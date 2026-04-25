@@ -61,6 +61,7 @@ def mock_settings() -> MagicMock:
         settings.auth_retry_attempts = 3
         settings.auth_jwk_set_cache_ttl = 300
         settings.refresh_token = None
+        settings.organization_id = None
         mock_settings.return_value = settings
         yield mock_settings
 
@@ -339,25 +340,22 @@ class TestBrowserCapabilityCheck:
 class TestAuthorizationCodeFlow:
     """Test cases for the authorization code flow with PKCE."""
 
-    @pytest.mark.unit
     @staticmethod
-    def test_perform_authorization_code_flow_success(record_property, mock_settings) -> None:
-        """Test successful authorization code flow with PKCE."""
-        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        # Mock OAuth session
+    def _run_pkce_flow() -> tuple[str | None, MagicMock]:
+        """Set up common PKCE flow mocks, run the flow, and return (token, mock_session).
+
+        Returns:
+            tuple: The returned token and the OAuth2Session mock for further assertions.
+        """
         mock_session = MagicMock(spec=OAuth2Session)
         mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
         mock_session.fetch_token.return_value = {"access_token": "pkce.token"}
 
-        # Mock HTTP server
         mock_server = MagicMock()
-
-        # Setup mocks for the redirect URI parsing
         mock_redirect_parsed = MagicMock()
         mock_redirect_parsed.hostname = "localhost"
         mock_redirect_parsed.port = 8000
 
-        # Create a custom HTTPServer mock implementation that simulates a callback
         class MockHTTPServer:
             def __init__(self, *args, **kwargs) -> None:
                 pass
@@ -368,7 +366,6 @@ class TestAuthorizationCodeFlow:
             def __exit__(self, *args) -> None:
                 pass
 
-        # Create a mock for the auth result
         mock_auth_result = MagicMock()
         mock_auth_result.token = "pkce.token"  # noqa: S105 - Test credential
         mock_auth_result.error = None
@@ -379,20 +376,19 @@ class TestAuthorizationCodeFlow:
             patch("urllib.parse.urlparse", return_value=mock_redirect_parsed),
             patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
         ):
-            # Simulate a successful server response by making handle_request set the token
-            def handle_request_side_effect():
-                # This simulates what the HTTP handler would do on success
-                mock_auth_result.token = "pkce.token"  # noqa: S105 - Test credential
-
-            mock_server.handle_request.side_effect = handle_request_side_effect
-
-            # Call the function under test
+            mock_server.handle_request.side_effect = lambda: None
             token = _perform_authorization_code_with_pkce_flow()
 
-            # Assertions
-            assert token == "pkce.token"  # noqa: S105 - Test credential
-            mock_server.handle_request.assert_called_once()
-            mock_session.authorization_url.assert_called_once()
+        return token, mock_session
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_perform_authorization_code_flow_success(record_property, mock_settings) -> None:
+        """Test successful authorization code flow with PKCE."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+        token, mock_session = TestAuthorizationCodeFlow._run_pkce_flow()
+        assert token == "pkce.token"  # noqa: S105 - Test credential
+        mock_session.authorization_url.assert_called_once()
 
     @pytest.mark.unit
     @staticmethod
@@ -465,6 +461,27 @@ class TestAuthorizationCodeFlow:
             # Expect RuntimeError with AUTHENTICATION_FAILED message
             with pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED):
                 _perform_authorization_code_with_pkce_flow()
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_perform_authorization_code_flow_with_organization(record_property, mock_settings) -> None:
+        """Test authorization code flow includes organization parameter when set."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+        mock_settings.return_value.organization_id = "test-org"
+        token, mock_session = TestAuthorizationCodeFlow._run_pkce_flow()
+        assert token == "pkce.token"  # noqa: S105
+        assert mock_session.authorization_url.call_args[1].get("organization") == "test-org"
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_perform_authorization_code_flow_without_organization(record_property, mock_settings) -> None:
+        """Test authorization code flow omits organization parameter when unset."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+        # organization_id is None by default in mock_settings fixture
+        assert mock_settings.return_value.organization_id is None
+        token, mock_session = TestAuthorizationCodeFlow._run_pkce_flow()
+        assert token == "pkce.token"  # noqa: S105
+        assert "organization" not in mock_session.authorization_url.call_args[1]
 
 
 class TestDeviceFlow:

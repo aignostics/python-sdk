@@ -1,5 +1,5 @@
 # API v1 Reference
-## Aignostics Platform API v1.0.0-ga
+## Aignostics Platform API v1.4.0
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
@@ -7,7 +7,7 @@ The Aignostics Platform is a cloud-based service that enables organizations to a
 
 To begin using the platform, your organization must first be registered by our business support team. If you don't have an account yet, please contact your account manager or email support@aignostics.com to get started. 
 
-More information about our applications can be found on (https://platform.aignostics.com).
+More information about our applications can be found on [https://platform.aignostics.com](https://platform.aignostics.com).
 
 **How to authorize and test API endpoints:**
 
@@ -80,7 +80,7 @@ fetch('/api/v1/applications',
 
 Returns the list of the applications, available to the caller.
 
-The application is available if any of the versions of the application is assigned to the caller’s organization.
+The application is available if any of the versions of the application is assigned to the caller's organization.
 The response is paginated and sorted according to the provided parameters.
 
 #### Parameters
@@ -114,27 +114,27 @@ The response is paginated and sorted according to the provided parameters.
 [
   {
     "application_id": "he-tme",
+    "name": "Atlas H&E-TME",
+    "regulatory_classes": [
+      "RUO"
+    ],
     "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
     "latest_version": {
       "number": "1.0.0",
       "released_at": "2025-09-01T19:01:05.401Z"
-    },
-    "name": "Atlas H&E-TME",
-    "regulatory_classes": [
-      "RUO"
-    ]
+    }
   },
   {
     "application_id": "test-app",
+    "name": "Test Application",
+    "regulatory_classes": [
+      "RUO"
+    ],
     "description": "This is the test application with two algorithms: TissueQc and Tissue Segmentation",
     "latest_version": {
       "number": "2.0.0",
       "released_at": "2025-09-02T19:01:05.401Z"
-    },
-    "name": "Test Application",
-    "regulatory_classes": [
-      "RUO"
-    ]
+    }
   }
 ]
 ```
@@ -149,7 +149,9 @@ The response is paginated and sorted according to the provided parameters.
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -174,6 +176,8 @@ Status Code **200**
 |Response List Applications V1 Applications Get|[[ApplicationReadShortResponse](#schemaapplicationreadshortresponse)]|false|none|[Response schema for `List available applications` and `Read Application by Id` endpoints]|
 |» ApplicationReadShortResponse|[ApplicationReadShortResponse](#schemaapplicationreadshortresponse)|false|none|Response schema for `List available applications` and `Read Application by Id` endpoints|
 |»» application_id|string|true|none|Application ID|
+|»» name|string|true|none|Application display name|
+|»» regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
 |»» description|string|true|none|Describing what the application can do|
 |»» latest_version|any|false|none|The version with highest version number available to the user|
 
@@ -190,13 +194,6 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» name|string|true|none|Application display name|
-|»» regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -262,11 +259,11 @@ Retrieve details of a specific application by its ID.
 ```json
 {
   "application_id": "he-tme",
-  "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
   "name": "Atlas H&E-TME",
   "regulatory_classes": [
     "RUO"
   ],
+  "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
   "versions": [
     {
       "number": "1.0.0",
@@ -351,14 +348,31 @@ Allows caller to retrieve information about application version based on provide
 
 ```json
 {
+  "version_number": "0.4.4",
   "changelog": "New deployment",
   "input_artifacts": [
     {
+      "name": "whole_slide_image",
+      "mime_type": "image/tiff",
       "metadata_schema": {
+        "type": "object",
         "$defs": {
           "LungCancerMetadata": {
-            "additionalProperties": false,
+            "type": "object",
+            "title": "LungCancerMetadata",
+            "required": [
+              "type",
+              "tissue"
+            ],
             "properties": {
+              "type": {
+                "enum": [
+                  "lung"
+                ],
+                "type": "string",
+                "const": "lung",
+                "title": "Type"
+              },
               "tissue": {
                 "enum": [
                   "lung",
@@ -368,77 +382,15 @@ Allows caller to retrieve information about application version based on provide
                   "bone",
                   "brain"
                 ],
-                "title": "Tissue",
-                "type": "string"
-              },
-              "type": {
-                "const": "lung",
-                "enum": [
-                  "lung"
-                ],
-                "title": "Type",
-                "type": "string"
+                "type": "string",
+                "title": "Tissue"
               }
             },
-            "required": [
-              "type",
-              "tissue"
-            ],
-            "title": "LungCancerMetadata",
-            "type": "object"
+            "additionalProperties": false
           }
         },
+        "title": "ExternalImageMetadata",
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "description": "Metadata corresponding to an external image.",
-        "properties": {
-          "base_mpp": {
-            "maximum": 0.5,
-            "minimum": 0.125,
-            "title": "Base Mpp",
-            "type": "number"
-          },
-          "cancer": {
-            "anyOf": [
-              false
-            ],
-            "title": "Cancer"
-          },
-          "checksum_crc32c": {
-            "title": "Checksum Crc32C",
-            "type": "string"
-          },
-          "height": {
-            "maximum": 150000,
-            "minimum": 1,
-            "title": "Height",
-            "type": "integer"
-          },
-          "mime_type": {
-            "default": "image/tiff",
-            "enum": [
-              "application/dicom",
-              "image/tiff"
-            ],
-            "title": "Mime Type",
-            "type": "string"
-          },
-          "stain": {
-            "const": "H&E",
-            "default": "H&E",
-            "enum": [
-              "H&E"
-            ],
-            "title": "Stain",
-            "type": "string"
-          },
-          "width": {
-            "maximum": 150000,
-            "minimum": 1,
-            "title": "Width",
-            "type": "integer"
-          }
-        },
         "required": [
           "checksum_crc32c",
           "base_mpp",
@@ -446,91 +398,136 @@ Allows caller to retrieve information about application version based on provide
           "height",
           "cancer"
         ],
-        "title": "ExternalImageMetadata",
-        "type": "object"
-      },
-      "mime_type": "image/tiff",
-      "name": "whole_slide_image"
+        "properties": {
+          "stain": {
+            "enum": [
+              "H&E"
+            ],
+            "type": "string",
+            "const": "H&E",
+            "title": "Stain",
+            "default": "H&E"
+          },
+          "width": {
+            "type": "integer",
+            "title": "Width",
+            "maximum": 150000,
+            "minimum": 1
+          },
+          "cancer": {
+            "anyOf": [
+              false
+            ],
+            "title": "Cancer"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height",
+            "maximum": 150000,
+            "minimum": 1
+          },
+          "base_mpp": {
+            "type": "number",
+            "title": "Base Mpp",
+            "maximum": 0.5,
+            "minimum": 0.125
+          },
+          "mime_type": {
+            "enum": [
+              "application/dicom",
+              "image/tiff"
+            ],
+            "type": "string",
+            "title": "Mime Type",
+            "default": "image/tiff"
+          },
+          "checksum_crc32c": {
+            "type": "string",
+            "title": "Checksum Crc32C"
+          }
+        },
+        "description": "Metadata corresponding to an external image.",
+        "additionalProperties": false
+      }
     }
   ],
   "output_artifacts": [
     {
+      "name": "tissue_qc:tiff_heatmap",
+      "mime_type": "image/tiff",
       "metadata_schema": {
+        "type": "object",
+        "title": "HeatmapMetadata",
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "additionalProperties": false,
-        "description": "Metadata corresponding to a segmentation heatmap file.",
-        "properties": {
-          "base_mpp": {
-            "maximum": 0.5,
-            "minimum": 0.125,
-            "title": "Base Mpp",
-            "type": "number"
-          },
-          "checksum_crc32c": {
-            "title": "Checksum Crc32C",
-            "type": "string"
-          },
-          "class_colors": {
-            "additionalProperties": {
-              "maxItems": 3,
-              "minItems": 3,
-              "prefixItems": [
-                {
-                  "maximum": 255,
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "maximum": 255,
-                  "minimum": 0,
-                  "type": "integer"
-                },
-                {
-                  "maximum": 255,
-                  "minimum": 0,
-                  "type": "integer"
-                }
-              ],
-              "type": "array"
-            },
-            "title": "Class Colors",
-            "type": "object"
-          },
-          "height": {
-            "title": "Height",
-            "type": "integer"
-          },
-          "mime_type": {
-            "const": "image/tiff",
-            "default": "image/tiff",
-            "enum": [
-              "image/tiff"
-            ],
-            "title": "Mime Type",
-            "type": "string"
-          },
-          "width": {
-            "title": "Width",
-            "type": "integer"
-          }
-        },
         "required": [
           "checksum_crc32c",
           "width",
           "height",
           "class_colors"
         ],
-        "title": "HeatmapMetadata",
-        "type": "object"
+        "properties": {
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "base_mpp": {
+            "type": "number",
+            "title": "Base Mpp",
+            "maximum": 0.5,
+            "minimum": 0.125
+          },
+          "mime_type": {
+            "enum": [
+              "image/tiff"
+            ],
+            "type": "string",
+            "const": "image/tiff",
+            "title": "Mime Type",
+            "default": "image/tiff"
+          },
+          "class_colors": {
+            "type": "object",
+            "title": "Class Colors",
+            "additionalProperties": {
+              "type": "array",
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "integer",
+                  "maximum": 255,
+                  "minimum": 0
+                },
+                {
+                  "type": "integer",
+                  "maximum": 255,
+                  "minimum": 0
+                },
+                {
+                  "type": "integer",
+                  "maximum": 255,
+                  "minimum": 0
+                }
+              ]
+            }
+          },
+          "checksum_crc32c": {
+            "type": "string",
+            "title": "Checksum Crc32C"
+          }
+        },
+        "description": "Metadata corresponding to a segmentation heatmap file.",
+        "additionalProperties": false
       },
-      "mime_type": "image/tiff",
-      "name": "tissue_qc:tiff_heatmap",
       "scope": "ITEM",
       "visibility": "EXTERNAL"
     }
   ],
-  "released_at": "2025-04-16T08:45:20.655972Z",
-  "version_number": "0.4.4"
+  "released_at": "2025-04-16T08:45:20.655972Z"
 }
 ```
 
@@ -544,7 +541,9 @@ Allows caller to retrieve information about application version based on provide
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -558,97 +557,6 @@ Allows caller to retrieve information about application version based on provide
 |403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this version|None|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Application version with given ID is not available to you or does not exist|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
-### get_me_v1_me_get
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.get('/api/v1/me', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/me',
-{
-  method: 'GET',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`GET /v1/me`
-
-*Get current user*
-
-Retrieves your identity details, including name, email, and organization.
-This is useful for verifying that the request is being made under the correct user profile
-and organization context, as well as confirming that the expected environment variables are correctly set
-(in case you are using Python SDK)
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "organization": {
-    "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
-    "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
-    "aignostics_bucket_name": "aignostics-platform-bucket",
-    "aignostics_bucket_protocol": "gs",
-    "aignostics_logfire_token": "your-logfire-token",
-    "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432",
-    "display_name": "Aignostics GmbH",
-    "id": "org_123456",
-    "name": "aignx"
-  },
-  "user": {
-    "email": "user@domain.com",
-    "email_verified": true,
-    "family_name": "Doe",
-    "given_name": "Jane",
-    "id": "auth0|123456",
-    "name": "Jane Doe",
-    "nickname": "jdoe",
-    "picture": "https://example.com/jdoe.jpg",
-    "updated_at": "2023-10-05T14:48:00.000Z"
-  }
-}
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[MeReadResponse](#schemamereadresponse)|
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -713,6 +621,7 @@ Returns paginated runs that were submitted by the user.
 |custom_metadata|query|any|false|Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.|
 |page|query|integer|false|none|
 |page_size|query|integer|false|none|
+|for_organization|query|any|false|Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs.|
 |sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
 
 ##### Detailed descriptions
@@ -752,7 +661,6 @@ Returns paginated runs that were submitted by the user.
 - `application_id`
 - `version_number`
 - `custom_metadata`
-- `statistics`
 - `submitted_at`
 - `submitted_by`
 - `terminated_at`
@@ -770,33 +678,37 @@ Returns paginated runs that were submitted by the user.
 ```json
 [
   {
+    "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
     "application_id": "he-tme",
+    "version_number": "0.4.4",
+    "state": "PENDING",
+    "output": "NONE",
+    "termination_reason": "ALL_ITEMS_PROCESSED",
+    "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+    "error_message": "Run canceled given errors on more than 10 items.",
+    "statistics": {
+      "item_count": 0,
+      "item_pending_count": 0,
+      "item_processing_count": 0,
+      "item_user_error_count": 0,
+      "item_system_error_count": 0,
+      "item_skipped_count": 0,
+      "item_succeeded_count": 0
+    },
     "custom_metadata": {
       "department": "D1",
       "study": "abc-1"
     },
     "custom_metadata_checksum": "f54fe109",
-    "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
-    "error_message": "Run canceled given errors on more than 10 items.",
-    "num_preceding_items_org": 0,
-    "num_preceding_items_platform": 0,
-    "output": "NONE",
-    "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
-    "state": "PENDING",
-    "statistics": {
-      "item_count": 0,
-      "item_pending_count": 0,
-      "item_processing_count": 0,
-      "item_skipped_count": 0,
-      "item_succeeded_count": 0,
-      "item_system_error_count": 0,
-      "item_user_error_count": 0
-    },
     "submitted_at": "2019-08-24T14:15:22Z",
     "submitted_by": "auth0|123456",
     "terminated_at": "2024-01-15T10:30:45.123Z",
-    "termination_reason": "ALL_ITEMS_PROCESSED",
-    "version_number": "0.4.4"
+    "num_preceding_items_org": 0,
+    "num_preceding_items_platform": 0,
+    "scheduling": {
+      "due_date": "2019-08-24T14:15:22Z",
+      "deadline": "2019-08-24T14:15:22Z"
+    }
   }
 ]
 ```
@@ -819,32 +731,18 @@ Status Code **200**
 |---|---|---|---|---|
 |Response List Runs V1 Runs Get|[[RunReadResponse](#schemarunreadresponse)]|false|none|[Response schema for `Get run details` endpoint]|
 |» RunReadResponse|[RunReadResponse](#schemarunreadresponse)|false|none|Response schema for `Get run details` endpoint|
+|»» run_id|string(uuid)|true|none|UUID of the application|
 |»» application_id|string|true|none|Application id|
-|»» custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
+|»» version_number|string|true|none|Application version number|
+|»» state|[RunState](#schemarunstate)|true|none|none|
+|»» output|[RunOutput](#schemarunoutput)|true|none|none|
+|»» termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
 
 *anyOf*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»»» *anonymous*|object|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used in the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
+|»»» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
 
 *or*
 
@@ -892,6 +790,70 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|»» statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|none|
+|»»» item_count|integer|true|none|Total number of the items in the run|
+|»»» item_pending_count|integer|true|none|The number of items in `PENDING` state|
+|»»» item_processing_count|integer|true|none|The number of items in `PROCESSING` state|
+|»»» item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
+|»»» item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
+|»»» item_skipped_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`|
+|»»» item_succeeded_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`|
+|»» custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used in the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
+|»» submitted_by|string|true|none|Id of the user who triggered the run|
+|»» terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |»» num_preceding_items_org|any|false|none|How many Items from other Runs in the same Organization are due to begin processing before this Run's next Item does.|
 
 *anyOf*
@@ -928,67 +890,61 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»» output|[RunOutput](#schemarunoutput)|true|none|none|
-|»» run_id|string(uuid)|true|none|UUID of the application|
-|»» state|[RunState](#schemarunstate)|true|none|none|
-|»» statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|none|
-|»»» item_count|integer|true|none|Total number of the items in the run|
-|»»» item_pending_count|integer|true|none|The number of items in `PENDING` state|
-|»»» item_processing_count|integer|true|none|The number of items in `PROCESSING` state|
-|»»» item_skipped_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`|
-|»»» item_succeeded_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`|
-|»»» item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
-|»»» item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
-|»» submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
-|»» submitted_by|string|true|none|Id of the user who triggered the run|
-|»» terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
+|»» scheduling|any|false|none|Scheduling constraints set for this run.|
 
 *anyOf*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»»» *anonymous*|string(date-time)|false|none|none|
+|»»» *anonymous*|[SchedulingResponse](#schemaschedulingresponse)|false|none|Scheduling fields returned in run responses.|
+|»»»» due_date|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» deadline|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
 
 *or*
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» version_number|string|true|none|Application version number|
 
 ##### Enumerated Values
 
 |Property|Value|
 |---|---|
-|output|NONE|
-|output|PARTIAL|
-|output|FULL|
 |state|PENDING|
 |state|PROCESSING|
 |state|TERMINATED|
+|output|NONE|
+|output|PARTIAL|
+|output|FULL|
 |*anonymous*|ALL_ITEMS_PROCESSED|
 |*anonymous*|CANCELED_BY_SYSTEM|
 |*anonymous*|CANCELED_BY_USER|
@@ -1021,9 +977,14 @@ print(r.json())
 ```javascript
 const inputBody = '{
   "application_id": "he-tme",
+  "version_number": "1.0.0-beta1",
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
+  },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
   },
   "items": [
     {
@@ -1047,8 +1008,7 @@ const inputBody = '{
         }
       ]
     }
-  ],
-  "version_number": "1.0.0-beta1"
+  ]
 }';
 const headers = {
   'Content-Type':'application/json',
@@ -1154,9 +1114,14 @@ documentation
 ```json
 {
   "application_id": "he-tme",
+  "version_number": "1.0.0-beta1",
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
+  },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
   },
   "items": [
     {
@@ -1180,8 +1145,7 @@ documentation
         }
       ]
     }
-  ],
-  "version_number": "1.0.0-beta1"
+  ]
 }
 ```
 
@@ -1278,33 +1242,37 @@ Access to a run is restricted to the user who created it.
 
 ```json
 {
+  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
   "application_id": "he-tme",
+  "version_number": "0.4.4",
+  "state": "PENDING",
+  "output": "NONE",
+  "termination_reason": "ALL_ITEMS_PROCESSED",
+  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+  "error_message": "Run canceled given errors on more than 10 items.",
+  "statistics": {
+    "item_count": 0,
+    "item_pending_count": 0,
+    "item_processing_count": 0,
+    "item_user_error_count": 0,
+    "item_system_error_count": 0,
+    "item_skipped_count": 0,
+    "item_succeeded_count": 0
+  },
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
   },
   "custom_metadata_checksum": "f54fe109",
-  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
-  "error_message": "Run canceled given errors on more than 10 items.",
-  "num_preceding_items_org": 0,
-  "num_preceding_items_platform": 0,
-  "output": "NONE",
-  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
-  "state": "PENDING",
-  "statistics": {
-    "item_count": 0,
-    "item_pending_count": 0,
-    "item_processing_count": 0,
-    "item_skipped_count": 0,
-    "item_succeeded_count": 0,
-    "item_system_error_count": 0,
-    "item_user_error_count": 0
-  },
   "submitted_at": "2019-08-24T14:15:22Z",
   "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
-  "termination_reason": "ALL_ITEMS_PROCESSED",
-  "version_number": "0.4.4"
+  "num_preceding_items_org": 0,
+  "num_preceding_items_platform": 0,
+  "scheduling": {
+    "due_date": "2019-08-24T14:15:22Z",
+    "deadline": "2019-08-24T14:15:22Z"
+  }
 }
 ```
 
@@ -1316,85 +1284,6 @@ Access to a run is restricted to the user who created it.
 |403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this run|None|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found because it was deleted.|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
-### delete_run_items_v1_runs__run_id__artifacts_delete
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.delete('/api/v1/runs/{run_id}/artifacts', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/runs/{run_id}/artifacts',
-{
-  method: 'DELETE',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`DELETE /v1/runs/{run_id}/artifacts`
-
-*Delete Run Items*
-
-This endpoint allows the caller to explicitly delete artifacts generated by a run.
-It can only be invoked when the run has reached a final state, i.e.
-`PROCESSED`, `CANCELED_SYSTEM`, or `CANCELED_USER`.
-Note that by default, all artifacts are automatically deleted 30 days after the run finishes,
-regardless of whether the caller explicitly requests such deletion.
-
-#### Parameters
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
-
-> Example responses
-
-> 200 Response
-
-```json
-null
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Run artifacts deleted|Inline|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
-|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-#### Response Schema
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -1474,6 +1363,688 @@ null
 |403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to cancel this run|None|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
 |409|[Conflict](https://tools.ietf.org/html/rfc7231#section-6.5.8)|Conflict - The Run is already cancelled|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### list_run_items_v1_runs__run_id__items_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/runs/{run_id}/items', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/items',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{run_id}/items`
+
+*List Run Items*
+
+List items in a run with filtering, sorting, and pagination capabilities.
+
+Returns paginated items within a specific run. Results can be filtered
+by `item_id`, `external_ids`, `custom_metadata`, `terminated_at`, and `termination_reason` using JSONPath expressions.
+
+### JSONPath Metadata Filtering
+Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
+
+#### Examples:
+- **Field existence**: `$.case_id` - Results that have a case_id field defined
+- **Exact value match**: `$.priority ? (@ == "high")` - Results with high priority
+- **Numeric comparison**: `$.confidence_score ? (@ > 0.95)` - Results with high confidence
+- **Array operations**: `$.flags[*] ? (@ == "reviewed")` - Results flagged as reviewed
+- **Complex conditions**: `$.metrics ? (@.accuracy > 0.9 && @.recall > 0.8)` - Results meeting performance thresholds
+
+### Notes
+- JSONPath expressions are evaluated using PostgreSQL's `@?` operator
+- The `$.` prefix is automatically added to root-level field references if missing
+- String values in conditions must be enclosed in double quotes
+- Use `&&` for AND operations and `||` for OR operations
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /v1/runs/` endpoint|
+|item_id__in|query|any|false|Filter for item ids|
+|external_id__in|query|any|false|Filter for items by their external_id from the input payload|
+|state|query|any|false|Filter items by their state|
+|termination_reason|query|any|false|Filter items by their termination reason. Only applies to TERMINATED items.|
+|custom_metadata|query|any|false|JSONPath expression to filter items by their custom_metadata|
+|page|query|integer|false|none|
+|page_size|query|integer|false|none|
+|sort|query|any|false|Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.|
+
+##### Detailed descriptions
+
+**sort**: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.
+                **Available fields:**
+- `item_id`
+- `external_id`
+- `custom_metadata`
+- `terminated_at`
+- `termination_reason`
+
+**Examples:**
+- `?sort=item_id` - Sort by id of the item (ascending)
+- `?sort=-external_id` - Sort by external ID (descending)
+- `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)
+
+> Example responses
+
+> 200 Response
+
+```json
+[
+  {
+    "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+    "external_id": "slide_1",
+    "custom_metadata": {},
+    "custom_metadata_checksum": "f54fe109",
+    "queue_position_org": 0,
+    "queue_position_platform": 0,
+    "state": "PENDING",
+    "output": "NONE",
+    "termination_reason": "SUCCEEDED",
+    "error_code": "string",
+    "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
+    "terminated_at": "2024-01-15T10:30:45.123Z",
+    "output_artifacts": [
+      {
+        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+        "name": "tissue_qc:tiff_heatmap",
+        "metadata": {},
+        "state": "PENDING",
+        "termination_reason": "SUCCEEDED",
+        "output": "NONE",
+        "error_code": "string",
+        "error_message": "string",
+        "download_url": "http://example.com"
+      }
+    ]
+  }
+]
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+Status Code **200**
+
+*Response List Run Items V1 Runs  Run Id  Items Get*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|Response List Run Items V1 Runs  Run Id  Items Get|[[ItemResultReadResponse](#schemaitemresultreadresponse)]|false|none|[Response schema for items in `List Run Items` endpoint]|
+|» ItemResultReadResponse|[ItemResultReadResponse](#schemaitemresultreadresponse)|false|none|Response schema for items in `List Run Items` endpoint|
+|»» item_id|string(uuid)|true|none|Item UUID generated by the Platform|
+|»» external_id|string|true|none|The external_id of the item from the user payload|
+|»» custom_metadata|any|true|none|The custom_metadata of the item that has been provided by the user on run creation.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field.Can be used in the `PUT /runs/{run-id}/items/{external_id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» queue_position_org|any|false|none|The position of the item in the organization's queue.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» queue_position_platform|any|false|none|The position of the item in the platform's queue.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|integer|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» state|[ItemState](#schemaitemstate)|true|none|none|
+|»» output|[ItemOutput](#schemaitemoutput)|true|none|none|
+|»» termination_reason|any|false|none|When the `state` is `TERMINATED` this will explain why`SUCCEEDED` -> Successful processing.`USER_ERROR` -> Failed because the provided input was invalid.`SYSTEM_ERROR` -> There was an error in the model or platform.`SKIPPED` -> Was cancelled|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|[ItemTerminationReason](#schemaitemterminationreason)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» error_code|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
+|»»» OutputArtifactResultReadResponse|[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)|false|none|none|
+|»»»» output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
+|»»»» name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
+|»»»» metadata|any|false|none|The metadata of the output artifact, provided by the application. Can only be None if the artifact itself was deleted.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|object|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» state|[ArtifactState](#schemaartifactstate)|true|none|none|
+|»»»» termination_reason|any|false|none|The reason for termination when state is TERMINATED|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|[ArtifactTerminationReason](#schemaartifactterminationreason)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» output|[ArtifactOutput](#schemaartifactoutput)|true|none|none|
+|»»»» error_code|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» error_message|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» download_url|any|false|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(uri)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+##### Enumerated Values
+
+|Property|Value|
+|---|---|
+|state|PENDING|
+|state|PROCESSING|
+|state|TERMINATED|
+|output|NONE|
+|output|FULL|
+|*anonymous*|SUCCEEDED|
+|*anonymous*|USER_ERROR|
+|*anonymous*|SYSTEM_ERROR|
+|*anonymous*|SKIPPED|
+|state|PENDING|
+|state|PROCESSING|
+|state|TERMINATED|
+|*anonymous*|SUCCEEDED|
+|*anonymous*|USER_ERROR|
+|*anonymous*|SYSTEM_ERROR|
+|*anonymous*|SKIPPED|
+|output|NONE|
+|output|AVAILABLE|
+|output|DELETED_BY_USER|
+|output|DELETED_BY_SYSTEM|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_item_by_run_v1_runs__run_id__items__external_id__get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/runs/{run_id}/items/{external_id}', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/items/{external_id}',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{run_id}/items/{external_id}`
+
+*Get Item By Run*
+
+Retrieve details of a specific item (slide) by its external ID and the run ID.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|The run id, returned by `POST /runs/` endpoint|
+|external_id|path|string|true|The `external_id` that was defined for the item by the customer that triggered the run.|
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "external_id": "slide_1",
+  "custom_metadata": {},
+  "custom_metadata_checksum": "f54fe109",
+  "queue_position_org": 0,
+  "queue_position_platform": 0,
+  "state": "PENDING",
+  "output": "NONE",
+  "termination_reason": "SUCCEEDED",
+  "error_code": "string",
+  "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
+  "terminated_at": "2024-01-15T10:30:45.123Z",
+  "output_artifacts": [
+    {
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+      "name": "tissue_qc:tiff_heatmap",
+      "metadata": {},
+      "state": "PENDING",
+      "termination_reason": "SUCCEEDED",
+      "output": "NONE",
+      "error_code": "string",
+      "error_message": "string",
+      "download_url": "http://example.com"
+    }
+  ]
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ItemResultReadResponse](#schemaitemresultreadresponse)|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this item|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Item with given ID does not exist|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_artifact_url_v1_runs__run_id__artifacts__artifact_id__file_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/runs/{run_id}/artifacts/{artifact_id}/file', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/artifacts/{artifact_id}/file',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{run_id}/artifacts/{artifact_id}/file`
+
+*Get Artifact Url*
+
+Download the artifact file with the specified artifact_id, belonging to the specified run.
+The artifact_is is returned by the `GET /v1/runs/{run_id}/items` endpoint as part of the item results, and can also
+be retrieved via `GET /v1/runs/{run_id}/items/{external_id}`.
+
+The endpoint may return a redirect response with a presigned URL to download the artifact file from the storage
+bucket. The presigned URL is valid for a limited time, so it should be used immediately after receiving the response.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+|artifact_id|path|string(uuid)|true|The artifact id to download|
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|307|[Temporary Redirect](https://tools.ietf.org/html/rfc7231#section-6.4.7)|Temporary Redirect - Redirect to the artifact file URL|None|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to download this artifact|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Artifact not found for the specified run|None|
+|410|[Gone](https://tools.ietf.org/html/rfc7231#section-6.5.9)|Gone - Artifact has been deleted|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### delete_run_items_v1_runs__run_id__artifacts_delete
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.delete('/api/v1/runs/{run_id}/artifacts', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/artifacts',
+{
+  method: 'DELETE',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`DELETE /v1/runs/{run_id}/artifacts`
+
+*Delete Run Items*
+
+This endpoint allows the caller to explicitly delete artifacts generated by a run.
+It can only be invoked when the run has reached a final state, i.e.
+`PROCESSED`, `CANCELED_SYSTEM`, or `CANCELED_USER`.
+Note that by default, all artifacts are automatically deleted 30 days after the run finishes,
+regardless of whether the caller explicitly requests such deletion.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Run artifacts deleted|Inline|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
 
 #### Response Schema
@@ -1592,525 +2163,6 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
-### list_run_items_v1_runs__run_id__items_get
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.get('/api/v1/runs/{run_id}/items', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/runs/{run_id}/items',
-{
-  method: 'GET',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`GET /v1/runs/{run_id}/items`
-
-*List Run Items*
-
-List items in a run with filtering, sorting, and pagination capabilities.
-
-Returns paginated items within a specific run. Results can be filtered
-by `item_id`, `external_ids`, `custom_metadata`, `terminated_at`, and `termination_reason` using JSONPath expressions.
-
-### JSONPath Metadata Filtering
-Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
-
-#### Examples:
-- **Field existence**: `$.case_id` - Results that have a case_id field defined
-- **Exact value match**: `$.priority ? (@ == "high")` - Results with high priority
-- **Numeric comparison**: `$.confidence_score ? (@ > 0.95)` - Results with high confidence
-- **Array operations**: `$.flags[*] ? (@ == "reviewed")` - Results flagged as reviewed
-- **Complex conditions**: `$.metrics ? (@.accuracy > 0.9 && @.recall > 0.8)` - Results meeting performance thresholds
-
-### Notes
-- JSONPath expressions are evaluated using PostgreSQL's `@?` operator
-- The `$.` prefix is automatically added to root-level field references if missing
-- String values in conditions must be enclosed in double quotes
-- Use `&&` for AND operations and `||` for OR operations
-
-#### Parameters
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|run_id|path|string(uuid)|true|Run id, returned by `POST /v1/runs/` endpoint|
-|item_id__in|query|any|false|Filter for item ids|
-|external_id__in|query|any|false|Filter for items by their external_id from the input payload|
-|state|query|any|false|Filter items by their state|
-|termination_reason|query|any|false|Filter items by their termination reason. Only applies to TERMINATED items.|
-|custom_metadata|query|any|false|JSONPath expression to filter items by their custom_metadata|
-|page|query|integer|false|none|
-|page_size|query|integer|false|none|
-|sort|query|any|false|Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.|
-
-##### Detailed descriptions
-
-**sort**: Sort the items by one or more fields. Use `+` for ascending and `-` for descending order.
-                **Available fields:**
-- `item_id`
-- `external_id`
-- `custom_metadata`
-- `terminated_at`
-- `termination_reason`
-
-**Examples:**
-- `?sort=item_id` - Sort by id of the item (ascending)
-- `?sort=-external_id` - Sort by external ID (descending)
-- `?sort=custom_metadata&sort=-external_id` - Sort by metadata, then by external ID (descending)
-
-> Example responses
-
-> 200 Response
-
-```json
-[
-  {
-    "custom_metadata": {},
-    "custom_metadata_checksum": "f54fe109",
-    "error_code": "string",
-    "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-    "external_id": "slide_1",
-    "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-    "output": "NONE",
-    "output_artifacts": [
-      {
-        "download_url": "http://example.com",
-        "error_code": "string",
-        "error_message": "string",
-        "metadata": {},
-        "name": "tissue_qc:tiff_heatmap",
-        "output": "NONE",
-        "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
-        "state": "PENDING",
-        "termination_reason": "SUCCEEDED"
-      }
-    ],
-    "queue_position_org": 0,
-    "queue_position_platform": 0,
-    "state": "PENDING",
-    "terminated_at": "2024-01-15T10:30:45.123Z",
-    "termination_reason": "SUCCEEDED"
-  }
-]
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Run not found|None|
-|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-#### Response Schema
-
-Status Code **200**
-
-*Response List Run Items V1 Runs  Run Id  Items Get*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|Response List Run Items V1 Runs  Run Id  Items Get|[[ItemResultReadResponse](#schemaitemresultreadresponse)]|false|none|[Response schema for items in `List Run Items` endpoint]|
-|» ItemResultReadResponse|[ItemResultReadResponse](#schemaitemresultreadresponse)|false|none|Response schema for items in `List Run Items` endpoint|
-|»» custom_metadata|any|true|none|The custom_metadata of the item that has been provided by the user on run creation.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|object|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field.Can be used in the `PUT /runs/{run-id}/items/{external_id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» error_code|any|true|read-only|Error code describing the error that occurred during item processing.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» external_id|string|true|none|The external_id of the item from the user payload|
-|»» item_id|string(uuid)|true|none|Item UUID generated by the Platform|
-|»» output|[ItemOutput](#schemaitemoutput)|true|none|none|
-|»» output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
-|»»» OutputArtifactResultReadResponse|[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)|false|none|none|
-|»»»» download_url|any|true|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|string(uri)|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» error_code|any|true|read-only|Error code describing the error that occurred during artifact processing.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» error_message|any|false|none|Error message when artifact is in error state|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» metadata|any|false|none|The metadata of the output artifact, provided by the application. Can only be None if the artifact itself was deleted.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|object|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
-|»»»» output|[ArtifactOutput](#schemaartifactoutput)|true|none|none|
-|»»»» output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
-|»»»» state|[ArtifactState](#schemaartifactstate)|true|none|none|
-|»»»» termination_reason|any|false|none|The reason for termination when state is TERMINATED|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|[ArtifactTerminationReason](#schemaartifactterminationreason)|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» queue_position_org|any|false|none|The position of the item in the organization's queue.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|integer|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» queue_position_platform|any|false|none|The position of the item in the platform's queue.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|integer|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» state|[ItemState](#schemaitemstate)|true|none|none|
-|»» terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string(date-time)|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» termination_reason|any|false|none|When the `state` is `TERMINATED` this will explain why`SUCCEEDED` -> Successful processing.`USER_ERROR` -> Failed because the provided input was invalid.`SYSTEM_ERROR` -> There was an error in the model or platform.`SKIPPED` -> Was cancelled|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|[ItemTerminationReason](#schemaitemterminationreason)|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
-
-##### Enumerated Values
-
-|Property|Value|
-|---|---|
-|output|NONE|
-|output|FULL|
-|output|NONE|
-|output|AVAILABLE|
-|output|DELETED_BY_USER|
-|output|DELETED_BY_SYSTEM|
-|state|PENDING|
-|state|PROCESSING|
-|state|TERMINATED|
-|*anonymous*|SUCCEEDED|
-|*anonymous*|USER_ERROR|
-|*anonymous*|SYSTEM_ERROR|
-|*anonymous*|SKIPPED|
-|state|PENDING|
-|state|PROCESSING|
-|state|TERMINATED|
-|*anonymous*|SUCCEEDED|
-|*anonymous*|USER_ERROR|
-|*anonymous*|SYSTEM_ERROR|
-|*anonymous*|SKIPPED|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
-### get_item_by_run_v1_runs__run_id__items__external_id__get
-
-
-
-> Code samples
-
-```python
-import requests
-headers = {
-  'Accept': 'application/json',
-  'Authorization': 'Bearer {access-token}'
-}
-
-r = requests.get('/api/v1/runs/{run_id}/items/{external_id}', headers = headers)
-
-print(r.json())
-
-```
-
-```javascript
-
-const headers = {
-  'Accept':'application/json',
-  'Authorization':'Bearer {access-token}'
-};
-
-fetch('/api/v1/runs/{run_id}/items/{external_id}',
-{
-  method: 'GET',
-
-  headers: headers
-})
-.then(function(res) {
-    return res.json();
-}).then(function(body) {
-    console.log(body);
-});
-
-```
-
-`GET /v1/runs/{run_id}/items/{external_id}`
-
-*Get Item By Run*
-
-Retrieve details of a specific item (slide) by its external ID and the run ID.
-
-#### Parameters
-
-|Name|In|Type|Required|Description|
-|---|---|---|---|---|
-|run_id|path|string(uuid)|true|The run id, returned by `POST /runs/` endpoint|
-|external_id|path|string|true|The `external_id` that was defined for the item by the customer that triggered the run.|
-
-> Example responses
-
-> 200 Response
-
-```json
-{
-  "custom_metadata": {},
-  "custom_metadata_checksum": "f54fe109",
-  "error_code": "string",
-  "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-  "external_id": "slide_1",
-  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-  "output": "NONE",
-  "output_artifacts": [
-    {
-      "download_url": "http://example.com",
-      "error_code": "string",
-      "error_message": "string",
-      "metadata": {},
-      "name": "tissue_qc:tiff_heatmap",
-      "output": "NONE",
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
-      "state": "PENDING",
-      "termination_reason": "SUCCEEDED"
-    }
-  ],
-  "queue_position_org": 0,
-  "queue_position_platform": 0,
-  "state": "PENDING",
-  "terminated_at": "2024-01-15T10:30:45.123Z",
-  "termination_reason": "SUCCEEDED"
-}
-```
-
-#### Responses
-
-|Status|Meaning|Description|Schema|
-|---|---|---|---|
-|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[ItemResultReadResponse](#schemaitemresultreadresponse)|
-|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this item|None|
-|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Item with given ID does not exist|None|
-|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
-
-
-To perform this operation, you must be authenticated by means of one of the following methods:
-OAuth2AuthorizationCodeBearer
-
-
 ### put_item_custom_metadata_by_run_v1_runs__run_id__items__external_id__custom_metadata_put
 
 
@@ -2220,6 +2272,97 @@ To perform this operation, you must be authenticated by means of one of the foll
 OAuth2AuthorizationCodeBearer
 
 
+### get_me_v1_me_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/me', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/me',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/me`
+
+*Get current user*
+
+Retrieves your identity details, including name, email, and organization.
+This is useful for verifying that the request is being made under the correct user profile
+and organization context, as well as confirming that the expected environment variables are correctly set
+(in case you are using Python SDK)
+
+> Example responses
+
+> 200 Response
+
+```json
+{
+  "user": {
+    "id": "auth0|123456",
+    "email": "user@domain.com",
+    "email_verified": true,
+    "name": "Jane Doe",
+    "given_name": "Jane",
+    "family_name": "Doe",
+    "nickname": "jdoe",
+    "picture": "https://example.com/jdoe.jpg",
+    "updated_at": "2023-10-05T14:48:00.000Z"
+  },
+  "organization": {
+    "id": "org_123456",
+    "name": "aignx",
+    "display_name": "Aignostics GmbH",
+    "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
+    "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
+    "aignostics_bucket_name": "aignostics-platform-bucket",
+    "aignostics_bucket_protocol": "gs",
+    "aignostics_logfire_token": "your-logfire-token",
+    "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
+  }
+}
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|[MeReadResponse](#schemamereadresponse)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
 ## Schemas
 
 ### ApplicationReadResponse
@@ -2232,11 +2375,11 @@ OAuth2AuthorizationCodeBearer
 ```json
 {
   "application_id": "he-tme",
-  "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
   "name": "Atlas H&E-TME",
   "regulatory_classes": [
     "RUO"
   ],
+  "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
   "versions": [
     {
       "number": "1.0.0",
@@ -2254,9 +2397,9 @@ ApplicationReadResponse
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |application_id|string|true|none|Application ID|
-|description|string|true|none|Describing what the application can do|
 |name|string|true|none|Application display name|
 |regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
+|description|string|true|none|Describing what the application can do|
 |versions|[[ApplicationVersion](#schemaapplicationversion)]|true|none|All version numbers available to the user|
 
 ### ApplicationReadShortResponse
@@ -2269,15 +2412,15 @@ ApplicationReadResponse
 ```json
 {
   "application_id": "he-tme",
+  "name": "Atlas H&E-TME",
+  "regulatory_classes": [
+    "RUO"
+  ],
   "description": "The Atlas H&E TME is an AI application designed to examine FFPE (formalin-fixed, paraffin-embedded) tissues stained with H&E (hematoxylin and eosin), delivering comprehensive insights into the tumor microenvironment.",
   "latest_version": {
     "number": "1.0.0",
     "released_at": "2025-09-15T10:30:45.123Z"
-  },
-  "name": "Atlas H&E-TME",
-  "regulatory_classes": [
-    "RUO"
-  ]
+  }
 }
 
 ```
@@ -2289,6 +2432,8 @@ ApplicationReadShortResponse
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |application_id|string|true|none|Application ID|
+|name|string|true|none|Application display name|
+|regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
 |description|string|true|none|Describing what the application can do|
 |latest_version|any|false|none|The version with highest version number available to the user|
 
@@ -2303,13 +2448,6 @@ or
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|name|string|true|none|Application display name|
-|regulatory_classes|[string]|true|none|Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.|
 
 ### ApplicationVersion
 
@@ -2526,7 +2664,9 @@ or
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -2550,9 +2690,9 @@ HTTPValidationError
 
 ```json
 {
-  "metadata_schema": {},
+  "name": "string",
   "mime_type": "image/tiff",
-  "name": "string"
+  "metadata_schema": {}
 }
 
 ```
@@ -2563,9 +2703,9 @@ InputArtifact
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|metadata_schema|object|true|none|none|
-|mime_type|string|true|none|none|
 |name|string|true|none|none|
+|mime_type|string|true|none|none|
+|metadata_schema|object|true|none|none|
 
 ### InputArtifactCreationRequest
 
@@ -2576,6 +2716,7 @@ InputArtifact
 
 ```json
 {
+  "name": "input_slide",
   "download_url": "https://example.com/case-no-1-slide.tiff",
   "metadata": {
     "checksum_base64_crc32c": "752f9554",
@@ -2583,8 +2724,7 @@ InputArtifact
     "height_mpp": 0.5,
     "width": 10000,
     "width_mpp": 0.5
-  },
-  "name": "input_slide"
+  }
 }
 
 ```
@@ -2595,9 +2735,9 @@ InputArtifactCreationRequest
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|name|string|true|none|Type of artifact. For Atlas H&E-TME, use "input_slide"|
 |download_url|string(uri)|true|none|[Signed URL](https://cloud.google.com/cdn/docs/using-signed-urls) to the input artifact file. The URL should be valid for at least 6 days from the payload submission time.|
 |metadata|object|true|none|The metadata of the artifact, required by the application version. The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`. The schema is located in `input_artifacts.[].metadata_schema`|
-|name|string|true|none|Type of artifact. For Atlas H&E-TME, use "input_slide"|
 
 ### ItemCreationRequest
 
@@ -2608,10 +2748,10 @@ InputArtifactCreationRequest
 
 ```json
 {
+  "external_id": "slide_1",
   "custom_metadata": {
     "case": "abc"
   },
-  "external_id": "slide_1",
   "input_artifacts": [
     {
       "download_url": "https://example-bucket.s3.amazonaws.com/slide1.tiff",
@@ -2640,6 +2780,7 @@ ItemCreationRequest
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|external_id|string|true|none|Unique identifier for this item within the run. Used for referencing items. Must be unique across all items in the same run|
 |custom_metadata|any|false|none|Optional JSON custom_metadata to store additional information alongside an item.|
 
 anyOf
@@ -2658,7 +2799,6 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|external_id|string|true|none|Unique identifier for this item within the run. Used for referencing items. Must be unique across all items in the same run|
 |input_artifacts|[[InputArtifactCreationRequest](#schemainputartifactcreationrequest)]|true|none|List of input artifacts for this item. For Atlas H&E-TME, typically contains one artifact (the slide image)|
 
 ### ItemOutput
@@ -2697,31 +2837,31 @@ ItemOutput
 
 ```json
 {
+  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
+  "external_id": "slide_1",
   "custom_metadata": {},
   "custom_metadata_checksum": "f54fe109",
-  "error_code": "string",
-  "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-  "external_id": "slide_1",
-  "item_id": "4d8cd62e-a579-4dae-af8c-3172f96f8f7c",
-  "output": "NONE",
-  "output_artifacts": [
-    {
-      "download_url": "http://example.com",
-      "error_code": "string",
-      "error_message": "string",
-      "metadata": {},
-      "name": "tissue_qc:tiff_heatmap",
-      "output": "NONE",
-      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
-      "state": "PENDING",
-      "termination_reason": "SUCCEEDED"
-    }
-  ],
   "queue_position_org": 0,
   "queue_position_platform": 0,
   "state": "PENDING",
+  "output": "NONE",
+  "termination_reason": "SUCCEEDED",
+  "error_code": "string",
+  "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
   "terminated_at": "2024-01-15T10:30:45.123Z",
-  "termination_reason": "SUCCEEDED"
+  "output_artifacts": [
+    {
+      "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+      "name": "tissue_qc:tiff_heatmap",
+      "metadata": {},
+      "state": "PENDING",
+      "termination_reason": "SUCCEEDED",
+      "output": "NONE",
+      "error_code": "string",
+      "error_message": "string",
+      "download_url": "http://example.com"
+    }
+  ]
 }
 
 ```
@@ -2732,6 +2872,8 @@ ItemResultReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|item_id|string(uuid)|true|none|Item UUID generated by the Platform|
+|external_id|string|true|none|The external_id of the item from the user payload|
 |custom_metadata|any|true|none|The custom_metadata of the item that has been provided by the user on run creation.|
 
 anyOf
@@ -2768,46 +2910,6 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|error_code|any|true|read-only|Error code describing the error that occurred during item processing.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|external_id|string|true|none|The external_id of the item from the user payload|
-|item_id|string(uuid)|true|none|Item UUID generated by the Platform|
-|output|[ItemOutput](#schemaitemoutput)|true|none|The output status of the item (NONE, FULL)|
-|output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
 |queue_position_org|any|false|none|The position of the item in the organization's queue.|
 
 anyOf
@@ -2845,6 +2947,61 @@ continued
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |state|[ItemState](#schemaitemstate)|true|none|The item moves from `PENDING` to `PROCESSING` to `TERMINATED` state.When terminated, consult the `termination_reason` property to see whether it was successful.|
+|output|[ItemOutput](#schemaitemoutput)|true|none|The output status of the item (NONE, FULL)|
+|termination_reason|any|false|none|When the `state` is `TERMINATED` this will explain why`SUCCEEDED` -> Successful processing.`USER_ERROR` -> Failed because the provided input was invalid.`SYSTEM_ERROR` -> There was an error in the model or platform.`SKIPPED` -> Was cancelled|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|[ItemTerminationReason](#schemaitemterminationreason)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error_code|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |terminated_at|any|false|none|Timestamp showing when the item reached a terminal state.|
 
 anyOf
@@ -2863,19 +3020,7 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|termination_reason|any|false|none|When the `state` is `TERMINATED` this will explain why`SUCCEEDED` -> Successful processing.`USER_ERROR` -> Failed because the provided input was invalid.`SYSTEM_ERROR` -> There was an error in the model or platform.`SKIPPED` -> Was cancelled|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|[ItemTerminationReason](#schemaitemterminationreason)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
+|output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
 
 ### ItemState
 
@@ -2943,27 +3088,27 @@ ItemTerminationReason
 
 ```json
 {
+  "user": {
+    "id": "auth0|123456",
+    "email": "user@domain.com",
+    "email_verified": true,
+    "name": "Jane Doe",
+    "given_name": "Jane",
+    "family_name": "Doe",
+    "nickname": "jdoe",
+    "picture": "https://example.com/jdoe.jpg",
+    "updated_at": "2023-10-05T14:48:00.000Z"
+  },
   "organization": {
+    "id": "org_123456",
+    "name": "aignx",
+    "display_name": "Aignostics GmbH",
     "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
     "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
     "aignostics_bucket_name": "aignostics-platform-bucket",
     "aignostics_bucket_protocol": "gs",
     "aignostics_logfire_token": "your-logfire-token",
-    "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432",
-    "display_name": "Aignostics GmbH",
-    "id": "org_123456",
-    "name": "aignx"
-  },
-  "user": {
-    "email": "user@domain.com",
-    "email_verified": true,
-    "family_name": "Doe",
-    "given_name": "Jane",
-    "id": "auth0|123456",
-    "name": "Jane Doe",
-    "nickname": "jdoe",
-    "picture": "https://example.com/jdoe.jpg",
-    "updated_at": "2023-10-05T14:48:00.000Z"
+    "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
   }
 }
 
@@ -2975,8 +3120,8 @@ MeReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|organization|[OrganizationReadResponse](#schemaorganizationreadresponse)|true|none|Part of response schema for Organization object in `Get current user` endpoint.This model corresponds to the response schema returned fromAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata outand doesn't return branding or token_quota objects.For details, see:https://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id#### Configuration for integrating with Aignostics Platform services.The Aignostics Platform API requires signed URLs for input artifacts (slide images). To simplify this process,Aignostics provides a dedicated storage bucket. The HMAC credentials below grant read and writeaccess to this bucket, allowing you to upload files and generate the signed URLs needed for API calls.Additionally, logging and error reporting tokens enable Aignostics to provide better support and monitorsystem performance for your integration.|
 |user|[UserReadResponse](#schemauserreadresponse)|true|none|Part of response schema for User object in `Get current user` endpoint.This model corresponds to the response schema returned fromAuth0 GET /v2/users/{id} endpoint.For details, see:https://auth0.com/docs/api/management/v2/users/get-users-by-id|
+|organization|[OrganizationReadResponse](#schemaorganizationreadresponse)|true|none|Part of response schema for Organization object in `Get current user` endpoint.This model corresponds to the response schema returned fromAuth0 GET /v2/organizations/{id} endpoint, flattens out the metadata outand doesn't return branding or token_quota objects.For details, see:https://auth0.com/docs/api/management/v2/organizations/get-organizations-by-id#### Configuration for integrating with Aignostics Platform services.The Aignostics Platform API requires signed URLs for input artifacts (slide images). To simplify this process,Aignostics provides a dedicated storage bucket. The HMAC credentials below grant read and writeaccess to this bucket, allowing you to upload files and generate the signed URLs needed for API calls.Additionally, logging and error reporting tokens enable Aignostics to provide better support and monitorsystem performance for your integration.|
 
 ### OrganizationReadResponse
 
@@ -2987,15 +3132,15 @@ MeReadResponse
 
 ```json
 {
+  "id": "org_123456",
+  "name": "aignx",
+  "display_name": "Aignostics GmbH",
   "aignostics_bucket_hmac_access_key_id": "YOUR_HMAC_ACCESS_KEY_ID",
   "aignostics_bucket_hmac_secret_access_key": "YOUR/HMAC/SECRET_ACCESS_KEY",
   "aignostics_bucket_name": "aignostics-platform-bucket",
   "aignostics_bucket_protocol": "gs",
   "aignostics_logfire_token": "your-logfire-token",
-  "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432",
-  "display_name": "Aignostics GmbH",
-  "id": "org_123456",
-  "name": "aignx"
+  "aignostics_sentry_dsn": "https://2354s3#ewsha@o44.ingest.us.sentry.io/34345123432"
 }
 
 ```
@@ -3003,30 +3148,6 @@ MeReadResponse
 OrganizationReadResponse
 
 #### Properties
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|aignostics_bucket_hmac_access_key_id|string|true|none|HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs|
-|aignostics_bucket_hmac_secret_access_key|string|true|none|HMAC secret access key paired with the access key ID. Keep this credential secure.|
-|aignostics_bucket_name|string|true|none|Name of the bucket provided by Aignostics for storing input artifacts (slide images)|
-|aignostics_bucket_protocol|string|true|none|Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service|
-|aignostics_logfire_token|string|true|none|Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support|
-|aignostics_sentry_dsn|string|true|none|Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team|
-|display_name|any|false|none|Public organization name (E.g. “Aignostics GmbH”)|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
@@ -3045,6 +3166,35 @@ or
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
 
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|display_name|any|false|none|Public organization name (E.g. “Aignostics GmbH”)|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|aignostics_bucket_hmac_access_key_id|string|true|none|HMAC access key ID for the Aignostics-provided storage bucket. Used to authenticate requests for uploading files and generating signed URLs|
+|aignostics_bucket_hmac_secret_access_key|string|true|none|HMAC secret access key paired with the access key ID. Keep this credential secure.|
+|aignostics_bucket_name|string|true|none|Name of the bucket provided by Aignostics for storing input artifacts (slide images)|
+|aignostics_bucket_protocol|string|true|none|Protocol to use for bucket access. Defines the URL scheme for connecting to the storage service|
+|aignostics_logfire_token|string|true|none|Authentication token for Logfire observability service. Enables sending application logs and performance metrics to Aignostics for monitoring and support|
+|aignostics_sentry_dsn|string|true|none|Data Source Name (DSN) for Sentry error tracking service. Allows automatic reporting of errors and exceptions to Aignostics support team|
+
 ### OutputArtifact
 
 
@@ -3054,9 +3204,9 @@ or
 
 ```json
 {
-  "metadata_schema": {},
-  "mime_type": "application/vnd.apache.parquet",
   "name": "string",
+  "mime_type": "application/vnd.apache.parquet",
+  "metadata_schema": {},
   "scope": "ITEM",
   "visibility": "INTERNAL"
 }
@@ -3069,9 +3219,9 @@ OutputArtifact
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|metadata_schema|object|true|none|none|
-|mime_type|string|true|none|none|
 |name|string|true|none|none|
+|mime_type|string|true|none|none|
+|metadata_schema|object|true|none|none|
 |scope|[OutputArtifactScope](#schemaoutputartifactscope)|true|none|none|
 |visibility|[OutputArtifactVisibility](#schemaoutputartifactvisibility)|true|none|none|
 
@@ -3084,15 +3234,15 @@ OutputArtifact
 
 ```json
 {
-  "download_url": "http://example.com",
+  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
+  "name": "tissue_qc:tiff_heatmap",
+  "metadata": {},
+  "state": "PENDING",
+  "termination_reason": "SUCCEEDED",
+  "output": "NONE",
   "error_code": "string",
   "error_message": "string",
-  "metadata": {},
-  "name": "tissue_qc:tiff_heatmap",
-  "output": "NONE",
-  "output_artifact_id": "3f78e99c-5d35-4282-9e82-63c422f3af1b",
-  "state": "PENDING",
-  "termination_reason": "SUCCEEDED"
+  "download_url": "http://example.com"
 }
 
 ```
@@ -3103,60 +3253,8 @@ OutputArtifactResultReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|download_url|any|true|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string(uri)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|error_code|any|true|read-only|Error code describing the error that occurred during artifact processing.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|error_message|any|false|none|Error message when artifact is in error state|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
+|output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
+|name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
 |metadata|any|false|none|The metadata of the output artifact, provided by the application. Can only be None if the artifact itself was deleted.|
 
 anyOf
@@ -3175,9 +3273,6 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|name|string|true|none|Name of the output from the output schema from the `/v1/versions/{version_id}` endpoint.|
-|output|[ArtifactOutput](#schemaartifactoutput)|true|none|The output status of the artifact (NONE, FULL)|
-|output_artifact_id|string(uuid)|true|none|The Id of the artifact. Used internally|
 |state|[ArtifactState](#schemaartifactstate)|true|none|The current state of the artifact (PENDING, PROCESSING, TERMINATED)|
 |termination_reason|any|false|none|The reason for termination when state is TERMINATED|
 
@@ -3186,6 +3281,61 @@ anyOf
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|[ArtifactTerminationReason](#schemaartifactterminationreason)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|output|[ArtifactOutput](#schemaartifactoutput)|true|none|The output status of the artifact (NONE, FULL)|
+|error_code|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|error_message|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|any|false|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(uri)|false|none|none|
 
 or
 
@@ -3257,9 +3407,14 @@ OutputArtifactVisibility
 ```json
 {
   "application_id": "he-tme",
+  "version_number": "1.0.0-beta1",
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
+  },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
   },
   "items": [
     {
@@ -3283,8 +3438,7 @@ OutputArtifactVisibility
         }
       ]
     }
-  ],
-  "version_number": "1.0.0-beta1"
+  ]
 }
 
 ```
@@ -3296,6 +3450,24 @@ RunCreationRequest
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |application_id|string|true|none|Unique ID for the application to use for processing|
+|version_number|any|false|none|Semantic version of the application to use for processing. If not provided, the latest available version will be used|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |custom_metadata|any|false|none|Optional JSON metadata to store additional information alongside the run|
 
 anyOf
@@ -3314,20 +3486,25 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts|
-|version_number|any|false|none|Semantic version of the application to use for processing. If not provided, the latest available version will be used|
+|scheduling|any|false|none|Optional scheduling constraints for this run.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
+|» *anonymous*|[SchedulingRequest](#schemaschedulingrequest)|false|none|Scheduling constraints for a run.|
 
 or
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts|
 
 ### RunCreationResponse
 
@@ -3349,7 +3526,7 @@ RunCreationResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|run_id|string(uuid)|false|none|none|
+|run_id|string(uuid)|true|none|none|
 
 ### RunItemStatistics
 
@@ -3363,10 +3540,10 @@ RunCreationResponse
   "item_count": 0,
   "item_pending_count": 0,
   "item_processing_count": 0,
-  "item_skipped_count": 0,
-  "item_succeeded_count": 0,
+  "item_user_error_count": 0,
   "item_system_error_count": 0,
-  "item_user_error_count": 0
+  "item_skipped_count": 0,
+  "item_succeeded_count": 0
 }
 
 ```
@@ -3380,10 +3557,10 @@ RunItemStatistics
 |item_count|integer|true|none|Total number of the items in the run|
 |item_pending_count|integer|true|none|The number of items in `PENDING` state|
 |item_processing_count|integer|true|none|The number of items in `PROCESSING` state|
+|item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
+|item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
 |item_skipped_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SKIPPED`|
 |item_succeeded_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SUCCEEDED`|
-|item_system_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `SYSTEM_ERROR`|
-|item_user_error_count|integer|true|none|The number of items in `TERMINATED` state, and the item termination reason is `USER_ERROR`|
 
 ### RunOutput
 
@@ -3422,33 +3599,37 @@ RunOutput
 
 ```json
 {
+  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
   "application_id": "he-tme",
+  "version_number": "0.4.4",
+  "state": "PENDING",
+  "output": "NONE",
+  "termination_reason": "ALL_ITEMS_PROCESSED",
+  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
+  "error_message": "Run canceled given errors on more than 10 items.",
+  "statistics": {
+    "item_count": 0,
+    "item_pending_count": 0,
+    "item_processing_count": 0,
+    "item_user_error_count": 0,
+    "item_system_error_count": 0,
+    "item_skipped_count": 0,
+    "item_succeeded_count": 0
+  },
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
   },
   "custom_metadata_checksum": "f54fe109",
-  "error_code": "SCHEDULER.ITEMS_WITH_ERROR_THRESHOLD_REACHED",
-  "error_message": "Run canceled given errors on more than 10 items.",
-  "num_preceding_items_org": 0,
-  "num_preceding_items_platform": 0,
-  "output": "NONE",
-  "run_id": "dded282c-8ebd-44cf-8ba5-9a234973d1ec",
-  "state": "PENDING",
-  "statistics": {
-    "item_count": 0,
-    "item_pending_count": 0,
-    "item_processing_count": 0,
-    "item_skipped_count": 0,
-    "item_succeeded_count": 0,
-    "item_system_error_count": 0,
-    "item_user_error_count": 0
-  },
   "submitted_at": "2019-08-24T14:15:22Z",
   "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
-  "termination_reason": "ALL_ITEMS_PROCESSED",
-  "version_number": "0.4.4"
+  "num_preceding_items_org": 0,
+  "num_preceding_items_platform": 0,
+  "scheduling": {
+    "due_date": "2019-08-24T14:15:22Z",
+    "deadline": "2019-08-24T14:15:22Z"
+  }
 }
 
 ```
@@ -3459,32 +3640,18 @@ RunReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|run_id|string(uuid)|true|none|UUID of the application|
 |application_id|string|true|none|Application id|
-|custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
+|version_number|string|true|none|Application version number|
+|state|[RunState](#schemarunstate)|true|none|When the run request is received by the Platform, the `state` of it is set to`PENDING`. The state changes to `PROCESSING` when at least one item is being processed. After `PROCESSING`, thestate of the run can switch back to `PENDING` if there are no processing items, or to `TERMINATED` when the runfinished processing.|
+|output|[RunOutput](#schemarunoutput)|true|none|The status of the output of the run. When 0 items are successfully processed the output is`NONE`, after one item is successfully processed, the value is set to `PARTIAL`. When all items of the run aresuccessfully processed, the output is set to `FULL`.|
+|termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|object|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used in the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
+|» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
 
 or
 
@@ -3532,6 +3699,63 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|Aggregated statistics of the run execution|
+|custom_metadata|any|false|none|Optional JSON metadata that was stored in alongside the run by the user|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|object|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|custom_metadata_checksum|any|false|none|The checksum of the `custom_metadata` field. Can be used in the `PUT /runs/{run-id}/custom_metadata`request to avoid unwanted override of the values in concurrent requests.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
+|submitted_by|string|true|none|Id of the user who triggered the run|
+|terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |num_preceding_items_org|any|false|none|How many Items from other Runs in the same Organization are due to begin processing before this Run's next Item does.|
 
 anyOf
@@ -3568,49 +3792,19 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|output|[RunOutput](#schemarunoutput)|true|none|The status of the output of the run. When 0 items are successfully processed the output is`NONE`, after one item is successfully processed, the value is set to `PARTIAL`. When all items of the run aresuccessfully processed, the output is set to `FULL`.|
-|run_id|string(uuid)|true|none|UUID of the application|
-|state|[RunState](#schemarunstate)|true|none|When the run request is received by the Platform, the `state` of it is set to`PENDING`. The state changes to `PROCESSING` when at least one item is being processed. After `PROCESSING`, thestate of the run can switch back to `PENDING` if there are no processing items, or to `TERMINATED` when the runfinished processing.|
-|statistics|[RunItemStatistics](#schemarunitemstatistics)|true|none|Aggregated statistics of the run execution|
-|submitted_at|string(date-time)|true|none|Timestamp showing when the run was triggered|
-|submitted_by|string|true|none|Id of the user who triggered the run|
-|terminated_at|any|false|none|Timestamp showing when the run reached a terminal state.|
+|scheduling|any|false|none|Scheduling constraints set for this run.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|» *anonymous*|string(date-time)|false|none|none|
+|» *anonymous*|[SchedulingResponse](#schemaschedulingresponse)|false|none|Scheduling fields returned in run responses.|
 
 or
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|termination_reason|any|true|none|The termination reason of the run. When the run is not in `TERMINATED` state, the        termination_reason is `null`. If all items of of the run are processed (successfully or with an error), then        termination_reason is set to `ALL_ITEMS_PROCESSED`. If the run is cancelled by the user, the value is set to        `CANCELED_BY_USER`. If the run reaches the threshold of number of failed items, the Platform cancels the run        and sets the termination_reason to `CANCELED_BY_SYSTEM`.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|[RunTerminationReason](#schemarunterminationreason)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|version_number|string|true|none|Application version number|
 
 ### RunState
 
@@ -3668,6 +3862,112 @@ RunTerminationReason
 |RunTerminationReason|CANCELED_BY_SYSTEM|
 |RunTerminationReason|CANCELED_BY_USER|
 
+### SchedulingRequest
+
+
+
+
+
+
+```json
+{
+  "due_date": "2026-03-04T23:59:59Z",
+  "deadline": "2026-03-05T23:59:59Z"
+}
+
+```
+
+SchedulingRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|due_date|any|false|none|Requested completion time. Items are prioritized to meet this target.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|deadline|any|false|none|Hard deadline. The run will be cancelled if not completed by this time.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### SchedulingResponse
+
+
+
+
+
+
+```json
+{
+  "due_date": "2019-08-24T14:15:22Z",
+  "deadline": "2019-08-24T14:15:22Z"
+}
+
+```
+
+SchedulingResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|due_date|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|deadline|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
 ### UserReadResponse
 
 
@@ -3677,12 +3977,12 @@ RunTerminationReason
 
 ```json
 {
+  "id": "auth0|123456",
   "email": "user@domain.com",
   "email_verified": true,
-  "family_name": "Doe",
-  "given_name": "Jane",
-  "id": "auth0|123456",
   "name": "Jane Doe",
+  "given_name": "Jane",
+  "family_name": "Doe",
   "nickname": "jdoe",
   "picture": "https://example.com/jdoe.jpg",
   "updated_at": "2023-10-05T14:48:00.000Z"
@@ -3696,6 +3996,7 @@ UserReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|id|string|true|none|Unique user identifier|
 |email|any|false|none|User email|
 
 anyOf
@@ -3732,7 +4033,7 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|family_name|any|false|none|none|
+|name|any|false|none|First and last name of the user|
 
 anyOf
 
@@ -3768,8 +4069,7 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|id|string|true|none|Unique user identifier|
-|name|any|false|none|First and last name of the user|
+|family_name|any|false|none|none|
 
 anyOf
 
@@ -3850,7 +4150,9 @@ or
     "string"
   ],
   "msg": "string",
-  "type": "string"
+  "type": "string",
+  "input": null,
+  "ctx": {}
 }
 
 ```
@@ -3881,6 +4183,8 @@ continued
 |---|---|---|---|---|
 |msg|string|true|none|none|
 |type|string|true|none|none|
+|input|any|false|none|none|
+|ctx|object|false|none|none|
 
 ### VersionReadResponse
 
@@ -3891,25 +4195,25 @@ continued
 
 ```json
 {
+  "version_number": "string",
   "changelog": "string",
   "input_artifacts": [
     {
-      "metadata_schema": {},
+      "name": "string",
       "mime_type": "image/tiff",
-      "name": "string"
+      "metadata_schema": {}
     }
   ],
   "output_artifacts": [
     {
-      "metadata_schema": {},
-      "mime_type": "application/vnd.apache.parquet",
       "name": "string",
+      "mime_type": "application/vnd.apache.parquet",
+      "metadata_schema": {},
       "scope": "ITEM",
       "visibility": "INTERNAL"
     }
   ],
-  "released_at": "2019-08-24T14:15:22Z",
-  "version_number": "string"
+  "released_at": "2019-08-24T14:15:22Z"
 }
 
 ```
@@ -3920,8 +4224,8 @@ VersionReadResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|version_number|string|true|none|Semantic version of the application|
 |changelog|string|true|none|Description of the changes relative to the previous version|
 |input_artifacts|[[InputArtifact](#schemainputartifact)]|true|none|List of the input fields, provided by the User|
 |output_artifacts|[[OutputArtifact](#schemaoutputartifact)]|true|none|List of the output fields, generated by the application|
 |released_at|string(date-time)|true|none|The timestamp when the application version was registered|
-|version_number|string|true|none|Semantic version of the application|

@@ -124,17 +124,35 @@ Notes:
 
 ### Publish Release
 
+Releases follow a four-phase workflow that allows Ketryx compliance approvals to be collected before publishing:
+
+**Phase 1 — Create the release branch:**
+
 ```shell
-make bump   # Patch release
-make minor  # Patch release
-make major  # Patch release
-make x.y.z  # Targeted release
+make prepare-release 1.2.3   # explicit version
 ```
 
-Notes:
+This triggers a GitHub Actions workflow that creates `release/vX.Y.Z` from `main`, bumps version files, and pushes the branch. CI runs automatically on the branch.
 
-1. Changelog generated automatically
-2. Publishes to PyPi, Docker Registries, Read The Docs, Streamlit and Auditing services
+**Phase 2 — Collect Ketryx approvals:**
+
+Point the Ketryx release to the `release/vX.Y.Z` branch and collect required approvals.
+
+**Phase 3 — Publish (tag → PyPI):**
+
+```shell
+make publish-release
+```
+
+Generates `CHANGELOG.md`, creates the `vX.Y.Z` tag, and pushes — triggering CI/CD which publishes to PyPI, Docker registries, and creates a GitHub release (Ketryx check must pass first).
+
+**Phase 4 — Merge back to main:**
+
+```shell
+make merge-release
+```
+
+Merges the release branch into `main` with `--no-ff` and deletes the branch.
 
 ## Advanced usage
 

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude_ai_Atlassian__getConfluencePage",
+      "mcp__claude_ai_Atlassian__getVisibleJiraProjects",
+      "mcp__claude_ai_Atlassian__getAccessibleAtlassianResources",
+      "mcp__claude_ai_Atlassian__getCompassComponent",
+      "mcp__claude_ai_Atlassian__getJiraIssue",
+      "mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql",
+      "mcp__claude_ai_Atlassian__search",
+      "mcp__claude_ai_Atlassian__getConfluenceSpaces",
+      "mcp__claude_ai_Atlassian__getPagesInConfluenceSpace",
+      "mcp__claude-in-chrome__read_page",
+      "mcp__claude-in-chrome__get_page_text",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(make lint)",
+      "Bash(make lint_fix)",
+      "Bash(make test_unit)",
+      "Bash(make test_integration)",
+      "Bash(make audit)",
+      "Bash(gh label list *)",
+      "Bash(gh search *)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [],
+  "extraKnownMarketplaces": {
+    "aignostics-claude-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "aignostics/claude-plugins"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "qms@aignostics-claude-plugins": true
+  }
+}

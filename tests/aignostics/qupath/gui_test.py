@@ -46,12 +46,11 @@ MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_logging: None, record_property) -> None:
+async def test_gui_qupath_install_only(
+    user: User, runner: CliRunner, silent_logging: None, qupath_save_restore: None, record_property
+) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
-    was_installed = not result.exit_code
 
     # Step 1: Check we are on the QuPath page
     await user.open("/qupath")
@@ -75,9 +74,6 @@ async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_log
     await user.should_see(f"QuPath {QUPATH_VERSION} is installed and ready to execute.")
     await user.should_see(marker="BUTTON_QUPATH_LAUNCH")
 
-    if not was_installed:
-        result = runner.invoke(cli, ["qupath", "uninstall"])
-
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -88,15 +84,11 @@ async def test_gui_qupath_install_only(user: User, runner: CliRunner, silent_log
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install_and_launch(
-    user: User, runner: CliRunner, silent_logging: None, qupath_teardown, record_property
+async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
+    user: User, runner: CliRunner, silent_logging: None, qupath_teardown, qupath_save_restore: None, record_property
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
     record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
-
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
-    was_installed = not result.exit_code
 
     # Step 1: Check we are on the QuPath page
     await user.open("/qupath")
@@ -142,9 +134,6 @@ async def test_gui_qupath_install_and_launch(
     except Exception as e:
         pytest.fail(f"Failed to kill QuPath process: {e}")
 
-    if not was_installed:
-        result = runner.invoke(cli, ["qupath", "uninstall"])
-
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -155,7 +144,13 @@ async def test_gui_qupath_install_and_launch(
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
 async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
-    user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, qupath_teardown: None, record_property
+    user: User,
+    runner: CliRunner,
+    tmp_path: Path,
+    silent_logging: None,
+    qupath_teardown: None,
+    qupath_save_restore: None,
+    record_property,
 ) -> None:
     """Test installing QuPath, downloading run results, creating QuPath project from it, and inspecting results."""
     record_property("tested-item-id", "TC-QUPATH-01, SPEC-GUI-SERVICE")
@@ -201,10 +196,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         "aignostics.application._gui._page_application_run_describe.get_user_data_directory", return_value=tmp_path
     ):
         # Step 1: (Re)Install QuPath
-        result = runner.invoke(cli, ["qupath", "uninstall"])
-        assert result.exit_code in {0, 2}, f"Uninstall command failed with exit code {result.exit_code}"
-        was_installed = not result.exit_code
-
         result = runner.invoke(cli, ["qupath", "install"])
         output = normalize_output(result.output, strip_ansi=True)
         assert f"QuPath v{QUPATH_VERSION} installed successfully" in output, (
@@ -311,7 +302,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         # Check for (1) spot added to QuPath project, (2) heatmaps added, (3) spot annotated
         try:
             project_info = json.loads(output)
-            annotations_total = 0
             spot_found = False
             spot_width = None
             spot_height = None
@@ -338,13 +328,10 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             ), (
                 f"Expected approximately {SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]} "
                 f"({SPOT_0_EXPECTED_CELLS_CLASSIFIED[1]}% tolerance) annotations in the QuPath results, "
-                f"but found {annotations_total}"
+                f"but found {spot_annotations}"
             )
         except json.JSONDecodeError as e:
             pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
 
         # Validate the inspect command exited successfully
         assert result.exit_code == 0, f"QuPath inspect command failed with exit code {result.exit_code}"
-
-        if not was_installed:
-            result = runner.invoke(cli, ["qupath", "uninstall"])

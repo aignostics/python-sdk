@@ -5,6 +5,7 @@ import pytest
 from aignostics.utils._health import Health
 
 DB_FAILURE = "DB failure"
+CACHE_SLOW = "cache slow"
 
 
 @pytest.mark.unit
@@ -81,7 +82,7 @@ def test_compute_health_from_components_single_down(record_property) -> None:
     result = health.compute_health_from_components()
 
     assert result.status == Health.Code.DOWN
-    assert result.reason == "Component 'database' is DOWN"
+    assert result.reason == f"Component 'database' is DOWN ({DB_FAILURE})"
     assert result is health  # Should return self
 
 
@@ -183,6 +184,82 @@ def test_validate_health_state_integration(record_property) -> None:
 
     assert health.components["database"].status == Health.Code.UP
     assert health.components["monitoring"].status == Health.Code.UP
+
+
+@pytest.mark.unit
+def test_health_degraded_requires_reason(record_property) -> None:
+    """Test that a DEGRADED status requires a reason."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    with pytest.raises(ValueError, match="Health DEGRADED must have a reason"):
+        Health(status=Health.Code.DEGRADED)
+
+    health = Health(status=Health.Code.DEGRADED, reason="x")
+    assert health.status == Health.Code.DEGRADED
+    assert health.reason == "x"
+
+
+@pytest.mark.unit
+def test_str_representation_degraded(record_property) -> None:
+    """Test string representation of DEGRADED health status."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    health = Health(status=Health.Code.DEGRADED, reason="slow")
+    assert str(health) == "DEGRADED: slow"
+
+
+@pytest.mark.unit
+def test_compute_health_from_components_single_degraded(record_property) -> None:
+    """Test that parent becomes DEGRADED when one component is DEGRADED."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    health = Health(status=Health.Code.UP)
+    health.components = {
+        "cache": Health(status=Health.Code.DEGRADED, reason=CACHE_SLOW),
+        "api": Health(status=Health.Code.UP),
+    }
+
+    result = health.compute_health_from_components()
+
+    assert result.status == Health.Code.DEGRADED
+    assert result.reason is not None
+    assert "cache" in result.reason
+    assert "DEGRADED" in result.reason
+
+
+@pytest.mark.unit
+def test_compute_health_from_components_multiple_degraded(record_property) -> None:
+    """Test that parent becomes DEGRADED with reason listing all degraded components."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    health = Health(status=Health.Code.UP)
+    health.components = {
+        "cache": Health(status=Health.Code.DEGRADED, reason=CACHE_SLOW),
+        "queue": Health(status=Health.Code.DEGRADED, reason="queue slow"),
+        "api": Health(status=Health.Code.UP),
+    }
+
+    result = health.compute_health_from_components()
+
+    assert result.status == Health.Code.DEGRADED
+    assert result.reason is not None
+    assert "cache" in result.reason
+    assert "queue" in result.reason
+    assert "DEGRADED" in result.reason
+
+
+@pytest.mark.unit
+def test_compute_health_from_components_down_trumps_degraded(record_property) -> None:
+    """Test that DOWN takes priority over DEGRADED when both are present."""
+    record_property("tested-item-id", "SPEC-UTILS-SERVICE")
+    health = Health(status=Health.Code.UP)
+    health.components = {
+        "database": Health(status=Health.Code.DOWN, reason=DB_FAILURE),
+        "cache": Health(status=Health.Code.DEGRADED, reason=CACHE_SLOW),
+    }
+
+    result = health.compute_health_from_components()
+
+    assert result.status == Health.Code.DOWN
+    assert result.reason is not None
+    assert "database" in result.reason
+    assert "DOWN" in result.reason
 
 
 @pytest.mark.unit

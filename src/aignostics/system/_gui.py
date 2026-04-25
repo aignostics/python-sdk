@@ -12,7 +12,7 @@ from ._service import Service
 class PageBuilder(BasePageBuilder):
     @staticmethod
     def register_pages() -> None:  # noqa: PLR0915
-        from nicegui import app, run, ui  # noqa: PLC0415
+        from nicegui import app, ui  # noqa: PLC0415
 
         locate_subclasses(BaseService)  # Ensure settings are loaded
         app.add_static_files("/system_assets", Path(__file__).parent / "assets")
@@ -49,7 +49,7 @@ class PageBuilder(BasePageBuilder):
                             }
                             editor = ui.json_editor(properties).style("width: 100%").mark("JSON_EDITOR_HEALTH")
                             editor.set_visibility(False)
-                            health = await run.cpu_bound(Service.health_static)
+                            health = await Service.health_static()
                             if health is None:
                                 properties["content"] = {"json": "Health check failed."}  # type: ignore[unreachable]
                             else:
@@ -84,9 +84,7 @@ class PageBuilder(BasePageBuilder):
                                 editor.set_visibility(False)
                                 spinner.set_visibility(True)
                                 mask_secrets_switch.set_visibility(False)
-                                info = await run.cpu_bound(
-                                    Service.info, include_environ=True, mask_secrets=mask_secrets
-                                )
+                                info = await Service.info(include_environ=True, mask_secrets=mask_secrets)
                                 if info is None:
                                     properties["content"] = {"json": "Info retrieval failed."}  # type: ignore[unreachable]
                                 else:

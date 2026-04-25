@@ -113,8 +113,11 @@ Laboratory systems that can be integrated with the Aignostics Platform for workf
 
 ### M
 
-**Marimo**  
+**Marimo**
 Modern notebook environment supported by the Aignostics Platform as an alternative to Jupyter.
+
+**MCP (Model Context Protocol)**
+Protocol that enables AI agents like Claude to interact with external tools and services. The Aignostics SDK includes an MCP server that exposes platform functionality to AI assistants.
 
 **Metadata**  
 Descriptive information about whole slide images including dimensions, resolution, tissue type, and disease information required for processing.

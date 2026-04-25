@@ -8,6 +8,7 @@ Method | HTTP request | Description
 [**cancel_run_v1_runs_run_id_cancel_post**](PublicApi.md#cancel_run_v1_runs_run_id_cancel_post) | **POST** /v1/runs/{run_id}/cancel | Cancel Run
 [**create_run_v1_runs_post**](PublicApi.md#create_run_v1_runs_post) | **POST** /v1/runs | Initiate Run
 [**delete_run_items_v1_runs_run_id_artifacts_delete**](PublicApi.md#delete_run_items_v1_runs_run_id_artifacts_delete) | **DELETE** /v1/runs/{run_id}/artifacts | Delete Run Items
+[**get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get**](PublicApi.md#get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get) | **GET** /v1/runs/{run_id}/artifacts/{artifact_id}/file | Get Artifact Url
 [**get_item_by_run_v1_runs_run_id_items_external_id_get**](PublicApi.md#get_item_by_run_v1_runs_run_id_items_external_id_get) | **GET** /v1/runs/{run_id}/items/{external_id} | Get Item By Run
 [**get_me_v1_me_get**](PublicApi.md#get_me_v1_me_get) | **GET** /v1/me | Get current user
 [**get_run_v1_runs_run_id_get**](PublicApi.md#get_run_v1_runs_run_id_get) | **GET** /v1/runs/{run_id} | Get run details
@@ -333,6 +334,87 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get**
+> object get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id)
+
+Get Artifact Url
+
+Download the artifact file with the specified artifact_id, belonging to the specified run. The artifact_is is returned by the `GET /v1/runs/{run_id}/items` endpoint as part of the item results, and can also be retrieved via `GET /v1/runs/{run_id}/items/{external_id}`.  The endpoint may return a redirect response with a presigned URL to download the artifact file from the storage bucket. The presigned URL is valid for a limited time, so it should be used immediately after receiving the response.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
+    artifact_id = 'artifact_id_example' # str | The artifact id to download
+
+    try:
+        # Get Artifact Url
+        api_response = api_instance.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id)
+        print("The response of PublicApi->get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
+ **artifact_id** | **str**| The artifact id to download | 
+
+### Return type
+
+**object**
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**404** | Not Found - Artifact not found for the specified run |  -  |
+**307** | Temporary Redirect - Redirect to the artifact file URL |  -  |
+**403** | Forbidden - You don&#39;t have permission to download this artifact |  -  |
+**410** | Gone - Artifact has been deleted |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_item_by_run_v1_runs_run_id_items_external_id_get**
 > ItemResultReadResponse get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id)
 
@@ -567,7 +649,7 @@ Name | Type | Description  | Notes
 
 List available applications
 
-Returns the list of the applications, available to the caller.  The application is available if any of the versions of the application is assigned to the caller’s organization. The response is paginated and sorted according to the provided parameters.
+Returns the list of the applications, available to the caller.  The application is available if any of the versions of the application is assigned to the caller's organization. The response is paginated and sorted according to the provided parameters.
 
 ### Example
 
@@ -739,7 +821,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **list_runs_v1_runs_get**
-> List[RunReadResponse] list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+> List[RunReadResponse] list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, for_organization=for_organization, sort=sort)
 
 List Runs
 
@@ -778,11 +860,12 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     custom_metadata = '$' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
-    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_id` - `version_number` - `custom_metadata` - `statistics` - `submitted_at` - `submitted_by` - `terminated_at` - `termination_reason`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)  (optional)
+    for_organization = 'for_organization_example' # str | Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs. (optional)
+    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_id` - `version_number` - `custom_metadata` - `submitted_at` - `submitted_by` - `terminated_at` - `termination_reason`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)  (optional)
 
     try:
         # List Runs
-        api_response = api_instance.list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+        api_response = api_instance.list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, for_organization=for_organization, sort=sort)
         print("The response of PublicApi->list_runs_v1_runs_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -802,7 +885,8 @@ Name | Type | Description  | Notes
  **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.study&#x60; - Runs that have a study field defined - **Exact value match**: &#x60;$.study ? (@ &#x3D;&#x3D; \&quot;high\&quot;)&#x60; - Runs with specific study value - **Numeric comparison**: &#x60;$.confidence_score ? (@ &gt; 0.75)&#x60; - Runs with confidence score greater than 0.75 - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;draft\&quot;)&#x60; - Runs with tags array containing \&quot;draft\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.study&#x60; - **Exact value match**: &#x60;%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)&#x60; - **Numeric comparison**: &#x60;%24.confidence_score%20%3F%20(%40%20%3E%200.75)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_id&#x60; - &#x60;version_number&#x60; - &#x60;custom_metadata&#x60; - &#x60;statistics&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60; - &#x60;terminated_at&#x60; - &#x60;termination_reason&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;state&amp;sort&#x3D;-submitted_at&#x60; - Sort by state, then by time (descending)  | [optional] 
+ **for_organization** | **str**| Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller&#39;s own runs. | [optional] 
+ **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_id&#x60; - &#x60;version_number&#x60; - &#x60;custom_metadata&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60; - &#x60;terminated_at&#x60; - &#x60;termination_reason&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;state&amp;sort&#x3D;-submitted_at&#x60; - Sort by state, then by time (descending)  | [optional] 
 
 ### Return type
 

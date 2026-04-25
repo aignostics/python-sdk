@@ -123,11 +123,9 @@ def health(self) -> Health:
             )
 
     # Determine overall status based on ALL modules
-    overall = Health.Code.UP if all(
-        c.status == Health.Code.UP for c in components.values()
-    ) else Health.Code.DOWN
-
-    return Health(status=overall, components=components)
+    # Priority: DOWN > DEGRADED > UP
+    # compute_health_from_components() handles this automatically
+    return Health(status=Health.Code.UP, components=components)
 ```
 
 ### Exception Hierarchy (`_exceptions.py`)
@@ -275,7 +273,7 @@ print(f"System status: {health.status}")
 
 # Check specific component
 platform_health = health.components.get("platform")
-if platform_health.status != Health.Code.UP:
+if not platform_health:  # False only when DOWN (DEGRADED and UP are both truthy)
     print(f"Platform issue: {platform_health.reason}")
 ```
 
@@ -453,7 +451,7 @@ def test_health_aggregation():
     service = Service()
     health = service.health()
 
-    assert health.status in [Health.Code.UP, Health.Code.DOWN]
+    assert health.status in [Health.Code.UP, Health.Code.DEGRADED, Health.Code.DOWN]
     assert "platform" in health.components
     assert isinstance(health.components, dict)
 

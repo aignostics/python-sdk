@@ -107,6 +107,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
         type="positive",
     )
     spinner.set_visibility(False)
+    system_healthy = bool(await SystemService.health_static())
 
     if application is None:
         await _frame(
@@ -301,8 +302,6 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 with ui.column(), ui.button(icon="info", on_click=info_dialog.open):
                     ui.tooltip("Show changes and input/ouput schema of this application version.")
             with ui.stepper_navigation():
-                # Check system health and determine if force option should be available
-                system_healthy = bool(SystemService.health_static())
                 unhealthy_tooltip = None
                 with ui.button(
                     "Next",
@@ -447,6 +446,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             "LIVER",
                             "LUNG",
                             "LYMPH_NODE",
+                            "OTHER",
                         }
                     ) or (
                         row["disease"]
@@ -555,14 +555,15 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                     "LIVER",
                                     "LUNG",
                                     "LYMPH_NODE",
+                                    "OTHER",
                                 ],
                                 "valueListGap": 10,
                             },
                             "cellClassRules": {
                                 "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
                                 "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE']).has(x)",
+                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
                             },
                         },
                         {
