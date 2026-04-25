@@ -32,6 +32,8 @@ aignx/codegen/models/run_output.py
 aignx/codegen/models/run_read_response.py
 aignx/codegen/models/run_state.py
 aignx/codegen/models/run_termination_reason.py
+aignx/codegen/models/scheduling_request.py
+aignx/codegen/models/scheduling_response.py
 aignx/codegen/models/user_read_response.py
 aignx/codegen/models/validation_error.py
 aignx/codegen/models/validation_error_loc_inner.py

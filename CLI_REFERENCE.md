@@ -14,7 +14,7 @@ $ aignostics [OPTIONS] COMMAND [ARGS]...
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
-🔬 Aignostics Python SDK v1.1.0 - built with love in Berlin 🐻 // Python v3.14.1
+🔬 Aignostics Python SDK v1.2.0 - built with love in Berlin 🐻 // Python v3.14.3
 
 **Commands**:
 
@@ -275,7 +275,7 @@ $ aignostics application run execute [OPTIONS] APPLICATION_ID METADATA_CSV_FILE 
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
-* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
+* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: A100]
 * `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
 * `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
@@ -371,7 +371,7 @@ $ aignostics application run submit [OPTIONS] APPLICATION_ID METADATA_CSV_FILE
 * `--due-date TEXT`: Optional soft due date to include with the run submission, ISO8601 format. The scheduler will try to complete the run by this date, taking the subscription tierand available GPU resources into account.
 * `--deadline TEXT`: Optional hard deadline to include with the run submission, ISO8601 format. If processing exceeds this deadline, the run can be aborted.
 * `--onboard-to-aignostics-portal / --no-onboard-to-aignostics-portal`: If True, onboard the run to the Aignostics Portal.  [default: no-onboard-to-aignostics-portal]
-* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: L4]
+* `--gpu-type TEXT`: GPU type to use for processing (L4 or A100).  [default: A100]
 * `--gpu-provisioning-mode TEXT`: GPU provisioning mode (SPOT, ON_DEMAND, or FLEX_START).  [default: SPOT]
 * `--max-gpus-per-slide INTEGER RANGE`: Maximum number of GPUs to allocate per slide (1-8).  [default: 1; 1&lt;=x&lt;=8]
 * `--flex-start-max-run-duration-minutes INTEGER RANGE`: Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). Ignored when gpu_provisioning_mode is not FLEX_START.  [default: 720; 1&lt;=x&lt;=3600]
@@ -398,6 +398,7 @@ $ aignostics application run list [OPTIONS]
 * `--note-regex TEXT`: Optional regex pattern to filter runs by note metadata.
 * `--query TEXT`: Optional query string to filter runs by note OR tags.
 * `--note-case-insensitive / --no-note-case-insensitive`: Make note regex search case-insensitive.  [default: note-case-insensitive]
+* `--for-organization TEXT`: Organization ID to list all runs for. Lists runs from all users in the organization.
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
 * `--help`: Show this message and exit.
 
@@ -580,7 +581,7 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
 * `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
 The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 
@@ -881,7 +882,7 @@ $ aignostics dataset aignostics download [OPTIONS] SOURCE_URL [DESTINATION_DIREC
 
 **Arguments**:
 
-* `SOURCE_URL`: URL to download. Example: gs://aignx-storage-service-dev/sample_data_formatted/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
+* `SOURCE_URL`: URL to download. Example: gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff  [required]
 * `[DESTINATION_DIRECTORY]`: Destination directory to download to  [default: (~/Library/Application Support/aignostics/datasets/aignostics)]
 
 **Options**:

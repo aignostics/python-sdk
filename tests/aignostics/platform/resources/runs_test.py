@@ -16,11 +16,7 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform.resources.runs import (
-    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
-    Run,
-    Runs,
-)
+from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
 
 
@@ -436,7 +432,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     """Test that Runs.list() correctly combines all filter parameters.
 
     This test verifies that all filter parameters (application_id, application_version,
-    external_id, custom_metadata, sort, page_size) work together correctly.
+    for_organization, external_id, custom_metadata, sort, page_size) work together correctly.
 
     Args:
         runs: Runs instance with mock API.
@@ -445,6 +441,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     # Arrange
     app_id = "test-app"
     app_version = "1.0.0"
+    org_id = "org-789"
     external_id = "ext-123"
     custom_metadata = "$.experiment=='test'"
     sort_field = "-created_at"
@@ -456,6 +453,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
         runs.list(
             application_id=app_id,
             application_version=app_version,
+            for_organization=org_id,
             external_id=external_id,
             custom_metadata=custom_metadata,
             sort=sort_field,
@@ -468,6 +466,7 @@ def test_runs_list_with_all_filters_combined(runs, mock_api) -> None:
     call_kwargs = mock_api.list_runs_v1_runs_get.call_args[1]
     assert call_kwargs["application_id"] == app_id
     assert call_kwargs["application_version"] == app_version
+    assert call_kwargs["for_organization"] == org_id
     assert call_kwargs["external_id"] == external_id
     assert call_kwargs["custom_metadata"] == custom_metadata
     assert call_kwargs["sort"] == [sort_field]
@@ -575,6 +574,64 @@ def test_runs_list_delegates_to_list_data(runs, mock_api) -> None:
     assert call_kwargs["page_size"] == page_size
     # nocache is handled by caching decorator, not passed to API
     assert "nocache" not in call_kwargs
+
+
+@pytest.mark.unit
+def test_application_run_results_with_filters(app_run, mock_api) -> None:
+    """Test that Run.results() correctly maps item_ids and external_ids to API parameters.
+
+    Verifies that:
+    - item_ids maps to item_id__in
+    - external_ids maps to external_id__in
+    """
+    # Arrange
+    item_ids = ["item-1", "item-2"]
+    external_ids = ["ext-1", "ext-2"]
+    page1 = [Mock(spec=ItemResultReadResponse) for _ in range(PAGE_SIZE)]
+    page2 = [Mock(spec=ItemResultReadResponse) for _ in range(3)]
+    mock_api.list_run_items_v1_runs_run_id_items_get.side_effect = [page1, page2]
+
+    # Act
+    result = list(app_run.results(item_ids=item_ids, external_ids=external_ids))
+
+    # Assert - filters are passed and pagination still works
+    assert len(result) == PAGE_SIZE + 3
+    assert mock_api.list_run_items_v1_runs_run_id_items_get.call_count == 2
+    for call in mock_api.list_run_items_v1_runs_run_id_items_get.call_args_list:
+        call_kwargs = call[1]
+        assert call_kwargs["item_id__in"] == item_ids
+        assert call_kwargs["external_id__in"] == external_ids
+        assert call_kwargs["run_id"] == app_run.run_id
+
+
+@pytest.mark.unit
+def test_application_run_results_without_filters_omits_filter_kwargs(app_run, mock_api) -> None:
+    """Test that Run.results() does not pass filter kwargs when no filters are provided."""
+    # Arrange
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    # Act
+    list(app_run.results())
+
+    # Assert
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert "item_id__in" not in call_kwargs
+    assert "external_id__in" not in call_kwargs
+
+
+@pytest.mark.unit
+def test_application_run_results_with_empty_list_filters_omits_filter_kwargs(app_run, mock_api) -> None:
+    """Test that Run.results() treats empty lists same as None (no filter applied)."""
+    # Arrange
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    # Act - empty lists should behave like None
+    list(app_run.results(item_ids=[], external_ids=[]))
+
+    # Assert - filter kwargs should NOT be present
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert "item_id__in" not in call_kwargs
+    assert "external_id__in" not in call_kwargs
 
 
 @pytest.mark.unit

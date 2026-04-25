@@ -13,8 +13,7 @@ from time import sleep
 from typing import Any, cast
 
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.exceptions import NotFoundException
-from aignx.codegen.exceptions import ServiceException
+from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import (
     CustomMetadataUpdateRequest,
     ItemCreationRequest,
@@ -24,6 +23,7 @@ from aignx.codegen.models import (
     RunCreationRequest,
     RunCreationResponse,
     RunState,
+    SchedulingRequest,
 )
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
@@ -218,7 +218,12 @@ class Run:
         )
         operation_cache_clear()  # Clear all caches since we added a new run
 
-    def results(self, nocache: bool = False) -> t.Iterator[ItemResultData]:
+    def results(
+        self,
+        nocache: bool = False,
+        item_ids: list[str] | None = None,
+        external_ids: list[str] | None = None,
+    ) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
         Retries on network and server errors.
@@ -226,9 +231,11 @@ class Run:
         Args:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            item_ids (list[str] | None): Optional list of item IDs to filter results by.
+            external_ids (list[str] | None): Optional list of external IDs to filter results by.
 
         Returns:
-            list[ItemResultData]: A list of item results.
+            Iterator[ItemResultData]: An iterator over item results.
 
         Raises:
             Exception: If the API request fails.
@@ -253,7 +260,13 @@ class Run:
                 )
             )
 
-        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **kwargs))
+        filter_kwargs: dict[str, object] = {}
+        if item_ids:
+            filter_kwargs["item_id__in"] = item_ids
+        if external_ids:
+            filter_kwargs["external_id__in"] = external_ids
+
+        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
 
     def download_to_folder(  # noqa: C901
         self,
@@ -516,6 +529,7 @@ class Runs:
         items: list[ItemCreationRequest],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
+        scheduling: SchedulingRequest | None = None,
     ) -> Run:
         """Submit a new application run.
 
@@ -525,6 +539,9 @@ class Runs:
             application_version (str|None): The version of the application to use.
                 If None, the latest version is used.
             custom_metadata (dict[str, Any] | None): Optional metadata to attach to the run.
+            scheduling (SchedulingRequest | None): Optional scheduling constraints for the run.
+                Supports 'due_date' (requested completion time, ISO 8601) and
+                'deadline' (hard deadline, ISO 8601).
 
         Returns:
             Run: The submitted application run.
@@ -545,6 +562,7 @@ class Runs:
             version_number=application_version,
             custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
+            scheduling=scheduling,
         )
         current_settings = settings()
         self._validate_input_items(payload)
@@ -583,6 +601,7 @@ class Runs:
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> Iterator[Run]:
         """Find application runs, optionally filtered by application id and/or version.
 
@@ -597,6 +616,8 @@ class Runs:
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[Run]: An iterator yielding application run handles.
@@ -610,6 +631,7 @@ class Runs:
             for response in self.list_data(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=sort,
@@ -627,6 +649,7 @@ class Runs:
         sort: str | None = None,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
         nocache: bool = False,
+        for_organization: str | None = None,
     ) -> t.Iterator[RunData]:
         """Fetch application runs, optionally filtered by application version.
 
@@ -641,6 +664,8 @@ class Runs:
             page_size (int): Number of items per page, defaults to max
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified organization
+                that match the filter criteria. If None, only the runs of the user are returned.
 
         Returns:
             Iterator[RunData]: Iterator yielding application run data.
@@ -675,6 +700,7 @@ class Runs:
             lambda **kwargs: list_data_with_retry(
                 application_id=application_id,
                 application_version=application_version,
+                for_organization=for_organization,
                 external_id=external_id,
                 custom_metadata=custom_metadata,
                 sort=[sort] if sort else None,

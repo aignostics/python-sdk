@@ -59,11 +59,36 @@ subclasses = locate_subclasses(BaseService)
 
 # Services inherit from BaseService
 class MyService(BaseService):
-    def health(self) -> Health:
+    async def health(self) -> Health:
         return Health(status=Health.Code.UP)
 
-    def info(self, mask_secrets=True) -> dict:
+    async def info(self, mask_secrets=True) -> dict:
         return {"version": "1.0.0"}
+```
+
+**FastAPI Dependency Injection:**
+
+`BaseService.get_service()` returns a cached FastAPI dependency function that yields a service instance.
+The same function object is returned on repeated calls (required for `dependency_overrides` in tests).
+
+```python
+from typing import Annotated
+from fastapi import Depends
+from aignostics.my_module._service import Service
+
+@router.get("/endpoint")
+async def endpoint(service: Annotated[Service, Depends(Service.get_service())]):
+    return service.do_something()
+```
+
+**Settings Accessor:**
+
+`BaseService.settings()` exposes `self._settings` as a public method for callers that need access
+to the service's configuration object.
+
+```python
+service = MyService()
+settings = service.settings()  # Returns the BaseSettings instance
 ```
 
 **User Agent Generation:**
@@ -114,7 +139,7 @@ settings = load_settings(MySettings)
 from aignostics.utils import Health, BaseService
 
 class MyService(BaseService):
-    def health(self) -> Health:
+    async def health(self) -> Health:
         return Health(
             status=Health.Code.UP,
             details={"database": "connected"}

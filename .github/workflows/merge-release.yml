@@ -1,0 +1,101 @@
+name: "Merge Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Release branch to merge (e.g. "release/v1.1.0"). Auto-detected if omitted.'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  merge-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
+        with:
+          app-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "aignostics-release-bot[bot]"
+          git config --global user.email "aignostics-release-bot[bot]@users.noreply.github.com"
+
+      - name: Checkout main
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve release branch
+        id: branch
+        env:
+          INPUT: ${{ inputs.branch }}
+        run: |
+          if [ -n "$INPUT" ]; then
+            BRANCH="$INPUT"
+          else
+            MATCHES=$(git ls-remote --heads origin 'release/v*' | awk '{print $2}' | sed 's|refs/heads/||')
+            if [ -z "$MATCHES" ]; then
+              echo "❌ No release/v* branches found."
+              exit 1
+            fi
+            COUNT=$(echo "$MATCHES" | wc -l | tr -d ' ')
+            if [ "$COUNT" -gt 1 ]; then
+              echo "❌ Multiple release/v* branches found. Specify one explicitly:"
+              echo "$MATCHES"
+              exit 1
+            fi
+            BRANCH="$MATCHES"
+          fi
+          # Validate branch name pattern
+          if ! echo "$BRANCH" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ Branch '${BRANCH}' does not match 'release/vX.Y.Z'. Aborting."
+            exit 1
+          fi
+          # Validate branch exists on origin
+          if ! git ls-remote --exit-code --heads origin "$BRANCH" > /dev/null 2>&1; then
+            echo "❌ Branch '${BRANCH}' does not exist on origin. Aborting."
+            exit 1
+          fi
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "✅ Using release branch: ${BRANCH}"
+
+      - name: Fetch remote
+        run: git fetch origin
+
+      - name: Merge release branch into main
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          git merge --no-ff "origin/${BRANCH}" -m "chore: merge ${BRANCH} into main"
+
+      - name: Push main
+        run: git push origin main
+
+      - name: Delete remote release branch
+        run: git push origin --delete "${{ steps.branch.outputs.branch }}"
+
+      - name: Print job summary
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## ✅ Release merged
+
+          | | |
+          |---|---|
+          | **Branch** | \`${BRANCH}\` |
+          | **Merged into** | \`main\` |
+
+          The release branch has been merged into \`main\` and deleted.
+          EOF

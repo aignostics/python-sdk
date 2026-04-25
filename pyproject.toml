@@ -1,6 +1,6 @@
 [project]
 name = "aignostics"
-version = "1.1.0"
+version = "1.2.0"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
@@ -78,8 +78,8 @@ dependencies = [
     # From Template
     "fastapi[all,standard]>=0.123.10",
     "humanize>=4.14.0,<5",
-    "nicegui[native]>=3.5.0,<4",  # CVE-2026-21871, CVE-2026-21871, CVE-2026-21873, CVE-2026-21874 all require >=3.5.0
-    "packaging>=25.0,<26",
+    "nicegui[native]>=3.9.0,<4",  # CVE-2026-21871, CVE-2026-21873, CVE-2026-21874 (>=3.5.0); CVE-2026-25516 (>=3.7.0, #418); CVE-2026-27156 (>=3.8.0, #448); CVE-2026-33332 (>=3.9.0, #498). CVE-2026-39844 (>=3.10.0, #531) not yet merged.
+    "packaging>=26,<27",
     "platformdirs>=4.5.1,<5",
     "psutil>=7.1.3,<8",
     "pydantic-settings>=2.12.0,<3",
@@ -87,7 +87,6 @@ dependencies = [
     "pyyaml>=6.0.3,<7",
     "sentry-sdk>=2.47.0,<3",
     "typer>=0.20.0,<1",
-    "uptime>=3.0.1,<4",
     # Custom
     "boto3>=1.42.4,<2",
     "certifi>=2025.11.12",
@@ -100,7 +99,7 @@ dependencies = [
     "highdicom>=0.26.1,<1; python_version < '3.14'", # transitive dependency pyjpegls not yet supporting Python 3.14
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==23.2.7",
+    "idc-index-data==23.8.1",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
@@ -112,10 +111,10 @@ dependencies = [
     "procrastinate>=3.5.3",
     "fastparquet>=2025.12.0,<2026.0.0; python_version < '3.14'",
     "pyarrow>=22.0.0,<23; python_version >= '3.14'",
-    "pyjwt[crypto]>=2.10.1,<3",
+    "pyjwt[crypto]>=2.12.0,<3", # CVE-2026-32597 requires >=2.12.0 (Renovate #475)
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
-    "requests>=2.32.5,<3",
+    "requests>=2.33.0,<3", # CVE-2026-25645 requires >= 2.33.0
     "requests-oauthlib>=2.0.0,<3",
     "s5cmd>=0.3.3,<1",
     "semver>=3.0.4,<4",
@@ -125,20 +124,26 @@ dependencies = [
     "truststore>=0.10.4,<1",
     "urllib3>=2.6.3,<3", # CVE-2026-21441 requires >= 2.6.3
     "wsidicom>=0.28.1,<1",
-    # Transitive overrides
+    "fastmcp>=3.2.0,<4",
+    # Transitive overrides (see SUPPLY_CHAIN_VULNERABILITIES.md)
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
-    "tornado>=6.5.0",                   # CVE-2025-47287
-    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182,
-    "pillow>=11.3.0",                   # CVE-2025-48379,
-    "aiohttp>=3.13.3",                  # CVE-2025-53643, CVE-2025-69223, CVE-2025-69224, CVE-2025-69228, CVE-2025-69229, CVE-2025-69230, CVE-2025-69226, CVE-2025-69227, CVE-2025-69225
+    "tornado>=6.5.5",                   # CVE-2025-47287 (>=6.5.0); GHSA-78cv-mqj4-43f7 (>=6.5.5, Renovate #472)
+    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182
+    "pillow>=12.2.0",                   # CVE-2025-48379 (>=11.3.0); CVE-2026-25990 (>=12.1.1, Renovate #428); CVE-2026-40192 (>=12.2.0, Renovate #539)
+    "aiohttp>=3.13.4",                  # CVE-2025-53643, CVE-2025-69223..9 (>=3.13.3); CVE-2026-22815 (>=3.13.4, Renovate #527)
     "starlette>=0.47.2",                # CVE-2025-54121
     "starlette>=0.49.1",                # GHSA-7f5h-v6xp-fcq8
-    "lxml>=6.0.2",                      # For python 3.14 pre-built wheels
-    "filelock>=3.20.1",                 # CVE-2025-68146
+    "lxml>=6.1.0",                      # CVE-2026-41066 (Renovate #556); also required for python 3.14 pre-built wheels
+    "filelock>=3.20.3",                 # CVE-2025-68146 (>=3.20.1); CVE-2026-22701 (>=3.20.3, Renovate #387)
     "marshmallow>=3.26.2",              # CVE-2025-68480
-    "fastmcp>=2.0.0,<3",                # MCP server - Major version 3 is in beta as of 26/01/2026 and has not been released on PyPI. Upgrade once a stable release is out.
+    "cryptography>=46.0.7",             # CVE-2026-39892 (>=46.0.7); transitive via pyjwt[crypto]
+    "pydicom>=3.0.2",                   # CVE-2026-32711 (>=3.0.2); transitive via dicomweb-client/wsidicom/highdicom
+    "pyasn1>=0.6.3",                    # CVE-2026-30922 (>=0.6.3); transitive via cryptography
+    "lxml-html-clean>=0.4.4",           # CVE-2026-28348, CVE-2026-28350 (>=0.4.4); transitive via html-sanitizer
+    "python-multipart>=0.0.26",         # CVE-2026-24486 (>=0.0.22), CVE-2026-40347 (>=0.0.26); transitive via fastapi/starlette
+    "protobuf>=6.33.5",                 # CVE-2026-0994 (>=6.33.5); transitive via google-cloud-storage/sentry-sdk
 ]
 
 [project.optional-dependencies]
@@ -149,11 +154,12 @@ jupyter = [
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "jupyter-core>=5.8.1",              # CVE-2025-30167
     "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "nbconvert>=7.17.1",                # CVE-2025-53000 (>=7.17.0, Dependabot #424); Dependabot #553 raised to 7.17.1
 ]
 marimo = [
     "cloudpathlib>=0.23.0,<1",
     "ipython>=9.8.0,<10",
-    "marimo>=0.18.4,<1",
+    "marimo>=0.23.0,<1", # GHSA-2679-6mx9-h9xc (Renovate #533)
     "matplotlib>=3.10.7,<4",
     "shapely>=2.1.0,<3",
 ]
@@ -174,7 +180,7 @@ dev = [
     "pip-licenses @ git+https://github.com/neXenio/pip-licenses.git@master", # https://github.com/raimon49/pip-licenses/pull/224
     "pre-commit>=4.5.0,<5",
     "pyright>=1.1.408,<1.1.409", # Regression in 1.1.407, see https://github.com/microsoft/pyright/issues/11060
-    "pytest>=9.0.2,<10",
+    "pytest>=9.0.3,<10", # CVE-2025-71176 requires >=9.0.3 (Renovate #538)
     "pytest-asyncio>=1.3.0,<2",
     "pytest-cov>=7.0.0,<8",
     "pytest-docker>=3.2.5,<4",
@@ -208,13 +214,14 @@ dev = [
     "watchdog>=6.0.0,<7",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "pip>=5.3",                         # CVE-2025-8869  
-    "uv>=0.9.7",                        # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64
+    "pip>=25.3",                        # CVE-2025-8869 (>=25.3). CVE-2026-3219 (fix in 26.1, unreleased) accepted via --ignore-vuln; see SUPPLY_CHAIN_VULNERABILITIES.md.
+    "uv>=0.11.6",                       # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64 (>=0.9.7); GHSA-pjjw-68hj-v9mw (>=0.11.6, Renovate #536)
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
+    "virtualenv>=20.36.1",              # pypa/virtualenv#3013 TOCTOU in app_data/lock dir; bundles filelock>=3.20.1 for CVE-2025-68146; transitive via nox/pre-commit
 ]
 
 [tool.uv]
-required-version = ">=0.9.7" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64
+required-version = ">=0.11.6" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64, GHSA-pjjw-68hj-v9mw
 # WARNING: override-dependencies is *not* respected by uvx
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pytest>=9.0.1",    # pytest-md-report depends on pytest<9 unnecessarily
@@ -234,7 +241,7 @@ Changelog = "https://github.com/aignostics/python-sdk/releases"
 Issues = "https://github.com/aignostics/python-sdk/issues"
 
 [build-system]
-requires = ["hatchling==1.28.0"]
+requires = ["hatchling==1.29.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
@@ -348,7 +355,7 @@ addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostic
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
-# timeout_method="signal" 
+# timeout_method="signal"
 env = [
     "COVERAGE_FILE=.coverage",
     "COVERAGE_PROCESS_START=pyproject.toml",
@@ -398,7 +405,7 @@ source = ["src/"]
 
 
 [tool.bumpversion]
-current_version = "1.1.0"
+current_version = "1.2.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
@@ -406,7 +413,7 @@ replace = "{new_version}"
 regex = false
 ignore_missing_version = false
 ignore_missing_files = false
-tag = true
+tag = false
 sign_tags = false
 tag_name = "v{new_version}"
 allow_dirty = false
@@ -414,16 +421,10 @@ commit = true
 commit_args = "--no-verify"
 tag_message = "Bump version: {current_version} → {new_version}"
 message = "Bump version: {current_version} → {new_version}"
-# Note: Uncomment the following line to avoid running tests and ketryx during version bumps
-#message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
-#tag_message = "Bump version: {current_version} → {new_version} [skip:test:all,skip:ketryx]"
 setup_hooks = []
 pre_commit_hooks = [
     "uv sync",
     "git add uv.lock",
-    "uv run git-cliff --tag $BVHOOK_NEW_VERSION",
-    "rm -f CHANGELOG.md.tmp",
-    "git add CHANGELOG.md",
 ]
 post_commit_hooks = []
 

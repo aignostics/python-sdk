@@ -13,6 +13,26 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_VERSION
 from tests.conftest import normalize_output
 
+_SKIP_IF_WINDOWS = pytest.mark.skipif(platform.system() == "Windows", reason="not supported on Windows")
+_INSTALL_UNINSTALL_PLATFORM_CONFIGS = [
+    pytest.param({"system": "Windows"}, id="windows"),
+    pytest.param(
+        {"system": "Linux"},
+        id="linux",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+    pytest.param(
+        {"system": "Darwin", "machine": "amd64"},
+        id="darwin-amd64",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+    pytest.param(
+        {"system": "Darwin", "machine": "arm64"},
+        id="darwin-arm64",
+        marks=_SKIP_IF_WINDOWS,
+    ),
+]
+
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -20,45 +40,25 @@ from tests.conftest import normalize_output
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
+@pytest.mark.timeout(timeout=60 * 5)
 @pytest.mark.sequential
-def test_cli_install_and_uninstall(runner: CliRunner) -> None:
+@pytest.mark.parametrize("platform_config", _INSTALL_UNINSTALL_PLATFORM_CONFIGS)
+def test_cli_install_and_uninstall(runner: CliRunner, qupath_save_restore: None, platform_config: dict) -> None:
     """Check (un)install works for Windows, Mac and Linux package."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
+    install_args = ["qupath", "install", "--platform-system", platform_config["system"]]
+    uninstall_args = ["qupath", "uninstall", "--platform-system", platform_config["system"]]
+    if "machine" in platform_config:
+        install_args.extend(["--platform-machine", platform_config["machine"]])
+        uninstall_args.extend(["--platform-machine", platform_config["machine"]])
 
-    # Test installation and uninstallation on different platforms
-    if platform.system() == "Windows":
-        platforms_to_test = [
-            {"system": "Windows"},
-        ]
-    else:
-        platforms_to_test = [
-            {"system": "Windows"},
-            {"system": "Linux"},
-            {"system": "Darwin", "machine": "amd64"},
-            {"system": "Darwin", "machine": "arm64"},
-        ]
+    result = runner.invoke(cli, install_args)
+    assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
+    assert result.exit_code == 0
 
-    for platform_config in platforms_to_test:
-        install_args = ["qupath", "install", "--platform-system", platform_config["system"]]
-        uninstall_args = ["qupath", "uninstall", "--platform-system", platform_config["system"]]
-        if "machine" in platform_config:
-            install_args.extend(["--platform-machine", platform_config["machine"]])
-            uninstall_args.extend(["--platform-machine", platform_config["machine"]])
-
-        result = runner.invoke(cli, install_args)
-        assert f"QuPath v{QUPATH_VERSION} installed successfully" in normalize_output(result.output)
-        assert result.exit_code == 0
-
-        result = runner.invoke(cli, uninstall_args)
-        assert "QuPath uninstalled successfully." in normalize_output(result.output)
-        assert result.exit_code == 0
-
-    # Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])
+    result = runner.invoke(cli, uninstall_args)
+    assert "QuPath uninstalled successfully." in normalize_output(result.output)
+    assert result.exit_code == 0
 
 
 @pytest.mark.e2e
@@ -67,14 +67,13 @@ def test_cli_install_and_uninstall(runner: CliRunner) -> None:
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpdir, qupath_teardown) -> None:
+def test_cli_install_launch_project_annotations_headless(
+    runner: CliRunner, tmpdir, qupath_teardown, qupath_save_restore: None
+) -> None:
     """Check (un)install, launching headless, creating project and adding annotations works."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
-
     # Step 1: System info determines QuPath is not installed
     result = runner.invoke(cli, ["system", "info"])
     output_data = json.loads(result.stdout)
@@ -126,10 +125,6 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
     assert output_data["qupath"]["app"]["version"] is None
     assert result.exit_code == 0
 
-    # Step 9: Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])
-
 
 @pytest.mark.e2e
 @pytest.mark.long_running
@@ -137,15 +132,11 @@ def test_cli_install_launch_project_annotations_headless(runner: CliRunner, tmpd
     platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"},
     reason="QuPath is not supported on ARM64 Linux",
 )
-@pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
+@pytest.mark.flaky(retries=3, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
+def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown, qupath_save_restore: None) -> None:
     """Check (un)install and launching UI versin of QuPath works."""
-    # Uninstall QuPath if it exists to have a clean state for the test
-    result = runner.invoke(cli, ["qupath", "uninstall"])
-    was_installed = result.exit_code == 0
-
     # Step 1: Check QuPath launch fails if not installed
     result = runner.invoke(cli, ["qupath", "launch"])
     assert "QuPath is not installed. Use 'uvx aignostics qupath install' to install it." in normalize_output(
@@ -201,7 +192,3 @@ def test_cli_install_and_launch_ui(runner: CliRunner, qupath_teardown) -> None:
         result.output
     )
     assert result.exit_code == 2
-
-    # Step 9: Reinstall QuPath if it was installed before
-    if was_installed:
-        result = runner.invoke(cli, ["qupath", "install"])

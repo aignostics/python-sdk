@@ -54,7 +54,7 @@ def mcp_create_server(server_name: str = MCP_SERVER_NAME) -> FastMCP:
 
     Creates a new FastMCP server instance and mounts all discovered MCP servers
     from the SDK and plugins. Each mounted server's tools are namespaced
-    automatically using FastMCP's built-in prefix feature.
+    automatically using FastMCP's built-in namespace feature.
 
     Args:
         server_name: Human-readable name for the MCP server.
@@ -76,7 +76,7 @@ def mcp_create_server(server_name: str = MCP_SERVER_NAME) -> FastMCP:
                 continue
             seen_names.add(server.name)
             logger.info(f"Mounting MCP server: {server.name}")
-            mcp.mount(server, prefix=server.name)
+            mcp.mount(server, namespace=server.name)
             count += 1
 
     logger.info(f"Mounted {count} MCP servers")
@@ -115,7 +115,7 @@ def mcp_list_tools(server_name: str = MCP_SERVER_NAME) -> list[dict[str, Any]]:
             'name' and 'description' keys.
     """
     server = mcp_create_server(server_name)
-    # FastMCP's get_tools() is async because mounted servers may need to
+    # FastMCP's list_tools() is async because mounted servers may need to
     # lazily initialize resources. We use asyncio.run() to bridge sync/async.
-    tools = asyncio.run(server.get_tools())
-    return [{"name": name, "description": tool.description or ""} for name, tool in tools.items()]
+    tools = asyncio.run(server.list_tools())
+    return [{"name": tool.name, "description": tool.description or ""} for tool in tools]

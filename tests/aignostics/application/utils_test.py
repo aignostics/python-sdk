@@ -1,10 +1,12 @@
 """Tests to verify the utility functions of the application module."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
 from aignostics.application._utils import (
     application_run_status_to_str,
@@ -16,7 +18,10 @@ from aignostics.application._utils import (
     queue_position_string_from_run,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    validate_deadline,
+    validate_due_date,
     validate_mappings,
+    validate_scheduling_constraints,
     write_metadata_dict_to_csv,
 )
 from aignostics.constants import (
@@ -38,6 +43,116 @@ from aignostics.platform import (
 )
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
+SUBMITTED_BY = "user@example.com"
+_ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+
+def _make_statistics(  # noqa: PLR0913
+    *,
+    item_count: int = 0,
+    item_succeeded_count: int = 0,
+    item_user_error_count: int = 0,
+    item_system_error_count: int = 0,
+    item_skipped_count: int = 0,
+    item_pending_count: int = 0,
+    item_processing_count: int = 0,
+) -> RunItemStatistics:
+    return RunItemStatistics(
+        item_count=item_count,
+        item_pending_count=item_pending_count,
+        item_processing_count=item_processing_count,
+        item_skipped_count=item_skipped_count,
+        item_succeeded_count=item_succeeded_count,
+        item_user_error_count=item_user_error_count,
+        item_system_error_count=item_system_error_count,
+    )
+
+
+def _make_run_data(  # noqa: PLR0913
+    *,
+    run_id: str = "run-test",
+    application_id: str = "test-app",
+    version_number: str = "0.0.1",
+    state: RunState = RunState.PENDING,
+    termination_reason: RunTerminationReason | None = None,
+    output: RunOutput = RunOutput.NONE,
+    statistics: RunItemStatistics | None = None,
+    terminated_at: datetime | None = None,
+    custom_metadata: dict[str, Any] | None = None,
+    error_message: str | None = None,
+    error_code: str | None = None,
+    **kwargs: object,
+) -> RunData:
+    return RunData(
+        run_id=run_id,
+        application_id=application_id,
+        version_number=version_number,
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        statistics=statistics or _make_statistics(),
+        submitted_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
+        submitted_by=SUBMITTED_BY,
+        terminated_at=terminated_at,
+        custom_metadata=custom_metadata,
+        error_message=error_message,
+        error_code=error_code,
+        **kwargs,
+    )
+
+
+def _make_artifact(  # noqa: PLR0913
+    *,
+    output_artifact_id: str = "artifact-abc",
+    name: str = "result.parquet",
+    download_url: str = "https://example.com/result.parquet",
+    metadata: dict[str, Any] | None = None,
+    state: ArtifactState = ArtifactState.TERMINATED,
+    termination_reason: ArtifactTerminationReason = ArtifactTerminationReason.SUCCEEDED,
+    output: ArtifactOutput = ArtifactOutput.AVAILABLE,
+    error_code: str | None = None,
+    error_message: str | None = None,
+) -> OutputArtifactElement:
+    return OutputArtifactElement(
+        output_artifact_id=output_artifact_id,
+        name=name,
+        download_url=download_url,
+        metadata={"media_type": "application/vnd.apache.parquet"} if metadata is None else metadata,
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        error_code=error_code,
+        error_message=error_message,
+    )
+
+
+def _make_item_result(  # noqa: PLR0913
+    *,
+    item_id: str = "item-001",
+    external_id: str = "slide-001.svs",
+    state: ItemState = ItemState.TERMINATED,
+    termination_reason: ItemTerminationReason = ItemTerminationReason.SUCCEEDED,
+    output: ItemOutput = ItemOutput.FULL,
+    error_message: str | None = None,
+    error_code: str | None = None,
+    custom_metadata: dict[str, Any] | None = None,
+    custom_metadata_checksum: str | None = None,
+    terminated_at: datetime | None = None,
+    output_artifacts: list[OutputArtifactElement] | None = None,
+) -> ItemResult:
+    return ItemResult(
+        item_id=item_id,
+        external_id=external_id,
+        state=state,
+        termination_reason=termination_reason,
+        output=output,
+        error_message=error_message,
+        error_code=error_code,
+        custom_metadata=custom_metadata,
+        custom_metadata_checksum=custom_metadata_checksum,
+        terminated_at=terminated_at,
+        output_artifacts=output_artifacts if output_artifacts is not None else [],
+    )
 
 
 @pytest.mark.unit
@@ -118,26 +233,98 @@ def test_application_run_status_to_str_terminated() -> None:
 # Tests for is_not_terminated_with_deadline_exceeded
 
 
+# --- Tests using scheduling response object (new primary path) ---
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_terminated_run() -> None:
+    """Test that terminated runs always return None regardless of scheduling deadline."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, scheduling=scheduling)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_pending_future() -> None:
+    """Test that a pending run with scheduling deadline in the future returns False."""
+    from datetime import timedelta
+
+    future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
+    scheduling = Mock(deadline=future_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is False
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_pending_past() -> None:
+    """Test that a pending run with scheduling deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_processing_past() -> None:
+    """Test that a processing run with scheduling deadline in the past returns True."""
+    past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
+    scheduling = Mock(deadline=past_deadline)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, scheduling=scheduling)
+    assert result is True
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_object_none_deadline() -> None:
+    """Test that scheduling object with None deadline returns None."""
+    scheduling = Mock(deadline=None)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_none() -> None:
+    """Test that None scheduling and None metadata returns None."""
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=None, custom_metadata=None)
+    assert result is None
+
+
+@pytest.mark.unit
+def test_is_not_terminated_with_deadline_exceeded_scheduling_takes_precedence() -> None:
+    """Test that scheduling object takes precedence over custom_metadata."""
+    from datetime import timedelta
+
+    # scheduling says future (not exceeded), custom_metadata says past (exceeded)
+    future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
+    scheduling = Mock(deadline=future_deadline)
+    metadata = {"sdk": {"scheduling": {"deadline": "2020-01-01T12:00:00Z"}}}
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, scheduling=scheduling, custom_metadata=metadata)
+    assert result is False  # scheduling wins
+
+
+# --- Tests using custom_metadata fallback (backward compatibility for older runs) ---
+
+
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_terminated_run() -> None:
     """Test that terminated runs always return None regardless of deadline."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.TERMINATED, custom_metadata=metadata)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_none_metadata() -> None:
     """Test that None metadata returns None."""
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, None)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=None)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_empty_metadata() -> None:
     """Test that empty metadata returns None."""
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, {})
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata={})
     assert result is None
 
 
@@ -145,7 +332,7 @@ def test_is_not_terminated_with_deadline_exceeded_empty_metadata() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_sdk_key() -> None:
     """Test that metadata without 'sdk' key returns None."""
     metadata = {"other_key": "other_value"}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -153,7 +340,7 @@ def test_is_not_terminated_with_deadline_exceeded_no_sdk_key() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_scheduling_key() -> None:
     """Test that metadata without 'scheduling' key returns None."""
     metadata = {"sdk": {"other_key": "other_value"}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -161,19 +348,18 @@ def test_is_not_terminated_with_deadline_exceeded_no_scheduling_key() -> None:
 def test_is_not_terminated_with_deadline_exceeded_no_deadline_key() -> None:
     """Test that metadata without 'deadline' key returns None."""
     metadata = {"sdk": {"scheduling": {"other_key": "other_value"}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
 @pytest.mark.unit
 def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_future() -> None:
     """Test that a pending run with deadline in the future returns False."""
-    # Create a deadline 1 hour in the future
     from datetime import timedelta
 
     future_deadline = datetime.now(tz=UTC) + timedelta(hours=1)
     metadata = {"sdk": {"scheduling": {"deadline": future_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is False
 
 
@@ -182,7 +368,7 @@ def test_is_not_terminated_with_deadline_exceeded_pending_deadline_in_past() -> 
     """Test that a pending run with deadline in the past returns True."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -191,7 +377,7 @@ def test_is_not_terminated_with_deadline_exceeded_processing_deadline_in_past() 
     """Test that a processing run with deadline in the past returns True."""
     past_deadline = datetime(2020, 1, 1, 12, 0, 0, tzinfo=UTC)
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline.isoformat()}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PROCESSING, custom_metadata=metadata)
     assert result is True
 
 
@@ -199,7 +385,7 @@ def test_is_not_terminated_with_deadline_exceeded_processing_deadline_in_past() 
 def test_is_not_terminated_with_deadline_exceeded_invalid_datetime_format() -> None:
     """Test that invalid datetime format returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": "not-a-valid-datetime"}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -208,7 +394,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_z_suffix() -> No
     """Test that deadline with Z suffix (UTC) is handled correctly for pending run."""
     past_deadline = "2020-01-01T12:00:00Z"
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -217,7 +403,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_timezone_offset(
     """Test that deadline with timezone offset is handled correctly for pending run."""
     past_deadline = "2020-01-01T12:00:00+00:00"
     metadata = {"sdk": {"scheduling": {"deadline": past_deadline}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is True
 
 
@@ -225,7 +411,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_with_timezone_offset(
 def test_is_not_terminated_with_deadline_exceeded_deadline_empty_string() -> None:
     """Test that empty string deadline returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": ""}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -233,7 +419,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_empty_string() -> Non
 def test_is_not_terminated_with_deadline_exceeded_deadline_none_value() -> None:
     """Test that None deadline value returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": None}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -241,7 +427,7 @@ def test_is_not_terminated_with_deadline_exceeded_deadline_none_value() -> None:
 def test_is_not_terminated_with_deadline_exceeded_deadline_numeric_value() -> None:
     """Test that numeric deadline value returns None."""
     metadata = {"sdk": {"scheduling": {"deadline": 123456789}}}
-    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, metadata)
+    result = is_not_terminated_with_deadline_exceeded(RunState.PENDING, custom_metadata=metadata)
     assert result is None
 
 
@@ -311,18 +497,11 @@ def test_get_mime_type_for_output_artifact() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
     """Test getting MIME type from OutputArtifactElement with media_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-456",
         name="data.json",
         download_url="https://example.com/download",
         metadata={"media_type": "application/json"},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -332,18 +511,11 @@ def test_get_mime_type_for_output_artifact_element_with_media_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
     """Test getting MIME type from OutputArtifactElement with mime_type in metadata."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-789",
         name="data.csv",
         download_url="https://example.com/download",
         metadata={"mime_type": "text/csv"},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -353,18 +525,11 @@ def test_get_mime_type_for_output_artifact_element_with_mime_type() -> None:
 @pytest.mark.unit
 def test_get_mime_type_for_output_artifact_element_default() -> None:
     """Test getting MIME type defaults to application/octet-stream."""
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason
-
-    artifact = OutputArtifactElement(
+    artifact = _make_artifact(
         output_artifact_id="artifact-999",
         name="unknown.bin",
         download_url="https://example.com/download",
         metadata={},
-        state=ArtifactState.TERMINATED,
-        termination_reason=ArtifactTerminationReason.SUCCEEDED,
-        output=ArtifactOutput.AVAILABLE,
-        error_code=None,
-        error_message=None,
     )
 
     result = get_mime_type_for_artifact(artifact)
@@ -378,31 +543,15 @@ def test_get_mime_type_for_output_artifact_element_default() -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
     """Test verbose printing of a single run."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
-
-    run = RunData(
+    run = _make_run_data(
         run_id="run-123",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=5,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=5,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
+        statistics=_make_statistics(item_count=5, item_succeeded_count=5),
+        terminated_at=datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC),
     )
 
     print_runs_verbose([run])
@@ -418,27 +567,12 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
     """Test non-verbose printing of runs with errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run = RunData(
+    run = _make_run_data(
         run_id="run-456",
-        application_id="test-app",
-        version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_USER,
         output=RunOutput.PARTIAL,
-        statistics=RunItemStatistics(
-            item_count=3,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=2,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
+        statistics=_make_statistics(item_count=3, item_succeeded_count=1, item_user_error_count=2),
         custom_metadata={"key": "value"},
         error_message="User canceled the run",
         error_code="USER_CANCELED",
@@ -457,61 +591,24 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    # Mock run data
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-789",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=2,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=2,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        statistics=_make_statistics(item_count=2, item_succeeded_count=2),
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    # Mock item results
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
-    item_result = ItemResult(
+    item_result = _make_item_result(
         item_id="item-123",
         external_id="slide-001",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
+        output_artifacts=[_make_artifact()],
     )
 
     # Create mock run handle
@@ -534,31 +631,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with no items."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
+    run_data = _make_run_data(run_id="run-empty")
 
     mock_run = MagicMock()
     mock_run.details.return_value = run_data
@@ -582,30 +655,8 @@ def test_retrieve_and_print_run_details_can_hide_platform_position(
     mock_console: Mock, hide_platform_queue_position: bool
 ) -> None:
     """Test that platform queue position can be hidden or shown."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-empty",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
         num_preceding_items_org=10,
         num_preceding_items_platform=100 if not hide_platform_queue_position else None,
     )
@@ -796,61 +847,32 @@ def test_queue_position_string_from_run_with_only_platform_position() -> None:
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> None:
     """Test summarize mode shows concise output with external ID, state, and errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-summarize-test",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=2,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=1,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        statistics=_make_statistics(item_count=2, item_succeeded_count=1, item_user_error_count=1),
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    from aignx.codegen.models import ItemOutput
-
-    item_success = ItemResult(
-        item_id="item-001",
+    item_success = _make_item_result(
         external_id="slide-success.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[],
     )
 
-    item_error = ItemResult(
+    item_error = _make_item_result(
         item_id="item-002",
         external_id="slide-error.svs",
-        state=ItemState.TERMINATED,
         termination_reason=ItemTerminationReason.USER_ERROR,
         output=ItemOutput.NONE,
         error_message="Invalid file format",
         error_code="INVALID_FORMAT",
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[],
     )
 
     mock_run = MagicMock()
@@ -880,31 +902,7 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -> None:
     """Test summarize mode with no items shows appropriate message."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-
-    run_data = RunData(
-        run_id="run-no-items",
-        application_id="test-app",
-        version_number="0.0.1",
-        state=RunState.PENDING,
-        termination_reason=None,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=0,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=None,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
-    )
+    run_data = _make_run_data(run_id="run-no-items")
 
     mock_run = MagicMock()
     mock_run.details.return_value = run_data
@@ -921,29 +919,12 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: Mock) -> None:
     """Test summarize mode shows run-level errors."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
-    terminated_at = datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC)
-
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-with-error",
-        application_id="test-app",
-        version_number="0.0.1",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.CANCELED_BY_SYSTEM,
-        output=RunOutput.NONE,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=0,
-            item_user_error_count=0,
-            item_system_error_count=1,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
-        terminated_at=terminated_at,
-        custom_metadata=None,
+        statistics=_make_statistics(item_count=1, item_system_error_count=1),
+        terminated_at=datetime(2025, 1, 1, 12, 5, 0, tzinfo=UTC),
         error_message="System error occurred",
         error_code="SYS_ERROR",
     )
@@ -963,59 +944,23 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
 @patch("aignostics.application._utils.console")
 def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) -> None:
     """Test that default mode (summarize=False) shows detailed output with artifacts."""
-    submitted_at = datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC)
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
 
-    run_data = RunData(
+    run_data = _make_run_data(
         run_id="run-detailed-test",
         application_id="he-tme",
         version_number="1.0.0",
         state=RunState.TERMINATED,
         termination_reason=RunTerminationReason.ALL_ITEMS_PROCESSED,
         output=RunOutput.FULL,
-        statistics=RunItemStatistics(
-            item_count=1,
-            item_pending_count=0,
-            item_processing_count=0,
-            item_skipped_count=0,
-            item_succeeded_count=1,
-            item_user_error_count=0,
-            item_system_error_count=0,
-        ),
-        submitted_at=submitted_at,
-        submitted_by="user@example.com",
+        statistics=_make_statistics(item_count=1, item_succeeded_count=1),
         terminated_at=terminated_at,
-        custom_metadata=None,
-        error_message=None,
-        error_code=None,
     )
 
-    from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
-    item_result = ItemResult(
+    item_result = _make_item_result(
         item_id="item-123",
-        external_id="slide-001.svs",
-        state=ItemState.TERMINATED,
-        termination_reason=ItemTerminationReason.SUCCEEDED,
-        output=ItemOutput.FULL,
-        error_message=None,
-        error_code=None,
-        custom_metadata=None,
-        custom_metadata_checksum=None,
         terminated_at=terminated_at,
-        output_artifacts=[
-            OutputArtifactElement(
-                output_artifact_id="artifact-abc",
-                name="result.parquet",
-                download_url="https://example.com/result.parquet",
-                metadata={"media_type": "application/vnd.apache.parquet"},
-                state=ArtifactState.TERMINATED,
-                termination_reason=ArtifactTerminationReason.SUCCEEDED,
-                output=ArtifactOutput.AVAILABLE,
-                error_code=None,
-                error_message=None,
-            )
-        ],
+        output_artifacts=[_make_artifact()],
     )
 
     mock_run = MagicMock()
@@ -1032,3 +977,208 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
     # Verify artifact details ARE shown in detailed mode
     assert "Download URL" in all_output
     assert "Artifact ID" in all_output
+
+
+@pytest.mark.unit
+def test_validate_due_date_none() -> None:
+    """Test that None is accepted (optional parameter)."""
+    # Should not raise any exception
+    validate_due_date(None)
+
+
+@pytest.mark.unit
+def test_validate_due_date_valid_formats() -> None:
+    """Test that valid ISO 8601 formats in the future are accepted."""
+    # Create a datetime 2 hours in the future
+    future_time = datetime.now(tz=UTC) + timedelta(hours=2)
+
+    valid_formats = [
+        future_time.isoformat(),  # With timezone offset like +00:00
+        future_time.strftime(_ISO_8601_FORMAT) + "Z",  # With Z suffix
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "Z",  # With microseconds and Z
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "+00:00",  # With microseconds and colon-separated offset
+    ]
+
+    for time_str in valid_formats:
+        # Should not raise any exception
+        try:
+            validate_due_date(time_str)
+        except ValueError as e:
+            pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_due_date_invalid_format() -> None:
+    """Test that invalid ISO 8601 formats are rejected."""
+    invalid_formats = [
+        "2025-10-19",  # Date only
+        "19:53:00",  # Time only
+        "2025/10/19 19:53:00",  # Wrong separators
+        "2025-10-19 19:53:00",  # Space instead of T
+        "not-a-date",  # Completely invalid
+        "2025-13-45T25:70:99Z",  # Invalid values
+    ]
+
+    for time_str in invalid_formats:
+        with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
+            validate_due_date(time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_past_datetime() -> None:
+    """Test that datetimes in the past are rejected."""
+    # Create a datetime 2 hours in the past
+    past_time = datetime.now(tz=UTC) - timedelta(hours=2)
+
+    past_formats = [
+        past_time.isoformat(),
+        past_time.strftime(_ISO_8601_FORMAT) + "Z",
+    ]
+
+    for time_str in past_formats:
+        with pytest.raises(ValueError, match=r"due_date must be in the future"):
+            validate_due_date(time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_current_time() -> None:
+    """Test that current time (not future) is rejected."""
+    # Get current time - should be rejected as it's not in the future
+    current_time = datetime.now(tz=UTC)
+    current_time_str = current_time.isoformat()
+
+    with pytest.raises(ValueError, match=r"due_date must be in the future"):
+        validate_due_date(current_time_str)
+
+
+@pytest.mark.unit
+def test_validate_due_date_edge_case_one_second_future() -> None:
+    """Test that a datetime 1 second in the future is accepted."""
+    # Create a datetime 1 second in the future
+    future_time = datetime.now(tz=UTC) + timedelta(seconds=1)
+    future_time_str = future_time.isoformat()
+
+    # Should not raise any exception
+    try:
+        validate_due_date(future_time_str)
+    except ValueError as e:
+        pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_deadline_none() -> None:
+    """Test that None is accepted (optional parameter)."""
+    # Should not raise any exception
+    validate_deadline(None)
+
+
+@pytest.mark.unit
+def test_validate_deadline_valid_formats() -> None:
+    """Test that valid ISO 8601 formats in the future are accepted."""
+    future_time = datetime.now(tz=UTC) + timedelta(hours=2)
+
+    valid_formats = [
+        future_time.isoformat(),
+        future_time.strftime(_ISO_8601_FORMAT) + "Z",
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "Z",
+        future_time.strftime(f"{_ISO_8601_FORMAT}.%f") + "+00:00",  # With microseconds and colon-separated offset
+    ]
+
+    for time_str in valid_formats:
+        try:
+            validate_deadline(time_str)
+        except ValueError as e:
+            pytest.fail(f"Valid ISO 8601 format '{time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_deadline_invalid_format() -> None:
+    """Test that invalid ISO 8601 formats are rejected."""
+    invalid_formats = [
+        "2025-10-19",
+        "19:53:00",
+        "2025/10/19 19:53:00",
+        "2025-10-19 19:53:00",
+        "not-a-date",
+        "2025-13-45T25:70:99Z",
+    ]
+
+    for time_str in invalid_formats:
+        with pytest.raises(ValueError, match=r"Invalid ISO 8601 format"):
+            validate_deadline(time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_past_datetime() -> None:
+    """Test that datetimes in the past are rejected."""
+    past_time = datetime.now(tz=UTC) - timedelta(hours=2)
+
+    past_formats = [
+        past_time.isoformat(),
+        past_time.strftime(_ISO_8601_FORMAT) + "Z",
+    ]
+
+    for time_str in past_formats:
+        with pytest.raises(ValueError, match=r"deadline must be in the future"):
+            validate_deadline(time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_current_time() -> None:
+    """Test that current time (not future) is rejected."""
+    current_time = datetime.now(tz=UTC)
+    current_time_str = current_time.isoformat()
+
+    with pytest.raises(ValueError, match=r"deadline must be in the future"):
+        validate_deadline(current_time_str)
+
+
+@pytest.mark.unit
+def test_validate_deadline_edge_case_one_second_future() -> None:
+    """Test that a datetime 1 second in the future is accepted."""
+    future_time = datetime.now(tz=UTC) + timedelta(seconds=1)
+    future_time_str = future_time.isoformat()
+
+    try:
+        validate_deadline(future_time_str)
+    except ValueError as e:
+        pytest.fail(f"Future datetime '{future_time_str}' was rejected: {e}")
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_both_none() -> None:
+    """Test that both None values are accepted."""
+    validate_scheduling_constraints(None, None)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_one_none() -> None:
+    """Test that a single None value is accepted (no cross-field check needed)."""
+    future_time = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    validate_scheduling_constraints(future_time, None)
+    validate_scheduling_constraints(None, future_time)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_before_deadline() -> None:
+    """Test that due_date before deadline is accepted."""
+    due_date = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    deadline = (datetime.now(tz=UTC) + timedelta(hours=4)).isoformat()
+    validate_scheduling_constraints(due_date, deadline)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_after_deadline() -> None:
+    """Test that due_date after deadline is rejected."""
+    due_date = (datetime.now(tz=UTC) + timedelta(hours=4)).isoformat()
+    deadline = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    with pytest.raises(ValueError, match=r"due_date must be before deadline"):
+        validate_scheduling_constraints(due_date, deadline)
+
+
+@pytest.mark.unit
+def test_validate_scheduling_constraints_due_date_equal_deadline() -> None:
+    """Test that due_date equal to deadline is rejected."""
+    same_time = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
+    with pytest.raises(ValueError, match=r"due_date must be before deadline"):
+        validate_scheduling_constraints(same_time, same_time)
