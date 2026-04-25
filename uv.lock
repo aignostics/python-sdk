@@ -201,7 +201,7 @@ requires-dist = [
     { name = "marshmallow", specifier = ">=3.26.2" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
     { name = "nbconvert", marker = "extra == 'jupyter'", specifier = ">=7.17.1" },
-    { name = "nicegui", extras = ["native"], specifier = ">=3.9.0,<4" },
+    { name = "nicegui", extras = ["native"], specifier = ">=3.11.0,<4" },
     { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
     { name = "openslide-python", specifier = ">=1.4.3,<2" },
     { name = "packaging", specifier = ">=26,<27" },

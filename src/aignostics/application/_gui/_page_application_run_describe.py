@@ -341,13 +341,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             try:
                 download_button.disable()
                 download_button.props(add="loading")
-                # Use io_bound instead of cpu_bound: the download is HTTP-bound (uses
-                # `requests`, which releases the GIL during I/O), so a thread pool is the
-                # natural fit. Avoiding the process pool also dodges a NiceGUI 3.10.0
-                # regression where in-flight cpu_bound calls inside the long-running test
-                # matrix never completed (test_gui_run_download / test_gui_run_qupath_install_to_inspect
-                # would time out at the "Download completed." notification).
-                results_folder = await nicegui_run.io_bound(
+                results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
                     destination_directory=Path(current_folder),
