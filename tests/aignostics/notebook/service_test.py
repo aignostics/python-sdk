@@ -6,8 +6,6 @@ import re
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
-from nicegui import app
 from nicegui.testing import User
 
 from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
@@ -99,65 +97,42 @@ def test_notebook_start_and_stop(caplog: pytest.LogCaptureFixture) -> None:
 @pytest.mark.flaky(retries=1, delay=5, only_on=[AssertionError])
 @pytest.mark.sequential
 @pytest.mark.timeout(timeout=60 * 2)
-def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
+async def test_serve_notebook(user: User, caplog: pytest.LogCaptureFixture) -> None:
     """Test notebook serving.
 
+    Uses the NiceGUI async test client rather than TestClient because
+    /notebook/{run_id} is a @ui.page route (not a plain FastAPI route)
+    and requires NiceGUI's test infrastructure to be properly initialised.
+
     Args:
-        user: The test user fixture.
+        user: NiceGUI test user fixture.
         caplog: Fixture to capture log messages.
 
     Raises:
         AssertionError: If the test assertions fail.
     """
-    # Set up logging to capture DEBUG level and above
     caplog.set_level(logging.DEBUG)
 
-    client = TestClient(app)
-
     try:
-        response = client.get("/notebook/4711?results_folder=/tmp", timeout=60)
-        assert response.status_code == 200
-        content = response.content.decode("utf-8")
-        assert "iframe" in content
-        assert "iframe src" in content
+        await user.open("/notebook/4711?results_folder=/tmp")
+        await user.should_see("marimo_iframe")
 
-        # Look for the encoded iframe in the innerHTML property
-        iframe_html = re.search(r'innerHTML":"&lt;iframe src=\\"([^"]+)\\"', content)
+        # Verify the iframe src URL contains the expected parameters.
+        # user.find() locates the ui.html element whose content contains "marimo_iframe".
+        iframe_element = next(iter(user.find("marimo_iframe").elements))
+        iframe_content = iframe_element.content  # raw HTML string
 
-        # Enhanced error message with logs if assertion fails
-        if iframe_html is None:
+        if not any(host in iframe_content for host in ("localhost", "127.0.0.1")):
             log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
-            error_msg = (
-                f"iframe src not found in response.\n"
-                f"Response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
-                f"Captured logs:\n{log_messages}"
+            pytest.fail(
+                f"localhost and 127.0.0.1 not found in iframe content: {iframe_content}\nCaptured logs:\n{log_messages}"
             )
-            pytest.fail(error_msg)
 
-        # Extract the URL from the iframe src attribute
-        notebook_url = iframe_html.group(1)
-
-        # Enhanced error messages with logs for remaining assertions
-        if not any(host in notebook_url for host in ("localhost", "127.0.0.1")):
+        if "run_id=4711" not in iframe_content:
             log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
-            error_msg = (
-                f"localhost and 127.0.0.1 not found in iframe src: {notebook_url}\n"
-                f"Full response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
-                f"Captured logs:\n{log_messages}"
-            )
-            pytest.fail(error_msg)
-
-        if "run_id=4711" not in notebook_url:
-            log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
-            error_msg = (
-                f"run_id not found in iframe src: {notebook_url}\n"
-                f"Full response content: {content[:1000]}{'...' if len(content) > 1000 else ''}\n"
-                f"Captured logs:\n{log_messages}"
-            )
-            pytest.fail(error_msg)
+            pytest.fail(f"run_id=4711 not found in iframe content: {iframe_content}\nCaptured logs:\n{log_messages}")
 
     except Exception as e:
-        # If any unexpected exception occurs, capture and include logs
         log_messages = "\n".join([f"{record.levelname}: {record.message}" for record in caplog.records])
         error_msg = f"Test failed with exception: {e}\nCaptured logs:\n{log_messages}"
         raise AssertionError(error_msg) from e
