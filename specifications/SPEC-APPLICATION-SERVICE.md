@@ -247,20 +247,99 @@ class Service:
 
     def application_run_submit(
         self,
-        application_version_id: str,
-        items: list[InputItem]
-    ) -> ApplicationRun:
+        application_id: str,
+        items: list[InputItem],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
         """Submit application run with validated inputs
 
         Args:
-            application_version_id: ID of the application version to run
+            application_id: ID of the application to run
             items: List of items to process with metadata
+            application_version: Optional application version (defaults to latest)
+            custom_metadata: Optional custom metadata to attach to the run
+            note: Optional human-readable note
+            tags: Optional set of tags for filtering
+            due_date: Optional ISO 8601 datetime string for requested completion
+                      (e.g. '2025-10-19T19:53:00+00:00'). Must be timezone-aware,
+                      in the future, and before `deadline` when both are provided.
+            deadline: Optional ISO 8601 datetime string for the hard run deadline.
+                      Must be timezone-aware, in the future, and after `due_date`
+                      when both are provided.
+            onboard_to_aignostics_portal: Whether to onboard the run to the portal
+            gpu_type: Optional GPU type for the run
+            gpu_provisioning_mode: Optional GPU provisioning mode
+            max_gpus_per_slide: Optional maximum GPUs per slide
+            flex_start_max_run_duration_minutes: Optional max run duration in minutes
+            cpu_provisioning_mode: Optional CPU provisioning mode
+            node_acquisition_timeout_minutes: Optional node acquisition timeout
 
         Returns:
-            ApplicationRun object with run details
+            Run object with run details
 
         Raises:
-            ValueError: When input validation fails
+            ValueError: When input validation fails (including scheduling date validation)
+            RuntimeError: When submission fails
+        """
+        pass
+
+    def application_run_submit_from_metadata(
+        self,
+        application_id: str,
+        metadata: list[dict[str, Any]],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
+        """Submit application run from prepared metadata dicts
+
+        Delegates to `application_run_submit` after converting metadata dicts
+        to InputItem objects. Accepts the same scheduling parameters.
+
+        Args:
+            application_id: ID of the application to run
+            metadata: List of metadata dicts (as produced by `run prepare`)
+            application_version: Optional application version (defaults to latest)
+            custom_metadata: Optional custom metadata to attach to the run
+            note: Optional human-readable note
+            tags: Optional set of tags for filtering
+            due_date: Optional ISO 8601 datetime string for requested completion
+            deadline: Optional ISO 8601 datetime string for the hard run deadline
+            onboard_to_aignostics_portal: Whether to onboard the run to the portal
+            gpu_type: Optional GPU type for the run
+            gpu_provisioning_mode: Optional GPU provisioning mode
+            max_gpus_per_slide: Optional maximum GPUs per slide
+            flex_start_max_run_duration_minutes: Optional max run duration in minutes
+            cpu_provisioning_mode: Optional CPU provisioning mode
+            node_acquisition_timeout_minutes: Optional node acquisition timeout
+
+        Returns:
+            Run object with run details
+
+        Raises:
+            ValueError: When input validation fails (including scheduling date validation)
             RuntimeError: When submission fails
         """
         pass
@@ -426,6 +505,7 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 - **WSI Files**: Format validation, file existence, size limits, and metadata extraction verification
 - **Application Metadata**: Schema validation against application-specific requirements with type checking
 - **Directory Paths**: Path existence, read permissions, and recursive access validation
+- **Scheduling Dates**: ISO 8601 format validation, timezone-awareness check (naive datetimes rejected), future-date assertion (both dates must be after UTC now), and cross-field constraint (`due_date` must be strictly before `deadline` when both are provided)
 
 ### 7.3 Graceful Degradation
 

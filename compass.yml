@@ -1,17 +1,42 @@
 name: python-sdk
 id: ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/aca547e5-2577-4f9d-9aaa-cf360acc976c
-description: 🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library.
+description: 🔬 Python SDK providing access to the Aignostics Platform. Includes
+  Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line
+  Interface), example notebooks, and Aignostics Client Library.
 configVersion: 1
 typeId: APPLICATION
 ownerId: ari:cloud:identity::team/b1cfb598-3138-4c2a-8b6a-19fb1078645b
 fields:
-  tier: 4
+  tier: 1
+  lifecycle: Active
+  isMonorepoProject: false
 links:
   - name: null
     type: REPOSITORY
     url: https://github.com/aignostics/python-sdk
+  - name: Jira Board
+    type: PROJECT
+    url: https://aignx.atlassian.net/jira/software/c/projects/PYSDK/boards/1799
+  - name: Status Page
+    type: DASHBOARD
+    url: https://status.aignostics.com
+  - name: '#python-sdk-dev'
+    type: CHAT_CHANNEL
+    url: https://slack.com/app_redirect?channel=C098D8MH431
+  - name: '#python-sdk-notifications'
+    type: CHAT_CHANNEL
+    url: https://slack.com/app_redirect?channel=C0AUPTA5QF9
+  - name: Ketryx Project
+    type: OTHER_LINK
+    url: https://app.ketryx.com/projects/KXPRJ2Q4PA8AADY975SFMKF276TYV75
+  - name: Sentry
+    type: DASHBOARD
+    url: https://aignostics.sentry.io/projects/python-sdk/
 relationships:
-  DEPENDS_ON: []
+  DEPENDS_ON:
+    - 'ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/638f89c6-24a3-48f4-90ad-1b09ef8d32c6'
+    - 'ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/8a5a2394-89b7-4c84-9b14-947ce2cf9fdd'
+    - 'ari:cloud:compass:fff788d2-8a2a-4c36-a884-dde2bb4a2b49:component/f65912bc-77bd-4e1f-b333-1a9e8f0ac32c/b2f7a1a1-112c-4d68-aa3c-7ce0c04eda2d'
 labels:
   - aignostics
   - atlas
@@ -38,25 +63,25 @@ customFields:
     value: false
   - name: Component Key
     type: text
-    value: null
+    value: python-sdk
   - name: Deployment Branch
     type: text
-    value: null
+    value: release/*
   - name: Development Branch
     type: text
-    value: null
+    value: main
   - name: FinOps Label
     type: text
     value: null
   - name: Has external API
     type: boolean
-    value: false
+    value: true
   - name: Has external CLI
     type: boolean
-    value: false
+    value: true
   - name: Has external graphical UI
     type: boolean
-    value: false
+    value: true
   - name: Has internal API
     type: boolean
     value: false
@@ -68,10 +93,13 @@ customFields:
     value: false
   - name: Is independently deployable
     type: boolean
-    value: false
+    value: true
+  - name: Is open source
+    type: boolean
+    value: true
   - name: Path in Repository
     type: text
-    value: null
+    value: /
   - name: Process Level
     type: single_select
-    value: null
+    value: 7a2a380d-da85-476f-ae5d-dfc034889b61
