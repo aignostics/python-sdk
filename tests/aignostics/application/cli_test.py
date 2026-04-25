@@ -486,6 +486,13 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=3, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
+@pytest.mark.skipif(
+    (platform.system() == "Linux" and platform.machine() in {"aarch64", "arm64"})
+    or (platform.system() in {"Darwin", "Windows"}),
+    reason=(
+        "Only run on Linux x86_64 / GitHub Actions ubuntu-latest to avoid creating unnecessary load on the platform."
+    ),
+)
 def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, silent_logging, record_property
 ) -> None:
@@ -805,6 +812,47 @@ def test_cli_run_list_verbose_limit_1(runner: CliRunner, record_property) -> Non
     assert match, "Expected run count message not found"
     displayed_count = int(match.group(1))
     assert displayed_count == 1, f"Expected listed count to be == 1, but got {displayed_count}"
+
+
+@pytest.mark.unit
+def test_cli_run_list_for_organization(runner: CliRunner) -> None:
+    """Check run list command passes --for-organization to service and shows org-specific empty message."""
+    with patch.object(ApplicationService, "application_runs", return_value=[]) as mock_method:
+        result = runner.invoke(cli, ["application", "run", "list", "--for-organization", "org-123"])
+        assert result.exit_code == 0
+        mock_method.assert_called_once()
+        assert mock_method.call_args[1]["for_organization"] == "org-123"
+        output = normalize_output(result.stdout)
+        assert "No runs found for organization 'org-123'" in output
+
+
+@pytest.mark.unit
+def test_cli_run_list_forbidden_with_organization(runner: CliRunner) -> None:
+    """Check ForbiddenException with --for-organization shows org-specific access denied message."""
+    from aignx.codegen.exceptions import ForbiddenException
+
+    with patch.object(
+        ApplicationService, "application_runs", side_effect=ForbiddenException(status=403, reason="Forbidden")
+    ):
+        result = runner.invoke(cli, ["application", "run", "list", "--for-organization", "secret-org"])
+        assert result.exit_code == 2
+        output = normalize_output(result.stdout)
+        assert "Access denied" in output
+        assert "secret-org" in output
+
+
+@pytest.mark.unit
+def test_cli_run_list_forbidden_without_organization(runner: CliRunner) -> None:
+    """Check ForbiddenException without --for-organization shows generic access denied message."""
+    from aignx.codegen.exceptions import ForbiddenException
+
+    with patch.object(
+        ApplicationService, "application_runs", side_effect=ForbiddenException(status=403, reason="Forbidden")
+    ):
+        result = runner.invoke(cli, ["application", "run", "list"])
+        assert result.exit_code == 2
+        output = normalize_output(result.stdout)
+        assert "Access denied: you are not authorized to list runs." in output
 
 
 # TODO(Andreas): This previously failed as invalid run id. Is it expected this now calls the API?

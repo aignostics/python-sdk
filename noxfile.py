@@ -30,7 +30,7 @@ def _read_python_version() -> str:
     """Read Python version from .python-version file.
 
     Returns:
-        str: Python version string (e.g., "3.14" or "3.14.1")
+        str: Python version string (e.g., "3.14" or "3.14.3")
 
     Raises:
         FileNotFoundError: If .python-version file does not exist
@@ -145,23 +145,18 @@ def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
     _setup_venv(session)
 
-    # pip-audit to check for vulnerabilities
+    # pip-audit to check for vulnerabilities.
+    # Every --ignore-vuln entry must correspond to a row in SUPPLY_CHAIN_VULNERABILITIES.md
+    # with rationale, scope, downstream-exposure assessment, and removal condition.
     try:
         session.run(
-            # TODO(Helmut): Ignore pip vuln until pip achieved to build v5.3
             "pip-audit",
             "-f",
             "json",
             "-o",
             "reports/vulnerabilities.json",
             "--ignore-vuln",
-            "GHSA-4xh5-x5gv-qwph",  # https://pyinstaller.org/en/stable/license.html
-            "--ignore-vuln",
-            "CVE-2025-53000",  # no fix available
-            "--ignore-vuln",
-            "CVE-2025-69872",  # no fix available
-            "--ignore-vuln",
-            "CVE-2026-4539",  # no fix available
+            "CVE-2026-3219",  # pip archive type confusion; fix in unreleased 26.1. See SUPPLY_CHAIN_VULNERABILITIES.md
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")
@@ -893,6 +888,15 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
         marker: Pytest marker expression
         cov_append: Whether to append to existing coverage data
     """
+    # On Windows, uv run sets PYTHONHOME to the managed Python 3.14 install dir when it
+    # starts nox. This leaks into pytest sub-processes for older Python versions (3.11-3.13)
+    # and causes them to load Python 3.14's stdlib, crashing at startup.
+    # Fix: set PYTHONHOME to None in session.env so nox strips it from the subprocess
+    # environment entirely (nox._clean_env filters out None-valued entries before passing
+    # to subprocess.Popen). Unlike os.environ.pop(), this does NOT mutate global process
+    # state; it only affects subprocesses spawned by session.run() / session.run_install().
+    if platform.system() == "Windows":
+        session.env["PYTHONHOME"] = None
     _setup_venv(session)
 
     posargs = session.posargs[:]
@@ -1021,21 +1025,6 @@ def act(session: nox.Session) -> None:
         "-",
         external=True,
     )
-
-
-@nox.session(default=False)
-def bump(session: nox.Session) -> None:
-    """Bump version and push changes to git."""
-    version_part = session.posargs[0] if session.posargs else "patch"
-
-    # Check if the version_part is a specific version (e.g., 1.2.3)
-    if re.match(r"^\d+\.\d+\.\d+$", version_part):
-        session.run("bump-my-version", "bump", "--new-version", version_part, external=True)
-    else:
-        session.run("bump-my-version", "bump", version_part, external=True)
-
-    # Push changes to git including tag created
-    session.run("git", "push", "--follow-tags", "--no-verify", external=True)
 
 
 @nox.session()

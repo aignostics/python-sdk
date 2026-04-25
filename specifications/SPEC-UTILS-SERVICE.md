@@ -260,7 +260,7 @@ uvx aignostics [module-name] [subcommand] [options]
 | `nicegui`           | ^1.0        | GUI framework support              | Optional          | CLI-only mode              |
 | `logfire`           | ^0.41       | Observability and monitoring       | Optional          | Standard logging           |
 | `sentry-sdk`        | ^2.0        | Error tracking and performance     | Optional          | Local error handling       |
-| `fastmcp`           | >=2.0,<3    | MCP server framework               | Required          | N/A - MCP functionality    |
+| `fastmcp`           | >=3.2,<4    | MCP server framework               | Required          | N/A - MCP functionality    |
 | `marimo`            | ^0.8        | Notebook utilities                 | Optional          | Notebook features disabled |
 
 _Note: For exact version requirements, refer to `pyproject.toml` and dependency lock files._
@@ -365,20 +365,14 @@ _Note: For exact version requirements, refer to `pyproject.toml` and dependency 
 
 ## Documentation Maintenance
 
-### Verification and Updates
-
-**Last Verified**: September 11, 2025  
-**Verification Method**: Code review against implementation in `src/aignostics/utils/`  
-**Next Review Date**: December 11, 2025
-
 ### Change Management
 
-**Interface Changes**: Changes to BaseService or BasePageBuilder APIs require spec updates and version bumps  
-**Implementation Changes**: Internal discovery algorithms don't require spec updates unless behavior changes  
+**Interface Changes**: Changes to BaseService or BasePageBuilder APIs require spec updates and version bumps
+**Implementation Changes**: Internal discovery algorithms don't require spec updates unless behavior changes
 **Dependency Changes**: Optional dependency changes should be reflected in fallback behavior section
 
 ### References
 
-**Implementation**: See `src/aignostics/utils/` for current implementation  
-**Tests**: See `tests/aignostics/utils/` for usage examples and verification  
+**Implementation**: See `src/aignostics/utils/` for current implementation
+**Tests**: See `tests/aignostics/utils/` for usage examples and verification
 **API Documentation**: Auto-generated from docstrings and type hints

@@ -1,5 +1,5 @@
 # API v1 Reference
-## Aignostics Platform API v1.0.0-ga
+## Aignostics Platform API v1.4.0
 
 > Scroll down for code samples, example requests and responses. Select a language for code samples from the tabs above or the mobile navigation menu.
 
@@ -80,7 +80,7 @@ fetch('/api/v1/applications',
 
 Returns the list of the applications, available to the caller.
 
-The application is available if any of the versions of the application is assigned to the caller’s organization.
+The application is available if any of the versions of the application is assigned to the caller's organization.
 The response is paginated and sorted according to the provided parameters.
 
 #### Parameters
@@ -149,7 +149,9 @@ The response is paginated and sorted according to the provided parameters.
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -539,7 +541,9 @@ Allows caller to retrieve information about application version based on provide
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -617,6 +621,7 @@ Returns paginated runs that were submitted by the user.
 |custom_metadata|query|any|false|Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata.|
 |page|query|integer|false|none|
 |page_size|query|integer|false|none|
+|for_organization|query|any|false|Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs.|
 |sort|query|any|false|Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.|
 
 ##### Detailed descriptions
@@ -656,7 +661,6 @@ Returns paginated runs that were submitted by the user.
 - `application_id`
 - `version_number`
 - `custom_metadata`
-- `statistics`
 - `submitted_at`
 - `submitted_by`
 - `terminated_at`
@@ -700,7 +704,11 @@ Returns paginated runs that were submitted by the user.
     "submitted_by": "auth0|123456",
     "terminated_at": "2024-01-15T10:30:45.123Z",
     "num_preceding_items_org": 0,
-    "num_preceding_items_platform": 0
+    "num_preceding_items_platform": 0,
+    "scheduling": {
+      "due_date": "2019-08-24T14:15:22Z",
+      "deadline": "2019-08-24T14:15:22Z"
+    }
   }
 ]
 ```
@@ -878,6 +886,55 @@ Status Code **200**
 |---|---|---|---|---|
 |»»» *anonymous*|null|false|none|none|
 
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»» scheduling|any|false|none|Scheduling constraints set for this run.|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|[SchedulingResponse](#schemaschedulingresponse)|false|none|Scheduling fields returned in run responses.|
+|»»»» due_date|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» deadline|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string(date-time)|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
 ##### Enumerated Values
 
 |Property|Value|
@@ -924,6 +981,10 @@ const inputBody = '{
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
+  },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
   },
   "items": [
     {
@@ -1057,6 +1118,10 @@ documentation
   "custom_metadata": {
     "department": "D1",
     "study": "abc-1"
+  },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
   },
   "items": [
     {
@@ -1203,7 +1268,11 @@ Access to a run is restricted to the user who created it.
   "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "num_preceding_items_org": 0,
-  "num_preceding_items_platform": 0
+  "num_preceding_items_platform": 0,
+  "scheduling": {
+    "due_date": "2019-08-24T14:15:22Z",
+    "deadline": "2019-08-24T14:15:22Z"
+  }
 }
 ```
 
@@ -1413,6 +1482,7 @@ Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
     "state": "PENDING",
     "output": "NONE",
     "termination_reason": "SUCCEEDED",
+    "error_code": "string",
     "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
     "terminated_at": "2024-01-15T10:30:45.123Z",
     "output_artifacts": [
@@ -1423,12 +1493,11 @@ Use PostgreSQL JSONPath expressions to filter items using their custom_metadata.
         "state": "PENDING",
         "termination_reason": "SUCCEEDED",
         "output": "NONE",
+        "error_code": "string",
         "error_message": "string",
-        "download_url": "http://example.com",
-        "error_code": "string"
+        "download_url": "http://example.com"
       }
-    ],
-    "error_code": "string"
+    ]
   }
 ]
 ```
@@ -1545,6 +1614,24 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|»» error_code|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |»» error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
 
 *anyOf*
@@ -1623,7 +1710,7 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»»» output|[ArtifactOutput](#schemaartifactoutput)|true|none|none|
-|»»»» error_message|any|false|none|Error message when artifact is in error state|
+|»»»» error_code|any|false|none|none|
 
 *anyOf*
 
@@ -1641,7 +1728,25 @@ Status Code **200**
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|»»»» download_url|any|true|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
+|»»»» error_message|any|false|none|none|
+
+*anyOf*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|string|false|none|none|
+
+*or*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»»» *anonymous*|null|false|none|none|
+
+*continued*
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|»»»» download_url|any|false|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
 
 *anyOf*
 
@@ -1654,42 +1759,6 @@ Status Code **200**
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»» error_code|any|true|read-only|Error code describing the error that occurred during artifact processing.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»»»» *anonymous*|null|false|none|none|
-
-*continued*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»» error_code|any|true|read-only|Error code describing the error that occurred during item processing.|
-
-*anyOf*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|string|false|none|none|
-
-*or*
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|»»» *anonymous*|null|false|none|none|
 
 ##### Enumerated Values
 
@@ -1789,6 +1858,7 @@ Retrieve details of a specific item (slide) by its external ID and the run ID.
   "state": "PENDING",
   "output": "NONE",
   "termination_reason": "SUCCEEDED",
+  "error_code": "string",
   "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "output_artifacts": [
@@ -1799,12 +1869,11 @@ Retrieve details of a specific item (slide) by its external ID and the run ID.
       "state": "PENDING",
       "termination_reason": "SUCCEEDED",
       "output": "NONE",
+      "error_code": "string",
       "error_message": "string",
-      "download_url": "http://example.com",
-      "error_code": "string"
+      "download_url": "http://example.com"
     }
-  ],
-  "error_code": "string"
+  ]
 }
 ```
 
@@ -1816,6 +1885,90 @@ Retrieve details of a specific item (slide) by its external ID and the run ID.
 |403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to see this item|None|
 |404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Item with given ID does not exist|None|
 |422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+
+To perform this operation, you must be authenticated by means of one of the following methods:
+OAuth2AuthorizationCodeBearer
+
+
+### get_artifact_url_v1_runs__run_id__artifacts__artifact_id__file_get
+
+
+
+> Code samples
+
+```python
+import requests
+headers = {
+  'Accept': 'application/json',
+  'Authorization': 'Bearer {access-token}'
+}
+
+r = requests.get('/api/v1/runs/{run_id}/artifacts/{artifact_id}/file', headers = headers)
+
+print(r.json())
+
+```
+
+```javascript
+
+const headers = {
+  'Accept':'application/json',
+  'Authorization':'Bearer {access-token}'
+};
+
+fetch('/api/v1/runs/{run_id}/artifacts/{artifact_id}/file',
+{
+  method: 'GET',
+
+  headers: headers
+})
+.then(function(res) {
+    return res.json();
+}).then(function(body) {
+    console.log(body);
+});
+
+```
+
+`GET /v1/runs/{run_id}/artifacts/{artifact_id}/file`
+
+*Get Artifact Url*
+
+Download the artifact file with the specified artifact_id, belonging to the specified run.
+The artifact_is is returned by the `GET /v1/runs/{run_id}/items` endpoint as part of the item results, and can also
+be retrieved via `GET /v1/runs/{run_id}/items/{external_id}`.
+
+The endpoint may return a redirect response with a presigned URL to download the artifact file from the storage
+bucket. The presigned URL is valid for a limited time, so it should be used immediately after receiving the response.
+
+#### Parameters
+
+|Name|In|Type|Required|Description|
+|---|---|---|---|---|
+|run_id|path|string(uuid)|true|Run id, returned by `POST /runs/` endpoint|
+|artifact_id|path|string(uuid)|true|The artifact id to download|
+
+> Example responses
+
+> 200 Response
+
+```json
+null
+```
+
+#### Responses
+
+|Status|Meaning|Description|Schema|
+|---|---|---|---|
+|200|[OK](https://tools.ietf.org/html/rfc7231#section-6.3.1)|Successful Response|Inline|
+|307|[Temporary Redirect](https://tools.ietf.org/html/rfc7231#section-6.4.7)|Temporary Redirect - Redirect to the artifact file URL|None|
+|403|[Forbidden](https://tools.ietf.org/html/rfc7231#section-6.5.3)|Forbidden - You don't have permission to download this artifact|None|
+|404|[Not Found](https://tools.ietf.org/html/rfc7231#section-6.5.4)|Not Found - Artifact not found for the specified run|None|
+|410|[Gone](https://tools.ietf.org/html/rfc7231#section-6.5.9)|Gone - Artifact has been deleted|None|
+|422|[Unprocessable Entity](https://tools.ietf.org/html/rfc2518#section-10.3)|Validation Error|[HTTPValidationError](#schemahttpvalidationerror)|
+
+#### Response Schema
 
 
 To perform this operation, you must be authenticated by means of one of the following methods:
@@ -2511,7 +2664,9 @@ or
         "string"
       ],
       "msg": "string",
-      "type": "string"
+      "type": "string",
+      "input": null,
+      "ctx": {}
     }
   ]
 }
@@ -2691,6 +2846,7 @@ ItemOutput
   "state": "PENDING",
   "output": "NONE",
   "termination_reason": "SUCCEEDED",
+  "error_code": "string",
   "error_message": "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "output_artifacts": [
@@ -2701,12 +2857,11 @@ ItemOutput
       "state": "PENDING",
       "termination_reason": "SUCCEEDED",
       "output": "NONE",
+      "error_code": "string",
       "error_message": "string",
-      "download_url": "http://example.com",
-      "error_code": "string"
+      "download_url": "http://example.com"
     }
-  ],
-  "error_code": "string"
+  ]
 }
 
 ```
@@ -2811,6 +2966,24 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|error_code|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |error_message|any|false|none|The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`|
 
 anyOf
@@ -2848,19 +3021,6 @@ continued
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |output_artifacts|[[OutputArtifactResultReadResponse](#schemaoutputartifactresultreadresponse)]|true|none|The list of the results generated by the application algorithm. The number of files and theirtypes depend on the particular application version, call `/v1/versions/{version_id}` to getthe details.|
-|error_code|any|true|read-only|Error code describing the error that occurred during item processing.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
 
 ### ItemState
 
@@ -3080,9 +3240,9 @@ OutputArtifact
   "state": "PENDING",
   "termination_reason": "SUCCEEDED",
   "output": "NONE",
+  "error_code": "string",
   "error_message": "string",
-  "download_url": "http://example.com",
-  "error_code": "string"
+  "download_url": "http://example.com"
 }
 
 ```
@@ -3133,7 +3293,7 @@ continued
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |output|[ArtifactOutput](#schemaartifactoutput)|true|none|The output status of the artifact (NONE, FULL)|
-|error_message|any|false|none|Error message when artifact is in error state|
+|error_code|any|false|none|none|
 
 anyOf
 
@@ -3151,31 +3311,31 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|download_url|any|true|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
+|error_message|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|download_url|any|false|none|The download URL to the output file. The URL is valid for 1 hour after the endpoint is called.A new URL is generated every time the endpoint is called.|
 
 anyOf
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
 |» *anonymous*|string(uri)|false|none|none|
-
-or
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|null|false|none|none|
-
-continued
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|error_code|any|true|read-only|Error code describing the error that occurred during artifact processing.|
-
-anyOf
-
-|Name|Type|Required|Restrictions|Description|
-|---|---|---|---|---|
-|» *anonymous*|string|false|none|none|
 
 or
 
@@ -3252,6 +3412,10 @@ OutputArtifactVisibility
     "department": "D1",
     "study": "abc-1"
   },
+  "scheduling": {
+    "deadline": "2026-03-05T23:59:59Z",
+    "due_date": "2026-03-04T23:59:59Z"
+  },
   "items": [
     {
       "external_id": "slide_1",
@@ -3322,6 +3486,24 @@ continued
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
+|scheduling|any|false|none|Optional scheduling constraints for this run.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|[SchedulingRequest](#schemaschedulingrequest)|false|none|Scheduling constraints for a run.|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
 |items|[[ItemCreationRequest](#schemaitemcreationrequest)]|true|none|List of items (slides) to process. Each item represents a whole slide image (WSI) with its associated metadata and artifacts|
 
 ### RunCreationResponse
@@ -3344,7 +3526,7 @@ RunCreationResponse
 
 |Name|Type|Required|Restrictions|Description|
 |---|---|---|---|---|
-|run_id|string(uuid)|false|none|none|
+|run_id|string(uuid)|true|none|none|
 
 ### RunItemStatistics
 
@@ -3443,7 +3625,11 @@ RunOutput
   "submitted_by": "auth0|123456",
   "terminated_at": "2024-01-15T10:30:45.123Z",
   "num_preceding_items_org": 0,
-  "num_preceding_items_platform": 0
+  "num_preceding_items_platform": 0,
+  "scheduling": {
+    "due_date": "2019-08-24T14:15:22Z",
+    "deadline": "2019-08-24T14:15:22Z"
+  }
 }
 
 ```
@@ -3602,6 +3788,24 @@ or
 |---|---|---|---|---|
 |» *anonymous*|null|false|none|none|
 
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|scheduling|any|false|none|Scheduling constraints set for this run.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|[SchedulingResponse](#schemaschedulingresponse)|false|none|Scheduling fields returned in run responses.|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
 ### RunState
 
 
@@ -3657,6 +3861,112 @@ RunTerminationReason
 |RunTerminationReason|ALL_ITEMS_PROCESSED|
 |RunTerminationReason|CANCELED_BY_SYSTEM|
 |RunTerminationReason|CANCELED_BY_USER|
+
+### SchedulingRequest
+
+
+
+
+
+
+```json
+{
+  "due_date": "2026-03-04T23:59:59Z",
+  "deadline": "2026-03-05T23:59:59Z"
+}
+
+```
+
+SchedulingRequest
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|due_date|any|false|none|Requested completion time. Items are prioritized to meet this target.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|deadline|any|false|none|Hard deadline. The run will be cancelled if not completed by this time.|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+### SchedulingResponse
+
+
+
+
+
+
+```json
+{
+  "due_date": "2019-08-24T14:15:22Z",
+  "deadline": "2019-08-24T14:15:22Z"
+}
+
+```
+
+SchedulingResponse
+
+#### Properties
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|due_date|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
+
+continued
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|deadline|any|false|none|none|
+
+anyOf
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|string(date-time)|false|none|none|
+
+or
+
+|Name|Type|Required|Restrictions|Description|
+|---|---|---|---|---|
+|» *anonymous*|null|false|none|none|
 
 ### UserReadResponse
 
@@ -3840,7 +4150,9 @@ or
     "string"
   ],
   "msg": "string",
-  "type": "string"
+  "type": "string",
+  "input": null,
+  "ctx": {}
 }
 
 ```
@@ -3871,6 +4183,8 @@ continued
 |---|---|---|---|---|
 |msg|string|true|none|none|
 |type|string|true|none|none|
+|input|any|false|none|none|
+|ctx|object|false|none|none|
 
 ### VersionReadResponse
 

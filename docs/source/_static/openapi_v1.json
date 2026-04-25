@@ -3,7 +3,7 @@
   "info": {
     "title": "Aignostics Platform API",
     "description": "\nThe Aignostics Platform is a cloud-based service that enables organizations to access advanced computational pathology applications through a secure API.  The platform provides standardized access to Aignostics' portfolio of computational pathology solutions, with Atlas H&E-TME serving as an example of the available API endpoints. \n\nTo begin using the platform, your organization must first be registered by our business support team. If you don't have an account yet, please contact your account manager or email support@aignostics.com to get started. \n\nMore information about our applications can be found on [https://platform.aignostics.com](https://platform.aignostics.com).\n\n**How to authorize and test API endpoints:**\n\n1. Click the \"Authorize\" button in the right corner below\n3. Click \"Authorize\" button in the dialog to log in with your Aignostics Platform credentials\n4. After successful login, you'll be redirected back and can use \"Try it out\" on any endpoint\n\n**Note**: You only need to authorize once per session. The lock icons next to endpoints will show green when authorized.\n\n",
-    "version": "1.0.0-ga"
+    "version": "1.4.0"
   },
   "servers": [
     {
@@ -17,7 +17,7 @@
           "Public"
         ],
         "summary": "List available applications",
-        "description": "Returns the list of the applications, available to the caller.\n\nThe application is available if any of the versions of the application is assigned to the caller’s organization.\nThe response is paginated and sorted according to the provided parameters.",
+        "description": "Returns the list of the applications, available to the caller.\n\nThe application is available if any of the versions of the application is assigned to the caller's organization.\nThe response is paginated and sorted according to the provided parameters.",
         "operationId": "list_applications_v1_applications_get",
         "security": [
           {
@@ -210,6 +210,7 @@
             "required": true,
             "schema": {
               "type": "string",
+              "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
               "title": "Version"
             }
           }
@@ -583,6 +584,24 @@
             }
           },
           {
+            "name": "for_organization",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs.",
+              "title": "For Organization"
+            },
+            "description": "Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs."
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -598,10 +617,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `run_id`\n- `application_id`\n- `version_number`\n- `custom_metadata`\n- `statistics`\n- `submitted_at`\n- `submitted_by`\n- `terminated_at`\n- `termination_reason`\n\n**Examples:**\n- `?sort=submitted_at` - Sort by creation time (ascending)\n- `?sort=-submitted_at` - Sort by creation time (descending)\n- `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)\n",
+              "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `run_id`\n- `application_id`\n- `version_number`\n- `custom_metadata`\n- `submitted_at`\n- `submitted_by`\n- `terminated_at`\n- `termination_reason`\n\n**Examples:**\n- `?sort=submitted_at` - Sort by creation time (ascending)\n- `?sort=-submitted_at` - Sort by creation time (descending)\n- `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)\n",
               "title": "Sort"
             },
-            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `run_id`\n- `application_id`\n- `version_number`\n- `custom_metadata`\n- `statistics`\n- `submitted_at`\n- `submitted_by`\n- `terminated_at`\n- `termination_reason`\n\n**Examples:**\n- `?sort=submitted_at` - Sort by creation time (ascending)\n- `?sort=-submitted_at` - Sort by creation time (descending)\n- `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)\n"
+            "description": "Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.\n\n**Available fields:**\n- `run_id`\n- `application_id`\n- `version_number`\n- `custom_metadata`\n- `submitted_at`\n- `submitted_by`\n- `terminated_at`\n- `termination_reason`\n\n**Examples:**\n- `?sort=submitted_at` - Sort by creation time (ascending)\n- `?sort=-submitted_at` - Sort by creation time (descending)\n- `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)\n"
           }
         ],
         "responses": {
@@ -1104,6 +1123,79 @@
         }
       }
     },
+    "/v1/runs/{run_id}/artifacts/{artifact_id}/file": {
+      "get": {
+        "tags": [
+          "Public"
+        ],
+        "summary": "Get Artifact Url",
+        "description": "Download the artifact file with the specified artifact_id, belonging to the specified run.\nThe artifact_is is returned by the `GET /v1/runs/{run_id}/items` endpoint as part of the item results, and can also\nbe retrieved via `GET /v1/runs/{run_id}/items/{external_id}`.\n\nThe endpoint may return a redirect response with a presigned URL to download the artifact file from the storage\nbucket. The presigned URL is valid for a limited time, so it should be used immediately after receiving the response.",
+        "operationId": "get_artifact_url_v1_runs__run_id__artifacts__artifact_id__file_get",
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Run id, returned by `POST /runs/` endpoint",
+              "title": "Run Id"
+            },
+            "description": "Run id, returned by `POST /runs/` endpoint"
+          },
+          {
+            "name": "artifact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The artifact id to download",
+              "title": "Artifact Id"
+            },
+            "description": "The artifact id to download"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Artifact not found for the specified run"
+          },
+          "307": {
+            "description": "Temporary Redirect - Redirect to the artifact file URL"
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to download this artifact"
+          },
+          "410": {
+            "description": "Gone - Artifact has been deleted"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/runs/{run_id}/artifacts": {
       "delete": {
         "tags": [
@@ -1461,6 +1553,7 @@
         "properties": {
           "number": {
             "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
             "title": "Number",
             "description": "The number of the latest version",
             "examples": [
@@ -1518,6 +1611,7 @@
           "custom_metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1602,6 +1696,7 @@
             ]
           },
           "metadata_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Metadata Schema"
           }
@@ -1636,6 +1731,7 @@
             ]
           },
           "metadata": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Metadata",
             "description": "The metadata of the artifact, required by the application version. The JSON schema of the metadata can be requested by `/v1/versions/{application_version_id}`. The schema is located in `input_artifacts.[].metadata_schema`",
@@ -1675,6 +1771,7 @@
           "custom_metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1753,6 +1850,7 @@
           "custom_metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -1820,6 +1918,17 @@
             ],
             "description": "\nWhen the `state` is `TERMINATED` this will explain why\n`SUCCEEDED` -> Successful processing.\n`USER_ERROR` -> Failed because the provided input was invalid.\n`SYSTEM_ERROR` -> There was an error in the model or platform.\n`SKIPPED` -> Was cancelled\n"
           },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
           "error_message": {
             "anyOf": [
               {
@@ -1833,7 +1942,8 @@
             "description": "\n    The error message in case the `termination_reason` is in `USER_ERROR` or `SYSTEM_ERROR`\n        ",
             "examples": [
               "This item was not processed because the threshold of 3 items finishing in error state (user or system error) was reached before the item was processed.",
-              "The item was not processed because the run was cancelled by the user before the item was processed.User error raised by Application because the input data provided by the user cannot be processed:\nThe image width is 123000 px, but the maximum width is 100000 px",
+              "The item was not processed because the run was cancelled by the user before the item was processed.",
+              "User error raised by Application because the input data provided by the user cannot be processed:\nThe image width is 123000 px, but the maximum width is 100000 px",
               "A system error occurred during the item execution:\n System went out of memory in cell classification",
               "An unknown system error occurred during the item execution"
             ]
@@ -1861,19 +1971,6 @@
             "type": "array",
             "title": "Output Artifacts",
             "description": "\nThe list of the results generated by the application algorithm. The number of files and their\ntypes depend on the particular application version, call `/v1/versions/{version_id}` to get\nthe details.\n    "
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code describing the error that occurred during item processing.",
-            "readOnly": true
           }
         },
         "type": "object",
@@ -1883,8 +1980,7 @@
           "custom_metadata",
           "state",
           "output",
-          "output_artifacts",
-          "error_code"
+          "output_artifacts"
         ],
         "title": "ItemResultReadResponse",
         "description": "Response schema for items in `List Run Items` endpoint"
@@ -2042,6 +2138,7 @@
             ]
           },
           "metadata_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Metadata Schema"
           },
@@ -2081,6 +2178,7 @@
           "metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2109,6 +2207,17 @@
             "$ref": "#/components/schemas/ArtifactOutput",
             "description": "The output status of the artifact (NONE, FULL)"
           },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
           "error_message": {
             "anyOf": [
               {
@@ -2118,8 +2227,7 @@
                 "type": "null"
               }
             ],
-            "title": "Error Message",
-            "description": "Error message when artifact is in error state"
+            "title": "Error Message"
           },
           "download_url": {
             "anyOf": [
@@ -2134,20 +2242,8 @@
               }
             ],
             "title": "Download Url",
-            "description": "\nThe download URL to the output file. The URL is valid for 1 hour after the endpoint is called.\nA new URL is generated every time the endpoint is called.\n    "
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code describing the error that occurred during artifact processing.",
-            "readOnly": true
+            "description": "\nThe download URL to the output file. The URL is valid for 1 hour after the endpoint is called.\nA new URL is generated every time the endpoint is called.\n    ",
+            "deprecated": true
           }
         },
         "type": "object",
@@ -2155,9 +2251,7 @@
           "output_artifact_id",
           "name",
           "state",
-          "output",
-          "download_url",
-          "error_code"
+          "output"
         ],
         "title": "OutputArtifactResultReadResponse"
       },
@@ -2205,6 +2299,7 @@
           "custom_metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2217,6 +2312,23 @@
               {
                 "department": "D1",
                 "study": "abc-1"
+              }
+            ]
+          },
+          "scheduling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SchedulingRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional scheduling constraints for this run.",
+            "examples": [
+              {
+                "deadline": "2026-03-05T23:59:59Z",
+                "due_date": "2026-03-04T23:59:59Z"
               }
             ]
           },
@@ -2269,13 +2381,15 @@
             "type": "string",
             "format": "uuid",
             "title": "Run Id",
-            "default": "Run id",
             "examples": [
               "3fa85f64-5717-4562-b3fc-2c963f66afa6"
             ]
           }
         },
         "type": "object",
+        "required": [
+          "run_id"
+        ],
         "title": "RunCreationResponse"
       },
       "RunItemStatistics": {
@@ -2417,6 +2531,7 @@
           "custom_metadata": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -2500,6 +2615,17 @@
             ],
             "title": "Num Preceding Items Platform",
             "description": "How many Items from other Runs are due to begin processing before this Run's next Item does."
+          },
+          "scheduling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SchedulingResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Scheduling constraints set for this run."
           }
         },
         "type": "object",
@@ -2536,6 +2662,76 @@
           "CANCELED_BY_USER"
         ],
         "title": "RunTerminationReason"
+      },
+      "SchedulingRequest": {
+        "properties": {
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date",
+            "description": "Requested completion time. Items are prioritized to meet this target.",
+            "examples": [
+              "2026-03-04T23:59:59Z"
+            ]
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline",
+            "description": "Hard deadline. The run will be cancelled if not completed by this time.",
+            "examples": [
+              "2026-03-05T23:59:59Z"
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SchedulingRequest",
+        "description": "Scheduling constraints for a run."
+      },
+      "SchedulingResponse": {
+        "properties": {
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          }
+        },
+        "type": "object",
+        "title": "SchedulingResponse",
+        "description": "Scheduling fields returned in run responses."
       },
       "UserReadResponse": {
         "properties": {
@@ -2693,6 +2889,13 @@
           "type": {
             "type": "string",
             "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
           }
         },
         "type": "object",
@@ -2707,6 +2910,7 @@
         "properties": {
           "version_number": {
             "type": "string",
+            "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
             "title": "Version Number",
             "description": "Semantic version of the application"
           },

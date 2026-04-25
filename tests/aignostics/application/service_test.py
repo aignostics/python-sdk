@@ -433,6 +433,68 @@ def test_application_runs_query_escapes_special_characters(mock_get_client: Magi
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_tags_single_generates_equality_jsonpath(mock_get_client: MagicMock) -> None:
+    """Test that a single tag generates a JSONPath equality expression instead of like_regex."""
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    mock_runs.list_data.return_value = iter([])
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    service.application_runs(tags={"experiment-1"})
+
+    call_kwargs = mock_runs.list_data.call_args[1]
+    assert call_kwargs["custom_metadata"] == '$.sdk.tags[*] ? (@ == "experiment-1")'
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_tags_multiple_generates_or_equality_jsonpath(mock_get_client: MagicMock) -> None:
+    """Test that multiple tags generate a JSONPath OR equality expression."""
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    mock_runs.list_data.return_value = iter([])
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    service.application_runs(tags={"alpha", "beta"})
+
+    call_kwargs = mock_runs.list_data.call_args[1]
+    custom_metadata = call_kwargs["custom_metadata"]
+
+    # Tags are from a set so order is not guaranteed
+    assert custom_metadata.startswith("$.sdk.tags[*] ? (")
+    assert custom_metadata.endswith(")")
+    assert '@ == "alpha"' in custom_metadata
+    assert '@ == "beta"' in custom_metadata
+    assert " || " in custom_metadata
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_runs_tags_escapes_quotes_and_backslashes(mock_get_client: MagicMock) -> None:
+    """Test that tag values with quotes and backslashes are properly escaped in JSONPath."""
+    mock_client = MagicMock()
+    mock_runs = MagicMock()
+    mock_runs.list_data.return_value = iter([])
+    mock_client.runs = mock_runs
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    service.application_runs(tags={'tag"with"quotes', "path\\to\\dir"})
+
+    call_kwargs = mock_runs.list_data.call_args[1]
+    custom_metadata = call_kwargs["custom_metadata"]
+
+    # Backslashes escaped first, then quotes
+    assert '@ == "tag\\"with\\"quotes"' in custom_metadata
+    assert '@ == "path\\\\to\\\\dir"' in custom_metadata
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_update_custom_metadata_success(mock_get_client: MagicMock) -> None:
     """Test successful update of run custom metadata."""
     mock_client = MagicMock()
