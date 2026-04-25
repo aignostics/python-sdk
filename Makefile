@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit bump clean codegen dist dist_native docs docker_build gui_watch install lint lint_fix pre_commit_run_all profile setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
+.PHONY: act all audit clean codegen dist dist_native docs docker_build gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -47,7 +47,7 @@ else \
 fi
 
 ## Individual Nox sessions
-act audit bump dist docs lint lint_fix setup test update_from_template:
+act audit dist docs lint lint_fix setup test update_from_template:
 	$(nox-cmd)
 
 # Standalone targets
@@ -103,6 +103,39 @@ test_coverage_reset:
 	rm -rf .coverage
 	rm -rf reports/coverage*
 
+## Trigger the prepare-release GitHub workflow to create a release/vX.Y.Z branch
+## Usage: make prepare-release x.y.z
+prepare-release:
+	$(eval VERSION := $(filter-out $@,$(MAKECMDGOALS)))
+	@if [ -z "$(VERSION)" ]; then \
+		echo "❌ Usage: make prepare-release x.y.z"; \
+		exit 1; \
+	fi
+	gh workflow run prepare-release.yml --field version=$(VERSION)
+	@echo "Workflow triggered. Monitor at: https://github.com/aignostics/python-sdk/actions"
+
+## Trigger the publish-release GitHub workflow to generate changelog, tag, and push
+## Usage: make publish-release [release/vX.Y.Z]
+publish-release:
+	$(eval BRANCH := $(filter-out $@,$(MAKECMDGOALS)))
+	@if [ -n "$(BRANCH)" ]; then \
+		gh workflow run publish-release.yml --field branch=$(BRANCH); \
+	else \
+		gh workflow run publish-release.yml; \
+	fi
+	@echo "Workflow triggered. Monitor at: https://github.com/aignostics/python-sdk/actions"
+
+## Trigger the merge-release GitHub workflow to merge release/vX.Y.Z into main and delete the branch
+## Usage: make merge-release [release/vX.Y.Z]
+merge-release:
+	$(eval BRANCH := $(filter-out $@,$(MAKECMDGOALS)))
+	@if [ -n "$(BRANCH)" ]; then \
+		gh workflow run merge-release.yml --field branch=$(BRANCH); \
+	else \
+		gh workflow run merge-release.yml; \
+	fi
+	@echo "Workflow triggered. Monitor at: https://github.com/aignostics/python-sdk/actions"
+
 ## Clean build artifacts and caches
 clean:
 	rm -rf .mypy_cache
@@ -129,7 +162,8 @@ gui_watch:
 	uv run runner/gui_watch.py
 
 profile:
-	uv run --all-extras python -m scalene runner/scalene.py
+	mkdir -p tmp
+	uv run --all-extras python -m scalene run runner/scalene.py --outfile tmp/scalene-profile.json && uv run --all-extras python -m scalene view tmp/scalene-profile.json
 
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
@@ -152,8 +186,8 @@ dist_native:
 # Project specific targets
 ## codegen
 codegen:
-	# Download openapi.json from https://platform.aignostics.com/api/v1/openapi.json, 
-	# format via jq, and save as codegen/in/openapi_$version.json, with the 
+	# Download openapi.json from https://platform.aignostics.com/api/v1/openapi.json,
+	# format via jq, and save as codegen/in/openapi_$version.json, with the
 	# version extracted from the info.version field in the JSON
 	mkdir -p codegen/in/archive
 	# curl -s https://platform.aignostics.com/api/v1/openapi.json | jq . > codegen/in/openapi.json
@@ -176,9 +210,9 @@ codegen:
 	find codegen/out/aignx/codegen/models/ -name "[a-z]*.py" -type f | sed 's|.*/\(.*\)\.py|\1|' | xargs -I{} echo "from .{} import *" > codegen/out/aignx/codegen/models/__init__.py
 	# fix resource patch
 	# in codegen/out/public_api.py replace all occurrences of resource_path='/v1 with resource_path='/api/v1
-	# Use portable sed syntax: -i'' works on both macOS and Linux
-	sed -i"" "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
-	
+	# Use portable sed syntax: try GNU-style -i'' first, then BSD/macOS-style -i ''
+	sed -i'' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py || sed -i '' "s|resource_path='/v1|resource_path='/api/v1|g" codegen/out/aignx/codegen/api/public_api.py
+
 # Special rule to catch any arguments (like patch, minor, major, pdf, Python versions, or x.y.z)
 # This prevents "No rule to make target" errors when passing arguments to make commands
 .PHONY: %
@@ -192,7 +226,9 @@ help:
 	@echo "  act                   - Run GitHub actions locally via act"
 	@echo "  all                   - Run all default nox sessions, i.e. lint, test, docs, audit"
 	@echo "  audit                 - Run security and license compliance audit"
-	@echo "  bump patch|minor|major|x.y.z - Bump version"
+	@echo "  prepare-release x.y.z                   - Create release/vX.Y.Z branch via GitHub workflow"
+	@echo "  publish-release [release/vX.Y.Z]        - Generate changelog, tag, and push via GitHub workflow"
+	@echo "  merge-release [release/vX.Y.Z]          - Merge release branch into main and delete it via GitHub workflow"
 	@echo "  clean                 - Clean build artifacts and caches"
 	@echo "  codegen               - Download openapi.json from Aignostics platform, generate API code"
 	@echo "  dist                  - Build wheel and sdist into dist/"

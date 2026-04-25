@@ -1,5 +1,9 @@
 # .gitignore of project Aignostics Python SDK
 
+# Claude Code agent worktrees — created locally per session, never committed.
+# Note: .claude/settings.json is intentionally tracked; only worktrees are ignored.
+.claude/worktrees/
+
 # Environment
 .env
 .env.*
@@ -58,6 +62,7 @@ reports/*
 .idea/
 *.swp
 *.swo
+.vscode/*
 
 # macOS
 .DS_Store
@@ -77,6 +82,7 @@ node_modules/
 # AI workflow
 .fixme
 CLAUDE.local.md
+**/settings.local.json
 
 # Copier
 *.rej
@@ -84,6 +90,8 @@ CLAUDE.local.md
 # Scalene
 profile.json
 profile.html
+scalene-profile.json
+scalene-profile.html
 
 # Nicegui
 .nicegui

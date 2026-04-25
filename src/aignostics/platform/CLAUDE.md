@@ -793,7 +793,7 @@ def delete(self) -> None:
 - ✅ `Applications.list()` - Application list (5 min TTL)
 - ✅ `Applications.details()` - Application details (5 min TTL)
 - ✅ `Runs.details()` - Run details (15 sec TTL)
-- ✅ `Runs.results()` - Run results (15 sec TTL)
+- ✅ `Runs.results()` - Run results (15 sec TTL), supports `item_ids` and `external_ids` filters
 - ✅ `Runs.list()` - Run list (15 sec TTL)
 
 **Cache Bypass (NEW):**

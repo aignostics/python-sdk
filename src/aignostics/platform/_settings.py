@@ -25,27 +25,35 @@ from ._constants import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
     API_ROOT_STAGING,
+    API_ROOT_TEST,
     AUDIENCE_DEV,
     AUDIENCE_PRODUCTION,
     AUDIENCE_STAGING,
+    AUDIENCE_TEST,
     AUTHORIZATION_BASE_URL_DEV,
     AUTHORIZATION_BASE_URL_PRODUCTION,
     AUTHORIZATION_BASE_URL_STAGING,
+    AUTHORIZATION_BASE_URL_TEST,
     CLIENT_ID_INTERACTIVE_DEV,
     CLIENT_ID_INTERACTIVE_PRODUCTION,
     CLIENT_ID_INTERACTIVE_STAGING,
+    CLIENT_ID_INTERACTIVE_TEST,
     DEVICE_URL_DEV,
     DEVICE_URL_PRODUCTION,
     DEVICE_URL_STAGING,
+    DEVICE_URL_TEST,
     JWS_JSON_URL_DEV,
     JWS_JSON_URL_PRODUCTION,
     JWS_JSON_URL_STAGING,
+    JWS_JSON_URL_TEST,
     REDIRECT_URI_DEV,
     REDIRECT_URI_PRODUCTION,
     REDIRECT_URI_STAGING,
+    REDIRECT_URI_TEST,
     TOKEN_URL_DEV,
     TOKEN_URL_PRODUCTION,
     TOKEN_URL_STAGING,
+    TOKEN_URL_TEST,
 )
 from ._messages import UNKNOWN_ENDPOINT_URL
 
@@ -197,6 +205,10 @@ class Settings(OpaqueSettings):
         str, BeforeValidator(_validate_url), Field(description="JWS key set URL for token verification")
     ]
     client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
+
+    organization_id: Annotated[
+        str | None, Field(description="Optional Auth0 organization ID parameter for the /authorize OAuth endpoint")
+    ] = None
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -519,22 +531,6 @@ class Settings(OpaqueSettings):
             return values
 
         match api_root:
-            case x if x == API_ROOT_PRODUCTION:
-                values["audience"] = AUDIENCE_PRODUCTION
-                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
-                values["token_url"] = TOKEN_URL_PRODUCTION
-                values["redirect_uri"] = REDIRECT_URI_PRODUCTION
-                values["device_url"] = DEVICE_URL_PRODUCTION
-                values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
-                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
-            case x if x == API_ROOT_STAGING:
-                values["audience"] = AUDIENCE_STAGING
-                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
-                values["token_url"] = TOKEN_URL_STAGING
-                values["redirect_uri"] = REDIRECT_URI_STAGING
-                values["device_url"] = DEVICE_URL_STAGING
-                values["jws_json_url"] = JWS_JSON_URL_STAGING
-                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
             case x if x == API_ROOT_DEV:
                 values["audience"] = AUDIENCE_DEV
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_DEV
@@ -543,6 +539,30 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_DEV
                 values["jws_json_url"] = JWS_JSON_URL_DEV
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_DEV
+            case x if x == API_ROOT_TEST:
+                values["audience"] = AUDIENCE_TEST
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_TEST
+                values["token_url"] = TOKEN_URL_TEST
+                values["redirect_uri"] = REDIRECT_URI_TEST
+                values["device_url"] = DEVICE_URL_TEST
+                values["jws_json_url"] = JWS_JSON_URL_TEST
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_TEST
+            case x if x == API_ROOT_STAGING:
+                values["audience"] = AUDIENCE_STAGING
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
+                values["token_url"] = TOKEN_URL_STAGING
+                values["redirect_uri"] = REDIRECT_URI_STAGING
+                values["device_url"] = DEVICE_URL_STAGING
+                values["jws_json_url"] = JWS_JSON_URL_STAGING
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
+            case x if x == API_ROOT_PRODUCTION:
+                values["audience"] = AUDIENCE_PRODUCTION
+                values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
+                values["token_url"] = TOKEN_URL_PRODUCTION
+                values["redirect_uri"] = REDIRECT_URI_PRODUCTION
+                values["device_url"] = DEVICE_URL_PRODUCTION
+                values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
+                values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
             case _:
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 

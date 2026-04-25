@@ -5,6 +5,7 @@ import random
 import string
 from asyncio import sleep
 from pathlib import Path
+from unittest.mock import patch
 
 import psutil
 import pytest
@@ -18,8 +19,10 @@ from tests.conftest import assert_notified
 @pytest.mark.integration
 async def test_gui_bucket_shows(user: User) -> None:
     """Test that the user sees the dataset page."""
-    await user.open("/bucket")
-    await user.should_see("The bucket is securely hosted on Google Cloud in EU")
+    # Service.find_static can be slow and lead to test timeouts; we patch it to return an empty list.
+    with patch("aignostics.bucket._gui.Service.find_static", return_value=[]):
+        await user.open("/bucket")
+        await user.should_see("The bucket is securely hosted on Google Cloud in EU")
 
 
 @pytest.mark.e2e

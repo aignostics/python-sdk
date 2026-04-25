@@ -34,7 +34,7 @@ extensions = [
 project = "aignostics"
 author = "Helmut Hoffer von Ankershoffen"
 copyright = f" (c) 2025-{datetime.now(UTC).year} Aignostics GmbH, Author: {author}"  # noqa: A001
-version = "1.0.3"
+version = "1.2.0"
 release = version
 github_username = "aignostics"
 github_repository = "python-sdk"
@@ -92,6 +92,7 @@ exclude_patterns = []
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_logo = "../../logo.png"
 html_theme_options = {
     "announcement": (

@@ -1,5 +1,6 @@
 """System CLI commands."""
 
+import asyncio
 import json
 import sys
 from enum import StrEnum
@@ -11,7 +12,7 @@ import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import Health, console  # noqa: TID252
+from ..utils import console  # noqa: TID252
 from ._service import Service
 
 cli = typer.Typer(name="system", help="Determine health, info and further utillities.")
@@ -51,7 +52,7 @@ def health(
     Args:
         output_format (OutputFormat): Output format (JSON or YAML).
     """
-    health = _service.health()
+    health = asyncio.run(_service.health())
     match output_format:
         case OutputFormat.JSON:
             console.print_json(data=health.model_dump())
@@ -60,7 +61,7 @@ def health(
                 yaml.dump(data=json.loads(health.model_dump_json()), width=80, default_flow_style=False),
                 end="",
             )
-    if health.status is not Health.Code.UP:
+    if not health:
         sys.exit(1)
 
 
@@ -79,7 +80,7 @@ def info(
         mask_secrets (bool): Mask values for variables identified as secrets.
         output_format (OutputFormat): Output format (JSON or YAML).
     """
-    info = _service.info(include_environ=include_environ, mask_secrets=mask_secrets)
+    info = asyncio.run(_service.info(include_environ=include_environ, mask_secrets=mask_secrets))
     match output_format:
         case OutputFormat.JSON:
             console.print_json(data=info)
@@ -162,7 +163,7 @@ def openapi(
         case OutputFormat.JSON:
             console.print_json(data=schema)
         case OutputFormat.YAML:
-            console.print(yaml.dump(schema, default_flow_style=False), end="")
+            print(yaml.dump(schema, default_flow_style=False, allow_unicode=True, width=float("inf")), end="")
 
 
 @cli.command()

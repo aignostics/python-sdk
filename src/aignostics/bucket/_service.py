@@ -1,6 +1,7 @@
 """Service of the bucket module."""
 
 import hashlib
+import os
 import re
 from collections.abc import Callable, Generator
 from pathlib import Path
@@ -92,7 +93,7 @@ class Service(BaseService):
         super().__init__(Settings)
         self._platform_service = PlatformService()
 
-    def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
         """Determine info of this service.
 
         Args:
@@ -103,7 +104,7 @@ class Service(BaseService):
         """
         return {}
 
-    def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:  # noqa: PLR6301
         """Determine health of this service.
 
         Returns:
@@ -285,6 +286,126 @@ class Service(BaseService):
         return results
 
     @staticmethod
+    def _compute_s3_prefix(
+        what: list[str],
+        what_is_key: bool,
+        compiled_patterns: list[re.Pattern[str]],  # noqa: ARG004
+    ) -> str | None:
+        """Compute the longest common S3 object prefix for server-side filtering.
+
+        When a useful prefix can be determined, passing it to the S3 paginator reduces
+        the number of pages fetched and dramatically improves performance on large buckets.
+
+        Args:
+            what (list[str]): Exact keys (when what_is_key=True) or regex pattern strings.
+            what_is_key (bool): If True, treat entries as exact keys; else as regex patterns.
+            compiled_patterns (list[re.Pattern[str]]): Pre-compiled patterns (reserved for future use).
+
+        Returns:
+            str | None: The longest common prefix, or None if no useful prefix can be inferred.
+        """
+        re_meta = re.compile(r"[.+*?^${}()\[\]|\\]")
+
+        if what_is_key:
+            prefix = os.path.commonprefix(what)
+        else:
+            literal_prefixes: list[str] = []
+            for pattern in what:
+                m = re_meta.search(pattern)
+                literal_prefix = pattern[: m.start()] if m else pattern
+                if not literal_prefix:
+                    return None
+                literal_prefixes.append(literal_prefix)
+            prefix = os.path.commonprefix(literal_prefixes)
+
+        return prefix or None
+
+    @staticmethod
+    def _compile_patterns(patterns: list[str]) -> list[re.Pattern[str]]:
+        """Compile a list of regex pattern strings, raising ValueError on invalid patterns.
+
+        Args:
+            patterns (list[str]): List of regex pattern strings to compile.
+
+        Returns:
+            list[re.Pattern[str]]: Compiled regex patterns.
+
+        Raises:
+            ValueError: If any pattern is invalid regex.
+        """
+        compiled: list[re.Pattern[str]] = []
+        for pattern in patterns:
+            try:
+                compiled.append(re.compile(pattern))
+            except re.error as e:
+                msg = f"Invalid regex pattern '{pattern}': {e}"
+                logger.warning(msg)
+                raise ValueError(msg) from e
+        return compiled
+
+    @staticmethod
+    def _matches_criteria(
+        item_key: str,
+        what: list[str],
+        what_is_key: bool,
+        compiled_patterns: list[re.Pattern[str]],
+    ) -> bool:
+        """Return True if item_key satisfies the search criteria.
+
+        Args:
+            item_key (str): The S3 object key to test.
+            what (list[str]): Exact keys or pattern strings.
+            what_is_key (bool): If True, match by exact key membership; else by regex.
+            compiled_patterns (list[re.Pattern[str]]): Pre-compiled patterns (used when not what_is_key).
+
+        Returns:
+            bool: True if the item matches any criterion.
+        """
+        if what_is_key:
+            return item_key in what
+        return any(pattern.match(item_key) for pattern in compiled_patterns)
+
+    def _build_result_item(
+        self,
+        item: dict[str, Any],
+        detail: bool,
+        include_signed_urls: bool,
+    ) -> str | dict[str, Any]:
+        """Build the result entry for a single S3 object.
+
+        Args:
+            item (dict[str, Any]): Raw S3 object metadata from the paginator.
+            detail (bool): If True, return full metadata dict; else return only the key.
+            include_signed_urls (bool): If True, include a pre-signed download URL.
+
+        Returns:
+            str | dict[str, Any]: Either the object key string or a metadata dict.
+        """
+        item_key: str = item["Key"]
+
+        if detail:
+            size_bytes = item.get("Size", 0)
+            item_data: dict[str, Any] = {
+                "key": item_key,
+                "size": size_bytes,
+                "size_human": humanize.naturalsize(size_bytes),
+                "last_modified": item.get("LastModified"),
+                "etag": item.get("ETag", "").strip('"'),
+                "storage_class": item.get("StorageClass", ""),
+            }
+            if include_signed_urls:
+                item_data["signed_download_url"] = self.create_signed_download_url(item_key)
+            return item_data
+
+        if include_signed_urls:
+            return {
+                "key": item_key,
+                "signed_download_url": self.create_signed_download_url(item_key),
+            }
+
+        return item_key
+
+    @staticmethod
     def find_static(
         what: list[str] | None = None,
         what_is_key: bool = False,
@@ -307,7 +428,7 @@ class Service(BaseService):
         """
         return Service().find(what, what_is_key, detail, include_signed_urls)
 
-    def find(  # noqa: C901
+    def find(
         self,
         what: list[str] | None,
         what_is_key: bool = False,
@@ -336,55 +457,23 @@ class Service(BaseService):
             bucket_prefix = f"{self.get_bucket_name()}/"
             what = [key.removeprefix(bucket_prefix) for key in what]
 
-        compiled_patterns: list[re.Pattern[str]] = []
-        if not what_is_key:
-            for pattern in what:
-                try:
-                    compiled_patterns.append(re.compile(pattern))
-                except re.error as e:
-                    msg = f"Invalid regex pattern '{pattern}': {e}"
-                    logger.warning(msg)
-                    raise ValueError(msg) from e
+        compiled_patterns = [] if what_is_key else self._compile_patterns(what)
 
         s3c = self._get_s3_client()
         paginator = s3c.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=self.get_bucket_name())
+        paginate_kwargs: dict[str, Any] = {"Bucket": self.get_bucket_name()}
+        prefix = Service._compute_s3_prefix(what, what_is_key, compiled_patterns)
+        if prefix is not None:
+            paginate_kwargs["Prefix"] = prefix
+        pages = paginator.paginate(**paginate_kwargs)
 
         result: list[str | dict[str, Any]] = []
 
         for page in pages:
-            contents = page.get("Contents", [])
-
-            for item in contents:
-                item_key = item["Key"]
-
-                # Check if item matches criteria
-                matches = (
-                    item_key in what if what_is_key else any(pattern.match(item_key) for pattern in compiled_patterns)
-                )
-                if not matches:
+            for item in page.get("Contents", []):
+                if not self._matches_criteria(item["Key"], what, what_is_key, compiled_patterns):
                     continue
-
-                if detail:
-                    size_bytes = item.get("Size", 0)
-                    item_data = {
-                        "key": item_key,
-                        "size": size_bytes,
-                        "size_human": humanize.naturalsize(size_bytes),
-                        "last_modified": item.get("LastModified"),
-                        "etag": item.get("ETag", "").strip('"'),
-                        "storage_class": item.get("StorageClass", ""),
-                    }
-                    if include_signed_urls:
-                        item_data["signed_download_url"] = self.create_signed_download_url(item_key)
-                    result.append(item_data)
-                elif include_signed_urls:
-                    result.append({
-                        "key": item_key,
-                        "signed_download_url": self.create_signed_download_url(item_key),
-                    })
-                else:
-                    result.append(item_key)
+                result.append(self._build_result_item(item, detail, include_signed_urls))
 
         return result
 

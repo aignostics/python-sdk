@@ -569,6 +569,24 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     status_str = f"{run_data.state.value}"
 
+                # Extract scheduling info from the API response field
+                scheduling = getattr(run_data, "scheduling", None)
+                due_date_str = "N/A"
+                deadline_str = "N/A"
+                if scheduling is not None:
+                    if getattr(scheduling, "due_date", None) is not None:
+                        due_date_str = (
+                            scheduling.due_date.astimezone().strftime("%m-%d %H:%M")
+                            if hasattr(scheduling.due_date, "astimezone")
+                            else str(scheduling.due_date)
+                        )
+                    if getattr(scheduling, "deadline", None) is not None:
+                        deadline_str = (
+                            scheduling.deadline.astimezone().strftime("%m-%d %H:%M")
+                            if hasattr(scheduling.deadline, "astimezone")
+                            else str(scheduling.deadline)
+                        )
+
                 ui.code(
                     f"""
                     * Run ID: {run_data.run_id}
@@ -585,6 +603,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                         - {run_data.statistics.item_system_error_count} system errors
                     * Submitted: {submitted_at.strftime("%m-%d %H:%M")} ({run_data.submitted_by})
                     * Terminated: {terminated_at.strftime("%m-%d %H:%M") if terminated_at else "N/A"} ({duration_str})
+                    * Scheduling:
+                        - Due Date: {due_date_str}
+                        - Deadline: {deadline_str}
                     * Error: {run_data.error_message or "N/A"} ({run_data.error_code or "N/A"})
                     """,
                     language="markdown",
