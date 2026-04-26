@@ -728,13 +728,32 @@ def test_platform_heta_app_find_and_validate() -> None:
 _CANARY_MAX_RUNS_TO_INSPECT = 20
 
 
+def _find_available_output_artifact_id(run: Run) -> str | None:
+    """Return the first AVAILABLE output_artifact_id from a successful run, else None.
+
+    Single-run scan helper for the /file endpoint canary. Walks the run's
+    items and per-item artifacts and returns the first artifact whose output
+    is ``AVAILABLE`` and whose ``output_artifact_id`` is non-empty. Returns
+    ``None`` when the run produced no usable artifact (e.g. all items
+    terminated with ``NONE`` output). The caller is expected to have already
+    filtered for runs that are ``TERMINATED`` with ``FULL`` output.
+    """
+    for item in run.results(nocache=True):
+        if item.state is not ItemState.TERMINATED or item.output is not ItemOutput.FULL:
+            continue
+        for art in item.output_artifacts:
+            if art.output is ArtifactOutput.AVAILABLE and art.output_artifact_id:
+                return art.output_artifact_id
+    return None
+
+
 def _find_available_artifact_in_recent_heta_run() -> tuple[Run, str] | None:
     """Find one AVAILABLE output artifact from a recent successful HETA run.
 
     Helper for the /file endpoint canary below. Iterates the most recent HETA
     runs tagged ``scheduled`` lazily — only inspects up to
     ``_CANARY_MAX_RUNS_TO_INSPECT`` runs and stops at the first hit. Returns
-    None when no such artifact is reachable in the inspected window — the
+    ``None`` when no such artifact is reachable in the inspected window — the
     canary skips in that case rather than fails.
 
     The cap exists because, as staging accumulates scheduled runs, materializing
@@ -750,23 +769,21 @@ def _find_available_artifact_in_recent_heta_run() -> tuple[Run, str] | None:
     client = platform.Client()
     # client.runs.list yields Run handles directly; iterate lazily and cap to N
     # so the canary stays well under its 60s timeout even on a busy staging env.
-    for run in itertools.islice(
+    candidate_runs = itertools.islice(
         client.runs.list(
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
             custom_metadata='$.sdk.tags[*] ? (@ == "scheduled")',
         ),
         _CANARY_MAX_RUNS_TO_INSPECT,
-    ):
+    )
+    for run in candidate_runs:
         details = run.details(nocache=True)
         if details.state is not RunState.TERMINATED or details.output is not RunOutput.FULL:
             continue
-        for item in run.results(nocache=True):
-            if item.state is not ItemState.TERMINATED or item.output is not ItemOutput.FULL:
-                continue
-            for art in item.output_artifacts:
-                if art.output is ArtifactOutput.AVAILABLE and art.output_artifact_id:
-                    return run, art.output_artifact_id
+        artifact_id = _find_available_output_artifact_id(run)
+        if artifact_id is not None:
+            return run, artifact_id
     return None
 
 
