@@ -473,7 +473,9 @@ class Run:
                         raise DownloadTimeoutError(msg)  # noqa: TRY301
                 for item in self.results(nocache=True):
                     if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
-                        self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                        self.ensure_artifacts_downloaded(
+                            application_run_dir, item, checksum_attribute_key, print_status=print_status
+                        )
                 sleep(sleep_interval)
                 application_run_state = self.details(nocache=True).state
                 print(self) if print_status else None

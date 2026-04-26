@@ -725,28 +725,39 @@ def test_platform_heta_app_find_and_validate() -> None:
     )
 
 
+_CANARY_MAX_RUNS_TO_INSPECT = 20
+
+
 def _find_available_artifact_in_recent_heta_run() -> tuple[Run, str] | None:
     """Find one AVAILABLE output artifact from a recent successful HETA run.
 
     Helper for the /file endpoint canary below. Iterates the most recent HETA
-    runs tagged ``scheduled``, returning the first ``(run, artifact_id)`` whose
-    parent item is ``TERMINATED+FULL`` and whose artifact output is
-    ``AVAILABLE``. Returns None when no such artifact is reachable — the canary
-    skips in that case rather than fails.
+    runs tagged ``scheduled`` lazily — only inspects up to
+    ``_CANARY_MAX_RUNS_TO_INSPECT`` runs and stops at the first hit. Returns
+    None when no such artifact is reachable in the inspected window — the
+    canary skips in that case rather than fails.
+
+    The cap exists because, as staging accumulates scheduled runs, materializing
+    the full list and querying details/results for every one risks the canary's
+    60s timeout. Runs from ``client.runs.list`` are already returned newest-first
+    so capping is biased toward recent data.
 
     Returns:
         tuple[Run, str] | None: A bound (Run, output_artifact_id) pair, or None.
     """
+    import itertools
+
     client = platform.Client()
-    candidate_runs = list(
+    # client.runs.list yields Run handles directly; iterate lazily and cap to N
+    # so the canary stays well under its 60s timeout even on a busy staging env.
+    for run in itertools.islice(
         client.runs.list(
             application_id=HETA_APPLICATION_ID,
             application_version=HETA_APPLICATION_VERSION,
             custom_metadata='$.sdk.tags[*] ? (@ == "scheduled")',
-        )
-    )
-    for run_summary in candidate_runs:
-        run = Run.for_run_id(run_summary.run_id)
+        ),
+        _CANARY_MAX_RUNS_TO_INSPECT,
+    ):
         details = run.details(nocache=True)
         if details.state is not RunState.TERMINATED or details.output is not RunOutput.FULL:
             continue
