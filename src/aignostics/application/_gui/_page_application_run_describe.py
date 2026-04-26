@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import queue as queue_module
 import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
@@ -256,13 +257,21 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         # This allows the timer callback to access the queue that's created during start_download
         progress_state: dict[str, Any] = {"queue": None}
 
-        def update_download_progress() -> None:  # noqa: C901, PLR0912
+        def update_download_progress() -> None:  # noqa: C901, PLR0912, PLR0915
             """Update the progress indicator with values from the queue."""
             progress_queue = progress_state.get("queue")
             if progress_queue is None:
                 return
-            while not progress_queue.empty():
-                progress = progress_queue.get()
+            # Drain everything currently in the queue, but never block on `get()`. Using
+            # `get_nowait()` (instead of the previously-paired `empty()` check + blocking `get()`)
+            # guards against a tiny IPC race on `multiprocessing.Manager().Queue` where the queue
+            # could be drained between `empty()` returning False and `get()` running, leaving
+            # `get()` to block indefinitely and stall the async progress task.
+            while True:
+                try:
+                    progress = progress_queue.get_nowait()
+                except queue_module.Empty:
+                    break
                 if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
                     status_text = (
                         f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
@@ -401,9 +410,14 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
             finally:
+                # Force the progress task to terminate even if it's stuck in a sync call (e.g.
+                # a Manager().Queue() IPC hiccup): set the stop event, hard-cancel the task,
+                # and wait a bounded time. This guarantees `start_download` cleanup completes
+                # in finite time no matter what the progress driver was doing.
                 stop_progress.set()
-                with contextlib.suppress(asyncio.CancelledError, Exception):
-                    await progress_task
+                progress_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception, TimeoutError):
+                    await asyncio.wait_for(progress_task, timeout=2.0)
                 progress_state["queue"] = None
                 download_button.props(remove="loading")
                 download_button.enable()
