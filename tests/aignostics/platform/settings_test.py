@@ -597,7 +597,7 @@ def test_status_page_url_explicit_none_argument(record_property) -> None:
 @pytest.mark.parametrize(
     "bad_url",
     [
-        "ftp://example.com",  # non-http(s) scheme
+        "ftp://example.com",  # non-http(s) scheme  # NOSONAR S5332: literal is the invalid input we assert is rejected
         "javascript:alert(1)",  # javascript scheme
         "file:///etc/passwd",  # file scheme
         "//example.com",  # missing scheme
