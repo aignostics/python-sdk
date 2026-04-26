@@ -1131,7 +1131,10 @@ class ArtifactOutput(BaseModel):
     """Individual artifact details."""
     state: ArtifactState
     termination_reason: ArtifactTerminationReason | None
-    download_url: str | None  # Available when SUCCEEDED
+    output_artifact_id: str          # Used to resolve a fresh presigned URL via Run.get_artifact_download_url(...)
+    download_url: str | None         # DEPRECATED — populated for backwards compatibility but may stop being emitted by SAMIA
+                                     # at any time. Resolve a short-lived presigned URL on demand instead via
+                                     # Run.get_artifact_download_url(artifact.output_artifact_id).
     # ... other fields
 
 class RunItemStatistics(BaseModel):
@@ -1192,11 +1195,15 @@ for item in run.results():
     if item.output.state == ItemState.TERMINATED:
         if item.output.termination_reason == ItemTerminationReason.SUCCEEDED:
             print(f"Item {item.item_id} succeeded")
-            # Access artifacts
+            # Access artifacts — resolve a fresh presigned URL via the /file endpoint.
+            # The legacy `artifact.download_url` field is deprecated and may stop being
+            # populated by SAMIA at any time; use Run.get_artifact_download_url(...) so
+            # the URL is always fresh and the SDK retries the resolve on transient errors.
             for artifact in item.output.artifacts:
                 if artifact.state == ArtifactState.TERMINATED:
                     if artifact.termination_reason == ArtifactTerminationReason.SUCCEEDED:
-                        print(f"  - Artifact ready: {artifact.download_url}")
+                        signed_url = run.get_artifact_download_url(artifact.output_artifact_id)
+                        print(f"  - Artifact ready: {signed_url}")
         elif item.output.termination_reason == ItemTerminationReason.USER_ERROR:
             print(f"Item {item.item_id} failed: user error")
         elif item.output.termination_reason == ItemTerminationReason.SYSTEM_ERROR:
