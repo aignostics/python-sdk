@@ -116,23 +116,19 @@ class Client:
             if app.application_id == application_id:
                 return app
         raise NotFoundException
-    
-    def application_version(self, application_id: str, 
-                          version_number: str | None = None) -> ApplicationVersion:
+
+    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
         """Get application version details.
-        
+
         Args:
             application_id: The ID of the application (e.g., 'heta')
             version_number: The semantic version number (e.g., '1.0.0')
                           If None, returns the latest version
-        
+
         Returns:
             ApplicationVersion with application_id and version_number attributes
         """
-        return Versions(self._api).details(
-            application_id=application_id, 
-            application_version=version_number
-        )
+        return Versions(self._api).details(application_id=application_id, application_version=version_number)
 ```
 
 ### Authentication Flow (`_authentication.py`)
@@ -190,6 +186,7 @@ LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 # In resources/utils.py
 PAGE_SIZE = 20  # Default for general pagination
 
+
 def paginate(func, *args, page_size=PAGE_SIZE, **kwargs):
     """Generic pagination helper."""
     page = 1
@@ -209,15 +206,15 @@ class Runs:
         self,
         application_id: str | None = None,
         application_version: str | None = None,
-        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ):
         """List runs with pagination.
-        
+
         Args:
             application_id: Optional filter by application ID
             application_version: Optional filter by version number (not version_id)
             page_size: Number of results per page (max 100)
-        
+
         Returns:
             Iterator[Run] Iterator of Run instances
         """
@@ -278,21 +275,27 @@ class Runs:
 ```python
 # From _sdk_metadata.py (actual implementation)
 
+
 class SubmissionMetadata(BaseModel):
     """Metadata about how the SDK was invoked."""
+
     date: str  # ISO 8601 timestamp
     interface: Literal["script", "cli", "launchpad"]  # How SDK was accessed
     source: Literal["user", "test", "bridge"]  # Who initiated the run
 
+
 class UserMetadata(BaseModel):
     """User information metadata."""
+
     organization_id: str
     organization_name: str
     user_email: str
     user_id: str
 
+
 class GitHubCIMetadata(BaseModel):
     """GitHub Actions CI metadata."""
+
     action: str | None
     job: str | None
     ref: str | None
@@ -309,27 +312,37 @@ class GitHubCIMetadata(BaseModel):
     workflow: str | None
     workflow_ref: str | None
 
+
 class PytestCIMetadata(BaseModel):
     """Pytest test execution metadata."""
+
     current_test: str  # Test name being executed
     markers: list[str] | None  # Pytest markers applied
 
+
 class CIMetadata(BaseModel):
     """CI/CD environment metadata."""
+
     github: GitHubCIMetadata | None
     pytest: PytestCIMetadata | None
 
+
 class WorkflowMetadata(BaseModel):
     """Workflow control metadata."""
+
     onboard_to_aignostics_portal: bool = False
+
 
 class SchedulingMetadata(BaseModel):
     """Scheduling metadata for run execution."""
+
     due_date: str | None  # ISO 8601, requested completion time
     deadline: str | None  # ISO 8601, hard deadline
 
+
 class RunSdkMetadata(BaseModel):
     """Complete Run SDK metadata schema."""
+
     schema_version: str  # Currently "0.0.4"
     created_at: str  # ISO 8601 timestamp - NEW
     updated_at: str  # ISO 8601 timestamp - NEW
@@ -344,14 +357,18 @@ class RunSdkMetadata(BaseModel):
 
     model_config = {"extra": "forbid"}  # Strict validation
 
+
 class PlatformBucketMetadata(BaseModel):
     """Platform bucket storage metadata for items - NEW"""
+
     bucket_name: str  # Name of the cloud storage bucket
     object_key: str  # Object key/path within the bucket
     signed_download_url: str  # Signed URL for downloading
 
+
 class ItemSdkMetadata(BaseModel):
     """Complete Item SDK metadata schema - NEW"""
+
     schema_version: str  # Currently "0.0.3"
     created_at: str  # ISO 8601 timestamp
     updated_at: str  # ISO 8601 timestamp
@@ -440,7 +457,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
         metadata["ci"] = metadata.get("ci", {})
         metadata["ci"]["pytest"] = {
             "current_test": os.environ["PYTEST_CURRENT_TEST"],
-            "markers": os.environ.get("PYTEST_MARKERS", "").split(",")
+            "markers": os.environ.get("PYTEST_MARKERS", "").split(","),
         }
 
     return metadata
@@ -450,6 +467,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
 
 ```python
 # From resources/runs.py (actual implementation)
+
 
 def submit(self, application_id: str, items: list, custom_metadata: dict = None):
     """Submit run with automatic SDK metadata attachment."""
@@ -468,11 +486,7 @@ def submit(self, application_id: str, items: list, custom_metadata: dict = None)
     custom_metadata["sdk"].update(sdk_metadata)
 
     # Submit run with merged metadata
-    return self._api.create_run(
-        application_id=application_id,
-        items=items,
-        custom_metadata=custom_metadata
-    )
+    return self._api.create_run(application_id=application_id, items=items, custom_metadata=custom_metadata)
 ```
 
 **JSON Schema Generation:**
@@ -529,6 +543,7 @@ def validate_run_sdk_metadata(metadata: dict[str, Any]) -> bool:
         logger.exception("SDK metadata validation failed")
         raise
 
+
 def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
     """Validate Run SDK metadata without raising exceptions."""
     try:
@@ -536,6 +551,7 @@ def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
         return True
     except ValidationError:
         return False
+
 
 def get_run_sdk_metadata_json_schema() -> dict[str, Any]:
     """Get JSON Schema for Run SDK metadata with $schema and $id fields."""
@@ -546,6 +562,7 @@ def get_run_sdk_metadata_json_schema() -> dict[str, Any]:
         f"docs/source/_static/sdk_run_custom_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
     )
     return schema
+
 
 def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build SDK metadata to attach to individual items - NEW"""
@@ -559,6 +576,7 @@ def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> 
         "updated_at": now,
     }
 
+
 def validate_item_sdk_metadata(metadata: dict[str, Any]) -> bool:
     """Validate Item SDK metadata - NEW"""
     try:
@@ -567,6 +585,7 @@ def validate_item_sdk_metadata(metadata: dict[str, Any]) -> bool:
     except ValidationError:
         logger.exception("Item SDK metadata validation failed")
         raise
+
 
 def get_item_sdk_metadata_json_schema() -> dict[str, Any]:
     """Get JSON Schema for Item SDK metadata - NEW"""
@@ -643,9 +662,8 @@ Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:
 # Global cache storage
 _operation_cache: dict[str, tuple[Any, float]] = {}
 
-def cached_operation(
-    ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None
-) -> Callable:
+
+def cached_operation(ttl: int, *, use_token: bool = True, instance_attrs: tuple[str, ...] | None = None) -> Callable:
     """Decorator for caching function results with TTL.
 
     Args:
@@ -659,6 +677,7 @@ def cached_operation(
         - Deletes expired entries automatically
         - Stores new results with expiry timestamp
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # Build cache key
@@ -681,8 +700,11 @@ def cached_operation(
             result = func(*args, **kwargs)
             _operation_cache[key] = (result, time.time() + ttl)
             return result
+
         return wrapper
+
     return decorator
+
 
 def operation_cache_clear(func: Callable | list[Callable] | None = None) -> int:
     """Clear operation cache, optionally filtering by function(s).
@@ -707,10 +729,7 @@ def operation_cache_clear(func: Callable | list[Callable] | None = None) -> int:
     func_list = func if isinstance(func, list) else [func]
     func_qualified_names = [f.__qualname__ for f in func_list]
 
-    keys_to_remove = [
-        key for key in _operation_cache
-        if any(name in key for name in func_qualified_names)
-    ]
+    keys_to_remove = [key for key in _operation_cache if any(name in key for name in func_qualified_names)]
 
     for key in keys_to_remove:
         del _operation_cache[key]
@@ -740,16 +759,13 @@ auth_jwk_set_cache_ttl: int = 86400  # 1 day
 # From _client.py
 @cached_operation(ttl=settings().me_cache_ttl, use_token=True)
 def me_with_retry() -> Me:
-    return Retrying(...)(
-        lambda: self._api.get_me_v1_me_get(...)
-    )
+    return Retrying(...)(lambda: self._api.get_me_v1_me_get(...))
+
 
 # From resources/runs.py
 @cached_operation(ttl=settings().run_cache_ttl, use_token=True)
 def details_with_retry(run_id: str) -> RunData:
-    return Retrying(...)(
-        lambda: self._api.get_run_v1_runs_run_id_get(run_id, ...)
-    )
+    return Retrying(...)(lambda: self._api.get_run_v1_runs_run_id_get(run_id, ...))
 ```
 
 **Cache Invalidation Strategy:**
@@ -805,6 +821,7 @@ All cached operations now support a `nocache=True` parameter to force fresh API 
 run = client.runs.details(run_id, nocache=True)  # Force API call
 applications = client.applications.list(nocache=True)  # Bypass cache
 me = client.me(nocache=True)  # Fresh user info
+
 
 # Useful in tests to avoid race conditions
 def test_run_update():
@@ -889,12 +906,12 @@ Comprehensive test suite in `tests/aignostics/platform/client_cache_test.py`:
 ```python
 # From _client.py and resources/*.py
 RETRYABLE_EXCEPTIONS = (
-    ServiceException,      # 5xx server errors
-    Urllib3TimeoutError,   # Connection timeout
-    PoolError,            # Connection pool exhausted
-    IncompleteRead,       # Partial response received
-    ProtocolError,        # Protocol violation
-    ProxyError,           # Proxy connection failed
+    ServiceException,  # 5xx server errors
+    Urllib3TimeoutError,  # Connection timeout
+    PoolError,  # Connection pool exhausted
+    IncompleteRead,  # Partial response received
+    ProtocolError,  # Protocol violation
+    ProxyError,  # Proxy connection failed
 )
 ```
 
@@ -909,14 +926,14 @@ def me_with_retry() -> Me:
         stop=stop_after_attempt(settings().me_retry_attempts),  # Max 4 attempts
         wait=wait_exponential_jitter(
             initial=settings().me_retry_wait_min,  # 0.1s
-            max=settings().me_retry_wait_max       # 60s
+            max=settings().me_retry_wait_max,  # 60s
         ),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,  # Re-raise after all attempts exhausted
     )(
         lambda: self._api.get_me_v1_me_get(
             _request_timeout=settings().me_timeout,  # 30s
-            _headers={"User-Agent": user_agent()}
+            _headers={"User-Agent": user_agent()},
         )
     )
 ```
@@ -926,7 +943,7 @@ def me_with_retry() -> Me:
 ```python
 # Defaults (from _settings.py)
 RETRY_ATTEMPTS_DEFAULT = 4
-RETRY_WAIT_MIN_DEFAULT = 0.1   # seconds
+RETRY_WAIT_MIN_DEFAULT = 0.1  # seconds
 RETRY_WAIT_MAX_DEFAULT = 60.0  # seconds
 TIMEOUT_DEFAULT = 30.0  # seconds
 
@@ -1039,23 +1056,29 @@ Comprehensive test suite in `tests/aignostics/platform/client_me_retry_test.py`:
 ```python
 # From codegen/out/aignx/codegen/models/
 
+
 class RunState(str, Enum):
     """Run lifecycle states."""
-    PENDING = 'PENDING'        # Run created, waiting to start
-    PROCESSING = 'PROCESSING'  # Run actively processing items
-    TERMINATED = 'TERMINATED'  # Run completed (check termination_reason)
+
+    PENDING = "PENDING"  # Run created, waiting to start
+    PROCESSING = "PROCESSING"  # Run actively processing items
+    TERMINATED = "TERMINATED"  # Run completed (check termination_reason)
+
 
 class ItemState(str, Enum):
     """Item (slide) processing states."""
-    PENDING = 'PENDING'        # Item queued for processing
-    PROCESSING = 'PROCESSING'  # Item being analyzed
-    TERMINATED = 'TERMINATED'  # Item processing done (check termination_reason)
+
+    PENDING = "PENDING"  # Item queued for processing
+    PROCESSING = "PROCESSING"  # Item being analyzed
+    TERMINATED = "TERMINATED"  # Item processing done (check termination_reason)
+
 
 class ArtifactState(str, Enum):
     """Individual artifact processing states."""
-    PENDING = 'PENDING'        # Artifact generation pending
-    PROCESSING = 'PROCESSING'  # Artifact being created
-    TERMINATED = 'TERMINATED'  # Artifact ready or failed
+
+    PENDING = "PENDING"  # Artifact generation pending
+    PROCESSING = "PROCESSING"  # Artifact being created
+    TERMINATED = "TERMINATED"  # Artifact ready or failed
 ```
 
 **New Termination Reason Enums:**
@@ -1063,22 +1086,27 @@ class ArtifactState(str, Enum):
 ```python
 class RunTerminationReason(str, Enum):
     """Why a run terminated."""
-    ALL_ITEMS_PROCESSED = 'ALL_ITEMS_PROCESSED'  # Normal completion
-    CANCELED_BY_SYSTEM = 'CANCELED_BY_SYSTEM'    # System initiated cancellation
-    CANCELED_BY_USER = 'CANCELED_BY_USER'        # User canceled the run
+
+    ALL_ITEMS_PROCESSED = "ALL_ITEMS_PROCESSED"  # Normal completion
+    CANCELED_BY_SYSTEM = "CANCELED_BY_SYSTEM"  # System initiated cancellation
+    CANCELED_BY_USER = "CANCELED_BY_USER"  # User canceled the run
+
 
 class ItemTerminationReason(str, Enum):
     """Why an item terminated."""
-    SUCCEEDED = 'SUCCEEDED'      # Item processed successfully
-    USER_ERROR = 'USER_ERROR'    # Input validation or user-caused error
-    SYSTEM_ERROR = 'SYSTEM_ERROR'  # Infrastructure or application error
-    SKIPPED = 'SKIPPED'          # Item skipped (e.g., duplicate)
+
+    SUCCEEDED = "SUCCEEDED"  # Item processed successfully
+    USER_ERROR = "USER_ERROR"  # Input validation or user-caused error
+    SYSTEM_ERROR = "SYSTEM_ERROR"  # Infrastructure or application error
+    SKIPPED = "SKIPPED"  # Item skipped (e.g., duplicate)
+
 
 class ArtifactTerminationReason(str, Enum):
     """Why an artifact terminated."""
-    SUCCEEDED = 'SUCCEEDED'      # Artifact created successfully
-    USER_ERROR = 'USER_ERROR'    # Input validation error
-    SYSTEM_ERROR = 'SYSTEM_ERROR'  # Generation failed due to system issue
+
+    SUCCEEDED = "SUCCEEDED"  # Artifact created successfully
+    USER_ERROR = "USER_ERROR"  # Input validation error
+    SYSTEM_ERROR = "SYSTEM_ERROR"  # Generation failed due to system issue
 ```
 
 **State Machine Architecture:**
@@ -1115,20 +1143,25 @@ PENDING → PROCESSING → TERMINATED
 ```python
 class RunOutput(BaseModel):
     """Run execution results summary."""
+
     state: RunState
     termination_reason: RunTerminationReason | None
     statistics: RunItemStatistics  # NEW: Aggregate item counts
     # ... other fields
 
+
 class ItemOutput(BaseModel):
     """Individual item processing results."""
+
     state: ItemState
     termination_reason: ItemTerminationReason | None
     artifacts: list[ArtifactOutput]  # List of output artifacts
     # ... other fields
 
+
 class ArtifactOutput(BaseModel):
     """Individual artifact details."""
+
     state: ArtifactState
     termination_reason: ArtifactTerminationReason | None
     output_artifact_id: str          # Used to resolve a fresh presigned URL via Run.get_artifact_download_url(...)
@@ -1137,15 +1170,17 @@ class ArtifactOutput(BaseModel):
                                      # Run.get_artifact_download_url(artifact.output_artifact_id).
     # ... other fields
 
+
 class RunItemStatistics(BaseModel):
     """NEW: Aggregate statistics for run."""
-    total: int        # Total items in run
-    succeeded: int    # Successfully processed
-    user_error: int   # Failed due to user errors
-    system_error: int # Failed due to system errors
-    skipped: int      # Skipped items
-    pending: int      # Not yet started
-    processing: int   # Currently processing
+
+    total: int  # Total items in run
+    succeeded: int  # Successfully processed
+    user_error: int  # Failed due to user errors
+    system_error: int  # Failed due to system errors
+    skipped: int  # Skipped items
+    pending: int  # Not yet started
+    processing: int  # Currently processing
 ```
 
 **Model Migrations (Deleted Models):**
@@ -1267,16 +1302,13 @@ for app in client.applications.list():
 # Get application version
 app_version = client.application_version(
     application_id="heta",
-    version_number="1.0.0"  # Omit for latest version
+    version_number="1.0.0",  # Omit for latest version
 )
 print(f"Application: {app_version.application_id}")
 print(f"Version: {app_version.version_number}")
 
 # Get latest version
-latest = client.application_version(
-    application_id="heta",
-    version_number=None
-)
+latest = client.application_version(application_id="heta", version_number=None)
 
 # Get specific run
 run = client.run("run-id-123")
@@ -1294,11 +1326,7 @@ for run in runs:
 
 ```python
 from aignostics.platform import Client
-from aignostics.platform._sdk_metadata import (
-    build_sdk_metadata,
-    validate_sdk_metadata,
-    get_sdk_metadata_json_schema
-)
+from aignostics.platform._sdk_metadata import build_sdk_metadata, validate_sdk_metadata, get_sdk_metadata_json_schema
 
 # SDK metadata is AUTOMATICALLY attached to every run submission
 client = Client()
@@ -1311,7 +1339,7 @@ run = client.runs.submit(
         "experiment_id": "exp-123",
         "dataset_version": "v2.1",
         # SDK metadata will be added under "sdk" key automatically
-    }
+    },
 )
 
 # Access SDK metadata from run
@@ -1361,11 +1389,13 @@ def mock_settings():
         mock.return_value = settings
         yield mock
 
+
 @pytest.fixture(autouse=True)
 def mock_can_open_browser():
     """Prevent browser opening in tests."""
     with patch("aignostics.platform._authentication._can_open_browser", return_value=False):
         yield
+
 
 @pytest.fixture(autouse=True)
 def mock_webbrowser():
@@ -1382,6 +1412,7 @@ def valid_token_with_expiry() -> str:
     future_time = int((datetime.now(tz=UTC) + timedelta(hours=1)).timestamp())
     return f"valid.jwt.token:{future_time}"
 
+
 def expired_token() -> str:
     """Create expired test token."""
     past_time = int((datetime.now(tz=UTC) - timedelta(hours=1)).timestamp())
@@ -1395,10 +1426,8 @@ def expired_token() -> str:
 ```python
 def test_runs_list_with_pagination(runs, mock_api):
     # Setup pages
-    page1 = [Mock(spec=RunReadResponse, run_id=f"run-{i}")
-             for i in range(PAGE_SIZE)]
-    page2 = [Mock(spec=RunReadResponse, run_id=f"run-{i + PAGE_SIZE}")
-             for i in range(5)]
+    page1 = [Mock(spec=RunReadResponse, run_id=f"run-{i}") for i in range(PAGE_SIZE)]
+    page2 = [Mock(spec=RunReadResponse, run_id=f"run-{i + PAGE_SIZE}") for i in range(5)]
 
     mock_api.list_application_runs_v1_runs_get.side_effect = [page1, page2]
 
@@ -1422,8 +1451,6 @@ def test_runs_list_with_pagination(runs, mock_api):
 **Logging (Actual Pattern from Code):**
 
 ```python
-
-
 logger.trace("Initializing client with cache_token={}", cache_token)
 logger.trace("Client initialized successfully.")
 logger.exception("Failed to initialize client.")
@@ -1495,7 +1522,7 @@ app = app_dict.get("app-id")
 # For version lookups, use direct API call
 version = client.application_version(
     application_id="heta",
-    version_number="1.0.0"  # or None for latest
+    version_number="1.0.0",  # or None for latest
 )
 # Access version attributes
 print(f"App: {version.application_id}, Version: {version.version_number}")

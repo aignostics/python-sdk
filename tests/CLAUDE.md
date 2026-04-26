@@ -47,6 +47,7 @@ def mock_settings():
         mock.return_value = settings
         yield mock
 
+
 @pytest.fixture(autouse=True)
 def mock_can_open_browser():
     """Prevent browser opening in CI/CD."""
@@ -78,17 +79,12 @@ def test_token_refresh_timing():
 ```python
 def test_application_version_formats():
     """Test all valid and invalid semver formats."""
-    valid = [
-        "1.0.0",
-        "1.0.0-alpha",
-        "1.0.0+meta",
-        "1.0.0-rc.1+meta"
-    ]
+    valid = ["1.0.0", "1.0.0-alpha", "1.0.0+meta", "1.0.0-rc.1+meta"]
 
     invalid = [
-        "v1.0.0",   # 'v' prefix not allowed
-        "1.0",      # Incomplete
-        "",         # Empty string
+        "v1.0.0",  # 'v' prefix not allowed
+        "1.0",  # Incomplete
+        "",  # Empty string
     ]
 
     for v in valid:
@@ -159,7 +155,7 @@ class TestBuildSdkMetadata:
         # Set GitHub Actions environment variables
         os.environ["GITHUB_RUN_ID"] = "12345"
         os.environ["GITHUB_REPOSITORY"] = "aignostics/python-sdk"
-        os.environ["GITHUB_SHA"] = "abc123def456" # pragma: allowlist secret
+        os.environ["GITHUB_SHA"] = "abc123def456"  # pragma: allowlist secret
         os.environ["GITHUB_REF"] = "refs/heads/main"
         os.environ["GITHUB_WORKFLOW"] = "CI/CD"
 
@@ -170,10 +166,8 @@ class TestBuildSdkMetadata:
         assert "github" in metadata["ci"]
         assert metadata["ci"]["github"]["run_id"] == "12345"
         assert metadata["ci"]["github"]["repository"] == "aignostics/python-sdk"
-        assert metadata["ci"]["github"]["sha"] == "abc123def456" # pragma: allowlist secret
-        assert metadata["ci"]["github"]["run_url"] == (
-            "https://github.com/aignostics/python-sdk/actions/runs/12345"
-        )
+        assert metadata["ci"]["github"]["sha"] == "abc123def456"  # pragma: allowlist secret
+        assert metadata["ci"]["github"]["run_url"] == ("https://github.com/aignostics/python-sdk/actions/runs/12345")
 
     def test_build_metadata_with_pytest(clean_env: None) -> None:
         """Test metadata with pytest environment."""
@@ -185,9 +179,7 @@ class TestBuildSdkMetadata:
         # Pytest CI metadata should be present
         assert "ci" in metadata
         assert "pytest" in metadata["ci"]
-        assert metadata["ci"]["pytest"]["current_test"] == (
-            "tests/platform/sdk_metadata_test.py::test_foo"
-        )
+        assert metadata["ci"]["pytest"]["current_test"] == ("tests/platform/sdk_metadata_test.py::test_foo")
         assert metadata["ci"]["pytest"]["markers"] == ["unit", "sequential"]
 
     def test_interface_detection_cli(clean_env: None) -> None:
@@ -236,7 +228,7 @@ class TestValidateSdkMetadata:
                 "interface": "script",
                 "source": "user",
             },
-            "user_agent": "test/1.0.0"
+            "user_agent": "test/1.0.0",
         }
 
         with pytest.raises(ValidationError):
@@ -253,7 +245,7 @@ class TestValidateSdkMetadata:
                 "interface": "invalid_interface",  # Invalid enum value
                 "source": "user",
             },
-            "user_agent": "test/1.0.0"
+            "user_agent": "test/1.0.0",
         }
 
         with pytest.raises(ValidationError):
@@ -283,9 +275,8 @@ class TestGetSdkMetadataJsonSchema:
 
         assert "$id" in schema
         assert (
-            schema["$id"]
-            == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
-               f"docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
+            schema["$id"] == f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
+            f"docs/source/_static/sdk_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
         )
 
         assert "properties" in schema
@@ -451,9 +442,7 @@ class TestNocacheDecoratorBehavior:
 class TestClientMeNocache:
     """Test nocache parameter for Client.me() method."""
 
-    def test_me_default_uses_cache(
-        client_with_mock_api: Client, mock_api_client: MagicMock
-    ) -> None:
+    def test_me_default_uses_cache(client_with_mock_api: Client, mock_api_client: MagicMock) -> None:
         """Verify me() uses cache by default."""
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
         mock_api_client.get_me_v1_me_get.return_value = mock_me_response
@@ -468,9 +457,7 @@ class TestClientMeNocache:
         assert result2 == mock_me_response
         assert mock_api_client.get_me_v1_me_get.call_count == 1  # No additional call
 
-    def test_me_nocache_true_fetches_fresh_data(
-        client_with_mock_api: Client, mock_api_client: MagicMock
-    ) -> None:
+    def test_me_nocache_true_fetches_fresh_data(client_with_mock_api: Client, mock_api_client: MagicMock) -> None:
         """Verify me(nocache=True) fetches fresh data."""
         mock_me_response_1 = {"user_id": "user-1"}
         mock_me_response_2 = {"user_id": "user-2"}
@@ -488,9 +475,7 @@ class TestClientMeNocache:
         assert result2 == mock_me_response_2
         assert mock_api_client.get_me_v1_me_get.call_count == 2  # Additional call made
 
-    def test_me_nocache_true_updates_cache(
-        client_with_mock_api: Client, mock_api_client: MagicMock
-    ) -> None:
+    def test_me_nocache_true_updates_cache(client_with_mock_api: Client, mock_api_client: MagicMock) -> None:
         """Verify me(nocache=True) updates cache with fresh data."""
         mock_me_response_1 = {"user_id": "user-1"}
         mock_me_response_2 = {"user_id": "user-2"}
@@ -520,6 +505,7 @@ class TestNocacheEdgeCases:
 
     def test_nocache_with_expired_cache_entry() -> None:
         """Test nocache behavior when cache entry expired."""
+
         @cached_operation(ttl=1, use_token=False)  # 1 second TTL
         def test_func() -> int:
             return time.time_ns()
@@ -625,7 +611,7 @@ def test_cleanup_processes_terminates_running():
 def test_pagination_generator():
     """Verify pagination doesn't materialize full result set."""
     page1 = [Mock(id=f"run-{i}") for i in range(50)]
-    page2 = [Mock(id=f"run-{i+50}") for i in range(5)]
+    page2 = [Mock(id=f"run-{i + 50}") for i in range(5)]
     mock_api.list_runs.side_effect = [page1, page2]
 
     result_gen = runs.list()  # Generator, not list
@@ -657,8 +643,8 @@ def qupath_teardown():
     """Ensure QuPath processes cleaned up."""
     yield
     # Kill any remaining QuPath processes
-    for proc in psutil.process_iter(['name']):
-        if 'QuPath' in proc.info['name']:
+    for proc in psutil.process_iter(["name"]):
+        if "QuPath" in proc.info["name"]:
             proc.terminate()
             proc.wait(timeout=5)
 ```
@@ -720,6 +706,7 @@ def mock_api():
     api.list_applications.return_value = [...]
     return api
 
+
 @pytest.fixture
 def mock_client(mock_api):
     """Mock platform Client."""
@@ -744,12 +731,7 @@ def mock_wsi_file(tmp_path):
 ```python
 @responses.activate
 def test_api_call():
-    responses.add(
-        responses.GET,
-        "https://api.aignostics.com/v1/runs",
-        json={"runs": []},
-        status=200
-    )
+    responses.add(responses.GET, "https://api.aignostics.com/v1/runs", json={"runs": []}, status=200)
 ```
 
 ## Test Coverage Requirements
@@ -800,6 +782,7 @@ def test_concurrent_runs():
 def test_memory_usage():
     """Verify no memory leaks in long operations."""
     import tracemalloc
+
     tracemalloc.start()
 
     # Run operations
@@ -822,9 +805,7 @@ class TestPlatformIntegration:
         """Start mock platform API."""
         docker_services.start("platform-mock")
         docker_services.wait_until_responsive(
-            check=lambda: requests.get("http://localhost:8080/health"),
-            timeout=30.0,
-            pause=0.5
+            check=lambda: requests.get("http://localhost:8080/health"), timeout=30.0, pause=0.5
         )
 
     def test_full_workflow(self, platform_container):
@@ -907,11 +888,14 @@ def create_test_wsi(size_mb: int = 10) -> Path:
 ### Parameterized Testing
 
 ```python
-@pytest.mark.parametrize("version,expected", [
-    ("v1.0.0", True),
-    ("1.0.0", False),
-    ("v1.0", False),
-])
+@pytest.mark.parametrize(
+    "version,expected",
+    [
+        ("v1.0.0", True),
+        ("1.0.0", False),
+        ("v1.0", False),
+    ],
+)
 def test_version_validation(version, expected):
     assert is_valid_semver(version) == expected
 ```
@@ -1029,7 +1013,9 @@ pytest -k "token"
 # Enable breakpoint in test
 def test_complex_logic():
     result = complex_function()
-    import pdb; pdb.set_trace()  # Breakpoint
+    import pdb
+
+    pdb.set_trace()  # Breakpoint
     assert result.status == "success"
 ```
 

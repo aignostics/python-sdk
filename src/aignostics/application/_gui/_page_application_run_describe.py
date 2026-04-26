@@ -500,7 +500,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 icon = "cloud_download"
 
             download_button = (
-                ui.button(
+                ui
+                .button(
                     label,
                     icon=icon,
                     on_click=start_download,
@@ -757,14 +758,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
                     with ui.button_group().props("push"):
                         with (
-                            ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
+                            ui
+                            .button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
                             .mark("BUTTON_DOWNLOAD_RUN")
                             .props("push")
                         ):
                             ui.tooltip("Download all results of this run")
                         if find_spec("ijson") and QuPathService.is_qupath_installed():
                             with (
-                                ui.button(
+                                ui
+                                .button(
                                     "QuPath",
                                     icon="zoom_in",
                                     on_click=lambda _: download_run_dialog_open(qupath_project=True),
@@ -775,7 +778,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 ui.tooltip("Open results in QuPath Microscopy Viewer")
                         if find_spec("marimo"):
                             with (
-                                ui.button(
+                                ui
+                                .button(
                                     "Marimo",
                                     icon="analytics",
                                     on_click=lambda _: download_run_dialog_open(qupath_project=False, marimo=True),
@@ -861,11 +865,11 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                             if item.custom_metadata:
                                 with ui.button(
                                     icon="info",
-                                    on_click=lambda _,
-                                    custom_metadata=item.custom_metadata,
-                                    external_id=item.external_id: custom_metadata_dialog_open(
-                                        title=f"Custom Metadata of item {external_id} ",
-                                        custom_metadata=custom_metadata,
+                                    on_click=lambda _, cm=item.custom_metadata, eid=item.external_id: (
+                                        custom_metadata_dialog_open(
+                                            title=f"Custom Metadata of item {eid} ",
+                                            custom_metadata=cm,
+                                        )
                                     ),
                                 ).props("floating"):
                                     ui.tooltip("Show custom metadata")
@@ -940,7 +944,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 elif item.state is ItemState.TERMINATED:
                     if item.error_message:
                         with (
-                            ui.row()
+                            ui
+                            .row()
                             .classes("w-1/2 justify-start items-start content-start ml-4")
                             .style("max-width: 50%;")
                         ):
@@ -1059,7 +1064,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             # Add "Show more" button
             with show_more_container:
                 show_more_button = (
-                    ui.button(
+                    ui
+                    .button(
                         f"Show more ({remaining_initial} remaining)",
                         icon="expand_more",
                         on_click=load_more,

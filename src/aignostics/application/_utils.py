@@ -518,11 +518,11 @@ def application_run_status_to_str(
     Args:
         status (RunState): The application status
 
-    Raises:
-        RuntimeError: If the status is invalid or unknown
-
     Returns:
         str: Human-readable string representation of the status
+
+    Raises:
+        RuntimeError: If the status is invalid or unknown
     """
     status_mapping = {
         RunState.PENDING: "pending",
