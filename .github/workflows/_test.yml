@@ -50,8 +50,11 @@ jobs:
           COMMIT_MESSAGE: ${{ inputs.commit_message }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
-          # TEMP(#531): forced to ubuntu-latest only while iterating on the long-running test fix.
-          echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
+          if [[ "$COMMIT_MESSAGE" == *"skip:test:matrix-runner"* ]] || [[ "$PR_LABELS" == *"skip:test:matrix-runner"* ]]; then
+            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false]}' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix={"runner":["ubuntu-latest"],"experimental":[false],"include":[{"runner":"ubuntu-24.04-arm","experimental":true},{"runner":"macos-latest","experimental":true},{"runner":"macos-15-intel","experimental":true},{"runner":"windows-latest","experimental":true}]}' >> $GITHUB_OUTPUT
+          fi
 
   test:
     needs: generate-matrix
@@ -160,11 +163,10 @@ jobs:
       # A single "Assert no test failures" gate step at the end surfaces any
       # failures and fails the job — so the workflow still fails correctly.
 
-      # TEMP(#531): debugging cycle — only run the 2 download tests on ubuntu-latest.
       - name: Test / Unit (multiple Python versions)
         id: unit
         continue-on-error: true
-        if: false # TEMP(#531)
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: unit
@@ -176,7 +178,7 @@ jobs:
       - name: Test / Integration (multiple Python versions)
         id: integration
         continue-on-error: true
-        if: false # TEMP(#531)
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: integration
@@ -188,7 +190,7 @@ jobs:
       - name: Test / E2E / regular (multiple Python versions)
         id: e2e_regular
         continue-on-error: true
-        if: false # TEMP(#531)
+        if: ${{ !cancelled() }}
         uses: ./.github/actions/run-tests
         with:
           test-type: e2e
@@ -197,30 +199,26 @@ jobs:
           summary-title: All regular e2e tests passed
           commit-message: ${{ inputs.commit_message }}
 
-      - name: Test / E2E / long running (TEMP — only #531 download tests)
+      - name: Test / E2E / long running (single Python version)
         id: e2e_long_running
         continue-on-error: true
         if: ${{ !cancelled() }}
-        shell: bash
-        run: |
-          set +e
-          uv run --all-extras pytest \
-            tests/aignostics/application/gui_test.py::test_gui_run_download \
-            tests/aignostics/qupath/gui_test.py::test_gui_run_qupath_install_to_inspect \
-            -m "long_running" \
-            -v --no-cov --tb=long -s -p no:retry --timeout=300 \
-            --junitxml=reports/junit_531_debug.xml \
-            --md-report-output=reports/pytest_531_debug.md
-          EXIT_CODE=$?
-          if [ -f "reports/pytest_531_debug.md" ]; then
-            cat "reports/pytest_531_debug.md" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit $EXIT_CODE
+        uses: ./.github/actions/run-tests
+        with:
+          test-type: long-running
+          make-target: test_long_running
+          skip-marker: skip:test:long_running
+          summary-title: All long running e2e tests passed
+          commit-message: ${{ inputs.commit_message }}
 
       - name: Test / E2E / very long running (single Python version)
         id: e2e_very_long_running
         continue-on-error: true
-        if: false # TEMP(#531)
+        if: |
+          !cancelled() && (
+            contains(inputs.commit_message, 'enable:test:very_long_running') ||
+            contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running')
+          )
         uses: ./.github/actions/run-tests
         with:
           test-type: very-long-running
