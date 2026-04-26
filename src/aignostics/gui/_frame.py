@@ -213,7 +213,12 @@ def frame(  # noqa: C901, PLR0915
             coroutine=_health_load_and_render(),
             name="_health_load_and_render",
         )
-        ui.run_javascript("document.getElementById('betterstack').src = document.getElementById('betterstack').src;")
+        # The Betterstack iframe is only rendered when settings().status_page_url is set
+        # (production / staging). Guard the lookup in JS so the timer is safe whether or not
+        # the iframe is present and whether or not it has been mounted yet.
+        ui.run_javascript(
+            "var iframe = document.getElementById('betterstack');if (iframe) { iframe.src = iframe.src; }"
+        )
 
     ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
 
@@ -271,6 +276,10 @@ def frame(  # noqa: C901, PLR0915
             yield
     else:
         yield
+
+    # Resolved once and reused by the right-drawer menu link and the footer iframe.
+    # None for dev/test (and for unknown api_roots when the user supplies all auth fields manually).
+    status_page_url = settings().status_page_url
 
     # Populate the right_drawer we created earlier
     with right_drawer, ui.column(align_items="stretch").classes("h-full"):  # noqa: PLR1702
@@ -342,13 +351,12 @@ def frame(  # noqa: C901, PLR0915
                     ui.link("Get Support", "https://platform.aignostics.com/support", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
-            with ui.item().props("clickable"):
-                with ui.item_section().props("avatar"):
-                    ui.icon("check_circle", color="primary")
-                with ui.item_section():
-                    ui.link("Check Platform Status", "https://status.aignostics.com", new_tab=True).mark(
-                        "LINK_DOCUMENTATION"
-                    )
+            if status_page_url:
+                with ui.item().props("clickable"):
+                    with ui.item_section().props("avatar"):
+                        ui.icon("check_circle", color="primary")
+                    with ui.item_section():
+                        ui.link("Check Platform Status", status_page_url, new_tab=True).mark("LINK_DOCUMENTATION")
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("handshake", color="primary")
@@ -368,14 +376,15 @@ def frame(  # noqa: C901, PLR0915
         ui.row(align_items="center").classes("justify-start w-full"),
     ):
         health_link()
-        with ui.row().style("padding: 0"):
-            ui.html(
-                '<iframe id="betterstack" src="https://status.aignostics.com/badge?theme=dark" '
-                'width="250" height="30" frameborder="0" scrolling="no" '
-                'style="color-scheme: dark"></iframe>',
-                sanitize=False,
-            ).style("margin-left: 0px;")
-            ui.tooltip("Check Platform Status")
+        if status_page_url:
+            with ui.row().style("padding: 0"):
+                ui.html(
+                    f'<iframe id="betterstack" src="{status_page_url}/badge?theme=dark" '
+                    'width="250" height="30" frameborder="0" scrolling="no" '
+                    'style="color-scheme: dark"></iframe>',
+                    sanitize=False,
+                ).style("margin-left: 0px;")
+                ui.tooltip("Check Platform Status")
         ui.space()
         with ui.row():
             flavor = " (native)" if getattr(sys, "frozen", False) else ""

@@ -37,6 +37,10 @@ from aignostics.platform import (
     REDIRECT_URI_PRODUCTION,
     REDIRECT_URI_STAGING,
     REDIRECT_URI_TEST,
+    STATUS_PAGE_URL_DEV,
+    STATUS_PAGE_URL_PRODUCTION,
+    STATUS_PAGE_URL_STAGING,
+    STATUS_PAGE_URL_TEST,
     TOKEN_URL_DEV,
     TOKEN_URL_PRODUCTION,
     TOKEN_URL_STAGING,
@@ -96,6 +100,8 @@ def test_authentication_settings_production(record_property) -> None:
     assert settings.redirect_uri == REDIRECT_URI_PRODUCTION
     assert settings.device_url == DEVICE_URL_PRODUCTION
     assert settings.jws_json_url == JWS_JSON_URL_PRODUCTION
+    assert settings.status_page_url == STATUS_PAGE_URL_PRODUCTION
+    assert settings.status_page_url == "https://status.platform.aignostics.com"
 
 
 @pytest.mark.unit
@@ -116,6 +122,8 @@ def test_authentication_settings_staging(record_property, mock_env_vars) -> None
     assert settings.redirect_uri == REDIRECT_URI_STAGING
     assert settings.device_url == DEVICE_URL_STAGING
     assert settings.jws_json_url == JWS_JSON_URL_STAGING
+    assert settings.status_page_url == STATUS_PAGE_URL_STAGING
+    assert settings.status_page_url == "https://status.platform-staging.aignostics.com"
 
 
 @pytest.mark.unit
@@ -136,6 +144,8 @@ def test_authentication_settings_dev(record_property, mock_env_vars) -> None:
     assert settings.redirect_uri == REDIRECT_URI_DEV
     assert settings.device_url == DEVICE_URL_DEV
     assert settings.jws_json_url == JWS_JSON_URL_DEV
+    assert settings.status_page_url is None
+    assert STATUS_PAGE_URL_DEV is None
 
 
 @pytest.mark.unit
@@ -156,6 +166,8 @@ def test_authentication_settings_test(record_property, mock_env_vars) -> None:
     assert settings.redirect_uri == REDIRECT_URI_TEST
     assert settings.device_url == DEVICE_URL_TEST
     assert settings.jws_json_url == JWS_JSON_URL_TEST
+    assert settings.status_page_url is None
+    assert STATUS_PAGE_URL_TEST is None
 
 
 @pytest.mark.unit
@@ -528,3 +540,53 @@ def test_validate_retry_wait_times_min_greater_than_max(mock_env_vars) -> None:
             auth_retry_wait_min=10.0,
             auth_retry_wait_max=5.0,
         )
+
+
+@pytest.mark.unit
+def test_status_page_url_env_override_takes_precedence(record_property, monkeypatch) -> None:
+    """User-supplied AIGNOSTICS_STATUS_PAGE_URL overrides the per-environment default."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    custom_url = "https://custom-status.example.com"
+    monkeypatch.setenv(f"{__project_name__.upper()}_STATUS_PAGE_URL", custom_url)
+
+    settings = Settings(api_root=API_ROOT_PRODUCTION)
+
+    # Env-supplied value wins over the production default.
+    assert settings.status_page_url == custom_url
+    assert settings.status_page_url != STATUS_PAGE_URL_PRODUCTION
+
+
+@pytest.mark.unit
+def test_status_page_url_explicit_argument_overrides_default(record_property) -> None:
+    """An explicit status_page_url argument wins over the per-environment default."""
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+    custom_url = "https://my-org-status.example.com"
+
+    settings = Settings(api_root=API_ROOT_STAGING, status_page_url=custom_url)
+
+    assert settings.status_page_url == custom_url
+
+
+@pytest.mark.unit
+def test_status_page_url_unknown_api_root_with_full_auth_defaults_to_none(record_property, mock_env_vars) -> None:
+    """A custom api_root with all auth fields supplied skips environment resolution.
+
+    The pre_init validator returns early (without entering the match block) when all auth
+    fields are explicitly provided, so the per-environment status_page_url is not assigned
+    and the field stays at its declared default of None.
+    """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+
+    settings = Settings(
+        client_id_device=SecretStr("test-client-id-device"),
+        api_root="https://custom.platform.example.com",
+        client_id_interactive="test-client-id-interactive",
+        authorization_base_url="https://custom.example.com/oauth2/authorize",
+        audience="custom-audience",
+        token_url="https://custom.example.com/oauth2/token",  # noqa: S106
+        redirect_uri="https://custom.example.com/callback",
+        device_url="https://custom.example.com/oauth2/device",
+        jws_json_url="https://custom.example.com/.well-known/jwks.json",
+    )
+
+    assert settings.status_page_url is None

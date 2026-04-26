@@ -50,6 +50,10 @@ from ._constants import (
     REDIRECT_URI_PRODUCTION,
     REDIRECT_URI_STAGING,
     REDIRECT_URI_TEST,
+    STATUS_PAGE_URL_DEV,
+    STATUS_PAGE_URL_PRODUCTION,
+    STATUS_PAGE_URL_STAGING,
+    STATUS_PAGE_URL_TEST,
     TOKEN_URL_DEV,
     TOKEN_URL_PRODUCTION,
     TOKEN_URL_STAGING,
@@ -205,6 +209,18 @@ class Settings(OpaqueSettings):
         str, BeforeValidator(_validate_url), Field(description="JWS key set URL for token verification")
     ]
     client_id_interactive: Annotated[str, Field(description="OAuth client ID for interactive flows")]
+
+    status_page_url: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Public Betterstack status page URL for the platform environment. None when no public status "
+                "page exists for the resolved api_root (dev/test or unknown environments). The Launchpad GUI "
+                "hides the status badge and 'Check Platform Status' menu link when this is None."
+            ),
+            default=None,
+        ),
+    ] = None
 
     organization_id: Annotated[
         str | None, Field(description="Optional Auth0 organization ID parameter for the /authorize OAuth endpoint")
@@ -539,6 +555,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_DEV
                 values["jws_json_url"] = JWS_JSON_URL_DEV
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_DEV
+                values.setdefault("status_page_url", STATUS_PAGE_URL_DEV)
             case x if x == API_ROOT_TEST:
                 values["audience"] = AUDIENCE_TEST
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_TEST
@@ -547,6 +564,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_TEST
                 values["jws_json_url"] = JWS_JSON_URL_TEST
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_TEST
+                values.setdefault("status_page_url", STATUS_PAGE_URL_TEST)
             case x if x == API_ROOT_STAGING:
                 values["audience"] = AUDIENCE_STAGING
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_STAGING
@@ -555,6 +573,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_STAGING
                 values["jws_json_url"] = JWS_JSON_URL_STAGING
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_STAGING
+                values.setdefault("status_page_url", STATUS_PAGE_URL_STAGING)
             case x if x == API_ROOT_PRODUCTION:
                 values["audience"] = AUDIENCE_PRODUCTION
                 values["authorization_base_url"] = AUTHORIZATION_BASE_URL_PRODUCTION
@@ -563,6 +582,7 @@ class Settings(OpaqueSettings):
                 values["device_url"] = DEVICE_URL_PRODUCTION
                 values["jws_json_url"] = JWS_JSON_URL_PRODUCTION
                 values["client_id_interactive"] = CLIENT_ID_INTERACTIVE_PRODUCTION
+                values.setdefault("status_page_url", STATUS_PAGE_URL_PRODUCTION)
             case _:
                 raise ValueError(UNKNOWN_ENDPOINT_URL)
 
