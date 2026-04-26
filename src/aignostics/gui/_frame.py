@@ -1,7 +1,6 @@
 """Layout including sidebar and menu."""
 
 import contextlib
-import html
 import platform
 import sys
 import webbrowser
@@ -378,18 +377,16 @@ def frame(  # noqa: C901, PLR0915
     ):
         health_link()
         if status_page_url:  # pragma: no branch — covered by smoke test, conditional render
-            # Defence-in-depth: status_page_url is already validated by Settings (http(s)
-            # scheme, no HTML-breaking characters), but we also escape here so that a future
-            # validator weakening or a direct mutation of the field cannot inject markup
-            # through the sanitize=False ui.html() call.
-            escaped_status_page_url = html.escape(status_page_url, quote=True)
+            # Render the Betterstack badge as a NiceGUI iframe element rather than building
+            # raw HTML from an f-string. NiceGUI sets the `src` via Vue data binding, which
+            # escapes attribute values for us — together with the http(s)-only validation in
+            # Settings, this removes the XSS surface that a sanitize=False `ui.html()` would
+            # otherwise expose.
             with ui.row().style("padding: 0"):
-                ui.html(
-                    f'<iframe id="betterstack" src="{escaped_status_page_url}/badge?theme=dark" '
-                    'width="250" height="30" frameborder="0" scrolling="no" '
-                    'style="color-scheme: dark"></iframe>',
-                    sanitize=False,
-                ).style("margin-left: 0px;")
+                ui.element("iframe").props(
+                    f'id=betterstack src="{status_page_url}/badge?theme=dark" '
+                    "width=250 height=30 frameborder=0 scrolling=no"
+                ).style("color-scheme: dark; margin-left: 0px;")
                 ui.tooltip("Check Platform Status")
         ui.space()
         with ui.row():
