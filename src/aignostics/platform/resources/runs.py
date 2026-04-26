@@ -487,7 +487,9 @@ class Run:
             # check if last results have been downloaded yet and report on errors
             for item in self.results(nocache=True):
                 if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
-                    self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
+                    self.ensure_artifacts_downloaded(
+                        application_run_dir, item, checksum_attribute_key, print_status=print_status
+                    )
                 message = (
                     f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
                     f"error `{item.error_message}` ({item.error_code}), "
