@@ -15,7 +15,7 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, RunState
+from aignostics.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, Run, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -38,6 +38,39 @@ WIDTH_1200px = "width: 1200px; max-width: none"
 RESULTS_PAGE_SIZE = 20
 
 service = Service()
+
+
+async def _resolve_artifact_url_or_notify(run: Run, artifact_id: str, button: ui.button) -> str | None:
+    """Resolve a fresh presigned download URL off the event loop, surface failures via NiceGUI.
+
+    Wraps the blocking ``Run.get_artifact_download_url`` call in
+    ``nicegui_run.io_bound`` so the UI stays responsive, and turns any failure
+    into a user-facing ``ui.notify(type="warning")`` rather than an unhandled
+    exception in the click handler. Toggles the button's loading state for
+    visual feedback while the request is in flight.
+
+    Module-level (rather than a closure inside ``_page_application_run_describe``)
+    so it can be unit-tested without spinning up the NiceGUI page harness — the
+    artifact preview/download closures are thin wrappers around it.
+
+    Args:
+        run: The application run owning the artifact.
+        artifact_id: The ``output_artifact_id`` to resolve.
+        button: NiceGUI button to mark loading while the request is in flight.
+
+    Returns:
+        The presigned URL, or None if resolution failed (and the user has
+        already been notified).
+    """
+    button.props(add="loading")
+    try:
+        return await nicegui_run.io_bound(run.get_artifact_download_url, artifact_id)
+    except Exception as e:
+        logger.exception("Failed to resolve download URL for artifact {}", artifact_id)
+        ui.notify(f"Failed to resolve download URL: {e}", type="warning", multi_line=True)
+        return None
+    finally:
+        button.props(remove="loading")
 
 
 async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -516,46 +549,21 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
         custom_metadata_dialog.open()
 
-    async def _resolve_url_or_notify(artifact_id: str, button: ui.button) -> str | None:
-        """Resolve a fresh presigned download URL off the event loop.
-
-        Wraps the blocking ``Run.get_artifact_download_url`` call in
-        ``nicegui_run.io_bound`` so the UI stays responsive, and surfaces
-        failures as a NiceGUI notification rather than letting the click
-        handler raise.
-
-        Args:
-            artifact_id: The output_artifact_id to resolve.
-            button: The button to mark loading while the request is in flight.
-
-        Returns:
-            The presigned URL, or None if resolution failed.
-        """
-        button.props(add="loading")
-        try:
-            return await nicegui_run.io_bound(run.get_artifact_download_url, artifact_id)
-        except Exception as e:
-            logger.exception("Failed to resolve download URL for artifact {}", artifact_id)
-            ui.notify(f"Failed to resolve download URL: {e}", type="warning", multi_line=True)
-            return None
-        finally:
-            button.props(remove="loading")
-
     async def open_tiff_preview(title: str, artifact_id: str, button: ui.button) -> None:
         """Resolve a fresh URL and open the TIFF preview dialog."""
-        url = await _resolve_url_or_notify(artifact_id, button)
+        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
         if url is not None:
             tiff_dialog_open(title, url)
 
     async def open_csv_preview(title: str, artifact_id: str, button: ui.button) -> None:
         """Resolve a fresh URL and open the CSV preview dialog."""
-        url = await _resolve_url_or_notify(artifact_id, button)
+        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
         if url is not None:
             csv_dialog_open(title, url)
 
     async def open_artifact_download(artifact_id: str, button: ui.button) -> None:
         """Resolve a fresh URL and hand it to the OS browser to download."""
-        url = await _resolve_url_or_notify(artifact_id, button)
+        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
         if url is not None:
             webbrowser.open(url)
 
