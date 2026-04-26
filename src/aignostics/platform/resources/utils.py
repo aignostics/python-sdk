@@ -30,6 +30,9 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         page_size (int): The number of items to request per page
         **kwargs: Keyword arguments to pass to the function.
 
+    Raises:
+        ValueError: If page_size is 0 or negative.
+
     Yields:
         Individual items from all pages.
 
@@ -40,6 +43,9 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         >>> items = list(paginate(list_items))
         >>> print(len(items))
     """
+    if page_size <= 0:
+        msg = f"page_size must be a positive integer, got {page_size}"
+        raise ValueError(msg)
     page = 1
     while True:
         try:
