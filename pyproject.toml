@@ -99,7 +99,7 @@ dependencies = [
     "highdicom>=0.26.1,<1; python_version < '3.14'", # transitive dependency pyjpegls not yet supporting Python 3.14
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==23.8.1",
+    "idc-index-data==23.10.1",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
@@ -138,6 +138,7 @@ dependencies = [
     "lxml>=6.1.0",                      # CVE-2026-41066 (Renovate #556); also required for python 3.14 pre-built wheels
     "filelock>=3.20.3",                 # CVE-2025-68146 (>=3.20.1); CVE-2026-22701 (>=3.20.3, Renovate #387)
     "marshmallow>=3.26.2",              # CVE-2025-68480
+    "pygments>=2.20.0",                 # CVE-2026-4539 (>=2.20.0); transitive via rich
     "cryptography>=46.0.7",             # CVE-2026-39892 (>=46.0.7); transitive via pyjwt[crypto]
     "pydicom>=3.0.2",                   # CVE-2026-32711 (>=3.0.2); transitive via dicomweb-client/wsidicom/highdicom
     "pyasn1>=0.6.3",                    # CVE-2026-30922 (>=0.6.3); transitive via cryptography
