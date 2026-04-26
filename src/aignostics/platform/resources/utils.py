@@ -38,8 +38,9 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
 
     Example:
         >>> def list_items(page=1, page_size=20):
-        ...     # Returns a full page on page 1, fewer items on page 2 (signals last page)
-        ...     return [f"item_{i}" for i in range(page_size if page == 1 else 5)]
+        ...     offset = (page - 1) * page_size
+        ...     count = page_size if page == 1 else 5  # partial last page
+        ...     return [f"item_{offset + i}" for i in range(count)]
         >>> items = list(paginate(list_items))
         >>> print(len(items))
         25
