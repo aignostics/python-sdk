@@ -1,5 +1,7 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
+import asyncio
+import contextlib
 import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
@@ -319,16 +321,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     download_item_progress.set_visibility(False)
                     download_artifact_progress.set_visibility(False)
 
-        async def start_download() -> None:  # noqa: PLR0915 - diagnostic prints push count over the threshold (#531)
-            # DIAGNOSTIC(#531): unbuffered raw write to fd 1 — survives task cancellation and
-            # bypasses NiceGUI's outer event-handler exception swallowing.
-            import os as _os531  # noqa: PLC0415
-
-            def _diag(msg: str) -> None:
-                _os531.write(1, f"[#531] {msg}\n".encode())
-
-            _diag("start_download ENTER")
-            # Read from download_options dict (defined outside @ui.refreshable) to get current values
+        async def start_download() -> None:  # noqa: PLR0915
             current_qupath_project = download_options["qupath_project"]
             current_marimo = download_options["marimo"]
             current_folder = folder_state["value"]
@@ -336,26 +329,47 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 ui.notify("Please select a folder first", type="warning")
                 return
 
-            _diag("BEFORE ui.notify Downloading ...")
             ui.notify("Downloading ...", type="info")
-            _diag("AFTER ui.notify Downloading ...")
-            _diag("BEFORE Manager().Queue()")
             progress_queue = Manager().Queue()
-            _diag("AFTER Manager().Queue()")
-            progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
-            _diag("BEFORE ui.timer(...)")
-            progress_timer: Any
+            progress_state["queue"] = progress_queue
+
+            # Drive the progress UI from a plain asyncio task instead of `ui.timer`.
+            #
+            # Background: NiceGUI 3.10's PR #5931 made `Timer._handle_delete()` cancel the timer
+            # whenever its parent container is cleared. The download dialog content lives inside
+            # `@ui.refreshable`, and `download_run_dialog_open()` calls `dialog_content.refresh()`
+            # on every open — so a pre-created `ui.timer` captured by this closure is always
+            # `_is_canceled=True` by the time the user clicks Download, and `Timer.activate()`'s
+            # `assert not self._is_canceled` raises silently inside NiceGUI's event-handler
+            # exception path (#531).
+            #
+            # Trying to *create* the timer fresh inside this click handler instead doesn't work
+            # either: `ui.timer` is an Element and needs a live slot context, but the click
+            # handler's parent_slot is the button's parent slot which has been GC'd in this
+            # @ui.refreshable + dialog flow ("RuntimeError: The parent element this slot belongs
+            # to has been deleted.").
+            #
+            # An `asyncio.create_task` running our callback doesn't need a slot context, doesn't
+            # depend on the refreshable lifecycle, and the callback closes over UI element refs
+            # (`download_item_status`, etc.) that were just created in the latest refresh and are
+            # valid for the duration of this download.
+            stop_progress = asyncio.Event()
+
+            async def _drive_progress() -> None:
+                while not stop_progress.is_set():
+                    try:
+                        update_download_progress()
+                    except Exception:
+                        logger.exception("update_download_progress raised; continuing")
+                    try:
+                        await asyncio.wait_for(stop_progress.wait(), timeout=0.1)
+                    except TimeoutError:
+                        continue
+
+            progress_task = asyncio.create_task(_drive_progress(), name=f"download-progress-{run.run_id}")
             try:
-                progress_timer = ui.timer(0.1, update_download_progress, active=True)
-            except BaseException as e_timer:
-                _diag(f"ui.timer RAISED {type(e_timer).__name__}: {e_timer}")
-                raise
-            _diag(f"AFTER ui.timer(...) timer={progress_timer!r} _is_canceled={progress_timer._is_canceled}")  # noqa: SLF001
-            try:
-                _diag("BEFORE download_button.disable()")
                 download_button.disable()
                 download_button.props(add="loading")
-                _diag(f"BEFORE await cpu_bound qupath={current_qupath_project} folder={current_folder!r}")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -364,7 +378,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
-                _diag(f"AFTER await cpu_bound results_folder={results_folder!r}")
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
@@ -384,13 +397,13 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 # this async event handler would otherwise be silently swallowed by NiceGUI's
                 # outer task-exception handler, leaving the dialog stuck in the loading state
                 # with no completion or failure notification. We always want the user to see
-                # *something* and the timer + button state cleaned up via the `finally`.
-                _diag(f"start_download except {type(e).__name__}: {e}")
+                # *something* and the progress task + button state cleaned up via the `finally`.
                 logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
             finally:
-                _diag("start_download finally")
-                progress_timer.cancel()
+                stop_progress.set()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
+                    await progress_task
                 progress_state["queue"] = None
                 download_button.props(remove="loading")
                 download_button.enable()
