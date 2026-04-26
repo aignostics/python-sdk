@@ -201,7 +201,7 @@ requires-dist = [
     { name = "marshmallow", specifier = ">=3.26.2" },
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
     { name = "nbconvert", marker = "extra == 'jupyter'", specifier = ">=7.17.1" },
-    { name = "nicegui", extras = ["native"], specifier = ">=3.9.0,<4" },
+    { name = "nicegui", extras = ["native"], specifier = ">=3.11.0,<4" },
     { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
     { name = "openslide-python", specifier = ">=1.4.3,<2" },
     { name = "packaging", specifier = ">=26,<27" },
@@ -4319,7 +4319,7 @@ wheels = [
 
 [[package]]
 name = "nicegui"
-version = "3.9.0"
+version = "3.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -4332,22 +4332,25 @@ dependencies = [
     { name = "ifaddr" },
     { name = "itsdangerous" },
     { name = "jinja2" },
+    { name = "lxml" },
     { name = "lxml-html-clean" },
     { name = "markdown2" },
     { name = "orjson", marker = "platform_machine != 'i386' and platform_machine != 'i686' and platform_python_implementation != 'PyPy'" },
     { name = "pydantic-core" },
     { name = "pygments" },
+    { name = "python-dotenv" },
     { name = "python-engineio" },
     { name = "python-multipart" },
     { name = "python-socketio", extra = ["asyncio-client"] },
     { name = "starlette" },
+    { name = "tinycss2" },
     { name = "typing-extensions" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d3/38/ed046018db555c34ebc17738284d2f85bf9a544734cd44a87311128619a5/nicegui-3.9.0.tar.gz", hash = "sha256:7ae9046b321d029c438f7cd54a697838ed1962cecb92c622912283c66c8bf8f6", size = 19031869, upload-time = "2026-03-19T09:51:52.247Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/51/32defa2f693a75efb7378cc54bc53747e3bb0fbf302e2ba91b134bd19901/nicegui-3.11.0.tar.gz", hash = "sha256:8be951c54cd425956f9e0bdfd808ecf107a12c07af6e53390e9586c05eab2513", size = 19231197, upload-time = "2026-04-24T13:12:18.626Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/11/f7f911f284ceb1b038c26d6f4833bc86d6583d5280156274fdb79be7dcfe/nicegui-3.9.0-py3-none-any.whl", hash = "sha256:4adfdb87a55e30b7fef05ab782efc030534ae6ad9afa330db856dfbb258e23c9", size = 19613351, upload-time = "2026-03-19T09:51:48.769Z" },
+    { url = "https://files.pythonhosted.org/packages/92/7a/5ba90576eb49cb5dc7d442d6eb7789afb4cfdffed4a8d5bde087b037207a/nicegui-3.11.0-py3-none-any.whl", hash = "sha256:3607d054fd3b0ebc3b83bb3648f08e071375b06d2ea01423a0b9b9e04f887b2b", size = 19801597, upload-time = "2026-04-24T13:12:15.018Z" },
 ]
 
 [package.optional-dependencies]

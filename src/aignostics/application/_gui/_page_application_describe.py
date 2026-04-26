@@ -315,7 +315,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     # Show force checkbox for internal users
                     if user_info and user_info.is_internal_user:
 
-                        def on_force_change(e: ValueChangeEventArguments) -> None:
+                        def on_force_change(e: ValueChangeEventArguments[bool | None]) -> None:
                             if e.value:
                                 version_next_button.enable()
                                 if unhealthy_tooltip:
@@ -324,7 +324,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 version_next_button.disable()
                                 if unhealthy_tooltip:
                                     unhealthy_tooltip.set_visibility(True)
-                            submit_form.force = e.value
+                            submit_form.force = bool(e.value)
 
                         ui.checkbox("Force (skip health check)", on_change=on_force_change).mark("CHECKBOX_FORCE")
 

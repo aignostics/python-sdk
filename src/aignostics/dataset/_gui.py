@@ -88,7 +88,7 @@ class PageBuilder(BasePageBuilder):
                     """
                 )
 
-            def _on_source_input_change(e: ValueChangeEventArguments) -> None:
+            def _on_source_input_change(e: ValueChangeEventArguments[str | None]) -> None:
                 """On change event."""
                 if download_form.download_button is None:
                     return
@@ -249,7 +249,7 @@ class PageBuilder(BasePageBuilder):
                         with ui.button("Download", icon="cloud_download").mark("BUTTON_DOWNLOAD") as download_button:
                             ui.tooltip("Download the selected dataset")
                         download_form.download_button = download_button
-                        download_form.download_button.on("click", lambda _: _download(source_input.value))
+                        download_form.download_button.on("click", lambda _: _download(source_input.value or ""))
                         download_form.download_button.disable()
 
             def update_progress() -> None:
