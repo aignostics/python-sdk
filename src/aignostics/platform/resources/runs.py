@@ -7,7 +7,7 @@ It includes functionality for starting runs, monitoring status, and downloading 
 import builtins
 import time
 import typing as t
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from http import HTTPStatus
 from pathlib import Path
 from time import sleep
@@ -166,6 +166,12 @@ class Artifact:
         ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
         verify_ssl = getattr(configuration, "verify_ssl", True)
         ssl_verify: bool | str = ssl_ca_cert or verify_ssl
+        # Honor the codegen client's token_provider when set: Client.get_api_client()
+        # wires it up with use_cache=cache_token, so a user who instantiates
+        # Client(cache_token=False) does not want us to read/write the token cache.
+        # Fall back to get_token() only when the configuration was built outside
+        # of Client (e.g. unit tests with bare PublicApi).
+        token_provider = getattr(configuration, "token_provider", None) or get_token
 
         return Retrying(
             retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -173,13 +179,14 @@ class Artifact:
             wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
             before_sleep=_log_retry_attempt,
             reraise=True,
-        )(lambda: self._fetch_redirect_url(endpoint_url, ssl_verify, proxy))
+        )(lambda: self._fetch_redirect_url(endpoint_url, ssl_verify, proxy, token_provider))
 
     def _fetch_redirect_url(
         self,
         endpoint_url: str,
         ssl_verify: bool | str,
         proxy: str | None,
+        token_provider: Callable[[], str],
     ) -> str:
         """Issue the GET and return the presigned URL from the 3xx Location header.
 
@@ -187,6 +194,9 @@ class Artifact:
             endpoint_url: Full /file endpoint URL.
             ssl_verify: True/False or CA bundle path, mirroring the codegen client config.
             proxy: Optional HTTP/HTTPS proxy URL, mirroring the codegen client config.
+            token_provider: Callable returning a fresh bearer token. Honors the
+                codegen client's ``cache_token`` choice when sourced from
+                ``Configuration.token_provider``.
 
         Returns:
             str: The presigned URL extracted from the Location header.
@@ -202,7 +212,7 @@ class Artifact:
             with requests.get(
                 endpoint_url,
                 headers={
-                    "Authorization": f"Bearer {get_token()}",
+                    "Authorization": f"Bearer {token_provider()}",
                     "User-Agent": user_agent(),
                 },
                 allow_redirects=False,
