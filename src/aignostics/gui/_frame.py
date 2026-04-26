@@ -8,6 +8,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from importlib.util import find_spec
 from typing import Any
+from urllib.parse import urljoin
 
 from html_sanitizer import Sanitizer
 from humanize import naturaldelta
@@ -377,16 +378,20 @@ def frame(  # noqa: C901, PLR0915
     ):
         health_link()
         if status_page_url:  # pragma: no branch — covered by smoke test, conditional render
-            # Render the Betterstack badge as a NiceGUI iframe element rather than building
-            # raw HTML from an f-string. NiceGUI sets the `src` via Vue data binding, which
-            # escapes attribute values for us — together with the http(s)-only validation in
-            # Settings, this removes the XSS surface that a sanitize=False `ui.html()` would
-            # otherwise expose.
+            # Render the Betterstack badge as a NiceGUI iframe element. Attributes are
+            # assigned via the props dict (not via an HTML/string template) so NiceGUI's
+            # Vue data binding handles attribute escaping. Together with the http(s)-only
+            # validation in Settings (`_validate_optional_url`), this removes the XSS
+            # surface that a sanitize=False `ui.html()` would otherwise expose.
             with ui.row().style("padding: 0"):
-                ui.element("iframe").props(
-                    f'id=betterstack src="{status_page_url}/badge?theme=dark" '
-                    "width=250 height=30 frameborder=0 scrolling=no"
-                ).style("color-scheme: dark; margin-left: 0px;")
+                iframe = ui.element("iframe")
+                iframe.props["id"] = "betterstack"
+                iframe.props["src"] = urljoin(status_page_url + "/", "badge?theme=dark")
+                iframe.props["width"] = "250"
+                iframe.props["height"] = "30"
+                iframe.props["frameborder"] = "0"
+                iframe.props["scrolling"] = "no"
+                iframe.style("color-scheme: dark; margin-left: 0px;")
                 ui.tooltip("Check Platform Status")
         ui.space()
         with ui.row():
