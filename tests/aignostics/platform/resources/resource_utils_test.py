@@ -95,6 +95,15 @@ def test_paginate_custom_page_size() -> None:
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("page_size", [0, -1, -100])
+def test_paginate_raises_for_non_positive_page_size(page_size: int) -> None:
+    """Test that paginate raises ValueError when page_size is zero or negative."""
+    mock_func = Mock()
+    with pytest.raises(ValueError, match="page_size must be a positive integer"):
+        list(paginate(mock_func, page_size=page_size))
+
+
+@pytest.mark.unit
 def test_paginate_multiple_pages() -> None:
     """Test that paginate correctly iterates through multiple pages.
 
