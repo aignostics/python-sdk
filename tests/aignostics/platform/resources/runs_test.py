@@ -797,6 +797,7 @@ def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
     [
         HTTPStatus.MOVED_PERMANENTLY,
         HTTPStatus.FOUND,
+        HTTPStatus.SEE_OTHER,
         HTTPStatus.TEMPORARY_REDIRECT,
         HTTPStatus.PERMANENT_REDIRECT,
     ],
@@ -806,7 +807,8 @@ def test_artifact_get_download_url_returns_location_for_any_redirect(artifact, r
 
     The /file endpoint contractually returns 307, but the SDK accepts every
     well-known redirect status so the SDK keeps working if the API ever flips
-    one for cache reasons.
+    one for cache reasons. 303 See Other is included per Copilot's PR review —
+    the back-end could legitimately switch to it for a POST→GET redirect shape.
     """
     response = _redirect_response(_PRESIGNED_URL, status=redirect_status)
 
@@ -1183,19 +1185,15 @@ def test_ensure_artifacts_downloaded_resumes_when_local_checksum_mismatches(app_
 def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tmp_path) -> None:
     """Artifact with empty metadata dict is skipped (no checksum to verify against).
 
-    Note: In the production loop, MIME detection runs *before* the empty-metadata
-    check. This is an existing quirk — artifacts without a media_type but with
-    empty metadata would never reach the early-return path. We mock through the
-    mime helpers so the test focuses purely on the empty-metadata behavior.
+    Per Copilot PR review on #598, the metadata check now runs *before* the
+    MIME lookup, so this test no longer needs to mock through the MIME helpers.
+    Without the reorder, an empty-metadata artifact would raise ``ValueError``
+    from ``mime_type_to_file_ending`` before the early-return could fire.
     """
     item = _make_item_mock(artifacts=[_make_artifact_mock(metadata={})])
     app_run.get_artifact_download_url = Mock()
 
-    with (
-        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
-        patch("aignostics.platform.resources.runs.get_mime_type_for_artifact", return_value="text/csv"),
-        patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
-    ):
+    with patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download:
         app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
 
     app_run.get_artifact_download_url.assert_not_called()

@@ -112,6 +112,7 @@ class DownloadTimeoutError(RuntimeError):
 _REDIRECT_STATUSES = frozenset({
     HTTPStatus.MOVED_PERMANENTLY,
     HTTPStatus.FOUND,
+    HTTPStatus.SEE_OTHER,
     HTTPStatus.TEMPORARY_REDIRECT,
     HTTPStatus.PERMANENT_REDIRECT,
 })
@@ -563,15 +564,19 @@ class Run:
         for artifact in item.output_artifacts:
             if artifact.output != ArtifactOutput.AVAILABLE:
                 continue
-            item_dir.mkdir(exist_ok=True, parents=True)
-            file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
-            file_path = item_dir / f"{artifact.name}{file_ending}"
+            # Metadata check must come BEFORE the MIME lookup: an artifact with
+            # empty metadata falls back to application/octet-stream, which
+            # mime_type_to_file_ending raises ValueError on — pre-empting the
+            # intended skip. (Caught by Copilot review on PR #598.)
             if not artifact.metadata:
                 logger.error("Skipping artifact %s for item %s, no metadata present", artifact.name, item.external_id)
                 print(
                     f"> Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
                 ) if print_status else None
                 continue
+            item_dir.mkdir(exist_ok=True, parents=True)
+            file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
+            file_path = item_dir / f"{artifact.name}{file_ending}"
             checksum = artifact.metadata[checksum_attribute_key]
 
             if file_path.exists():
