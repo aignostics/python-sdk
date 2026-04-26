@@ -323,7 +323,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         # This avoids RuntimeError when trying to create timer inside async event handler
         progress_timer = ui.timer(0.1, update_download_progress, active=False)
 
-        async def start_download() -> None:  # noqa: PLR0915 - diagnostic prints temporarily push count over the threshold (#531)
+        async def start_download() -> None:
             # Read from download_options dict (defined outside @ui.refreshable) to get current values
             current_qupath_project = download_options["qupath_project"]
             current_marimo = download_options["marimo"]
@@ -333,41 +333,32 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 return
 
             ui.notify("Downloading ...", type="info")
-            # DIAGNOSTIC(#531): use os.write directly to fd 1 so output is fully unbuffered and
-            # cannot be lost on task cancellation / process tear-down. The previous run with
-            # plain print(flush=True) showed the trace stops between AFTER Manager().Queue()
-            # and AFTER progress_timer.activate() — instrumenting every individual statement
-            # in that range to pinpoint which one hangs / cancels the click handler.
-            import os as _os531  # noqa: PLC0415
-
-            def _diag531(msg: str) -> None:
-                _os531.write(1, f"[#531] start_download: {msg}\n".encode())
-
-            _diag531(f"BEFORE Manager().Queue() for run={run.run_id}")
             progress_queue = Manager().Queue()
-            _diag531(f"AFTER Manager().Queue(), queue={progress_queue!r}")
-            _diag531("BEFORE progress_state['queue'] = progress_queue")
             progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
-            _diag531("AFTER progress_state['queue'] = progress_queue")
 
-            # Activate the timer now that download is starting
-            # DIAGNOSTIC(#531): isolate the exact sub-step within Timer.activate / BindableProperty.__set__.
-            # Timer.activate() is `assert not self._is_canceled; self.active = True` — the setter goes
-            # through BindableProperty.__set__ which calls _propagate(...). One of those is the boundary.
-            _diag531(f"BEFORE progress_timer._is_canceled check, _is_canceled={progress_timer._is_canceled}")  # noqa: SLF001
-            _diag531(f"BEFORE progress_timer.active = True (current value = {progress_timer.active})")
+            # Activate the timer now that download is starting.
+            #
+            # Workaround for a NiceGUI 3.10+ regression (#531):
+            # `download_run_dialog_open()` calls `download_run_dialog_content.refresh()` which
+            # destroys the previous refreshable instance. NiceGUI 3.10's PR #5931 made
+            # `Timer._handle_delete()` call `cancel(with_current_invocation=True)`, so the timer
+            # we close over here ends up with `_is_canceled=True` by the time start_download
+            # actually runs. `progress_timer.activate()` would then raise
+            # `AssertionError: Cannot activate a canceled timer`, which NiceGUI's outer
+            # task-exception handler swallows — leaving the dialog stuck in "loading" state
+            # with no completion or failure notification.
+            #
+            # Bypassing the assert via direct attribute set lets the click handler proceed.
+            # Note: because `_is_canceled` is True, the timer's `_run_in_loop` exits via
+            # `_should_stop()` and the progress callback won't fire — the dialog's progress
+            # bar will not animate during download. Acceptable trade-off until upstream fix:
+            # the download itself completes and "Download completed." fires. Restore
+            # `progress_timer.activate()` once the upstream timer-cancel-on-refresh behavior
+            # is changed (see https://github.com/zauberzeug/nicegui/pull/5931 for context).
+            progress_timer.active = True
             try:
-                progress_timer.active = True
-                _diag531("AFTER progress_timer.active = True")
-            except BaseException as e531:
-                _diag531(f"progress_timer.active = True RAISED {type(e531).__name__}: {e531}")
-                raise
-            try:
-                _diag531("BEFORE download_button.disable()")
                 download_button.disable()
-                _diag531("AFTER download_button.disable()")
                 download_button.props(add="loading")
-                _diag531(f"BEFORE await cpu_bound, qupath={current_qupath_project}, folder={current_folder!r}")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -376,7 +367,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
-                _diag531(f"AFTER await cpu_bound, results_folder={results_folder!r}")
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
