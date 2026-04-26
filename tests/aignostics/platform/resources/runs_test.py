@@ -27,7 +27,7 @@ _RUN_ID = "test-run-id"
 _ARTIFACT_ID = "artifact-123"
 _PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc123"
 _PATCH_REQUESTS_GET = "aignostics.platform.resources.runs.requests.get"
-_PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105 (mock target string, not a credential)
+_PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105
 _PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
 
 
@@ -1064,6 +1064,7 @@ def test_run_artifact_returns_artifact_handle(app_run) -> None:
 
 _PATCH_DOWNLOAD_FILE_RUNS = "aignostics.platform.resources.runs.download_file"
 _PATCH_CALC_CRC32C = "aignostics.platform.resources.runs.calculate_file_crc32c"
+_PATCH_MIME_TYPE_TO_FILE_ENDING = "aignostics.platform.resources.runs.mime_type_to_file_ending"
 
 
 def _make_artifact_mock(
@@ -1148,7 +1149,7 @@ def test_ensure_artifacts_downloaded_skips_existing_file_with_matching_checksum(
 
     with (
         patch(_PATCH_CALC_CRC32C, return_value="AAAA"),  # Matches metadata checksum
-        patch("aignostics.platform.resources.runs.mime_type_to_file_ending", return_value=".csv"),
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
         patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
     ):
         app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
@@ -1169,7 +1170,7 @@ def test_ensure_artifacts_downloaded_resumes_when_local_checksum_mismatches(app_
 
     with (
         patch(_PATCH_CALC_CRC32C, return_value="ZZZZ"),  # Mismatch with metadata "AAAA"
-        patch("aignostics.platform.resources.runs.mime_type_to_file_ending", return_value=".csv"),
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
         patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
     ):
         app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
@@ -1191,7 +1192,7 @@ def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tm
     app_run.get_artifact_download_url = Mock()
 
     with (
-        patch("aignostics.platform.resources.runs.mime_type_to_file_ending", return_value=".csv"),
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
         patch("aignostics.platform.resources.runs.get_mime_type_for_artifact", return_value="text/csv"),
         patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
     ):
