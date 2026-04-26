@@ -401,21 +401,16 @@ class PageBuilder(BasePageBuilder):
 
             await _select_data()
 
-            ui.timer(
-                interval=1,
-                callback=lambda: (
-                    bucket_form.grid.classes(
-                        add="ag-theme-balham-dark"
-                        if app.storage.general.get("dark_mode", False)
-                        else "ag-theme-balham",
-                        remove="ag-theme-balham"
-                        if app.storage.general.get("dark_mode", False)
-                        else "ag-theme-balham-dark",
-                    )
-                    if bucket_form.grid
-                    else None
-                ),
-            )
+            def _sync_bucket_grid_theme() -> None:
+                if not bucket_form.grid:
+                    return
+                dark_mode = app.storage.general.get("dark_mode", False)
+                bucket_form.grid.classes(
+                    add="ag-theme-balham-dark" if dark_mode else "ag-theme-balham",
+                    remove="ag-theme-balham" if dark_mode else "ag-theme-balham-dark",
+                )
+
+            ui.timer(interval=1, callback=_sync_bucket_grid_theme)
 
             # Timer for updating download progress
             ui.timer(interval=0.1, callback=update_download_progress)

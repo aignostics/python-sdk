@@ -621,21 +621,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 .mark("GRID_METADATA")
             )
             # use ui timer to update the grid class depending on dark mode, with a frequency of once per second
-            ui.timer(
-                interval=1,
-                callback=lambda: (
-                    submit_form.metadata_grid.classes(
-                        add="ag-theme-balham-dark"
-                        if app.storage.general.get("dark_mode", False)
-                        else "ag-theme-balham",
-                        remove="ag-theme-balham"
-                        if app.storage.general.get("dark_mode", False)
-                        else "ag-theme-balham-dark",
-                    )
-                    if submit_form.metadata_grid
-                    else None
-                ),
-            )
+
+            def _sync_metadata_grid_theme() -> None:
+                if not submit_form.metadata_grid:
+                    return
+                dark_mode = app.storage.general.get("dark_mode", False)
+                submit_form.metadata_grid.classes(
+                    add="ag-theme-balham-dark" if dark_mode else "ag-theme-balham",
+                    remove="ag-theme-balham" if dark_mode else "ag-theme-balham-dark",
+                )
+
+            ui.timer(interval=1, callback=_sync_metadata_grid_theme)
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Select", on_click=_pytest_meta, icon="folder").mark("BUTTON_PYTEST_META")
