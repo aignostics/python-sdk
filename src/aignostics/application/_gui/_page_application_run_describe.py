@@ -333,24 +333,33 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 return
 
             ui.notify("Downloading ...", type="info")
-            # DIAGNOSTIC(#531): use print() with flush=True so output reaches CI logs even with
-            # `--log-disable=aignostics`; this is around the suspected NiceGUI 3.10+ cpu_bound hang.
-            print(f"[#531] start_download: BEFORE Manager().Queue() for run={run.run_id}", flush=True)
+            # DIAGNOSTIC(#531): use os.write directly to fd 1 so output is fully unbuffered and
+            # cannot be lost on task cancellation / process tear-down. The previous run with
+            # plain print(flush=True) showed the trace stops between AFTER Manager().Queue()
+            # and AFTER progress_timer.activate() — instrumenting every individual statement
+            # in that range to pinpoint which one hangs / cancels the click handler.
+            import os as _os531  # noqa: PLC0415
+
+            def _diag531(msg: str) -> None:
+                _os531.write(1, f"[#531] start_download: {msg}\n".encode())
+
+            _diag531(f"BEFORE Manager().Queue() for run={run.run_id}")
             progress_queue = Manager().Queue()
-            print(f"[#531] start_download: AFTER Manager().Queue(), queue={progress_queue!r}", flush=True)
+            _diag531(f"AFTER Manager().Queue(), queue={progress_queue!r}")
+            _diag531("BEFORE progress_state['queue'] = progress_queue")
             progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
+            _diag531("AFTER progress_state['queue'] = progress_queue")
 
             # Activate the timer now that download is starting
+            _diag531(f"BEFORE progress_timer.activate(), timer={progress_timer!r}")
             progress_timer.activate()
-            print("[#531] start_download: AFTER progress_timer.activate()", flush=True)
+            _diag531("AFTER progress_timer.activate()")
             try:
+                _diag531("BEFORE download_button.disable()")
                 download_button.disable()
+                _diag531("AFTER download_button.disable()")
                 download_button.props(add="loading")
-                print(
-                    f"[#531] start_download: BEFORE await cpu_bound, qupath={current_qupath_project}, "
-                    f"folder={current_folder!r}",
-                    flush=True,
-                )
+                _diag531(f"BEFORE await cpu_bound, qupath={current_qupath_project}, folder={current_folder!r}")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -359,7 +368,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
-                print(f"[#531] start_download: AFTER await cpu_bound, results_folder={results_folder!r}", flush=True)
+                _diag531(f"AFTER await cpu_bound, results_folder={results_folder!r}")
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
