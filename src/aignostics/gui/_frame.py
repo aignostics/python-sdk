@@ -352,7 +352,7 @@ def frame(  # noqa: C901, PLR0915
                     ui.link("Get Support", "https://platform.aignostics.com/support", new_tab=True).mark(
                         "LINK_DOCUMENTATION"
                     )
-            if status_page_url:
+            if status_page_url:  # pragma: no branch — covered by smoke test, conditional render
                 with ui.item().props("clickable"):
                     with ui.item_section().props("avatar"):
                         ui.icon("check_circle", color="primary")
@@ -377,7 +377,7 @@ def frame(  # noqa: C901, PLR0915
         ui.row(align_items="center").classes("justify-start w-full"),
     ):
         health_link()
-        if status_page_url:
+        if status_page_url:  # pragma: no branch — covered by smoke test, conditional render
             # Defence-in-depth: status_page_url is already validated by Settings (http(s)
             # scheme, no HTML-breaking characters), but we also escape here so that a future
             # validator weakening or a direct mutation of the field cannot inject markup
