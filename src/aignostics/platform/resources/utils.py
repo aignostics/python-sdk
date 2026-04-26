@@ -30,16 +30,24 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         page_size (int): The number of items to request per page
         **kwargs: Keyword arguments to pass to the function.
 
+    Raises:
+        ValueError: If page_size is 0 or negative.
+
     Yields:
         Individual items from all pages.
 
     Example:
         >>> def list_items(page=1, page_size=20):
-        ...     # API call that returns a list of items for the given page
-        ...     return [f"item_{i}" for i in range(page_size)]
+        ...     offset = (page - 1) * page_size
+        ...     count = page_size if page == 1 else 5  # partial last page
+        ...     return [f"item_{offset + i}" for i in range(count)]
         >>> items = list(paginate(list_items))
         >>> print(len(items))
+        25
     """
+    if page_size <= 0:
+        message = f"page_size must be a positive integer, got {page_size}"
+        raise ValueError(message)
     page = 1
     while True:
         try:
