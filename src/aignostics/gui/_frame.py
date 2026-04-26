@@ -1,6 +1,7 @@
 """Layout including sidebar and menu."""
 
 import contextlib
+import html
 import platform
 import sys
 import webbrowser
@@ -377,9 +378,14 @@ def frame(  # noqa: C901, PLR0915
     ):
         health_link()
         if status_page_url:
+            # Defence-in-depth: status_page_url is already validated by Settings (http(s)
+            # scheme, no HTML-breaking characters), but we also escape here so that a future
+            # validator weakening or a direct mutation of the field cannot inject markup
+            # through the sanitize=False ui.html() call.
+            escaped_status_page_url = html.escape(status_page_url, quote=True)
             with ui.row().style("padding: 0"):
                 ui.html(
-                    f'<iframe id="betterstack" src="{status_page_url}/badge?theme=dark" '
+                    f'<iframe id="betterstack" src="{escaped_status_page_url}/badge?theme=dark" '
                     'width="250" height="30" frameborder="0" scrolling="no" '
                     'style="color-scheme: dark"></iframe>',
                     sanitize=False,

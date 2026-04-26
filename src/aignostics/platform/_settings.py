@@ -110,6 +110,39 @@ def _validate_url(value: str) -> str:
     return value
 
 
+def _validate_optional_url(value: str | None) -> str | None:
+    """Validate an optional URL setting.
+
+    Used for URL settings that may be unset (None) or set to an http(s) URL. Empty strings
+    (which env-var loaders may produce when the variable is set but empty) are coerced to
+    None so they round-trip through GUI None-checks correctly. Non-empty values must pass
+    a stricter check than _validate_url: in addition to scheme/netloc validation, the URL
+    must not contain characters that could break out of an HTML attribute when interpolated
+    into raw markup. RFC 3986 requires those characters to be percent-encoded; their raw
+    form is either malformed or an injection attempt and is rejected here.
+
+    Args:
+        value: The string to validate, or None.
+
+    Returns:
+        The validated URL string, or None if input was None or an empty string.
+
+    Raises:
+        ValueError: If the string is non-empty and either not a valid http(s) URL or
+            contains characters that are unsafe to interpolate into HTML.
+    """
+    if not value:
+        return None
+    forbidden = {'"', "'", "<", ">", "`", "\\"}
+    if any(c in value for c in forbidden) or any(c.isspace() for c in value):
+        msg = (
+            "URL must not contain quote, angle-bracket, backtick, backslash, or whitespace "
+            f"characters (RFC 3986 requires percent-encoding): {value!r}"
+        )
+        raise ValueError(msg)
+    return _validate_url(value)
+
+
 class Settings(OpaqueSettings):
     """Configuration settings for the Aignostics SDK.
 
@@ -212,11 +245,14 @@ class Settings(OpaqueSettings):
 
     status_page_url: Annotated[
         str | None,
+        BeforeValidator(_validate_optional_url),
         Field(
             description=(
                 "Public Betterstack status page URL for the platform environment. None when no public status "
-                "page exists for the resolved api_root (dev/test or unknown environments). The Launchpad GUI "
-                "hides the status badge and 'Check Platform Status' menu link when this is None."
+                "page exists for the resolved api_root (dev/test or unknown environments). Empty strings are "
+                "coerced to None. The Launchpad GUI hides the status badge and 'Check Platform Status' menu "
+                "link when this is None. Validation rejects non-http(s) schemes and characters that would "
+                "break out of an HTML attribute when interpolated into the embedded iframe."
             ),
             default=None,
         ),
