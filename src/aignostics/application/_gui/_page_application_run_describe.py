@@ -319,7 +319,15 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     download_item_progress.set_visibility(False)
                     download_artifact_progress.set_visibility(False)
 
-        async def start_download() -> None:
+        async def start_download() -> None:  # noqa: PLR0915 - diagnostic prints push count over the threshold (#531)
+            # DIAGNOSTIC(#531): unbuffered raw write to fd 1 — survives task cancellation and
+            # bypasses NiceGUI's outer event-handler exception swallowing.
+            import os as _os531  # noqa: PLC0415
+
+            def _diag(msg: str) -> None:
+                _os531.write(1, f"[#531] {msg}\n".encode())
+
+            _diag("start_download ENTER")
             # Read from download_options dict (defined outside @ui.refreshable) to get current values
             current_qupath_project = download_options["qupath_project"]
             current_marimo = download_options["marimo"]
@@ -328,21 +336,26 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 ui.notify("Please select a folder first", type="warning")
                 return
 
+            _diag("BEFORE ui.notify Downloading ...")
             ui.notify("Downloading ...", type="info")
+            _diag("AFTER ui.notify Downloading ...")
+            _diag("BEFORE Manager().Queue()")
             progress_queue = Manager().Queue()
+            _diag("AFTER Manager().Queue()")
             progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
-
-            # Create the progress timer fresh per-download instead of pre-creating it in the
-            # refreshable container. NiceGUI 3.10's PR #5931 made `Timer._handle_delete()` cancel
-            # the timer when its container is cleared, and `download_run_dialog_open()` calls
-            # `download_run_dialog_content.refresh()` on every open — so a pre-created timer
-            # captured by this closure would already have `_is_canceled=True` here, silently
-            # breaking `progress_timer.activate()` (#531). Owning the timer for one download's
-            # lifetime is also the natural model: started here, cancelled below in `finally`.
-            progress_timer = ui.timer(0.1, update_download_progress, active=True)
+            _diag("BEFORE ui.timer(...)")
+            progress_timer: Any
             try:
+                progress_timer = ui.timer(0.1, update_download_progress, active=True)
+            except BaseException as e_timer:
+                _diag(f"ui.timer RAISED {type(e_timer).__name__}: {e_timer}")
+                raise
+            _diag(f"AFTER ui.timer(...) timer={progress_timer!r} _is_canceled={progress_timer._is_canceled}")  # noqa: SLF001
+            try:
+                _diag("BEFORE download_button.disable()")
                 download_button.disable()
                 download_button.props(add="loading")
+                _diag(f"BEFORE await cpu_bound qupath={current_qupath_project} folder={current_folder!r}")
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -351,6 +364,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
+                _diag(f"AFTER await cpu_bound results_folder={results_folder!r}")
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
@@ -371,9 +385,11 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 # outer task-exception handler, leaving the dialog stuck in the loading state
                 # with no completion or failure notification. We always want the user to see
                 # *something* and the timer + button state cleaned up via the `finally`.
+                _diag(f"start_download except {type(e).__name__}: {e}")
                 logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
             finally:
+                _diag("start_download finally")
                 progress_timer.cancel()
                 progress_state["queue"] = None
                 download_button.props(remove="loading")
