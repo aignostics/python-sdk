@@ -1164,10 +1164,10 @@ class ArtifactOutput(BaseModel):
 
     state: ArtifactState
     termination_reason: ArtifactTerminationReason | None
-    output_artifact_id: str          # Used to resolve a fresh presigned URL via Run.get_artifact_download_url(...)
-    download_url: str | None         # DEPRECATED — populated for backwards compatibility but may stop being emitted by SAMIA
-                                     # at any time. Resolve a short-lived presigned URL on demand instead via
-                                     # Run.get_artifact_download_url(artifact.output_artifact_id).
+    output_artifact_id: str  # Used to resolve a fresh presigned URL via Run.get_artifact_download_url(...)
+    download_url: str | None  # DEPRECATED — populated for backwards compatibility but may stop being emitted by SAMIA
+    # at any time. Resolve a short-lived presigned URL on demand instead via
+    # Run.get_artifact_download_url(artifact.output_artifact_id).
     # ... other fields
 
 

@@ -902,35 +902,31 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                         if mime_type == "image/tiff":
                                             tiff_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
                                             tiff_button.on_click(
-                                                lambda _,
-                                                aid=artifact_id,
-                                                t=title,
-                                                btn=tiff_button: _resolve_artifact_url_and_invoke(
-                                                    run,
-                                                    aid,
-                                                    btn,
-                                                    lambda url, t=t: tiff_dialog_open(t, url),  # type: ignore[misc]
+                                                lambda _, aid=artifact_id, t=title, btn=tiff_button: (
+                                                    _resolve_artifact_url_and_invoke(
+                                                        run,
+                                                        aid,
+                                                        btn,
+                                                        lambda url, t=t: tiff_dialog_open(t, url),  # type: ignore[misc]
+                                                    )
                                                 )
                                             )
                                         if mime_type == "text/csv":
                                             csv_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
                                             csv_button.on_click(
-                                                lambda _,
-                                                aid=artifact_id,
-                                                t=title,
-                                                btn=csv_button: _resolve_artifact_url_and_invoke(
-                                                    run,
-                                                    aid,
-                                                    btn,
-                                                    lambda url, t=t: csv_dialog_open(t, url),  # type: ignore[misc]
+                                                lambda _, aid=artifact_id, t=title, btn=csv_button: (
+                                                    _resolve_artifact_url_and_invoke(
+                                                        run,
+                                                        aid,
+                                                        btn,
+                                                        lambda url, t=t: csv_dialog_open(t, url),  # type: ignore[misc]
+                                                    )
                                                 )
                                             )
                                         download_button = ui.button(text="Download", icon="cloud_download")
                                         download_button.on_click(
-                                            lambda _,
-                                            aid=artifact_id,
-                                            btn=download_button: _resolve_artifact_url_and_invoke(
-                                                run, aid, btn, webbrowser.open
+                                            lambda _, aid=artifact_id, btn=download_button: (
+                                                _resolve_artifact_url_and_invoke(run, aid, btn, webbrowser.open)
                                             )
                                         )
                                         if metadata:

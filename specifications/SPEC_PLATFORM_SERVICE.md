@@ -369,7 +369,9 @@ class ApplicationRun:
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run."""
 
-    def download_to_folder(self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c") -> None:
+    def download_to_folder(
+        self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
+    ) -> None:
         """Downloads all result artifacts to a folder.
 
         Internally resolves a fresh presigned URL for each AVAILABLE artifact via the
