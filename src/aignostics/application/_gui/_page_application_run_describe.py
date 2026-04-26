@@ -351,9 +351,17 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             _diag531("AFTER progress_state['queue'] = progress_queue")
 
             # Activate the timer now that download is starting
-            _diag531(f"BEFORE progress_timer.activate(), timer={progress_timer!r}")
-            progress_timer.activate()
-            _diag531("AFTER progress_timer.activate()")
+            # DIAGNOSTIC(#531): isolate the exact sub-step within Timer.activate / BindableProperty.__set__.
+            # Timer.activate() is `assert not self._is_canceled; self.active = True` — the setter goes
+            # through BindableProperty.__set__ which calls _propagate(...). One of those is the boundary.
+            _diag531(f"BEFORE progress_timer._is_canceled check, _is_canceled={progress_timer._is_canceled}")  # noqa: SLF001
+            _diag531(f"BEFORE progress_timer.active = True (current value = {progress_timer.active})")
+            try:
+                progress_timer.active = True
+                _diag531("AFTER progress_timer.active = True")
+            except BaseException as e531:
+                _diag531(f"progress_timer.active = True RAISED {type(e531).__name__}: {e531}")
+                raise
             try:
                 _diag531("BEFORE download_button.disable()")
                 download_button.disable()
