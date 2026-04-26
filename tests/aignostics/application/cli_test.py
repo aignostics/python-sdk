@@ -1146,6 +1146,7 @@ def test_cli_run_execute_invalid_mapping_format(runner: CliRunner, tmp_path: Pat
             str(tmp_path),
             "--mapping",
             ".*\\.tiff:staining_method:H&E",  # Wrong: colon instead of equals
+            "--force",  # Skip health check; we're testing argument validation only
         ],
     )
     assert result.exit_code != 0
@@ -1167,6 +1168,7 @@ def test_cli_run_execute_invalid_regex_pattern(runner: CliRunner, tmp_path: Path
             str(tmp_path),
             "--mapping",
             "*.tiff:staining_method=H&E",  # Wrong: glob pattern, not regex
+            "--force",  # Skip health check; we're testing argument validation only
         ],
     )
     assert result.exit_code != 0
