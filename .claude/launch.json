@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "launchpad-production",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "AIGNOSTICS_API_ROOT=https://platform.aignostics.com uv run aignostics system serve --host 127.0.0.1 --port 8801"
+      ],
+      "port": 8801
+    },
+    {
+      "name": "launchpad-staging",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "AIGNOSTICS_API_ROOT=https://platform-staging.aignostics.com uv run aignostics system serve --host 127.0.0.1 --port 8802"
+      ],
+      "port": 8802
+    },
+    {
+      "name": "launchpad-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "AIGNOSTICS_API_ROOT=https://platform-dev.aignostics.ai uv run aignostics system serve --host 127.0.0.1 --port 8803"
+      ],
+      "port": 8803
+    }
+  ]
+}
