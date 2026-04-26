@@ -101,7 +101,7 @@ def test_get_cpu_freq_info_handles_missing_cpu_freq() -> None:
     had_cpu_freq = hasattr(psutil, "cpu_freq")
     original: Any = getattr(psutil, "cpu_freq", None)
     if had_cpu_freq:
-        delattr(psutil, "cpu_freq")
+        del psutil.cpu_freq
     try:
         result = Service._get_cpu_freq_info()
     finally:
