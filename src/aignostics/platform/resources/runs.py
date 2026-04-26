@@ -8,13 +8,16 @@ import builtins
 import time
 import typing as t
 from collections.abc import Iterator
+from http import HTTPStatus
 from pathlib import Path
 from time import sleep
 from typing import Any, cast
 
+import requests
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.exceptions import NotFoundException, ServiceException
+from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
+    ArtifactOutput,
     CustomMetadataUpdateRequest,
     ItemCreationRequest,
     ItemOutput,
@@ -49,6 +52,7 @@ from tenacity import (
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
 from aignostics.platform._sdk_metadata import (
     build_item_sdk_metadata,
@@ -103,6 +107,148 @@ LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
 
 class DownloadTimeoutError(RuntimeError):
     """Exception raised when the download operation exceeds its timeout."""
+
+
+_REDIRECT_STATUSES = frozenset({
+    HTTPStatus.MOVED_PERMANENTLY,
+    HTTPStatus.FOUND,
+    HTTPStatus.TEMPORARY_REDIRECT,
+    HTTPStatus.PERMANENT_REDIRECT,
+})
+
+
+class Artifact:
+    """Represents a single output artifact belonging to a run.
+
+    Provides operations to resolve a fresh presigned download URL via the
+    ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` endpoint.
+    """
+
+    def __init__(self, api: PublicApi, run_id: str, artifact_id: str) -> None:
+        """Initializes an Artifact instance.
+
+        Args:
+            api (PublicApi): The configured API client.
+            run_id (str): The ID of the parent run.
+            artifact_id (str): The ID of the output artifact.
+        """
+        self._api = api
+        self.run_id = run_id
+        self.artifact_id = artifact_id
+
+    def get_download_url(self) -> str:
+        """Resolve a fresh presigned download URL for this artifact.
+
+        Calls ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` with
+        ``allow_redirects=False`` and returns the presigned URL from the redirect
+        ``Location`` header. The presigned URL is short-lived; resolve immediately
+        before downloading.
+
+        The generated client cannot be used directly because urllib3 follows the
+        redirect automatically and would fetch the artifact body — losing the URL
+        we need for streaming/chunked downloads with checksum verification.
+
+        Returns:
+            str: A time-limited presigned URL.
+
+        Raises:
+            NotFoundException: 404 — artifact not found for the run.
+            ApiException: Other 4xx (e.g. 403 forbidden, 410 gone).
+            ServiceException: 5xx, request timeouts, or connection errors
+                (after retry attempts have been exhausted).
+            RuntimeError: 3xx response with no Location header, or any other
+                unexpected status the API contract does not define.
+        """
+        configuration = self._api.api_client.configuration
+        host = configuration.host.rstrip("/")
+        endpoint_url = f"{host}/api/v1/runs/{self.run_id}/artifacts/{self.artifact_id}/file"
+        proxy = getattr(configuration, "proxy", None)
+        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
+        verify_ssl = getattr(configuration, "verify_ssl", True)
+        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
+
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().run_retry_attempts),
+            wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(lambda: self._fetch_redirect_url(endpoint_url, ssl_verify, proxy))
+
+    def _fetch_redirect_url(
+        self,
+        endpoint_url: str,
+        ssl_verify: bool | str,
+        proxy: str | None,
+    ) -> str:
+        """Issue the GET and return the presigned URL from the 3xx Location header.
+
+        Args:
+            endpoint_url: Full /file endpoint URL.
+            ssl_verify: True/False or CA bundle path, mirroring the codegen client config.
+            proxy: Optional HTTP/HTTPS proxy URL, mirroring the codegen client config.
+
+        Returns:
+            str: The presigned URL extracted from the Location header.
+
+        Raises:
+            NotFoundException: 404.
+            ApiException: 4xx other than 404.
+            ServiceException: 5xx or transient network errors (caught & wrapped so
+                the outer Retrying picks them up).
+            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
+        """
+        try:
+            with requests.get(
+                endpoint_url,
+                headers={
+                    "Authorization": f"Bearer {get_token()}",
+                    "User-Agent": user_agent(),
+                },
+                allow_redirects=False,
+                timeout=settings().run_timeout,
+                proxies={"http": proxy, "https": proxy} if proxy else None,
+                verify=ssl_verify,
+                stream=True,
+            ) as response:
+                if response.status_code in _REDIRECT_STATUSES:
+                    location = response.headers.get("Location")
+                    if not location:
+                        msg = (
+                            f"Redirect response {response.status_code} from /file endpoint "
+                            f"missing Location header for artifact {self.artifact_id}"
+                        )
+                        raise RuntimeError(msg)
+                    return location
+                if response.status_code == HTTPStatus.NOT_FOUND:
+                    raise NotFoundException(
+                        status=HTTPStatus.NOT_FOUND.value,
+                        reason=f"Artifact {self.artifact_id} not found in run {self.run_id}",
+                    )
+                if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    raise ServiceException(status=response.status_code, reason=response.reason)
+                if response.status_code >= HTTPStatus.BAD_REQUEST:
+                    raise ApiException(status=response.status_code, reason=response.reason)
+                msg = (
+                    f"Unexpected status {response.status_code} from /file endpoint "
+                    f"for artifact {self.artifact_id}; expected a redirect"
+                )
+                raise RuntimeError(msg)
+        except requests.Timeout as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason="Request timed out",
+            ) from e
+        except requests.ConnectionError as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason="Connection failed",
+            ) from e
+        except requests.RequestException as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason=f"Request failed: {e}",
+            ) from e
 
 
 class Run:
@@ -327,7 +473,7 @@ class Run:
 
             # check if last results have been downloaded yet and report on errors
             for item in self.results(nocache=True):
-                if ItemOutput.FULL:
+                if item.state == ItemState.TERMINATED and item.output == ItemOutput.FULL:
                     self.ensure_artifacts_downloaded(application_run_dir, item, checksum_attribute_key)
                 message = (
                     f"Output of item `{item.external_id}` is `{item.output}`, state `{item.state}`, "
@@ -345,8 +491,40 @@ class Run:
             msg = f"Download operation failed unexpectedly for run {self.run_id}: {e}"
             raise RuntimeError(msg) from e
 
-    @staticmethod
+    def artifact(self, artifact_id: str) -> Artifact:
+        """Get an Artifact handle for resolving a presigned download URL.
+
+        Args:
+            artifact_id (str): The output artifact ID
+                (``OutputArtifactResultReadResponse.output_artifact_id``).
+
+        Returns:
+            Artifact: A handle bound to this run and the given artifact.
+        """
+        return Artifact(self._api, self.run_id, artifact_id)
+
+    def get_artifact_download_url(self, artifact_id: str) -> str:
+        """Resolve a fresh presigned download URL for an artifact of this run.
+
+        Convenience wrapper around :meth:`artifact` and
+        :meth:`Artifact.get_download_url`.
+
+        Args:
+            artifact_id (str): The output artifact ID.
+
+        Returns:
+            str: A short-lived presigned URL.
+
+        Raises:
+            NotFoundException: 404.
+            ApiException: Other 4xx.
+            ServiceException: 5xx or transient network errors.
+            RuntimeError: Unexpected response from the /file endpoint.
+        """
+        return self.artifact(artifact_id).get_download_url()
+
     def ensure_artifacts_downloaded(
+        self,
         base_folder: Path,
         item: ItemResultReadResponse,
         checksum_attribute_key: str = "checksum_base64_crc32c",
@@ -355,6 +533,9 @@ class Run:
         """Ensures all artifacts for an item are downloaded.
 
         Downloads missing or partially downloaded artifacts and verifies their integrity.
+        Resolves a fresh presigned URL for each artifact via the
+        ``/api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` endpoint instead
+        of the deprecated ``OutputArtifactResultReadResponse.download_url`` field.
 
         Args:
             base_folder (Path): Base directory to download artifacts to.
@@ -370,34 +551,32 @@ class Run:
 
         downloaded_at_least_one_artifact = False
         for artifact in item.output_artifacts:
-            if artifact.download_url:
-                item_dir.mkdir(exist_ok=True, parents=True)
-                file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
-                file_path = item_dir / f"{artifact.name}{file_ending}"
-                if not artifact.metadata:
-                    logger.error(
-                        "Skipping artifact %s for item %s, no metadata present", artifact.name, item.external_id
-                    )
-                    print(
-                        f"> Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
-                    ) if print_status else None
-                    continue
-                checksum = artifact.metadata[checksum_attribute_key]
+            if artifact.output != ArtifactOutput.AVAILABLE:
+                continue
+            item_dir.mkdir(exist_ok=True, parents=True)
+            file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
+            file_path = item_dir / f"{artifact.name}{file_ending}"
+            if not artifact.metadata:
+                logger.error("Skipping artifact %s for item %s, no metadata present", artifact.name, item.external_id)
+                print(
+                    f"> Skipping artifact {artifact.name} for item {item.external_id}, no metadata present"
+                ) if print_status else None
+                continue
+            checksum = artifact.metadata[checksum_attribute_key]
 
-                if file_path.exists():
-                    file_checksum = calculate_file_crc32c(file_path)
-                    if file_checksum != checksum:
-                        logger.trace("Resume download for {} to {}", artifact.name, file_path)
-                        print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
-                    else:
-                        continue
+            if file_path.exists():
+                file_checksum = calculate_file_crc32c(file_path)
+                if file_checksum != checksum:
+                    logger.trace("Resume download for {} to {}", artifact.name, file_path)
+                    print(f"> Resume download for {artifact.name} to {file_path}") if print_status else None
                 else:
-                    downloaded_at_least_one_artifact = True
-                    logger.trace("Download for {} to {}", artifact.name, file_path)
-                    print(f"> Download for {artifact.name} to {file_path}") if print_status else None
+                    continue
+            else:
+                logger.trace("Download for {} to {}", artifact.name, file_path)
+                print(f"> Download for {artifact.name} to {file_path}") if print_status else None
 
-                # if file is not there at all or only partially downloaded yet
-                download_file(artifact.download_url, str(file_path), checksum)
+            downloaded_at_least_one_artifact = True
+            download_file(self.get_artifact_download_url(artifact.output_artifact_id), str(file_path), checksum)
 
         if downloaded_at_least_one_artifact:
             logger.trace("Downloaded results for item: {} to {}", item.external_id, item_dir)

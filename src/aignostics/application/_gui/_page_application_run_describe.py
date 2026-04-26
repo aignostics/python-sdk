@@ -15,7 +15,7 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ItemOutput, ItemResult, ItemState, RunState
+from aignostics.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, RunState
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -516,6 +516,49 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
         custom_metadata_dialog.open()
 
+    async def _resolve_url_or_notify(artifact_id: str, button: ui.button) -> str | None:
+        """Resolve a fresh presigned download URL off the event loop.
+
+        Wraps the blocking ``Run.get_artifact_download_url`` call in
+        ``nicegui_run.io_bound`` so the UI stays responsive, and surfaces
+        failures as a NiceGUI notification rather than letting the click
+        handler raise.
+
+        Args:
+            artifact_id: The output_artifact_id to resolve.
+            button: The button to mark loading while the request is in flight.
+
+        Returns:
+            The presigned URL, or None if resolution failed.
+        """
+        button.props(add="loading")
+        try:
+            return await nicegui_run.io_bound(run.get_artifact_download_url, artifact_id)
+        except Exception as e:
+            logger.exception("Failed to resolve download URL for artifact {}", artifact_id)
+            ui.notify(f"Failed to resolve download URL: {e}", type="warning", multi_line=True)
+            return None
+        finally:
+            button.props(remove="loading")
+
+    async def open_tiff_preview(title: str, artifact_id: str, button: ui.button) -> None:
+        """Resolve a fresh URL and open the TIFF preview dialog."""
+        url = await _resolve_url_or_notify(artifact_id, button)
+        if url is not None:
+            tiff_dialog_open(title, url)
+
+    async def open_csv_preview(title: str, artifact_id: str, button: ui.button) -> None:
+        """Resolve a fresh URL and open the CSV preview dialog."""
+        url = await _resolve_url_or_notify(artifact_id, button)
+        if url is not None:
+            csv_dialog_open(title, url)
+
+    async def open_artifact_download(artifact_id: str, button: ui.button) -> None:
+        """Resolve a fresh URL and hand it to the OS browser to download."""
+        url = await _resolve_url_or_notify(artifact_id, button)
+        if url is not None:
+            webbrowser.open(url)
+
     async def open_qupath(
         project: Path | None = None, image: Path | str | None = None, button: ui.button | None = None
     ) -> None:
@@ -781,29 +824,31 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 icon=mime_type_to_icon(mime_type),
                                 group="artifacts",
                             ).classes("w-full"):
-                                if artifact.download_url:
-                                    url = artifact.download_url
+                                if artifact.output is ArtifactOutput.AVAILABLE:
+                                    artifact_id = artifact.output_artifact_id
                                     title = artifact.name
                                     metadata = artifact.metadata
                                     with ui.button_group():
                                         if mime_type == "image/tiff":
-                                            ui.button(
-                                                "Preview",
-                                                icon=mime_type_to_icon(mime_type),
-                                                on_click=lambda _, url=url, title=title: tiff_dialog_open(title, url),
+                                            tiff_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
+                                            tiff_button.on_click(
+                                                lambda _, aid=artifact_id, t=title, btn=tiff_button: open_tiff_preview(
+                                                    t, aid, btn
+                                                )
                                             )
                                         if mime_type == "text/csv":
-                                            ui.button(
-                                                "Preview",
-                                                icon=mime_type_to_icon(mime_type),
-                                                on_click=lambda _, url=url, title=title: csv_dialog_open(title, url),
+                                            csv_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
+                                            csv_button.on_click(
+                                                lambda _, aid=artifact_id, t=title, btn=csv_button: open_csv_preview(
+                                                    t, aid, btn
+                                                )
                                             )
-                                        if url:
-                                            ui.button(
-                                                text="Download",
-                                                icon="cloud_download",
-                                                on_click=lambda _, url=url: webbrowser.open(url),
+                                        download_button = ui.button(text="Download", icon="cloud_download")
+                                        download_button.on_click(
+                                            lambda _, aid=artifact_id, btn=download_button: open_artifact_download(
+                                                aid, btn
                                             )
+                                        )
                                         if metadata:
                                             ui.button(
                                                 text="Schema",

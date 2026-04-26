@@ -786,8 +786,10 @@ def _validate_output(
                 f"Application run `{application_run.run_id}`: "
                 f"artifact `{artifact}` should have output state `AVAILABLE`."
             )
-            assert artifact.download_url is not None, (
-                f"Application run `{application_run.run_id}`: artifact `{artifact}` should provide a download url."
+            artifact_download_url = application_run.get_artifact_download_url(artifact.output_artifact_id)
+            assert artifact_download_url, (
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` "
+                f"should resolve to a presigned download URL via the /file endpoint."
             )
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"

@@ -4,10 +4,13 @@ This module contains unit tests for the Runs class and Run class,
 verifying their functionality for listing, creating, and managing application runs.
 """
 
-from unittest.mock import Mock
+from http import HTTPStatus
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import requests
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     InputArtifactCreationRequest,
     ItemCreationRequest,
@@ -16,8 +19,16 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs
+from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
+
+_PLATFORM_HOST = "https://platform-staging.aignostics.com"
+_RUN_ID = "test-run-id"
+_ARTIFACT_ID = "artifact-123"
+_PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc123"
+_PATCH_REQUESTS_GET = "aignostics.platform.resources.runs.requests.get"
+_PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105 (mock target string, not a credential)
+_PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
 
 
 @pytest.fixture
@@ -53,7 +64,51 @@ def app_run(mock_api) -> Run:
     Returns:
         Run: An Run instance using the mock API.
     """
-    return Run(mock_api, "test-run-id")
+    return Run(mock_api, _RUN_ID)
+
+
+@pytest.fixture
+def configured_api(mock_api) -> Mock:
+    """Wire a Mock API client to expose a `configuration` matching real codegen shape.
+
+    Returns:
+        Mock: The same `mock_api` fixture, with `api_client.configuration`
+            populated with `host`, `proxy`, `ssl_ca_cert`, `verify_ssl`.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.proxy = None
+    mock_api.api_client.configuration.ssl_ca_cert = None
+    mock_api.api_client.configuration.verify_ssl = True
+    return mock_api
+
+
+@pytest.fixture
+def artifact(configured_api) -> Artifact:
+    """Create an Artifact instance bound to a configured mock API."""
+    return Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+
+
+def _redirect_response(location: str | None, status: int = HTTPStatus.TEMPORARY_REDIRECT) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given status + Location."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {"Location": location} if location is not None else {}
+    response.reason = HTTPStatus(status).phrase or "Unknown"
+    return response
+
+
+def _error_response(status: int) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given non-redirect status."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {}
+    response.reason = HTTPStatus(status).phrase
+    return response
 
 
 @pytest.mark.unit
@@ -725,3 +780,247 @@ def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
         app_run.details()
 
     assert mock_api.get_run_v1_runs_run_id_get.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Artifact / Run.get_artifact_download_url
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "redirect_status",
+    [
+        HTTPStatus.MOVED_PERMANENTLY,
+        HTTPStatus.FOUND,
+        HTTPStatus.TEMPORARY_REDIRECT,
+        HTTPStatus.PERMANENT_REDIRECT,
+    ],
+)
+def test_artifact_get_download_url_returns_location_for_any_redirect(artifact, redirect_status) -> None:
+    """Any 3xx redirect status with a Location header yields the presigned URL.
+
+    The /file endpoint contractually returns 307, but the SDK accepts every
+    well-known redirect status so the SDK keeps working if the API ever flips
+    one for cache reasons.
+    """
+    response = _redirect_response(_PRESIGNED_URL, status=redirect_status)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        url = artifact.get_download_url()
+
+    assert url == _PRESIGNED_URL
+    mock_get.assert_called_once()
+    assert mock_get.call_args.args[0] == f"{_PLATFORM_HOST}/api/v1/runs/{_RUN_ID}/artifacts/{_ARTIFACT_ID}/file"
+    assert mock_get.call_args.kwargs["allow_redirects"] is False
+    assert mock_get.call_args.kwargs["stream"] is True
+    assert mock_get.call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
+    assert "User-Agent" in mock_get.call_args.kwargs["headers"]
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_strips_trailing_slash_from_host(configured_api) -> None:
+    """Trailing slash on configuration.host must not produce a `//api/v1/...` URL."""
+    configured_api.api_client.configuration.host = f"{_PLATFORM_HOST}/"
+    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+    response = _redirect_response(_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        art.get_download_url()
+
+    assert mock_get.call_args.args[0] == f"{_PLATFORM_HOST}/api/v1/runs/{_RUN_ID}/artifacts/{_ARTIFACT_ID}/file"
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_redirect_without_location_raises(artifact) -> None:
+    """A 3xx response with no Location header is an SDK-level RuntimeError.
+
+    Bypassing the codegen means we own the redirect contract; this asserts we
+    fail loudly instead of returning None/empty string.
+    """
+    response = _redirect_response(location=None, status=HTTPStatus.TEMPORARY_REDIRECT)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response),
+        pytest.raises(RuntimeError, match="missing Location header"),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_404_raises_not_found(artifact) -> None:
+    """404 from the /file endpoint maps to NotFoundException (codegen-style)."""
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(HTTPStatus.NOT_FOUND)),
+        pytest.raises(NotFoundException),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "client_status",
+    [HTTPStatus.FORBIDDEN, HTTPStatus.GONE, HTTPStatus.UNPROCESSABLE_ENTITY],
+)
+def test_artifact_get_download_url_4xx_raises_api_exception(artifact, client_status) -> None:
+    """4xx responses other than 404 surface as ApiException with the original status.
+
+    Includes 410 because the API contract says deleted artifacts return 410 Gone.
+    """
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(client_status)),
+        pytest.raises(ApiException) as exc_info,
+    ):
+        artifact.get_download_url()
+    assert exc_info.value.status == client_status
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_unexpected_2xx_raises_runtime(artifact) -> None:
+    """A 200 (or other unexpected non-error, non-redirect) is RuntimeError.
+
+    Per Dima's clarification on PR #478: the endpoint never returns 200 in
+    practice. If it ever does, we fail explicitly rather than silently passing
+    a body off to webbrowser.open().
+    """
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(HTTPStatus.OK)),
+        pytest.raises(RuntimeError, match="Unexpected status 200"),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_5xx_retries_then_succeeds(artifact) -> None:
+    """A transient 5xx is retried; once it succeeds the presigned URL is returned."""
+    error = _error_response(HTTPStatus.SERVICE_UNAVAILABLE)
+    success = _redirect_response(_PRESIGNED_URL)
+
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 3
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(_PATCH_REQUESTS_GET, side_effect=[error, success]) as mock_get,
+    ):
+        url = artifact.get_download_url()
+
+    assert url == _PRESIGNED_URL
+    assert mock_get.call_count == 2  # one retry was needed
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_5xx_exhausts_retries_then_raises(artifact) -> None:
+    """If 5xx persists for all retry attempts, ServiceException is reraised."""
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 2
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(
+            _PATCH_REQUESTS_GET,
+            return_value=_error_response(HTTPStatus.SERVICE_UNAVAILABLE),
+        ) as mock_get,
+        pytest.raises(ServiceException),
+    ):
+        artifact.get_download_url()
+    assert mock_get.call_count == fake_settings.run_retry_attempts
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "exc_factory",
+    [
+        lambda: requests.Timeout("timed out"),
+        lambda: requests.ConnectionError("dns failure"),
+        lambda: requests.RequestException("misc"),
+    ],
+)
+def test_artifact_get_download_url_network_errors_become_service_exception(artifact, exc_factory) -> None:
+    """`requests` exceptions are wrapped as ServiceException so retry can act on them.
+
+    Without this wrapping the e2e tests in PR #507 hung — `requests.HTTPError`
+    escaped the retry loop and surfaced as a wrong exception type.
+    """
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 1  # don't waste test time on retries
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(_PATCH_REQUESTS_GET, side_effect=exc_factory()),
+        pytest.raises(ServiceException),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_passes_proxy_and_ca_bundle(configured_api) -> None:
+    """Proxy and custom CA bundle from codegen Configuration are honored.
+
+    Enterprise installs frequently set these via env; a previous draft of this
+    code ignored them, which would have broken downloads behind a proxy.
+    """
+    configured_api.api_client.configuration.proxy = "http://proxy.local:3128"
+    configured_api.api_client.configuration.ssl_ca_cert = "/etc/ssl/corp-ca.pem"
+    configured_api.api_client.configuration.verify_ssl = False
+    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+    response = _redirect_response(_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        art.get_download_url()
+
+    kwargs = mock_get.call_args.kwargs
+    assert kwargs["proxies"] == {"http": "http://proxy.local:3128", "https": "http://proxy.local:3128"}
+    # CA bundle path takes precedence over verify_ssl=False
+    assert kwargs["verify"] == "/etc/ssl/corp-ca.pem"
+
+
+@pytest.mark.unit
+def test_run_get_artifact_download_url_delegates_to_artifact(app_run, configured_api) -> None:
+    """Run.get_artifact_download_url is the documented entry point and must just delegate.
+
+    Keeping this thin protects callers from internal refactors of `Artifact`.
+    """
+    response = _redirect_response(_PRESIGNED_URL)
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response),
+    ):
+        # Replace mock_api on the existing Run with the configured one
+        app_run._api = configured_api
+        url = app_run.get_artifact_download_url(_ARTIFACT_ID)
+    assert url == _PRESIGNED_URL
+
+
+@pytest.mark.unit
+def test_run_artifact_returns_artifact_handle(app_run) -> None:
+    """Run.artifact() returns an Artifact bound to the right run/artifact pair."""
+    handle = app_run.artifact(_ARTIFACT_ID)
+    assert isinstance(handle, Artifact)
+    assert handle.run_id == _RUN_ID
+    assert handle.artifact_id == _ARTIFACT_ID

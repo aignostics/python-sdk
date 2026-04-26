@@ -10,7 +10,7 @@ import crc32c
 import requests
 from loguru import logger
 
-from aignostics.platform import ItemOutput, ItemState, Run, generate_signed_url
+from aignostics.platform import ArtifactOutput, ItemOutput, ItemState, Run, generate_signed_url
 from aignostics.utils import sanitize_path_component
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -201,8 +201,18 @@ def download_available_items(  # noqa: PLR0913, PLR0917
                 progress.artifact = artifact
                 update_progress(progress, download_progress_callable, download_progress_queue)
 
+                if artifact.output != ArtifactOutput.AVAILABLE:
+                    logger.trace(
+                        "Skipping artifact {} of item {}: not AVAILABLE (output={})",
+                        artifact.output_artifact_id,
+                        item.external_id,
+                        artifact.output,
+                    )
+                    continue
+
                 download_item_artifact(
                     progress,
+                    application_run,
                     artifact,
                     item_directory,
                     item.external_id if not create_subdirectory_per_item else "",
@@ -215,6 +225,7 @@ def download_available_items(  # noqa: PLR0913, PLR0917
 
 def download_item_artifact(  # noqa: PLR0913, PLR0917
     progress: DownloadProgress,
+    run: Run,
     artifact: Any,  # noqa: ANN401
     destination_directory: Path,
     prefix: str = "",
@@ -223,17 +234,23 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
 ) -> None:
     """Download an artifact of a result item with progress tracking.
 
+    Resolves a fresh presigned URL via
+    ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` immediately
+    before downloading, instead of relying on the deprecated
+    ``OutputArtifactResultReadResponse.download_url`` field.
+
     Args:
         progress (DownloadProgress): Progress tracking object for GUI or CLI updates.
-        artifact (Any): The artifact to download.
+        run (Run): The run owning the artifact, used to resolve the presigned URL.
+        artifact (Any): The artifact to download
+            (``OutputArtifactResultReadResponse``).
         destination_directory (Path): Directory to save the file.
         prefix (str): Prefix for the file name, if needed.
         download_progress_queue (Queue | None): Queue for GUI progress updates.
         download_progress_callable (Callable | None): Callback for CLI progress updates.
 
     Raises:
-        ValueError: If
-            no checksum metadata is found for the artifact.
+        ValueError: If no checksum metadata is found for the artifact.
         requests.HTTPError: If the download fails.
     """
     metadata = artifact.metadata or {}
@@ -260,7 +277,7 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
 
     download_file_with_progress(
         progress,
-        artifact.download_url,
+        run.get_artifact_download_url(artifact.output_artifact_id),
         artifact_path,
         metadata_checksum,
         download_progress_queue,
