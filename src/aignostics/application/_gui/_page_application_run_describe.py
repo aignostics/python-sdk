@@ -319,10 +319,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     download_item_progress.set_visibility(False)
                     download_artifact_progress.set_visibility(False)
 
-        # Create the timer during dialog construction (in valid slot context), but inactive initially
-        # This avoids RuntimeError when trying to create timer inside async event handler
-        progress_timer = ui.timer(0.1, update_download_progress, active=False)
-
         async def start_download() -> None:
             # Read from download_options dict (defined outside @ui.refreshable) to get current values
             current_qupath_project = download_options["qupath_project"]
@@ -336,26 +332,14 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             progress_queue = Manager().Queue()
             progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
 
-            # Activate the timer now that download is starting.
-            #
-            # Workaround for a NiceGUI 3.10+ regression (#531):
-            # `download_run_dialog_open()` calls `download_run_dialog_content.refresh()` which
-            # destroys the previous refreshable instance. NiceGUI 3.10's PR #5931 made
-            # `Timer._handle_delete()` call `cancel(with_current_invocation=True)`, so the timer
-            # we close over here ends up with `_is_canceled=True` by the time start_download
-            # actually runs. `progress_timer.activate()` would then raise
-            # `AssertionError: Cannot activate a canceled timer`, which NiceGUI's outer
-            # task-exception handler swallows — leaving the dialog stuck in "loading" state
-            # with no completion or failure notification.
-            #
-            # Bypassing the assert via direct attribute set lets the click handler proceed.
-            # Note: because `_is_canceled` is True, the timer's `_run_in_loop` exits via
-            # `_should_stop()` and the progress callback won't fire — the dialog's progress
-            # bar will not animate during download. Acceptable trade-off until upstream fix:
-            # the download itself completes and "Download completed." fires. Restore
-            # `progress_timer.activate()` once the upstream timer-cancel-on-refresh behavior
-            # is changed (see https://github.com/zauberzeug/nicegui/pull/5931 for context).
-            progress_timer.active = True
+            # Create the progress timer fresh per-download instead of pre-creating it in the
+            # refreshable container. NiceGUI 3.10's PR #5931 made `Timer._handle_delete()` cancel
+            # the timer when its container is cleared, and `download_run_dialog_open()` calls
+            # `download_run_dialog_content.refresh()` on every open — so a pre-created timer
+            # captured by this closure would already have `_is_canceled=True` here, silently
+            # breaking `progress_timer.activate()` (#531). Owning the timer for one download's
+            # lifetime is also the natural model: started here, cancelled below in `finally`.
+            progress_timer = ui.timer(0.1, update_download_progress, active=True)
             try:
                 download_button.disable()
                 download_button.props(add="loading")
@@ -371,10 +355,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
                 if current_qupath_project:
-                    if results_folder:
-                        ui.notify("Download and QuPath project creation completed.", type="positive")
-                        download_item_status.set_text("Opening QuPath ...")
-                        await open_qupath(project=results_folder / "qupath", button=download_button)
+                    ui.notify("Download and QuPath project creation completed.", type="positive")
+                    download_item_status.set_text("Opening QuPath ...")
+                    await open_qupath(project=results_folder / "qupath", button=download_button)
                 elif current_marimo:
                     ui.notify("Download and Notebook preparation completed.", type="positive")
                     download_item_status.set_text("Opening Notebook ...")
@@ -383,15 +366,15 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     ui.notify("Download completed.", type="positive")
                 show_in_file_manager(str(results_folder))
             except Exception as e:
-                # Catching the broad `Exception` here is intentional: any unhandled exception
-                # in this async event handler would otherwise be silently swallowed by
-                # NiceGUI's app.handle_exception, leaving the dialog stuck in the loading
-                # state with no completion or failure notification. We always want the user
-                # to see *something* — even a generic error — and we always want the timer +
-                # button state to be cleaned up.
+                # Catching the broad `Exception` here is intentional: any unhandled exception in
+                # this async event handler would otherwise be silently swallowed by NiceGUI's
+                # outer task-exception handler, leaving the dialog stuck in the loading state
+                # with no completion or failure notification. We always want the user to see
+                # *something* and the timer + button state cleaned up via the `finally`.
                 logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
-                progress_timer.deactivate()
+            finally:
+                progress_timer.cancel()
                 progress_state["queue"] = None
                 download_button.props(remove="loading")
                 download_button.enable()
@@ -399,15 +382,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 download_item_progress.set_visibility(False)
                 download_artifact_status.set_visibility(False)
                 download_artifact_progress.set_visibility(False)
-                return
-            progress_timer.deactivate()
-            progress_state["queue"] = None
-            download_button.props(remove="loading")
-            download_button.enable()
-            download_item_status.set_visibility(False)
-            download_item_progress.set_visibility(False)
-            download_artifact_status.set_visibility(False)
-            download_artifact_progress.set_visibility(False)
 
         ui.separator()
         with ui.row(align_items="end").classes("w-full justify-end"):
