@@ -1,13 +1,19 @@
 """Tests for download utility functions in the application module."""
 
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
 
-from aignostics.application._download import download_url_to_file_with_progress, extract_filename_from_url
+from aignostics.application._download import (
+    download_available_items,
+    download_item_artifact,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+)
 from aignostics.application._models import DownloadProgress, DownloadProgressState
+from aignostics.platform import ArtifactOutput
 
 
 @pytest.mark.unit
@@ -397,3 +403,189 @@ def test_download_url_to_file_with_progress_https_with_chunked(tmp_path: Path) -
 
         # Verify direct URL was used (no signed URL generation)
         mock_get.assert_called_once_with(https_url, stream=True, timeout=60)
+
+
+# ---------------------------------------------------------------------------
+# download_item_artifact / download_available_items: AVAILABLE-gating + URL flow
+# ---------------------------------------------------------------------------
+
+
+_PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc"
+# Patch _download.get_file_extension_for_artifact (NOT _utils.*) — the function
+# is imported by name into _download, so re-binding it on _utils does nothing.
+# Copilot called this out on PR #478 (comments #3 + #4).
+_PATCH_GET_EXT = "aignostics.application._download.get_file_extension_for_artifact"
+_PATCH_DOWNLOAD_FILE_WITH_PROGRESS = "aignostics.application._download.download_file_with_progress"
+
+
+def _mock_artifact(
+    *,
+    output_artifact_id: str = "art-1",
+    name: str = "result",
+    output: ArtifactOutput = ArtifactOutput.AVAILABLE,
+    metadata: dict | None = None,
+) -> MagicMock:
+    """Build a mock OutputArtifactResultReadResponse for tests."""
+    artifact = MagicMock()
+    artifact.output_artifact_id = output_artifact_id
+    artifact.name = name
+    artifact.output = output
+    artifact.metadata = metadata if metadata is not None else {"checksum_base64_crc32c": "AAAA"}
+    return artifact
+
+
+@pytest.mark.unit
+def test_download_item_artifact_resolves_fresh_url_per_call(tmp_path: Path) -> None:
+    """download_item_artifact must call run.get_artifact_download_url(artifact_id).
+
+    The deprecated artifact.download_url field is no longer consulted; every
+    download resolves a fresh, short-lived URL via the /file endpoint. This
+    test pins that behavior.
+    """
+    artifact = _mock_artifact()
+    run = MagicMock()
+    run.get_artifact_download_url.return_value = _PRESIGNED_URL
+
+    with (
+        patch(_PATCH_GET_EXT, return_value=".csv"),
+        patch(_PATCH_DOWNLOAD_FILE_WITH_PROGRESS) as mock_download,
+    ):
+        download_item_artifact(
+            progress=DownloadProgress(),
+            run=run,
+            artifact=artifact,
+            destination_directory=tmp_path,
+        )
+
+    run.get_artifact_download_url.assert_called_once_with("art-1")
+    # download_file_with_progress was handed the fresh URL, not anything from artifact
+    mock_download.assert_called_once()
+    assert mock_download.call_args.args[1] == _PRESIGNED_URL
+
+
+@pytest.mark.unit
+def test_download_item_artifact_skips_when_local_checksum_matches(tmp_path: Path) -> None:
+    """If the artifact already exists locally with the right checksum, skip.
+
+    Critical: do NOT call run.get_artifact_download_url in this branch — the
+    presigned URL request hits SAMIA, and skipping it shortens resume cycles
+    and reduces backend load.
+    """
+    import base64
+
+    import crc32c as crc32c_lib  # local import keeps the test name space tight
+
+    content = b"hello, slide"
+    artifact_path = tmp_path / "result.csv"
+    artifact_path.write_bytes(content)
+
+    h = crc32c_lib.CRC32CHash()
+    h.update(content)
+    correct_checksum = base64.b64encode(h.digest()).decode("ascii")
+
+    artifact = _mock_artifact(metadata={"checksum_base64_crc32c": correct_checksum})
+    run = MagicMock()
+
+    with (
+        patch(_PATCH_GET_EXT, return_value=".csv"),
+        patch(_PATCH_DOWNLOAD_FILE_WITH_PROGRESS) as mock_download,
+    ):
+        download_item_artifact(
+            progress=DownloadProgress(),
+            run=run,
+            artifact=artifact,
+            destination_directory=tmp_path,
+        )
+
+    run.get_artifact_download_url.assert_not_called()
+    mock_download.assert_not_called()
+
+
+@pytest.mark.unit
+def test_download_item_artifact_raises_when_no_checksum(tmp_path: Path) -> None:
+    """Empty metadata -> ValueError, before any URL is requested."""
+    artifact = _mock_artifact(metadata={})
+    run = MagicMock()
+
+    with pytest.raises(ValueError, match="No checksum metadata"):
+        download_item_artifact(
+            progress=DownloadProgress(),
+            run=run,
+            artifact=artifact,
+            destination_directory=tmp_path,
+        )
+
+    run.get_artifact_download_url.assert_not_called()
+
+
+@pytest.mark.unit
+def test_download_available_items_skips_non_available_artifacts(tmp_path: Path) -> None:
+    """Artifacts with output != AVAILABLE are skipped.
+
+    Per Dima on PR #478: the /file endpoint does NOT return a presigned URL for
+    artifacts that aren't AVAILABLE. Calling it for a NONE artifact would fail
+    the whole download. This test pins the guard.
+    """
+    from aignostics.platform import ItemOutput, ItemState
+
+    available = _mock_artifact(output_artifact_id="art-ok", output=ArtifactOutput.AVAILABLE)
+    none_artifact = _mock_artifact(output_artifact_id="art-skip", output=ArtifactOutput.NONE)
+
+    item = MagicMock()
+    item.external_id = "slide-1"
+    item.state = ItemState.TERMINATED
+    item.output = ItemOutput.FULL
+    item.output_artifacts = [available, none_artifact]
+
+    run = MagicMock()
+    run.run_id = "run-xyz"
+    run.results.return_value = [item]
+
+    with patch("aignostics.application._download.download_item_artifact") as mock_dia:
+        download_available_items(
+            progress=DownloadProgress(),
+            application_run=run,
+            destination_directory=tmp_path,
+            downloaded_items=set(),
+        )
+
+    # Only the AVAILABLE artifact triggered a download
+    assert mock_dia.call_count == 1
+    forwarded_artifact = mock_dia.call_args.args[2]
+    assert forwarded_artifact.output_artifact_id == "art-ok"
+
+
+@pytest.mark.unit
+def test_download_available_items_passes_run_to_download_item_artifact(tmp_path: Path) -> None:
+    """download_item_artifact is called with the Run instance as the second positional arg.
+
+    download_item_artifact needs the Run handle to call get_artifact_download_url,
+    so the calling site must pass it through. Pinning the call shape keeps the
+    contract explicit.
+    """
+    from aignostics.platform import ItemOutput, ItemState
+
+    artifact = _mock_artifact()
+    item = MagicMock()
+    item.external_id = "slide-1"
+    item.state = ItemState.TERMINATED
+    item.output = ItemOutput.FULL
+    item.output_artifacts = [artifact]
+
+    run = MagicMock()
+    run.run_id = "run-xyz"
+    run.results.return_value = [item]
+
+    with patch("aignostics.application._download.download_item_artifact") as mock_dia:
+        download_available_items(
+            progress=DownloadProgress(),
+            application_run=run,
+            destination_directory=tmp_path,
+            downloaded_items=set(),
+        )
+
+    # Args order matches def download_item_artifact(progress, run, artifact, ...)
+    forwarded_progress, forwarded_run, forwarded_artifact, *_ = mock_dia.call_args.args
+    assert forwarded_run is run
+    assert forwarded_artifact is artifact
+    assert isinstance(forwarded_progress, DownloadProgress)

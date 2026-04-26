@@ -4,10 +4,13 @@ This module contains unit tests for the Runs class and Run class,
 verifying their functionality for listing, creating, and managing application runs.
 """
 
-from unittest.mock import Mock
+from http import HTTPStatus
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import requests
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     InputArtifactCreationRequest,
     ItemCreationRequest,
@@ -16,8 +19,16 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Run, Runs
+from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
 from aignostics.platform.resources.utils import PAGE_SIZE
+
+_PLATFORM_HOST = "https://platform-staging.aignostics.com"
+_RUN_ID = "test-run-id"
+_ARTIFACT_ID = "artifact-123"
+_PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc123"
+_PATCH_REQUESTS_GET = "aignostics.platform.resources.runs.requests.get"
+_PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105
+_PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
 
 
 @pytest.fixture
@@ -53,7 +64,55 @@ def app_run(mock_api) -> Run:
     Returns:
         Run: An Run instance using the mock API.
     """
-    return Run(mock_api, "test-run-id")
+    return Run(mock_api, _RUN_ID)
+
+
+@pytest.fixture
+def configured_api(mock_api) -> Mock:
+    """Wire a Mock API client to expose a `configuration` matching real codegen shape.
+
+    Returns:
+        Mock: The same `mock_api` fixture, with `api_client.configuration`
+            populated with `host`, `proxy`, `ssl_ca_cert`, `verify_ssl`,
+            and ``token_provider=None`` (so Artifact falls back to ``get_token``).
+            Tests that need to verify ``token_provider`` propagation should set
+            it explicitly.
+    """
+    mock_api.api_client = Mock()
+    mock_api.api_client.configuration.host = _PLATFORM_HOST
+    mock_api.api_client.configuration.proxy = None
+    mock_api.api_client.configuration.ssl_ca_cert = None
+    mock_api.api_client.configuration.verify_ssl = True
+    mock_api.api_client.configuration.token_provider = None
+    return mock_api
+
+
+@pytest.fixture
+def artifact(configured_api) -> Artifact:
+    """Create an Artifact instance bound to a configured mock API."""
+    return Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+
+
+def _redirect_response(location: str | None, status: int = HTTPStatus.TEMPORARY_REDIRECT) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given status + Location."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {"Location": location} if location is not None else {}
+    response.reason = HTTPStatus(status).phrase or "Unknown"
+    return response
+
+
+def _error_response(status: int) -> MagicMock:
+    """Build a context-manager-shaped Mock response with the given non-redirect status."""
+    response = MagicMock()
+    response.__enter__ = Mock(return_value=response)
+    response.__exit__ = Mock(return_value=False)
+    response.status_code = status
+    response.headers = {}
+    response.reason = HTTPStatus(status).phrase
+    return response
 
 
 @pytest.mark.unit
@@ -725,3 +784,462 @@ def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
         app_run.details()
 
     assert mock_api.get_run_v1_runs_run_id_get.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Artifact / Run.get_artifact_download_url
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "redirect_status",
+    [
+        HTTPStatus.MOVED_PERMANENTLY,
+        HTTPStatus.FOUND,
+        HTTPStatus.SEE_OTHER,
+        HTTPStatus.TEMPORARY_REDIRECT,
+        HTTPStatus.PERMANENT_REDIRECT,
+    ],
+)
+def test_artifact_get_download_url_returns_location_for_any_redirect(artifact, redirect_status) -> None:
+    """Any 3xx redirect status with a Location header yields the presigned URL.
+
+    The /file endpoint contractually returns 307, but the SDK accepts every
+    well-known redirect status so the SDK keeps working if the API ever flips
+    one for cache reasons. 303 See Other is included per Copilot's PR review —
+    the back-end could legitimately switch to it for a POST→GET redirect shape.
+    """
+    response = _redirect_response(_PRESIGNED_URL, status=redirect_status)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="test-token"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        url = artifact.get_download_url()
+
+    assert url == _PRESIGNED_URL
+    mock_get.assert_called_once()
+    assert mock_get.call_args.args[0] == f"{_PLATFORM_HOST}/api/v1/runs/{_RUN_ID}/artifacts/{_ARTIFACT_ID}/file"
+    assert mock_get.call_args.kwargs["allow_redirects"] is False
+    assert mock_get.call_args.kwargs["stream"] is True
+    assert mock_get.call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
+    assert "User-Agent" in mock_get.call_args.kwargs["headers"]
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_strips_trailing_slash_from_host(configured_api) -> None:
+    """Trailing slash on configuration.host must not produce a `//api/v1/...` URL."""
+    configured_api.api_client.configuration.host = f"{_PLATFORM_HOST}/"
+    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+    response = _redirect_response(_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        art.get_download_url()
+
+    assert mock_get.call_args.args[0] == f"{_PLATFORM_HOST}/api/v1/runs/{_RUN_ID}/artifacts/{_ARTIFACT_ID}/file"
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_redirect_without_location_raises(artifact) -> None:
+    """A 3xx response with no Location header is an SDK-level RuntimeError.
+
+    Bypassing the codegen means we own the redirect contract; this asserts we
+    fail loudly instead of returning None/empty string.
+    """
+    response = _redirect_response(location=None, status=HTTPStatus.TEMPORARY_REDIRECT)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response),
+        pytest.raises(RuntimeError, match="missing Location header"),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_404_raises_not_found(artifact) -> None:
+    """404 from the /file endpoint maps to NotFoundException (codegen-style)."""
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(HTTPStatus.NOT_FOUND)),
+        pytest.raises(NotFoundException),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "client_status",
+    [HTTPStatus.FORBIDDEN, HTTPStatus.GONE, HTTPStatus.UNPROCESSABLE_ENTITY],
+)
+def test_artifact_get_download_url_4xx_raises_api_exception(artifact, client_status) -> None:
+    """4xx responses other than 404 surface as ApiException with the original status.
+
+    Includes 410 because the API contract says deleted artifacts return 410 Gone.
+    """
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(client_status)),
+        pytest.raises(ApiException) as exc_info,
+    ):
+        artifact.get_download_url()
+    assert exc_info.value.status == client_status
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_unexpected_2xx_raises_runtime(artifact) -> None:
+    """A 200 (or other unexpected non-error, non-redirect) is RuntimeError.
+
+    Per Dima's clarification on PR #478: the endpoint never returns 200 in
+    practice. If it ever does, we fail explicitly rather than silently passing
+    a body off to webbrowser.open().
+    """
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=_error_response(HTTPStatus.OK)),
+        pytest.raises(RuntimeError, match="Unexpected status 200"),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_5xx_retries_then_succeeds(artifact) -> None:
+    """A transient 5xx is retried; once it succeeds the presigned URL is returned."""
+    error = _error_response(HTTPStatus.SERVICE_UNAVAILABLE)
+    success = _redirect_response(_PRESIGNED_URL)
+
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 3
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(_PATCH_REQUESTS_GET, side_effect=[error, success]) as mock_get,
+    ):
+        url = artifact.get_download_url()
+
+    assert url == _PRESIGNED_URL
+    assert mock_get.call_count == 2  # one retry was needed
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_5xx_exhausts_retries_then_raises(artifact) -> None:
+    """If 5xx persists for all retry attempts, ServiceException is reraised."""
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 2
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(
+            _PATCH_REQUESTS_GET,
+            return_value=_error_response(HTTPStatus.SERVICE_UNAVAILABLE),
+        ) as mock_get,
+        pytest.raises(ServiceException),
+    ):
+        artifact.get_download_url()
+    assert mock_get.call_count == fake_settings.run_retry_attempts
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "exc_factory",
+    [
+        lambda: requests.Timeout("timed out"),
+        lambda: requests.ConnectionError("dns failure"),
+        lambda: requests.RequestException("misc"),
+    ],
+)
+def test_artifact_get_download_url_network_errors_become_service_exception(artifact, exc_factory) -> None:
+    """`requests` exceptions are wrapped as ServiceException so retry can act on them.
+
+    Without this wrapping the e2e tests in PR #507 hung — `requests.HTTPError`
+    escaped the retry loop and surfaced as a wrong exception type.
+    """
+    fake_settings = Mock()
+    fake_settings.run_retry_attempts = 1  # don't waste test time on retries
+    fake_settings.run_retry_wait_min = 0.0
+    fake_settings.run_retry_wait_max = 0.0
+    fake_settings.run_timeout = 5.0
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_SETTINGS, return_value=fake_settings),
+        patch(_PATCH_REQUESTS_GET, side_effect=exc_factory()),
+        pytest.raises(ServiceException),
+    ):
+        artifact.get_download_url()
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_honors_configuration_token_provider(configured_api) -> None:
+    """When configuration.token_provider is set, Artifact uses it instead of get_token.
+
+    The codegen Client wires up token_provider to call ``get_token(use_cache=cache_token)``.
+    A user who instantiates ``Client(cache_token=False)`` does not want the SDK to
+    read/write the token file when the SDK resolves artifact URLs. This test pins
+    that contract — without it, Copilot's PR review caught us bypassing the user's
+    cache preference.
+    """
+    custom_token_provider = Mock(return_value="cache-disabled-token")
+    configured_api.api_client.configuration.token_provider = custom_token_provider
+    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+    response = _redirect_response(_PRESIGNED_URL)
+
+    with (
+        # If the implementation falls back to get_token here, the test would still
+        # pass — so we patch get_token to a sentinel value the assertion would catch.
+        patch(_PATCH_GET_TOKEN, return_value="WRONG-from-fallback"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        art.get_download_url()
+
+    custom_token_provider.assert_called_once_with()
+    assert mock_get.call_args.kwargs["headers"]["Authorization"] == "Bearer cache-disabled-token"
+
+
+@pytest.mark.unit
+def test_artifact_get_download_url_passes_proxy_and_ca_bundle(configured_api) -> None:
+    """Proxy and custom CA bundle from codegen Configuration are honored.
+
+    Enterprise installs frequently set these via env; a previous draft of this
+    code ignored them, which would have broken downloads behind a proxy.
+    """
+    proxy_url = "https://corp-proxy.local:3128"
+    configured_api.api_client.configuration.proxy = proxy_url
+    configured_api.api_client.configuration.ssl_ca_cert = "/etc/ssl/corp-ca.pem"
+    configured_api.api_client.configuration.verify_ssl = False
+    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID)
+    response = _redirect_response(_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get,
+    ):
+        art.get_download_url()
+
+    kwargs = mock_get.call_args.kwargs
+    assert kwargs["proxies"] == {"http": proxy_url, "https": proxy_url}
+    # CA bundle path takes precedence over verify_ssl=False
+    assert kwargs["verify"] == "/etc/ssl/corp-ca.pem"
+
+
+@pytest.mark.unit
+def test_run_get_artifact_download_url_delegates_to_artifact(app_run, configured_api) -> None:
+    """Run.get_artifact_download_url is the documented entry point and must just delegate.
+
+    Keeping this thin protects callers from internal refactors of `Artifact`.
+    """
+    response = _redirect_response(_PRESIGNED_URL)
+    with (
+        patch(_PATCH_GET_TOKEN, return_value="t"),
+        patch(_PATCH_REQUESTS_GET, return_value=response),
+    ):
+        # Replace mock_api on the existing Run with the configured one
+        app_run._api = configured_api
+        url = app_run.get_artifact_download_url(_ARTIFACT_ID)
+    assert url == _PRESIGNED_URL
+
+
+@pytest.mark.unit
+def test_run_artifact_returns_artifact_handle(app_run) -> None:
+    """Run.artifact() returns an Artifact bound to the right run/artifact pair."""
+    handle = app_run.artifact(_ARTIFACT_ID)
+    assert isinstance(handle, Artifact)
+    assert handle.run_id == _RUN_ID
+    assert handle.artifact_id == _ARTIFACT_ID
+
+
+# ---------------------------------------------------------------------------
+# Run.ensure_artifacts_downloaded — instance method, AVAILABLE gating, fresh URL
+# ---------------------------------------------------------------------------
+
+_PATCH_DOWNLOAD_FILE_RUNS = "aignostics.platform.resources.runs.download_file"
+_PATCH_CALC_CRC32C = "aignostics.platform.resources.runs.calculate_file_crc32c"
+_PATCH_MIME_TYPE_TO_FILE_ENDING = "aignostics.platform.resources.runs.mime_type_to_file_ending"
+
+
+def _make_artifact_mock(
+    *,
+    name: str = "result",
+    output_artifact_id: str = "art-1",
+    output: object | None = None,
+    metadata: dict | None = None,
+) -> MagicMock:
+    """Build a mock OutputArtifactResultReadResponse for ensure_artifacts_downloaded tests."""
+    from aignx.codegen.models import ArtifactOutput as _ArtifactOutput
+
+    a = MagicMock()
+    a.name = name
+    a.output_artifact_id = output_artifact_id
+    a.output = output if output is not None else _ArtifactOutput.AVAILABLE
+    a.metadata = metadata if metadata is not None else {"checksum_base64_crc32c": "AAAA", "media_type": "text/csv"}
+    return a
+
+
+def _make_item_mock(external_id: str = "slide-1", artifacts: list | None = None) -> MagicMock:
+    item = MagicMock()
+    item.external_id = external_id
+    item.output_artifacts = artifacts if artifacts is not None else [_make_artifact_mock()]
+    return item
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_resolves_fresh_url_per_artifact(app_run, tmp_path) -> None:
+    """ensure_artifacts_downloaded must call get_artifact_download_url for AVAILABLE artifacts.
+
+    The deprecated artifact.download_url field is no longer consulted; URL is
+    resolved fresh per artifact via the /file endpoint right before downloading.
+    """
+    item = _make_item_mock(artifacts=[_make_artifact_mock(output_artifact_id="art-xyz")])
+    app_run.get_artifact_download_url = Mock(return_value=_PRESIGNED_URL)
+
+    with patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download:
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    app_run.get_artifact_download_url.assert_called_once_with("art-xyz")
+    mock_download.assert_called_once()
+    call_args = mock_download.call_args.args
+    assert call_args[0] == _PRESIGNED_URL  # First arg is the freshly resolved URL
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_skips_non_available_artifacts(app_run, tmp_path) -> None:
+    """Non-AVAILABLE artifacts must be skipped — the /file endpoint won't return URLs for them.
+
+    Per Dima on PR #478: the /file endpoint does not return a presigned URL for
+    artifacts whose output is NONE (e.g. deleted, never produced). Calling it
+    would fail the entire download. This test pins the AVAILABLE-gating.
+    """
+    from aignx.codegen.models import ArtifactOutput as _ArtifactOutput
+
+    none_artifact = _make_artifact_mock(output_artifact_id="art-none", output=_ArtifactOutput.NONE)
+    item = _make_item_mock(artifacts=[none_artifact])
+    app_run.get_artifact_download_url = Mock()
+
+    with patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download:
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    app_run.get_artifact_download_url.assert_not_called()
+    mock_download.assert_not_called()
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_skips_existing_file_with_matching_checksum(app_run, tmp_path) -> None:
+    """If a local file already matches the metadata checksum, skip the URL fetch and the download.
+
+    Critical: do NOT call get_artifact_download_url when we wouldn't have downloaded
+    anyway. Resolving a presigned URL hits SAMIA; skipping it on resume saves
+    backend load and shortens resume cycles.
+    """
+    item_dir = tmp_path / "slide-1"
+    item_dir.mkdir()
+    artifact_path = item_dir / "result.csv"
+    artifact_path.write_bytes(b"hello")
+    item = _make_item_mock(artifacts=[_make_artifact_mock()])
+    app_run.get_artifact_download_url = Mock()
+
+    with (
+        patch(_PATCH_CALC_CRC32C, return_value="AAAA"),  # Matches metadata checksum
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
+        patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    app_run.get_artifact_download_url.assert_not_called()
+    mock_download.assert_not_called()
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_resumes_when_local_checksum_mismatches(app_run, tmp_path) -> None:
+    """Local file exists but checksum mismatches → fresh URL fetched and download retried."""
+    item_dir = tmp_path / "slide-1"
+    item_dir.mkdir()
+    artifact_path = item_dir / "result.csv"
+    artifact_path.write_bytes(b"corrupted")
+    item = _make_item_mock(artifacts=[_make_artifact_mock(output_artifact_id="art-xyz")])
+    app_run.get_artifact_download_url = Mock(return_value=_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_CALC_CRC32C, return_value="ZZZZ"),  # Mismatch with metadata "AAAA"
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".csv"),
+        patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    app_run.get_artifact_download_url.assert_called_once_with("art-xyz")
+    mock_download.assert_called_once()
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tmp_path) -> None:
+    """Artifact with empty metadata dict is skipped (no checksum to verify against).
+
+    Per Copilot PR review on #598, the metadata check now runs *before* the
+    MIME lookup, so this test no longer needs to mock through the MIME helpers.
+    Without the reorder, an empty-metadata artifact would raise ``ValueError``
+    from ``mime_type_to_file_ending`` before the early-return could fire.
+    """
+    item = _make_item_mock(artifacts=[_make_artifact_mock(metadata={})])
+    app_run.get_artifact_download_url = Mock()
+
+    with patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download:
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    app_run.get_artifact_download_url.assert_not_called()
+    mock_download.assert_not_called()
+
+
+@pytest.mark.unit
+def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run, mock_api, tmp_path) -> None:
+    """Post-termination loop must filter items by state==TERMINATED and output==FULL.
+
+    Regression guard for the latent enum-truthiness bug Sentry flagged on PR #478:
+    the original code had ``if ItemOutput.FULL:`` (always truthy because it's a
+    member-existence check, not a value comparison), which caused
+    ensure_artifacts_downloaded to be called for *every* item regardless of state
+    or output. This test pins that we only download items that are actually
+    terminated with full output.
+    """
+    from aignx.codegen.models import ItemOutput, ItemState, RunState
+
+    terminated_full_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.FULL, external_id="ok")
+    terminated_none_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.NONE, external_id="empty")
+    pending_item = MagicMock(state=ItemState.PROCESSING, output=ItemOutput.NONE, external_id="pending")
+
+    # Run is already TERMINATED on first details() call → skip the wait loop, go to post-loop.
+    terminated_run_state = MagicMock(state=RunState.TERMINATED)
+    app_run.details = Mock(return_value=terminated_run_state)
+    app_run.results = Mock(return_value=[terminated_full_item, terminated_none_item, pending_item])
+    app_run.ensure_artifacts_downloaded = Mock()
+
+    app_run.download_to_folder(tmp_path, print_status=False)
+
+    # Only the TERMINATED+FULL item should trigger ensure_artifacts_downloaded.
+    # If the latent enum bug were back, all 3 items would trigger it.
+    assert app_run.ensure_artifacts_downloaded.call_count == 1
+    forwarded_item = app_run.ensure_artifacts_downloaded.call_args.args[1]
+    assert forwarded_item.external_id == "ok"
+
+
+@pytest.mark.unit
+def test_ensure_artifacts_downloaded_is_instance_method_not_static(app_run, tmp_path) -> None:
+    """Regression guard: ensure_artifacts_downloaded must be an instance method.
+
+    PR #478 left it as @staticmethod, which made `self.get_artifact_download_url()`
+    inside the loop impossible. Pinning the bound-method shape so a future refactor
+    cannot accidentally revert.
+    """
+    bound = app_run.ensure_artifacts_downloaded
+    # On a method, __self__ is the instance; on a staticmethod, __self__ doesn't exist.
+    assert getattr(bound, "__self__", None) is app_run

@@ -7,7 +7,7 @@ from asyncio import sleep, to_thread
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from nicegui.testing import User
@@ -15,7 +15,11 @@ from typer.testing import CliRunner
 
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
-from aignostics.application._gui._page_application_run_describe import RESULTS_PAGE_SIZE
+from aignostics.application._gui._page_application_run_describe import (
+    RESULTS_PAGE_SIZE,
+    _resolve_artifact_url_and_invoke,
+    _resolve_artifact_url_or_notify,
+)
 from aignostics.cli import cli
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
@@ -570,3 +574,150 @@ async def test_gui_run_results_pagination_show_more(user: User, silent_logging: 
     else:
         # All items loaded - button should be hidden
         await user.should_not_see(marker="BUTTON_SHOW_MORE_RESULTS", retries=20)
+
+
+# ---------------------------------------------------------------------------
+# _resolve_artifact_url_or_notify — module-level GUI helper
+# ---------------------------------------------------------------------------
+
+_PATCH_NICEGUI_RUN_IO_BOUND = "aignostics.application._gui._page_application_run_describe.nicegui_run.io_bound"
+_PATCH_UI_NOTIFY = "aignostics.application._gui._page_application_run_describe.ui.notify"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_or_notify_returns_url_on_success() -> None:
+    """Happy path: io_bound succeeds → helper returns the URL, no notify is shown."""
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+    presigned_url = "https://storage.example.com/file?sig=abc"
+
+    with (
+        patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, return_value=presigned_url) as mock_io_bound,
+        patch(_PATCH_UI_NOTIFY) as mock_notify,
+    ):
+        result = await _resolve_artifact_url_or_notify(fake_run, "art-123", fake_button)
+
+    assert result == presigned_url
+    mock_io_bound.assert_awaited_once_with(fake_run.get_artifact_download_url, "art-123")
+    mock_notify.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_or_notify_returns_none_and_notifies_on_exception() -> None:
+    """Failure path: io_bound raises → helper notifies user with warning, returns None.
+
+    This is the principled-error-handling path for the GUI. Without it, the
+    NiceGUI click handler would surface the exception as a dev-console traceback,
+    not as a user-friendly notification — and the loading state would stay
+    forever stuck on the button.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+
+    with (
+        patch(
+            _PATCH_NICEGUI_RUN_IO_BOUND,
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("SAMIA returned 503"),
+        ) as mock_io_bound,
+        patch(_PATCH_UI_NOTIFY) as mock_notify,
+    ):
+        result = await _resolve_artifact_url_or_notify(fake_run, "art-123", fake_button)
+
+    assert result is None
+    mock_io_bound.assert_awaited_once()
+    mock_notify.assert_called_once()
+    # The notify call carries the failure detail and is a user-friendly warning.
+    notify_args, notify_kwargs = mock_notify.call_args
+    assert "SAMIA returned 503" in notify_args[0]
+    assert notify_kwargs["type"] == "warning"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_or_notify_toggles_button_loading_state_on_success() -> None:
+    """The loading prop must be both added before and removed after a successful resolve.
+
+    A button left in loading state after a successful URL fetch is a classic UI
+    bug — the user sees a spinner forever. The ``finally`` block in the helper
+    must run on both the success and the exception paths; this test pins the
+    success path; the next test pins the exception path.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+
+    with (
+        patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, return_value="https://x"),
+        patch(_PATCH_UI_NOTIFY),
+    ):
+        await _resolve_artifact_url_or_notify(fake_run, "art-1", fake_button)
+
+    fake_button.props.assert_any_call(add="loading")
+    fake_button.props.assert_any_call(remove="loading")
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_or_notify_toggles_button_loading_state_on_exception() -> None:
+    """The loading prop must be removed even when the URL resolve raises."""
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+
+    with (
+        patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, side_effect=RuntimeError("boom")),
+        patch(_PATCH_UI_NOTIFY),
+    ):
+        await _resolve_artifact_url_or_notify(fake_run, "art-1", fake_button)
+
+    fake_button.props.assert_any_call(add="loading")
+    fake_button.props.assert_any_call(remove="loading")
+
+
+# ---------------------------------------------------------------------------
+# _resolve_artifact_url_and_invoke — composition helper used by every per-artifact button
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_and_invoke_calls_on_success_with_url() -> None:
+    """When URL resolution succeeds, on_success is invoked exactly once with the URL.
+
+    This is the composition path used by every per-artifact button in the run
+    page (TIFF preview, CSV preview, browser download). Pinning the call shape
+    means a future refactor cannot accidentally pass the wrong argument or
+    skip the success branch.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+    on_success = Mock()
+    presigned_url = "https://storage.example.com/file?sig=xyz"
+
+    with patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, return_value=presigned_url):
+        await _resolve_artifact_url_and_invoke(fake_run, "art-1", fake_button, on_success)
+
+    on_success.assert_called_once_with(presigned_url)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_and_invoke_short_circuits_on_resolution_failure() -> None:
+    """When URL resolution fails, on_success must NOT be called.
+
+    The user has already been notified via ui.notify by the inner helper;
+    invoking on_success with None would either crash (e.g. webbrowser.open(None))
+    or open a dialog with no content. Pinning the short-circuit.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+    on_success = Mock()
+
+    with (
+        patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, side_effect=RuntimeError("nope")),
+        patch(_PATCH_UI_NOTIFY),  # notify is called but we don't assert on it here
+    ):
+        await _resolve_artifact_url_and_invoke(fake_run, "art-1", fake_button, on_success)
+
+    on_success.assert_not_called()

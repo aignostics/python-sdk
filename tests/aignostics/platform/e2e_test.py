@@ -725,6 +725,128 @@ def test_platform_heta_app_find_and_validate() -> None:
     )
 
 
+_CANARY_MAX_RUNS_TO_INSPECT = 20
+
+
+def _find_available_output_artifact_id(run: Run) -> str | None:
+    """Return the first AVAILABLE output_artifact_id from a successful run, else None.
+
+    Single-run scan helper for the /file endpoint canary. Walks the run's
+    items and per-item artifacts and returns the first artifact whose output
+    is ``AVAILABLE`` and whose ``output_artifact_id`` is non-empty. Returns
+    ``None`` when the run produced no usable artifact (e.g. all items
+    terminated with ``NONE`` output). The caller is expected to have already
+    filtered for runs that are ``TERMINATED`` with ``FULL`` output.
+    """
+    for item in run.results(nocache=True):
+        if item.state is not ItemState.TERMINATED or item.output is not ItemOutput.FULL:
+            continue
+        for art in item.output_artifacts:
+            if art.output is ArtifactOutput.AVAILABLE and art.output_artifact_id:
+                return art.output_artifact_id
+    return None
+
+
+def _find_available_artifact_in_recent_heta_run() -> tuple[Run, str] | None:
+    """Find one AVAILABLE output artifact from a recent successful HETA run.
+
+    Helper for the /file endpoint canary below. Iterates the most recent HETA
+    runs tagged ``scheduled`` lazily — only inspects up to
+    ``_CANARY_MAX_RUNS_TO_INSPECT`` runs and stops at the first hit. Returns
+    ``None`` when no such artifact is reachable in the inspected window — the
+    canary skips in that case rather than fails.
+
+    The cap exists because, as staging accumulates scheduled runs, materializing
+    the full list and querying details/results for every one risks the canary's
+    60s timeout. Runs from ``client.runs.list`` are already returned newest-first
+    so capping is biased toward recent data.
+
+    Returns:
+        tuple[Run, str] | None: A bound (Run, output_artifact_id) pair, or None.
+    """
+    import itertools
+
+    client = platform.Client()
+    # client.runs.list yields Run handles directly; iterate lazily and cap to N
+    # so the canary stays well under its 60s timeout even on a busy staging env.
+    candidate_runs = itertools.islice(
+        client.runs.list(
+            application_id=HETA_APPLICATION_ID,
+            application_version=HETA_APPLICATION_VERSION,
+            custom_metadata='$.sdk.tags[*] ? (@ == "scheduled")',
+        ),
+        _CANARY_MAX_RUNS_TO_INSPECT,
+    )
+    for run in candidate_runs:
+        details = run.details(nocache=True)
+        if details.state is not RunState.TERMINATED or details.output is not RunOutput.FULL:
+            continue
+        artifact_id = _find_available_output_artifact_id(run)
+        if artifact_id is not None:
+            return run, artifact_id
+    return None
+
+
+@pytest.mark.e2e
+@pytest.mark.timeout(timeout=60)
+def test_platform_artifact_file_endpoint_resolves_to_working_url(record_property) -> None:
+    """Smoke-test the SAMIA /file endpoint at PR time, not 6h later.
+
+    The full ``_validate_output`` flow that exercises the new endpoint is
+    ``scheduled_only``, so it never runs on PRs. That leaves a window in which
+    a SAMIA-side regression to ``/api/v1/runs/{run_id}/artifacts/{artifact_id}/file``
+    (think PAPI-4868: the auth bug that forced reverting #507) ships green
+    through PR CI and is only caught by the next scheduled run, up to 6h later.
+
+    This canary closes that window: at PR time it picks any recent successful
+    HETA run, resolves a presigned URL through ``Run.get_artifact_download_url``
+    against real SAMIA, and ``HEAD``-checks the URL to confirm the storage backend
+    serves it. The whole roundtrip is well under 60s, so the test stays out of
+    ``long_running`` and runs on every PR that doesn't carry ``skip:test:e2e``.
+
+    Failure modes covered end-to-end:
+
+    - ``/file`` endpoint 5xx / 4xx (auth, missing run, etc.) → typed exception
+    - ``/file`` returns 3xx with an empty Location header → ``RuntimeError``
+    - ``/file`` returns a Location URL that storage rejects → ``HEAD`` fails
+    - ``/file`` returns a Location URL pointing at the wrong scope → ``HEAD`` 403
+
+    Skips when no recent successful HETA run exists (e.g. the first time the
+    scheduled suite has been run in a fresh staging environment) — the test
+    is a canary, not a fixture provider, so a missing prerequisite is not a
+    failure.
+
+    Raises:
+        AssertionError: If the resolved URL is empty or the HEAD request fails.
+    """
+    record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+
+    # Local import: requests is already an SDK dep; importing at use-site avoids
+    # adding to the module-level imports of an otherwise import-heavy test file.
+    import requests
+
+    found = _find_available_artifact_in_recent_heta_run()
+    if found is None:
+        pytest.skip(
+            f"No AVAILABLE output artifact in any recent HETA run "
+            f"(version {HETA_APPLICATION_VERSION}) tagged 'scheduled'; "
+            "this canary needs one from the scheduled suite to exercise the /file endpoint."
+        )
+    selected_run, artifact_id = found
+
+    presigned_url = selected_run.get_artifact_download_url(artifact_id)
+    assert presigned_url, (
+        f"SAMIA /file endpoint returned an empty/falsy URL for run={selected_run.run_id} artifact={artifact_id}"
+    )
+
+    head_response = requests.head(presigned_url, allow_redirects=True, timeout=30)
+    assert head_response.ok, (
+        f"Presigned URL from /file endpoint did not serve content: "
+        f"{head_response.status_code} {head_response.reason} "
+        f"(run={selected_run.run_id} artifact={artifact_id})"
+    )
+
+
 def _validate_output(
     application_run: Run,
     output_base_folder: Path,
@@ -786,8 +908,10 @@ def _validate_output(
                 f"Application run `{application_run.run_id}`: "
                 f"artifact `{artifact}` should have output state `AVAILABLE`."
             )
-            assert artifact.download_url is not None, (
-                f"Application run `{application_run.run_id}`: artifact `{artifact}` should provide a download url."
+            artifact_download_url = application_run.get_artifact_download_url(artifact.output_artifact_id)
+            assert artifact_download_url, (
+                f"Application run `{application_run.run_id}`: artifact `{artifact}` "
+                f"should resolve to a presigned download URL via the /file endpoint."
             )
             file_ending = platform.mime_type_to_file_ending(platform.get_mime_type_for_artifact(artifact))
             file_path = item_dir / f"{artifact.name}{file_ending}"

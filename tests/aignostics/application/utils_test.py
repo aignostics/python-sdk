@@ -974,9 +974,12 @@ def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) 
 
     # Verify detailed output shows "Run Details" not "Run Summary"
     assert "Run Details for run-detailed-test" in all_output
-    # Verify artifact details ARE shown in detailed mode
-    assert "Download URL" in all_output
+    # Verify artifact details ARE shown in detailed mode.
+    # Download URL is no longer printed: presigned URLs are short-lived and
+    # are now resolved on-demand via Run.get_artifact_download_url().
+    assert "Download URL" not in all_output
     assert "Artifact ID" in all_output
+    assert "MIME Type" in all_output
 
 
 @pytest.mark.unit

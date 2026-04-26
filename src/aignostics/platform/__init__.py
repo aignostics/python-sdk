@@ -13,10 +13,8 @@ Higher level abstractions are provided in the application module.
 from aignx.codegen.exceptions import ApiException, ForbiddenException, NotFoundException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
-from aignx.codegen.models import InputArtifact as InputArtifactData
-from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
-from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import (
+    ArtifactOutput,
     ItemOutput,
     ItemState,
     ItemTerminationReason,
@@ -25,6 +23,9 @@ from aignx.codegen.models import (
     RunState,
     RunTerminationReason,
 )
+from aignx.codegen.models import InputArtifact as InputArtifactData
+from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
+from aignx.codegen.models import ItemCreationRequest as InputItem
 from aignx.codegen.models import ItemResultReadResponse as ItemResult
 from aignx.codegen.models import MeReadResponse as Me
 from aignx.codegen.models import OrganizationReadResponse as Organization
@@ -95,7 +96,7 @@ from ._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
-from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Run
+from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Artifact, Run
 
 __all__ = [
     "API_ROOT_DEV",
@@ -149,6 +150,8 @@ __all__ = [
     "Application",
     "ApplicationSummary",
     "ApplicationVersion",
+    "Artifact",
+    "ArtifactOutput",
     "Client",
     "ForbiddenException",
     "InputArtifact",
