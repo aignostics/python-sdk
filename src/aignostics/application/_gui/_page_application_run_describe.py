@@ -1,6 +1,7 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
 import webbrowser
+from collections.abc import Callable
 from importlib.util import find_spec
 from multiprocessing import Manager
 from pathlib import Path
@@ -50,8 +51,7 @@ async def _resolve_artifact_url_or_notify(run: Run, artifact_id: str, button: ui
     visual feedback while the request is in flight.
 
     Module-level (rather than a closure inside ``_page_application_run_describe``)
-    so it can be unit-tested without spinning up the NiceGUI page harness — the
-    artifact preview/download closures are thin wrappers around it.
+    so it can be unit-tested without spinning up the NiceGUI page harness.
 
     Args:
         run: The application run owning the artifact.
@@ -71,6 +71,34 @@ async def _resolve_artifact_url_or_notify(run: Run, artifact_id: str, button: ui
         return None
     finally:
         button.props(remove="loading")
+
+
+async def _resolve_artifact_url_and_invoke(
+    run: Run,
+    artifact_id: str,
+    button: ui.button,
+    on_success: Callable[[str], object],
+) -> None:
+    """Resolve a presigned URL and pass it to ``on_success`` if resolution succeeded.
+
+    Single composition helper for every per-artifact GUI click handler
+    (TIFF preview, CSV preview, browser download). Centralizing the
+    resolve → check → invoke shape here keeps the per-button click handlers
+    one-liners and means the only thing the page-handler closures contribute
+    is the ``on_success`` lambda — which itself just routes to the right
+    dialog or to ``webbrowser.open``. The intent is testability: this helper
+    is module-level and can be unit-tested without spinning up NiceGUI.
+
+    Args:
+        run: The application run owning the artifact.
+        artifact_id: The ``output_artifact_id`` to resolve.
+        button: NiceGUI button to mark loading while the request is in flight.
+        on_success: Callable invoked with the resolved URL when resolution
+            succeeds. Return value is ignored.
+    """
+    url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
+    if url is not None:
+        on_success(url)
 
 
 async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
@@ -549,24 +577,6 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         custom_metadata_dialog_content.refresh(title=title, custom_metadata=custom_metadata)
         custom_metadata_dialog.open()
 
-    async def open_tiff_preview(title: str, artifact_id: str, button: ui.button) -> None:
-        """Resolve a fresh URL and open the TIFF preview dialog."""
-        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
-        if url is not None:
-            tiff_dialog_open(title, url)
-
-    async def open_csv_preview(title: str, artifact_id: str, button: ui.button) -> None:
-        """Resolve a fresh URL and open the CSV preview dialog."""
-        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
-        if url is not None:
-            csv_dialog_open(title, url)
-
-    async def open_artifact_download(artifact_id: str, button: ui.button) -> None:
-        """Resolve a fresh URL and hand it to the OS browser to download."""
-        url = await _resolve_artifact_url_or_notify(run, artifact_id, button)
-        if url is not None:
-            webbrowser.open(url)
-
     async def open_qupath(
         project: Path | None = None, image: Path | str | None = None, button: ui.button | None = None
     ) -> None:
@@ -840,21 +850,35 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                         if mime_type == "image/tiff":
                                             tiff_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
                                             tiff_button.on_click(
-                                                lambda _, aid=artifact_id, t=title, btn=tiff_button: open_tiff_preview(
-                                                    t, aid, btn
+                                                lambda _,
+                                                aid=artifact_id,
+                                                t=title,
+                                                btn=tiff_button: _resolve_artifact_url_and_invoke(
+                                                    run,
+                                                    aid,
+                                                    btn,
+                                                    lambda url, t=t: tiff_dialog_open(t, url),  # type: ignore[misc]
                                                 )
                                             )
                                         if mime_type == "text/csv":
                                             csv_button = ui.button("Preview", icon=mime_type_to_icon(mime_type))
                                             csv_button.on_click(
-                                                lambda _, aid=artifact_id, t=title, btn=csv_button: open_csv_preview(
-                                                    t, aid, btn
+                                                lambda _,
+                                                aid=artifact_id,
+                                                t=title,
+                                                btn=csv_button: _resolve_artifact_url_and_invoke(
+                                                    run,
+                                                    aid,
+                                                    btn,
+                                                    lambda url, t=t: csv_dialog_open(t, url),  # type: ignore[misc]
                                                 )
                                             )
                                         download_button = ui.button(text="Download", icon="cloud_download")
                                         download_button.on_click(
-                                            lambda _, aid=artifact_id, btn=download_button: open_artifact_download(
-                                                aid, btn
+                                            lambda _,
+                                            aid=artifact_id,
+                                            btn=download_button: _resolve_artifact_url_and_invoke(
+                                                run, aid, btn, webbrowser.open
                                             )
                                         )
                                         if metadata:

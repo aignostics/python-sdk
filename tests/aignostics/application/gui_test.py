@@ -7,7 +7,7 @@ from asyncio import sleep, to_thread
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from nicegui.testing import User
@@ -17,6 +17,7 @@ from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
 from aignostics.application._gui._page_application_run_describe import (
     RESULTS_PAGE_SIZE,
+    _resolve_artifact_url_and_invoke,
     _resolve_artifact_url_or_notify,
 )
 from aignostics.cli import cli
@@ -672,3 +673,51 @@ async def test_resolve_artifact_url_or_notify_toggles_button_loading_state_on_ex
 
     fake_button.props.assert_any_call(add="loading")
     fake_button.props.assert_any_call(remove="loading")
+
+
+# ---------------------------------------------------------------------------
+# _resolve_artifact_url_and_invoke — composition helper used by every per-artifact button
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_and_invoke_calls_on_success_with_url() -> None:
+    """When URL resolution succeeds, on_success is invoked exactly once with the URL.
+
+    This is the composition path used by every per-artifact button in the run
+    page (TIFF preview, CSV preview, browser download). Pinning the call shape
+    means a future refactor cannot accidentally pass the wrong argument or
+    skip the success branch.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+    on_success = Mock()
+    presigned_url = "https://storage.example.com/file?sig=xyz"
+
+    with patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, return_value=presigned_url):
+        await _resolve_artifact_url_and_invoke(fake_run, "art-1", fake_button, on_success)
+
+    on_success.assert_called_once_with(presigned_url)
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_resolve_artifact_url_and_invoke_short_circuits_on_resolution_failure() -> None:
+    """When URL resolution fails, on_success must NOT be called.
+
+    The user has already been notified via ui.notify by the inner helper;
+    invoking on_success with None would either crash (e.g. webbrowser.open(None))
+    or open a dialog with no content. Pinning the short-circuit.
+    """
+    fake_run = MagicMock()
+    fake_button = MagicMock()
+    on_success = Mock()
+
+    with (
+        patch(_PATCH_NICEGUI_RUN_IO_BOUND, new_callable=AsyncMock, side_effect=RuntimeError("nope")),
+        patch(_PATCH_UI_NOTIFY),  # notify is called but we don't assert on it here
+    ):
+        await _resolve_artifact_url_and_invoke(fake_run, "art-1", fake_button, on_success)
+
+    on_success.assert_not_called()
