@@ -207,7 +207,7 @@ requires-dist = [
     { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
     { name = "openslide-python", specifier = ">=1.4.3,<2" },
     { name = "packaging", specifier = ">=26,<27" },
-    { name = "pandas", specifier = ">=2.3.3,<3" },
+    { name = "pandas", specifier = ">=2.3.3,<4" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "platformdirs", specifier = ">=4.3.2,<5" },
     { name = "platformdirs", specifier = ">=4.5.1,<5" },
