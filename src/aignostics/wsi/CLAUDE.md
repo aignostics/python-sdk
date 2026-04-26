@@ -57,10 +57,12 @@ class WSIHandler(ABC):
     def get_metadata(self, wsi: WSIFile) -> dict:
         pass
 
+
 # OpenSlide handler for .svs, .tiff, .ndpi
 class OpenSlideHandler(WSIHandler):
     def open(self, path: Path) -> OpenSlide:
         return openslide.OpenSlide(str(path))
+
 
 # PyDICOM handler for DICOM files
 class PyDICOMHandler(WSIHandler):
@@ -72,18 +74,19 @@ class PyDICOMHandler(WSIHandler):
 
 ```python
 WSI_SUPPORTED_FILE_EXTENSIONS = {
-    ".svs",    # Aperio
-    ".tiff",   # Generic TIFF
-    ".tif",    # Generic TIFF
-    ".ndpi",   # Hamamatsu
-    ".vms",    # Hamamatsu
-    ".vmu",    # Hamamatsu
-    ".scn",    # Leica
-    ".mrxs",   # MIRAX
-    ".bif",    # Ventana
-    ".dcm",    # DICOM
-    ".dicom"   # DICOM
+    ".svs",  # Aperio
+    ".tiff",  # Generic TIFF
+    ".tif",  # Generic TIFF
+    ".ndpi",  # Hamamatsu
+    ".vms",  # Hamamatsu
+    ".vmu",  # Hamamatsu
+    ".scn",  # Leica
+    ".mrxs",  # MIRAX
+    ".bif",  # Ventana
+    ".dcm",  # DICOM
+    ".dicom",  # DICOM
 }
+
 
 def get_handler(file_path: Path) -> WSIHandler:
     """Get appropriate handler based on file extension."""
@@ -143,11 +146,7 @@ def get_metadata(self, wsi_path: Path) -> dict:
     """Extract all available metadata."""
 
     handler = self.get_handler(wsi_path)
-    metadata = {
-        "file_path": str(wsi_path),
-        "file_size": wsi_path.stat().st_size,
-        "format": wsi_path.suffix.lower()
-    }
+    metadata = {"file_path": str(wsi_path), "file_size": wsi_path.stat().st_size, "format": wsi_path.suffix.lower()}
 
     if isinstance(handler, OpenSlideHandler):
         slide = handler.open(wsi_path)
@@ -157,7 +156,7 @@ def get_metadata(self, wsi_path: Path) -> dict:
             "level_dimensions": slide.level_dimensions,
             "level_downsamples": slide.level_downsamples,
             "properties": dict(slide.properties),
-            "vendor": slide.properties.get("openslide.vendor", "Unknown")
+            "vendor": slide.properties.get("openslide.vendor", "Unknown"),
         })
 
     elif isinstance(handler, PyDICOMHandler):
@@ -169,7 +168,7 @@ def get_metadata(self, wsi_path: Path) -> dict:
             "rows": ds.get("Rows", 0),
             "columns": ds.get("Columns", 0),
             "number_of_frames": ds.get("NumberOfFrames", 1),
-            "photometric_interpretation": str(ds.get("PhotometricInterpretation", ""))
+            "photometric_interpretation": str(ds.get("PhotometricInterpretation", "")),
         })
 
     return metadata
@@ -180,15 +179,7 @@ def get_metadata(self, wsi_path: Path) -> dict:
 **Region of Interest Extraction:**
 
 ```python
-def get_tile(
-    self,
-    wsi_path: Path,
-    x: int,
-    y: int,
-    width: int,
-    height: int,
-    level: int = 0
-) -> Image:
+def get_tile(self, wsi_path: Path, x: int, y: int, width: int, height: int, level: int = 0) -> Image:
     """Extract tile from WSI at specified coordinates."""
 
     handler = self.get_handler(wsi_path)
@@ -227,17 +218,11 @@ from aignostics.wsi import Service
 from pathlib import Path
 
 # Get filtered DICOM files
-files = Service.get_wsi_files_to_process(
-    path=Path("/data/dicoms"),
-    extension=".dcm"
-)
+files = Service.get_wsi_files_to_process(path=Path("/data/dicoms"), extension=".dcm")
 # Returns only highest resolution WSI files
 
 # For non-DICOM formats, returns all files
-tiff_files = Service.get_wsi_files_to_process(
-    path=Path("/data/slides"),
-    extension=".tiff"
-)
+tiff_files = Service.get_wsi_files_to_process(path=Path("/data/slides"), extension=".tiff")
 # Returns all .tiff files (no filtering)
 ```
 
@@ -371,12 +356,7 @@ if service.is_supported_format(wsi_path):
 
 ```python
 # Extract specific region
-tile = service.get_tile(
-    wsi_path,
-    x=1000, y=2000,
-    width=512, height=512,
-    level=0
-)
+tile = service.get_tile(wsi_path, x=1000, y=2000, width=512, height=512, level=0)
 tile.save("tile.jpg")
 
 # Process multiple WSI files
@@ -543,6 +523,7 @@ def sample_wsi():
     """Provide sample WSI for testing."""
     return Path("tests/fixtures/sample.svs")
 
+
 def test_thumbnail_generation(sample_wsi):
     """Test thumbnail generation."""
     service = Service()
@@ -550,6 +531,7 @@ def test_thumbnail_generation(sample_wsi):
 
     assert thumbnail.size == (256, 256)
     assert thumbnail.mode in ["RGB", "RGBA"]
+
 
 def test_metadata_extraction(sample_wsi):
     """Test metadata extraction."""
@@ -595,6 +577,7 @@ def test_dicom_processing():
 import cProfile
 import pstats
 
+
 def profile_wsi_processing():
     """Profile WSI processing performance."""
 
@@ -607,7 +590,7 @@ def profile_wsi_processing():
 
     profiler.disable()
     stats = pstats.Stats(profiler)
-    stats.sort_stats('cumulative')
+    stats.sort_stats("cumulative")
     stats.print_stats(20)
 ```
 

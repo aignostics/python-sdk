@@ -343,11 +343,9 @@ class Service:
             RuntimeError: When submission fails
         """
         pass
+
     def application_run_download(
-        self,
-        run_id: str,
-        output_dir: Path,
-        progress_callback: Optional[Callable] = None
+        self, run_id: str, output_dir: Path, progress_callback: Optional[Callable] = None
     ) -> DownloadProgress:
         """Download results with progress tracking
 

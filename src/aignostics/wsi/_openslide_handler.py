@@ -1,7 +1,7 @@
 """Handler for wsi files using OpenSlide."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import defusedxml.ElementTree as ET  # noqa: N817
 import openslide
@@ -266,7 +266,7 @@ class OpenSlideHandler:
         """Close the OpenSlide object."""
         self.slide.close()
 
-    def __enter__(self) -> "OpenSlideHandler":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(

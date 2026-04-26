@@ -184,6 +184,7 @@ dev = [
     "pytest>=9.0.3,<10", # CVE-2025-71176 requires >=9.0.3 (Renovate #538)
     "pytest-asyncio>=1.3.0,<2",
     "pytest-cov>=7.0.0,<8",
+    "coverage>=7.12.0,<7.13",  # Pin: coverage 7.13.x introduced a regression where pytest-cov fails with "INTERNALERROR: Expected current collector to be ..." when tests spawn subprocesses (e.g., marimo server). Re-evaluate when coverage releases a fix.
     "pytest-docker>=3.2.5,<4",
     "pytest-durations>=1.6.1,<2",
     "pytest-env>=1.2.0,<2",
@@ -197,7 +198,7 @@ dev = [
     "pytest-xdist[psutil]>=3.8.0,<4",
     "ruff>=0.14.8,<1",
     "scalene>=2.0.1,<3",
-    "sphinx>=8.2.3,<10",
+    "sphinx>=8.2.3,<9",  # Tightened from <10: sphinx-toolbox 4.1.2 imports `logger` from `sphinx.ext.autodoc`, which Sphinx 9 removed. Re-evaluate when sphinx-toolbox ships Sphinx 9 support.
     "sphinx-autobuild>=2025.8.25,<2026",
     "sphinx-click>=6.2.0,<7",
     "sphinx-copybutton>=0.5.2,<1",
@@ -299,6 +300,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = [
+    "RUF067",   # __init__ modules may contain initialization logic beyond re-exports
+]
 "**/tests/**/*.py" = [
     # we are more relaxed in tests, while sill applying hundreds of rules
     "S101",     # asserts allowed in tests...
@@ -320,6 +324,7 @@ ignore = [
     "ASYNC230", # async functions should not open files with blocking methods like `open`
     "S104",     # bind to all ports
     "S607",     # subprocess with partial path
+    "RUF069",   # float equality comparisons in tests are intentional
 ]
 
 [tool.ruff.format]

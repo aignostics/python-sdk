@@ -54,12 +54,14 @@ The GUI enforces health checks before allowing critical operations:
 ```python
 launchpad_healthy: bool | None = None  # None = loading, True = healthy, False = unhealthy
 
+
 async def _health_load_and_render() -> None:
     nonlocal launchpad_healthy
     with contextlib.suppress(Exception):
         launchpad_healthy = bool(await run.cpu_bound(SystemService.health_static))
     health_icon.refresh()
     health_link.refresh()
+
 
 ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
 ```

@@ -3,7 +3,7 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import highdicom as hd
 import numpy as np
@@ -448,7 +448,7 @@ class PydicomHandler:
 
         return {"type": "root", "studies": studies}
 
-    def __enter__(self) -> "PydicomHandler":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:  # noqa: ANN001

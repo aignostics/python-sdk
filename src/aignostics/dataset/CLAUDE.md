@@ -92,21 +92,14 @@ class IDCClient:
 
         # Add proxy support
         self.session = requests.Session()
-        self.session.proxies = {
-            "http": os.environ.get("HTTP_PROXY"),
-            "https": os.environ.get("HTTPS_PROXY")
-        }
+        self.session.proxies = {"http": os.environ.get("HTTP_PROXY"), "https": os.environ.get("HTTPS_PROXY")}
 
         # Custom certificate bundle
         if ca_bundle := os.environ.get("REQUESTS_CA_BUNDLE"):
             self.session.verify = ca_bundle
 
         # Retry configuration for flaky networks
-        retry_strategy = Retry(
-            total=5,
-            backoff_factor=1,
-            status_forcelist=[429, 500, 502, 503, 504]
-        )
+        retry_strategy = Retry(total=5, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("https://", adapter)
 ```
@@ -118,20 +111,15 @@ class IDCClient:
 ```python
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"
 
+
 def download_dataset(
-    collection_id: str,
-    output_dir: Path,
-    progress_callback: Callable = None,
-    filters: dict = None
+    collection_id: str, output_dir: Path, progress_callback: Callable = None, filters: dict = None
 ) -> None:
     """Download IDC dataset with s5cmd for maximum performance."""
 
     # Query IDC for download manifest
     idc_client = IDCClient()
-    manifest = idc_client.get_download_manifest(
-        collection_id=collection_id,
-        filters=filters
-    )
+    manifest = idc_client.get_download_manifest(collection_id=collection_id, filters=filters)
 
     # Create s5cmd commands file
     commands_file = Path(tempfile.mktemp(suffix=".txt"))
@@ -145,15 +133,19 @@ def download_dataset(
     process = subprocess.Popen(
         [
             "s5cmd",
-            "--endpoint-url", "https://s3.amazonaws.com",
-            "--concurrent", "100",  # Parallel transfers
-            "--retry-count", "3",
-            "run", str(commands_file)
+            "--endpoint-url",
+            "https://s3.amazonaws.com",
+            "--concurrent",
+            "100",  # Parallel transfers
+            "--retry-count",
+            "3",
+            "run",
+            str(commands_file),
         ],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        creationflags=SUBPROCESS_CREATION_FLAGS
+        creationflags=SUBPROCESS_CREATION_FLAGS,
     )
 
     # Track process for cleanup
@@ -194,6 +186,7 @@ def _terminate_process(process: subprocess.Popen) -> None:
     except Exception as e:
         logger.exception(f"Error terminating process {process.pid}: {e}")
 
+
 def _cleanup_processes() -> None:
     """Clean up all active processes on exit."""
     for process in _active_processes[:]:
@@ -206,10 +199,7 @@ def _cleanup_processes() -> None:
 **Multi-Threaded Progress Monitoring:**
 
 ```python
-def _monitor_download(
-    process: subprocess.Popen,
-    progress_callback: Callable
-) -> None:
+def _monitor_download(process: subprocess.Popen, progress_callback: Callable) -> None:
     """Monitor s5cmd output for progress updates."""
 
     total_files = 0
@@ -238,7 +228,7 @@ def _monitor_download(
                     completed_files=completed_files,
                     failed_files=failed_files,
                     current_file=current_file,
-                    throughput_mbps=self._calculate_throughput()
+                    throughput_mbps=self._calculate_throughput(),
                 )
                 progress_callback(progress)
 
@@ -289,10 +279,12 @@ collections = idc.get_collections()
 for collection in collections:
     print(f"{collection.id}: {collection.subjects} subjects")
 
+
 # Download specific collection
 def progress_callback(progress):
     print(f"Downloaded: {progress.completed_files}/{progress.total_files}")
     print(f"Throughput: {progress.throughput_mbps:.1f} MB/s")
+
 
 service.download_dataset(
     collection_id="TCGA-LUAD",
@@ -300,8 +292,8 @@ service.download_dataset(
     progress_callback=progress_callback,
     filters={
         "Modality": "SM",  # Slide Microscopy only
-        "BodyPartExamined": "LUNG"
-    }
+        "BodyPartExamined": "LUNG",
+    },
 )
 ```
 
@@ -321,10 +313,7 @@ def download_with_resume(collection_id: str, output_dir: Path):
     manifest = idc.get_download_manifest(collection_id)
 
     # Filter already downloaded
-    to_download = [
-        item for item in manifest
-        if Path(item['target_path']) not in existing_files
-    ]
+    to_download = [item for item in manifest if Path(item["target_path"]) not in existing_files]
 
     logger.debug(f"Resuming download: {len(to_download)} files remaining")
 
@@ -337,6 +326,7 @@ def download_with_resume(collection_id: str, output_dir: Path):
 ```python
 from concurrent.futures import ProcessPoolExecutor
 
+
 def download_multiple_collections(collections: list[str]):
     """Download multiple collections in parallel."""
 
@@ -345,11 +335,7 @@ def download_multiple_collections(collections: list[str]):
 
         for collection_id in collections:
             output_dir = Path(f"./datasets/{collection_id}")
-            future = executor.submit(
-                service.download_dataset,
-                collection_id=collection_id,
-                output_dir=output_dir
-            )
+            future = executor.submit(service.download_dataset, collection_id=collection_id, output_dir=output_dir)
             futures[future] = collection_id
 
         # Monitor completion
@@ -379,6 +365,7 @@ def test_cleanup_processes_terminates_running():
     mock_process.terminate.assert_called_once()
     if mock_process.poll.return_value is None:
         mock_process.kill.assert_called_once()
+
 
 def test_graceful_termination():
     """Test graceful process shutdown."""
@@ -417,20 +404,26 @@ def test_idc_download_with_proxy():
 **Logging Standards:**
 
 ```python
-logger.debug("Dataset download started", extra={
-    "collection_id": collection_id,
-    "estimated_size_gb": size_gb,
-    "output_directory": str(output_dir),
-    "filters": filters
-})
+logger.debug(
+    "Dataset download started",
+    extra={
+        "collection_id": collection_id,
+        "estimated_size_gb": size_gb,
+        "output_directory": str(output_dir),
+        "filters": filters,
+    },
+)
 
-logger.error("Download failed", extra={
-    "collection_id": collection_id,
-    "error": str(e),
-    "completed_files": completed,
-    "failed_files": failed,
-    "duration_seconds": duration
-})
+logger.error(
+    "Download failed",
+    extra={
+        "collection_id": collection_id,
+        "error": str(e),
+        "completed_files": completed,
+        "failed_files": failed,
+        "duration_seconds": duration,
+    },
+)
 ```
 
 ### Performance Optimization
@@ -447,6 +440,7 @@ logger.error("Download failed", extra={
 ```python
 # Path length validation for Windows
 PATH_LENGTH_MAX = 260
+
 
 def validate_path_length(path: Path) -> bool:
     """Ensure path compatibility with Windows."""
@@ -469,7 +463,7 @@ def download_with_retry(manifest_item: dict, max_retries: int = 3):
             download_file(manifest_item)
             return
         except Exception as e:
-            wait_time = 2 ** attempt  # Exponential backoff
+            wait_time = 2**attempt  # Exponential backoff
             logger.warning(f"Retry {attempt + 1}/{max_retries} after {wait_time}s")
             time.sleep(wait_time)
 

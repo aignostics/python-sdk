@@ -92,7 +92,7 @@ def generate_signed_url(
     operation: str = "GET",
     expiry_seconds: int = 3600,
     content_type: str = None,
-    metadata: dict = None
+    metadata: dict = None,
 ) -> str:
     """Generate time-limited signed URL with security constraints."""
 
@@ -105,7 +105,7 @@ def generate_signed_url(
         "Bucket": bucket,
         "Key": key,
         "ResponseContentDisposition": f"attachment; filename={Path(key).name}",
-        "ResponseContentType": content_type or "application/octet-stream"
+        "ResponseContentType": content_type or "application/octet-stream",
     }
 
     # Add server-side encryption
@@ -115,19 +115,14 @@ def generate_signed_url(
 
     # Generate presigned URL
     url = s3_client.generate_presigned_url(
-        ClientMethod=operation.lower() + "_object",
-        Params=params,
-        ExpiresIn=expiry_seconds
+        ClientMethod=operation.lower() + "_object", Params=params, ExpiresIn=expiry_seconds
     )
 
     # Audit log
-    audit_logger.debug(f"Generated signed URL", extra={
-        "operation": operation,
-        "bucket": bucket,
-        "key": key,
-        "expiry": expiry_seconds,
-        "user": current_user.id
-    })
+    audit_logger.debug(
+        f"Generated signed URL",
+        extra={"operation": operation, "bucket": bucket, "key": key, "expiry": expiry_seconds, "user": current_user.id},
+    )
 
     return url
 ```
@@ -137,23 +132,17 @@ def generate_signed_url(
 **Chunk Size Constants (Actual):**
 
 ```python
-UPLOAD_CHUNK_SIZE = 1024 * 1024         # 1MB upload chunks
+UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB upload chunks
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024 * 10  # 10MB download chunks
-ETAG_CHUNK_SIZE = 1024 * 1024 * 100     # 100MB for ETag calculation
+ETAG_CHUNK_SIZE = 1024 * 1024 * 100  # 100MB for ETag calculation
 
-def upload_file(
-    file_path: Path,
-    bucket: str,
-    key: str,
-    progress_callback: Callable = None
-) -> str:
+
+def upload_file(file_path: Path, bucket: str, key: str, progress_callback: Callable = None) -> str:
     """Upload file with chunking (actual implementation pattern)."""
 
     # Generate signed URL for upload
     url = self._get_s3_client().generate_presigned_url(
-        ClientMethod="put_object",
-        Params={"Bucket": bucket, "Key": key},
-        ExpiresIn=3600
+        ClientMethod="put_object", Params={"Bucket": bucket, "Key": key}, ExpiresIn=3600
     )
 
     # Upload with chunking
@@ -177,11 +166,7 @@ def upload_file(
 **Memory-Efficient Download:**
 
 ```python
-def download_file(
-    url: str,
-    output_path: Path,
-    progress_callback: Callable = None
-) -> None:
+def download_file(url: str, output_path: Path, progress_callback: Callable = None) -> None:
     """Download file with streaming (actual implementation pattern)."""
 
     response = requests.get(url, stream=True)
@@ -195,10 +180,7 @@ def download_file(
                 downloaded += len(chunk)
 
                 if progress_callback:
-                    progress = DownloadProgress(
-                        current_file_downloaded=downloaded,
-                        current_file_size=total_size
-                    )
+                    progress = DownloadProgress(current_file_downloaded=downloaded, current_file_size=total_size)
                     progress_callback(progress)
 ```
 
@@ -237,15 +219,17 @@ from aignostics.bucket import Service
 
 service = Service()
 
+
 # Upload file with progress
 def progress(current, total):
-    print(f"Upload: {current/total:.1%}")
+    print(f"Upload: {current / total:.1%}")
+
 
 url = service.upload(
     file_path=Path("slide.svs"),
     bucket="aignostics-data",
     key=f"runs/{run_id}/inputs/slide.svs",
-    progress_callback=progress
+    progress_callback=progress,
 )
 
 # Generate signed download URL
@@ -253,7 +237,7 @@ download_url = service.generate_signed_url(
     bucket="aignostics-data",
     key=f"runs/{run_id}/outputs/results.json",
     operation="GET",
-    expiry_seconds=7200  # 2 hours
+    expiry_seconds=7200,  # 2 hours
 )
 ```
 
@@ -264,6 +248,7 @@ download_url = service.generate_signed_url(
 ```python
 from concurrent.futures import ThreadPoolExecutor
 
+
 def upload_batch(files: list[Path]) -> list[str]:
     """Upload multiple files in parallel."""
 
@@ -271,10 +256,7 @@ def upload_batch(files: list[Path]) -> list[str]:
         futures = []
         for file_path in files:
             future = executor.submit(
-                service.upload,
-                file_path=file_path,
-                bucket="aignostics-data",
-                key=f"batch/{file_path.name}"
+                service.upload, file_path=file_path, bucket="aignostics-data", key=f"batch/{file_path.name}"
             )
             futures.append(future)
 
@@ -294,11 +276,7 @@ def upload_batch(files: list[Path]) -> list[str]:
 **Resumable Download:**
 
 ```python
-def download_with_resume(
-    bucket: str,
-    key: str,
-    output_path: Path
-) -> None:
+def download_with_resume(bucket: str, key: str, output_path: Path) -> None:
     """Download with automatic resume on failure."""
 
     # Check for partial download
@@ -310,9 +288,7 @@ def download_with_resume(
 
     # Download with range header
     response = s3_client.get_object(
-        Bucket=bucket,
-        Key=key,
-        Range=f"bytes={resume_offset}-" if resume_offset > 0 else None
+        Bucket=bucket, Key=key, Range=f"bytes={resume_offset}-" if resume_offset > 0 else None
     )
 
     # Append to existing file or create new
@@ -336,14 +312,11 @@ def mock_s3_client():
         mock.return_value = client
         yield client
 
+
 def test_signed_url_generation(mock_s3_client):
     """Test secure URL generation."""
     service = Service()
-    url = service.generate_signed_url(
-        bucket="test",
-        key="file.txt",
-        expiry_seconds=3600
-    )
+    url = service.generate_signed_url(bucket="test", key="file.txt", expiry_seconds=3600)
 
     assert url.startswith("https://")
     mock_s3_client.generate_presigned_url.assert_called_once()
@@ -375,13 +348,16 @@ def test_multipart_upload_recovery():
 **Logging Standards:**
 
 ```python
-logger.debug("File uploaded", extra={
-    "bucket": bucket,
-    "key": key,
-    "size_mb": file_size / (1024*1024),
-    "duration_seconds": duration,
-    "transfer_rate_mbps": transfer_rate
-})
+logger.debug(
+    "File uploaded",
+    extra={
+        "bucket": bucket,
+        "key": key,
+        "size_mb": file_size / (1024 * 1024),
+        "duration_seconds": duration,
+        "transfer_rate_mbps": transfer_rate,
+    },
+)
 ```
 
 ### Security & Compliance
@@ -400,12 +376,7 @@ logger.debug("File uploaded", extra={
 # Ensure PHI data is encrypted
 if contains_phi(file_path):
     encryption_config = {
-        "Rules": [{
-            "ApplyServerSideEncryptionByDefault": {
-                "SSEAlgorithm": "aws:kms",
-                "KMSMasterKeyID": KMS_KEY_ID
-            }
-        }]
+        "Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "aws:kms", "KMSMasterKeyID": KMS_KEY_ID}}]
     }
 ```
 
@@ -425,6 +396,7 @@ if contains_phi(file_path):
 # Local cache for frequently accessed files
 CACHE_DIR = Path.home() / ".aignostics" / "cache"
 MAX_CACHE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
+
 
 def get_with_cache(bucket: str, key: str) -> Path:
     """Get file with local caching."""

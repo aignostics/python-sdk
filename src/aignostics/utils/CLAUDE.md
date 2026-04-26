@@ -57,6 +57,7 @@ services = locate_implementations(BaseService)
 # Find all subclasses of a type
 subclasses = locate_subclasses(BaseService)
 
+
 # Services inherit from BaseService
 class MyService(BaseService):
     async def health(self) -> Health:
@@ -75,6 +76,7 @@ The same function object is returned on repeated calls (required for `dependency
 from typing import Annotated
 from fastapi import Depends
 from aignostics.my_module._service import Service
+
 
 @router.get("/endpoint")
 async def endpoint(service: Annotated[Service, Depends(Service.get_service())]):
@@ -127,8 +129,10 @@ logger.debug("Application started", extra={"correlation_id": "123"})
 from aignostics.utils import load_settings
 from pydantic import BaseModel
 
+
 class MySettings(BaseModel):
     api_url: str = "https://api.example.com"
+
 
 settings = load_settings(MySettings)
 ```
@@ -138,12 +142,10 @@ settings = load_settings(MySettings)
 ```python
 from aignostics.utils import Health, BaseService
 
+
 class MyService(BaseService):
     async def health(self) -> Health:
-        return Health(
-            status=Health.Code.UP,
-            details={"database": "connected"}
-        )
+        return Health(status=Health.Code.UP, details={"database": "connected"})
 ```
 
 **MCP Server Utilities:**
@@ -160,7 +162,7 @@ from aignostics.utils import (
 
 # Constants
 print(MCP_SERVER_NAME)  # "Central Aignostics MCP Server"
-print(MCP_TRANSPORT)    # "stdio"
+print(MCP_TRANSPORT)  # "stdio"
 
 # Create and configure MCP server
 server = mcp_create_server()
@@ -363,6 +365,7 @@ Plugins can expose MCP tools by:
 
    mcp = FastMCP("my_plugin")
 
+
    @mcp.tool
    def my_tool(param: str) -> str:
        """Tool description."""
@@ -372,6 +375,7 @@ Plugins can expose MCP tools by:
 3. Exporting the instance in `__init__.py`:
    ```python
    from ._mcp import mcp
+
    __all__ = ["mcp"]
    ```
 
