@@ -38,10 +38,11 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
 
     Example:
         >>> def list_items(page=1, page_size=20):
-        ...     # API call that returns a list of items for the given page
-        ...     return [f"item_{i}" for i in range(page_size)]
+        ...     # Returns a full page on page 1, fewer items on page 2 (signals last page)
+        ...     return [f"item_{i}" for i in range(page_size if page == 1 else 5)]
         >>> items = list(paginate(list_items))
         >>> print(len(items))
+        25
     """
     # Credit: fix contributed by external community contributor @alekseevpavel04
     # (https://github.com/aignostics/python-sdk/pull/444)
