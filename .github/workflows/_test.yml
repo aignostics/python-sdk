@@ -211,9 +211,12 @@ jobs:
         shell: bash
         run: |
           set +e
+          # NOTE: `-m long_running` is REQUIRED here — tests/conftest.py:pytest_collection_modifyitems
+          # auto-skips `long_running` tests when no `-m` is passed, even if the test is named explicitly.
           uv run --all-extras pytest \
             tests/aignostics/application/gui_test.py::test_gui_run_download \
             tests/aignostics/qupath/gui_test.py::test_gui_run_qupath_install_to_inspect \
+            -m "long_running" \
             -v --no-cov --tb=long -s -p no:retry --timeout=300 \
             --junitxml=reports/junit_531_debug.xml \
             --md-report-output=reports/pytest_531_debug.md
