@@ -63,7 +63,9 @@ class PageBuilder(BasePageBuilder):
                             # Mask secrets switch with reload functionality
                             with ui.row().classes("w-full items-center gap-2 mb-4"):
                                 mask_secrets_switch = ui.switch(
-                                    text="Mask secrets", value=True, on_change=lambda e: load_info(mask_secrets=e.value)
+                                    text="Mask secrets",
+                                    value=True,
+                                    on_change=lambda e: load_info(mask_secrets=bool(e.value)),
                                 )
 
                             spinner = ui.spinner(size="lg").classes(

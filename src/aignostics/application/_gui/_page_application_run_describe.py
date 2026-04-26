@@ -1,5 +1,8 @@
 """Run describe page, including download, QuPath and Marimo control."""
 
+import asyncio
+import contextlib
+import queue as queue_module
 import webbrowser
 from importlib.util import find_spec
 from multiprocessing import Manager
@@ -254,13 +257,21 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         # This allows the timer callback to access the queue that's created during start_download
         progress_state: dict[str, Any] = {"queue": None}
 
-        def update_download_progress() -> None:  # noqa: C901, PLR0912
+        def update_download_progress() -> None:  # noqa: C901, PLR0912, PLR0915
             """Update the progress indicator with values from the queue."""
             progress_queue = progress_state.get("queue")
             if progress_queue is None:
                 return
-            while not progress_queue.empty():
-                progress = progress_queue.get()
+            # Drain everything currently in the queue, but never block on `get()`. Using
+            # `get_nowait()` (instead of the previously-paired `empty()` check + blocking `get()`)
+            # guards against a tiny IPC race on `multiprocessing.Manager().Queue` where the queue
+            # could be drained between `empty()` returning False and `get()` running, leaving
+            # `get()` to block indefinitely and stall the async progress task.
+            while True:
+                try:
+                    progress = progress_queue.get_nowait()
+                except queue_module.Empty:
+                    break
                 if progress.status is DownloadProgressState.DOWNLOADING_INPUT:
                     status_text = (
                         f"Downloading input slide {progress.item_index + 1} of {progress.item_count}"
@@ -319,12 +330,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     download_item_progress.set_visibility(False)
                     download_artifact_progress.set_visibility(False)
 
-        # Create the timer during dialog construction (in valid slot context), but inactive initially
-        # This avoids RuntimeError when trying to create timer inside async event handler
-        progress_timer = ui.timer(0.1, update_download_progress, active=False)
-
-        async def start_download() -> None:
-            # Read from download_options dict (defined outside @ui.refreshable) to get current values
+        async def start_download() -> None:  # noqa: PLR0915
             current_qupath_project = download_options["qupath_project"]
             current_marimo = download_options["marimo"]
             current_folder = folder_state["value"]
@@ -334,10 +340,42 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
 
             ui.notify("Downloading ...", type="info")
             progress_queue = Manager().Queue()
-            progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
+            progress_state["queue"] = progress_queue
 
-            # Activate the timer now that download is starting
-            progress_timer.activate()
+            # Drive the progress UI from a plain asyncio task instead of `ui.timer`.
+            #
+            # Background: NiceGUI 3.10's PR #5931 made `Timer._handle_delete()` cancel the timer
+            # whenever its parent container is cleared. The download dialog content lives inside
+            # `@ui.refreshable`, and `download_run_dialog_open()` calls `dialog_content.refresh()`
+            # on every open — so a pre-created `ui.timer` captured by this closure is always
+            # `_is_canceled=True` by the time the user clicks Download, and `Timer.activate()`'s
+            # `assert not self._is_canceled` raises silently inside NiceGUI's event-handler
+            # exception path (#531).
+            #
+            # Trying to *create* the timer fresh inside this click handler instead doesn't work
+            # either: `ui.timer` is an Element and needs a live slot context, but the click
+            # handler's parent_slot is the button's parent slot which has been GC'd in this
+            # @ui.refreshable + dialog flow ("RuntimeError: The parent element this slot belongs
+            # to has been deleted.").
+            #
+            # An `asyncio.create_task` running our callback doesn't need a slot context, doesn't
+            # depend on the refreshable lifecycle, and the callback closes over UI element refs
+            # (`download_item_status`, etc.) that were just created in the latest refresh and are
+            # valid for the duration of this download.
+            stop_progress = asyncio.Event()
+
+            async def _drive_progress() -> None:
+                while not stop_progress.is_set():
+                    try:
+                        update_download_progress()
+                    except Exception:
+                        logger.exception("update_download_progress raised; continuing")
+                    try:
+                        await asyncio.wait_for(stop_progress.wait(), timeout=0.1)
+                    except TimeoutError:
+                        continue
+
+            progress_task = asyncio.create_task(_drive_progress(), name=f"download-progress-{run.run_id}")
             try:
                 download_button.disable()
                 download_button.props(add="loading")
@@ -353,10 +391,9 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301
                 if current_qupath_project:
-                    if results_folder:
-                        ui.notify("Download and QuPath project creation completed.", type="positive")
-                        download_item_status.set_text("Opening QuPath ...")
-                        await open_qupath(project=results_folder / "qupath", button=download_button)
+                    ui.notify("Download and QuPath project creation completed.", type="positive")
+                    download_item_status.set_text("Opening QuPath ...")
+                    await open_qupath(project=results_folder / "qupath", button=download_button)
                 elif current_marimo:
                     ui.notify("Download and Notebook preparation completed.", type="positive")
                     download_item_status.set_text("Opening Notebook ...")
@@ -364,19 +401,30 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 else:
                     ui.notify("Download completed.", type="positive")
                 show_in_file_manager(str(results_folder))
-            except ValueError as e:
+            except Exception as e:
+                # Catching the broad `Exception` here is intentional: any unhandled exception in
+                # this async event handler would otherwise be silently swallowed by NiceGUI's
+                # outer task-exception handler, leaving the dialog stuck in the loading state
+                # with no completion or failure notification. We always want the user to see
+                # *something* and the progress task + button state cleaned up via the `finally`.
+                logger.exception("Download failed for run '{}'", run.run_id)
                 ui.notify(f"Download failed: {e}", type="negative", multi_line=True)
-                progress_timer.deactivate()
+            finally:
+                # Force the progress task to terminate even if it's stuck in a sync call (e.g.
+                # a Manager().Queue() IPC hiccup): set the stop event, hard-cancel the task,
+                # and wait a bounded time. This guarantees `start_download` cleanup completes
+                # in finite time no matter what the progress driver was doing.
+                stop_progress.set()
+                progress_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception, TimeoutError):
+                    await asyncio.wait_for(progress_task, timeout=2.0)
                 progress_state["queue"] = None
-                return
-            progress_timer.deactivate()
-            progress_state["queue"] = None
-            download_button.props(remove="loading")
-            download_button.enable()
-            download_item_status.set_visibility(False)
-            download_item_progress.set_visibility(False)
-            download_artifact_status.set_visibility(False)
-            download_artifact_progress.set_visibility(False)
+                download_button.props(remove="loading")
+                download_button.enable()
+                download_item_status.set_visibility(False)
+                download_item_progress.set_visibility(False)
+                download_artifact_status.set_visibility(False)
+                download_artifact_progress.set_visibility(False)
 
         ui.separator()
         with ui.row(align_items="end").classes("w-full justify-end"):

@@ -23,6 +23,24 @@
   },
   "packageRules": [
     {
+      "description": "Runtime-critical packages whose bumps touch the GUI event loop, HTTP client, or pydantic models — regressions in these only surface end-to-end (closure lifecycles, event handler exception swallowing, request retry semantics, ...). Override the global labels to drop `skip:test:long_running` so the long-running e2e matrix runs and catches integration regressions on every bump. Discovered while shipping nicegui 3.10/3.11 (#531) where a silently-swallowed AssertionError inside an async click handler hung a download dialog and was only caught by the long-running suite.",
+      "matchPackageNames": [
+        "nicegui",
+        "fastapi",
+        "starlette",
+        "httpx",
+        "pydantic",
+        "pydantic-settings",
+        "uvicorn"
+      ],
+      "labels": [
+        "bot",
+        "renovate",
+        "dependencies",
+        "skip:codecov"
+      ]
+    },
+    {
       "groupName": "minor and patch dependencies",
       "matchManagers": ["pep621"],
       "matchUpdateTypes": ["minor", "patch"]
