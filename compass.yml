@@ -26,6 +26,9 @@ links:
   - name: '#python-sdk-notifications'
     type: CHAT_CHANNEL
     url: https://slack.com/app_redirect?channel=C0AUPTA5QF9
+  - name: '#python-sdk-announcements'
+    type: CHAT_CHANNEL
+    url: https://slack.com/app_redirect?channel=C08TN9NEY3Z
   - name: Ketryx Project
     type: OTHER_LINK
     url: https://app.ketryx.com/projects/KXPRJ2Q4PA8AADY975SFMKF276TYV75
