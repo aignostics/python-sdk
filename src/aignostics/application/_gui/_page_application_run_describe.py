@@ -323,7 +323,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         # This avoids RuntimeError when trying to create timer inside async event handler
         progress_timer = ui.timer(0.1, update_download_progress, active=False)
 
-        async def start_download() -> None:
+        async def start_download() -> None:  # noqa: PLR0915 - diagnostic prints temporarily push count over the threshold (#531)
             # Read from download_options dict (defined outside @ui.refreshable) to get current values
             current_qupath_project = download_options["qupath_project"]
             current_marimo = download_options["marimo"]
@@ -333,14 +333,24 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 return
 
             ui.notify("Downloading ...", type="info")
+            # DIAGNOSTIC(#531): use print() with flush=True so output reaches CI logs even with
+            # `--log-disable=aignostics`; this is around the suspected NiceGUI 3.10+ cpu_bound hang.
+            print(f"[#531] start_download: BEFORE Manager().Queue() for run={run.run_id}", flush=True)
             progress_queue = Manager().Queue()
+            print(f"[#531] start_download: AFTER Manager().Queue(), queue={progress_queue!r}", flush=True)
             progress_state["queue"] = progress_queue  # Store queue so timer callback can access it
 
             # Activate the timer now that download is starting
             progress_timer.activate()
+            print("[#531] start_download: AFTER progress_timer.activate()", flush=True)
             try:
                 download_button.disable()
                 download_button.props(add="loading")
+                print(
+                    f"[#531] start_download: BEFORE await cpu_bound, qupath={current_qupath_project}, "
+                    f"folder={current_folder!r}",
+                    flush=True,
+                )
                 results_folder = await nicegui_run.cpu_bound(
                     Service.application_run_download_static,
                     run_id=run.run_id,
@@ -349,6 +359,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                     qupath_project=current_qupath_project,
                     download_progress_queue=progress_queue,
                 )
+                print(f"[#531] start_download: AFTER await cpu_bound, results_folder={results_folder!r}", flush=True)
                 if not results_folder:
                     message = "Download returned without results folder."
                     raise ValueError(message)  # noqa: TRY301

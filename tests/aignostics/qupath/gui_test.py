@@ -143,12 +143,6 @@ async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-# TODO(#531): NiceGUI 3.10/3.11 regression — same root cause as test_gui_run_download.
-# `await nicegui_run.cpu_bound(...)` from the run-download click handler never returns on staging
-# CI; the test times out at the "Download and QuPath project creation completed." notification.
-# Skipping so the CVE-2026-39844 security bump can land; re-enable once the upstream regression
-# is root-caused.
-@pytest.mark.skip(reason="NiceGUI 3.10/3.11 cpu_bound regression — see TODO(#531)")
 async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
     user: User,
     runner: CliRunner,

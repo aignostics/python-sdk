@@ -1359,15 +1359,38 @@ class Service(BaseService):  # noqa: PLR0904
             NotFoundException: If the application run with the given ID is not found.
             RuntimeError: If run details cannot be retrieved or download fails.
         """
-        return Service().application_run_download(
-            run_id,
-            destination_directory,
-            create_subdirectory_for_run,
-            create_subdirectory_per_item,
-            wait_for_completion,
-            qupath_project,
-            download_progress_queue,
+        # DIAGNOSTIC(#531): print from inside the cpu_bound subprocess so we know it actually
+        # started and reaches each phase. Output flushes via stderr to the parent process.
+        import os  # noqa: PLC0415
+        import sys  # noqa: PLC0415
+
+        sys.stderr.write(
+            f"[#531][subproc pid={os.getpid()}] application_run_download_static ENTER, "
+            f"run_id={run_id}, dest={destination_directory}, qupath={qupath_project}, "
+            f"queue={download_progress_queue!r}\n"
         )
+        sys.stderr.flush()
+        try:
+            result = Service().application_run_download(
+                run_id,
+                destination_directory,
+                create_subdirectory_for_run,
+                create_subdirectory_per_item,
+                wait_for_completion,
+                qupath_project,
+                download_progress_queue,
+            )
+            sys.stderr.write(
+                f"[#531][subproc pid={os.getpid()}] application_run_download_static EXIT, result={result!r}\n"
+            )
+            sys.stderr.flush()
+        except BaseException as e:
+            sys.stderr.write(
+                f"[#531][subproc pid={os.getpid()}] application_run_download_static RAISED {type(e).__name__}: {e}\n"
+            )
+            sys.stderr.flush()
+            raise
+        return result
 
     def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
         self,
@@ -1417,18 +1440,30 @@ class Service(BaseService):  # noqa: PLR0904
             wait_for_completion,
             qupath_project,
         )
+        # DIAGNOSTIC(#531): trace which step the subprocess is on
+        import os as _os531  # noqa: PLC0415
+        import sys as _sys531  # noqa: PLC0415
+
+        def _diag531(msg: str) -> None:
+            _sys531.stderr.write(f"[#531][subproc pid={_os531.getpid()}] download: {msg}\n")
+            _sys531.stderr.flush()
+
         if qupath_project and not has_qupath_extra:
             message = "QuPath project creation requested, but 'qupath' extra is not installed."
             message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
             logger.warning(message)
             raise ValueError(message)
+        _diag531("creating DownloadProgress + initial update_progress")
         progress = DownloadProgress()
         update_progress(progress, download_progress_callable, download_progress_queue)
 
+        _diag531(f"resolving application_run({run_id})")
         application_run = self.application_run(run_id)
         final_destination_directory = destination_directory
         try:
+            _diag531("calling application_run.details()")
             details = application_run.details()
+            _diag531(f"got details: state={details.state}, output={details.output}")
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
@@ -1451,7 +1486,10 @@ class Service(BaseService):  # noqa: PLR0904
             logger.warning(message)
             raise ValueError(message) from e
 
+        _diag531(f"mkdir OK: {final_destination_directory}")
+        _diag531("listing application_run.results()")
         results = list(application_run.results())
+        _diag531(f"got {len(results)} item(s) from results()")
         for item_index, item in enumerate(results):
             if item.external_id.startswith(("gs://", "http://", "https://")):
                 # Download URL to local input directory and update external_id
@@ -1499,13 +1537,19 @@ class Service(BaseService):  # noqa: PLR0904
 
         progress.status = DownloadProgressState.CHECKING
         update_progress(progress, download_progress_callable, download_progress_queue)
+        _diag531("entering polling loop")
 
         downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
+        loop_iteration531 = 0
         while True:
+            loop_iteration531 += 1
+            _diag531(f"loop iter {loop_iteration531}: calling application_run.details()")
             run_details = application_run.details()  # (Re)load current run details
+            _diag531(f"loop iter {loop_iteration531}: state={run_details.state}")
             progress.run = run_details
             update_progress(progress, download_progress_callable, download_progress_queue)
 
+            _diag531(f"loop iter {loop_iteration531}: calling download_available_items")
             download_available_items(
                 progress,
                 application_run,
@@ -1515,8 +1559,13 @@ class Service(BaseService):  # noqa: PLR0904
                 download_progress_queue,
                 download_progress_callable,
             )
+            _diag531(
+                f"loop iter {loop_iteration531}: download_available_items returned, "
+                f"downloaded_items={len(downloaded_items)}"
+            )
 
             if run_details.state == RunState.TERMINATED:
+                _diag531(f"loop iter {loop_iteration531}: TERMINATED -> breaking")
                 logger.trace(
                     "Run '{}' reached final status '{}' with message '{}' ({}).",
                     run_id,
@@ -1616,5 +1665,6 @@ class Service(BaseService):  # noqa: PLR0904
         logger.trace("Completed downloading application run '{}' to '{}'", run_id, final_destination_directory)
         progress.status = DownloadProgressState.COMPLETED
         update_progress(progress, download_progress_callable, download_progress_queue)
+        _diag531(f"COMPLETED, returning {final_destination_directory}")
 
         return final_destination_directory
