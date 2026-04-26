@@ -43,6 +43,8 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         >>> items = list(paginate(list_items))
         >>> print(len(items))
     """
+    # Credit: fix contributed by external community contributor @alekseevpavel04
+    # (https://github.com/aignostics/python-sdk/pull/444)
     if page_size <= 0:
         message = f"page_size must be a positive integer, got {page_size}"
         raise ValueError(message)
