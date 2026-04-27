@@ -101,7 +101,7 @@ version.
 
 | Package | Constraint | Protects against | Severity | Applies to | Since |
 | --- | --- | --- | --- | --- | --- |
-| `nicegui[native]` | `>=3.9.0,<4` | [CVE-2026-21871](https://nvd.nist.gov/vuln/detail/CVE-2026-21871), [CVE-2026-21873](https://nvd.nist.gov/vuln/detail/CVE-2026-21873), [CVE-2026-21874](https://nvd.nist.gov/vuln/detail/CVE-2026-21874) (≥3.5.0); [CVE-2026-25516](https://nvd.nist.gov/vuln/detail/CVE-2026-25516) (≥3.7.0); [CVE-2026-27156](https://nvd.nist.gov/vuln/detail/CVE-2026-27156) (≥3.8.0); [CVE-2026-33332](https://nvd.nist.gov/vuln/detail/CVE-2026-33332) (≥3.9.0) | Medium | always | 2026-01-09 (≥3.5.0); 2026-04-24 raised to ≥3.9.0 |
+| `nicegui[native]` | `>=3.11.0,<4` | [CVE-2026-21871](https://nvd.nist.gov/vuln/detail/CVE-2026-21871), [CVE-2026-21873](https://nvd.nist.gov/vuln/detail/CVE-2026-21873), [CVE-2026-21874](https://nvd.nist.gov/vuln/detail/CVE-2026-21874) (≥3.5.0); [CVE-2026-25516](https://nvd.nist.gov/vuln/detail/CVE-2026-25516) (≥3.7.0); [CVE-2026-27156](https://nvd.nist.gov/vuln/detail/CVE-2026-27156) (≥3.8.0); [CVE-2026-33332](https://nvd.nist.gov/vuln/detail/CVE-2026-33332) (≥3.9.0); [CVE-2026-39844](https://nvd.nist.gov/vuln/detail/CVE-2026-39844) (≥3.10.0) | Medium | always | 2026-01-09 (≥3.5.0); 2026-04-24 raised to ≥3.9.0; 2026-04-26 raised to ≥3.11.0 (#531) |
 | `pyjwt[crypto]` | `>=2.12.0,<3` | [CVE-2026-32597](https://nvd.nist.gov/vuln/detail/CVE-2026-32597) | High | always | 2026-04-24 |
 | `requests` | `>=2.33.0,<3` | [CVE-2026-25645](https://nvd.nist.gov/vuln/detail/CVE-2026-25645) | Medium | always | 2026-03-26 |
 | `urllib3` | `>=2.6.3,<3` | [CVE-2026-21441](https://nvd.nist.gov/vuln/detail/CVE-2026-21441) | Medium | always | 2026-01-08 |
@@ -121,7 +121,7 @@ version.
 | `lxml-html-clean` | `>=0.4.4` | [CVE-2026-28348](https://nvd.nist.gov/vuln/detail/CVE-2026-28348), [CVE-2026-28350](https://nvd.nist.gov/vuln/detail/CVE-2026-28350) | Medium | always | 2026-04-24 |
 | `python-multipart` | `>=0.0.26` | [CVE-2026-24486](https://nvd.nist.gov/vuln/detail/CVE-2026-24486) (≥0.0.22); [CVE-2026-40347](https://nvd.nist.gov/vuln/detail/CVE-2026-40347) (≥0.0.26) | High | always | 2026-04-24 |
 | `protobuf` | `>=6.33.5` | [CVE-2026-0994](https://nvd.nist.gov/vuln/detail/CVE-2026-0994) | High | always | 2026-04-24 |
-| `nbconvert` | `>=7.17.1` | [CVE-2025-53000](https://nvd.nist.gov/vuln/detail/CVE-2025-53000) | High | with the `jupyter` extra | 2026-04-24 |
+| `nbconvert` | `>=7.17.1` | [CVE-2025-53000](https://nvd.nist.gov/vuln/detail/CVE-2025-53000) (≥7.17.0); [CVE-2026-39377](https://nvd.nist.gov/vuln/detail/CVE-2026-39377), [CVE-2026-39378](https://nvd.nist.gov/vuln/detail/CVE-2026-39378) (≥7.17.1) | High | with the `jupyter` extra | 2026-04-24 (≥7.17.1) |
 | `jupyter-core` | `>=5.8.1` | [CVE-2025-30167](https://nvd.nist.gov/vuln/detail/CVE-2025-30167) | High | with the `jupyter` extra | 2025-12-10 |
 | `jupyterlab` | `>=4.4.9` | [CVE-2025-59842](https://nvd.nist.gov/vuln/detail/CVE-2025-59842) | Low | with the `jupyter` extra | 2025-12-10 |
 | `marimo` | `>=0.23.0,<1` | [GHSA-2679-6mx9-h9xc](https://github.com/advisories/GHSA-2679-6mx9-h9xc) | Medium | with the `marimo` extra | 2026-04-24 |
