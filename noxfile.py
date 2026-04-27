@@ -155,8 +155,6 @@ def audit(session: nox.Session) -> None:
             "json",
             "-o",
             "reports/vulnerabilities.json",
-            "--ignore-vuln",
-            "CVE-2026-3219",  # pip archive type confusion; fix in unreleased 26.1. See SUPPLY_CHAIN_VULNERABILITIES.md
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")

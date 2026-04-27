@@ -216,7 +216,7 @@ dev = [
     "watchdog>=6.0.0,<7",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "pip>=25.3",                        # CVE-2025-8869 (>=25.3). CVE-2026-3219 (fix in 26.1, unreleased) accepted via --ignore-vuln; see SUPPLY_CHAIN_VULNERABILITIES.md.
+    "pip>=26.1",                        # CVE-2025-8869 (Medium, >=25.3); CVE-2026-3219 (Medium, >=26.1, released 2026-04-26 via pypa/pip#13870)
     "uv>=0.11.6",                       # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64 (>=0.9.7); GHSA-pjjw-68hj-v9mw (>=0.11.6, Renovate #536)
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
     "virtualenv>=20.36.1",              # pypa/virtualenv#3013 TOCTOU in app_data/lock dir; bundles filelock>=3.20.1 for CVE-2025-68146; transitive via nox/pre-commit

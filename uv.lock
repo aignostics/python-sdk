@@ -265,7 +265,7 @@ dev = [
     { name = "mypy", specifier = ">=1.19.0,<2" },
     { name = "myst-parser", specifier = ">=5,<6" },
     { name = "nox", extras = ["uv"], specifier = ">=2025.11.12" },
-    { name = "pip", specifier = ">=25.3" },
+    { name = "pip", specifier = ">=26.1" },
     { name = "pip-audit", specifier = ">=2.10.0,<3" },
     { name = "pip-licenses", git = "https://github.com/neXenio/pip-licenses.git?rev=master" },
     { name = "pre-commit", specifier = ">=4.5.0,<5" },
