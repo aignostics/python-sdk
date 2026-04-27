@@ -75,7 +75,7 @@ under which the acceptance expires.
 
 | Advisory | Package (affected) | Severity | Applies to | Downstream exposure | Published | Accepted | Revisit by | Fix status | Rationale | Removal condition | Accepted via |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [GHSA-58qw-9mgm-455v](https://github.com/advisories/GHSA-58qw-9mgm-455v) / [CVE-2026-3219](https://nvd.nist.gov/vuln/detail/CVE-2026-3219) — pip archive type confusion (tar+ZIP concatenation) | `pip` ≤ 26.0.1 | CVSS 4.6 Moderate (CWE-434) | dev only | **None** — `pip` is not shipped as a dependency of `aignostics`; consumers use their own pip. | 2026-04-20 | 2026-04-24 | 2026-05-24 | Fix merged in [pypa/pip#13870](https://github.com/pypa/pip/pull/13870) for milestone `26.1`; not yet released | Exploitation requires `pip install` on an attacker-crafted dual-format archive; aignostics installs only from PyPI and signed GitHub release artifacts. | pip `26.1` (or later) is released on PyPI. Raise the dev-only `pip>=25.3` lower bound to `pip>=26.1` with a `# CVE-2026-3219` comment and remove the ignore. | [PYSDK-93](https://aignx.atlassian.net/browse/PYSDK-93) |
+| _No active acceptances. All known advisories that affect aignostics or its dependencies have an upstream fix that is reflected as an enforced lower bound below._ | — | — | — | — | — | — | — | — | — | — | — |
 
 "Revisit by" is a soft deadline: when it passes, we re-check whether the
 upstream fix landed or whether a newer advisory superseded this one. For
@@ -101,6 +101,7 @@ version.
 
 | Package | Constraint | Protects against | Severity | Applies to | Since |
 | --- | --- | --- | --- | --- | --- |
+| `pip` | `>=26.1` | [CVE-2025-8869](https://nvd.nist.gov/vuln/detail/CVE-2025-8869) (≥25.3); [CVE-2026-3219](https://nvd.nist.gov/vuln/detail/CVE-2026-3219) / [GHSA-58qw-9mgm-455v](https://github.com/advisories/GHSA-58qw-9mgm-455v) (≥26.1, [pypa/pip#13870](https://github.com/pypa/pip/pull/13870)) | Medium | dev only | 2026-04-01 (>=5.3 — ineffective); 2026-04-24 raised to ≥25.3; 2026-04-27 raised to ≥26.1 |
 | `nicegui[native]` | `>=3.11.0,<4` | [CVE-2026-21871](https://nvd.nist.gov/vuln/detail/CVE-2026-21871), [CVE-2026-21873](https://nvd.nist.gov/vuln/detail/CVE-2026-21873), [CVE-2026-21874](https://nvd.nist.gov/vuln/detail/CVE-2026-21874) (≥3.5.0); [CVE-2026-25516](https://nvd.nist.gov/vuln/detail/CVE-2026-25516) (≥3.7.0); [CVE-2026-27156](https://nvd.nist.gov/vuln/detail/CVE-2026-27156) (≥3.8.0); [CVE-2026-33332](https://nvd.nist.gov/vuln/detail/CVE-2026-33332) (≥3.9.0); [CVE-2026-39844](https://nvd.nist.gov/vuln/detail/CVE-2026-39844) (≥3.10.0) | Medium | always | 2026-01-09 (≥3.5.0); 2026-04-24 raised to ≥3.9.0; 2026-04-26 raised to ≥3.11.0 (#531) |
 | `pyjwt[crypto]` | `>=2.12.0,<3` | [CVE-2026-32597](https://nvd.nist.gov/vuln/detail/CVE-2026-32597) | High | always | 2026-04-24 |
 | `requests` | `>=2.33.0,<3` | [CVE-2026-25645](https://nvd.nist.gov/vuln/detail/CVE-2026-25645) | Medium | always | 2026-03-26 |
@@ -125,7 +126,6 @@ version.
 | `jupyter-core` | `>=5.8.1` | [CVE-2025-30167](https://nvd.nist.gov/vuln/detail/CVE-2025-30167) | High | with the `jupyter` extra | 2025-12-10 |
 | `jupyterlab` | `>=4.4.9` | [CVE-2025-59842](https://nvd.nist.gov/vuln/detail/CVE-2025-59842) | Low | with the `jupyter` extra | 2025-12-10 |
 | `marimo` | `>=0.23.0,<1` | [GHSA-2679-6mx9-h9xc](https://github.com/advisories/GHSA-2679-6mx9-h9xc) | Medium | with the `marimo` extra | 2026-04-24 |
-| `pip` | `>=25.3` | [CVE-2025-8869](https://nvd.nist.gov/vuln/detail/CVE-2025-8869) | Medium | dev only | 2026-04-01 (>=5.3 — ineffective); 2026-04-24 raised to ≥25.3 |
 | `uv` | `>=0.11.6` | [CVE-2025-54368](https://nvd.nist.gov/vuln/detail/CVE-2025-54368), [GHSA-w476-p2h3-79g9](https://github.com/advisories/GHSA-w476-p2h3-79g9), [GHSA-pqhf-p39g-3x64](https://github.com/advisories/GHSA-pqhf-p39g-3x64) (≥0.9.7); [GHSA-pjjw-68hj-v9mw](https://github.com/advisories/GHSA-pjjw-68hj-v9mw) (≥0.11.6) | Medium | dev only | 2025-12-10 (≥0.9.7); 2026-04-24 raised to ≥0.11.6 |
 | `pytest` | `>=9.0.3,<10` | [CVE-2025-71176](https://nvd.nist.gov/vuln/detail/CVE-2025-71176) | Medium | dev only | 2026-04-24 |
 | `virtualenv` | `>=20.36.1` | [pypa/virtualenv#3013](https://github.com/pypa/virtualenv/pull/3013) TOCTOU fix; bundles filelock ≥3.20.1 for [CVE-2025-68146](https://nvd.nist.gov/vuln/detail/CVE-2025-68146) | Medium | dev only | 2026-04-24 |
