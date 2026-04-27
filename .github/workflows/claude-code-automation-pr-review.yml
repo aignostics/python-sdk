@@ -12,7 +12,8 @@ concurrency:
 jobs:
   claude-review:
     if: |
-      contains(github.event.pull_request.labels.*.name, 'claude') ||
+      (github.event.action == 'labeled' && github.event.label.name == 'claude') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'claude')) ||
       github.event.action == 'ready_for_review'
     uses: ./.github/workflows/_claude-code.yml
     with:
