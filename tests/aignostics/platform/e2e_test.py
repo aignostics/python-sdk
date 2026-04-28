@@ -224,13 +224,6 @@ def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[pla
             "disease": "LUNG_CANCER",
         },
     }
-    normalization_metadata = {
-        "checksum_base64_crc32c": SPOT_1_CRC32C,
-        "width_px": SPOT_1_WIDTH,
-        "height_px": SPOT_1_HEIGHT,
-        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-        "media_type": "image/tiff",
-    }
     return [
         platform.InputItem(
             external_id=f"{SPOT_1_GS_URL}&spot_index={index}",
@@ -239,11 +232,6 @@ def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[pla
                     name="whole_slide_image",
                     download_url=signed_url,
                     metadata=wsi_metadata,
-                ),
-                platform.InputArtifact(
-                    name="normalization:wsi",
-                    download_url=signed_url,
-                    metadata=normalization_metadata,
                 ),
             ],
         )
