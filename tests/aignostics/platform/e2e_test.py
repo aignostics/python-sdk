@@ -36,8 +36,6 @@ from tests.constants_test import (
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
     PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
-    SPECIAL_APPLICATION_ID,
-    SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
     SPOT_0_GS_URL,
     SPOT_0_HEIGHT,
@@ -61,6 +59,12 @@ from tests.constants_test import (
     TEST_APPLICATION_ID,
     TEST_APPLICATION_VERSION,
 )
+
+try:
+    from tests.constants_test import SPECIAL_APPLICATION_ID, SPECIAL_APPLICATION_VERSION
+except ImportError:
+    SPECIAL_APPLICATION_ID = None  # type: ignore[assignment]
+    SPECIAL_APPLICATION_VERSION = None  # type: ignore[assignment]
 
 TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
@@ -610,6 +614,7 @@ def test_platform_heta_app_submit() -> None:
 @pytest.mark.e2e
 @pytest.mark.stress_only
 @pytest.mark.long_running
+@pytest.mark.skipif(SPECIAL_APPLICATION_ID is None, reason="Special application not configured for this environment")
 @pytest.mark.timeout(timeout=SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_special_app_submit() -> None:
     """Test application runs with the special application.
@@ -678,6 +683,7 @@ def test_platform_special_app_submit() -> None:
 @pytest.mark.stress_only
 @pytest.mark.long_running
 @pytest.mark.scheduled_only
+@pytest.mark.skipif(SPECIAL_APPLICATION_ID is None, reason="Special application not configured for this environment")
 @pytest.mark.timeout(timeout=SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_special_app_find_and_validate() -> None:
     """Test application runs with the special application.
