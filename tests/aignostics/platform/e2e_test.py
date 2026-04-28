@@ -36,6 +36,8 @@ from tests.constants_test import (
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
     PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
+    SPECIAL_APPLICATION_ID,
+    SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
     SPOT_0_GS_URL,
     SPOT_0_HEIGHT,
@@ -59,12 +61,6 @@ from tests.constants_test import (
     TEST_APPLICATION_ID,
     TEST_APPLICATION_VERSION,
 )
-
-try:
-    from tests.constants_test import SPECIAL_APPLICATION_ID, SPECIAL_APPLICATION_VERSION
-except ImportError:
-    SPECIAL_APPLICATION_ID = None  # type: ignore[assignment]
-    SPECIAL_APPLICATION_VERSION = None  # type: ignore[assignment]
 
 TEST_APPLICATION_SUBMIT_AND_WAIT_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_SUBMIT_AND_WAIT_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
