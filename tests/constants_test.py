@@ -94,7 +94,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
     case "staging":
         TEST_APPLICATION_ID = "test-app"
-        TEST_APPLICATION_VERSION = "0.0.6"
+        TEST_APPLICATION_VERSION = "1.0.0"
 
         HETA_APPLICATION_ID = "he-tme"
         HETA_APPLICATION_VERSION = "1.1.1"
@@ -107,9 +107,6 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_MAX_GPUS_PER_SLIDE = 1
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 30
-
-        SPECIAL_APPLICATION_ID = "test-app"
-        SPECIAL_APPLICATION_VERSION = "0.99.0"
 
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1642856, 10),
