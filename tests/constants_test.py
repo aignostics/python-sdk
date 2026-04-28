@@ -108,9 +108,6 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 30
 
-        SPECIAL_APPLICATION_ID = "test-app"
-        SPECIAL_APPLICATION_VERSION = "1.0.0"
-
         SPOT_0_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1642856, 10),
             ("tissue_qc_geojson_polygons.json", 259955, 10),
