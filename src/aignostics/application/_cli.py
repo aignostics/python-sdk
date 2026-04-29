@@ -1602,7 +1602,7 @@ def application_version_document_list(
         items = documents.list()
     except NotFoundException as e:
         message = f"No release documents found: application version '{application_version_id}' is unavailable."
-        logger.warning("{} ({})", message, e)
+        logger.warning("{} ({})", message, e)  # NOSONAR python:S1192: loguru positional format string is conventional
         if format == "json":
             print(json.dumps({"error": "not_found", "message": message}), file=sys.stderr)
         else:
@@ -1648,7 +1648,7 @@ def application_version_document_describe(
         application_id, version_number, documents = _resolve_documents(application_version_id)
     except NotFoundException as e:
         message = f"Application version '{application_version_id}' is unavailable."
-        logger.warning("{} ({})", message, e)
+        logger.warning("{} ({})", message, e)  # NOSONAR python:S1192
         if format == "json":
             print(json.dumps({"error": "not_found", "message": message}), file=sys.stderr)
         else:
@@ -1717,7 +1717,7 @@ def application_version_document_download(
         _, _, documents = _resolve_documents(application_version_id)
     except NotFoundException as e:
         message = f"Application version '{application_version_id}' is unavailable."
-        logger.warning("{} ({})", message, e)
+        logger.warning("{} ({})", message, e)  # NOSONAR python:S1192
         console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
     try:

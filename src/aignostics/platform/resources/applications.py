@@ -428,25 +428,14 @@ class Documents:
             ServiceException: 5xx errors, request timeouts, or connection errors after retries.
             requests.HTTPError: For other 4xx errors or signed-URL download failures.
         """
-        destination_path = Path(destination)
-        if destination_path.is_dir() or (not destination_path.exists() and not destination_path.suffix):
-            destination_path /= document_name
-        destination_path = destination_path.resolve()
-        destination_path.parent.mkdir(parents=True, exist_ok=True)
-
+        destination_path = self._resolve_destination_path(destination, document_name)
         configuration = self._api.api_client.configuration
-        host = configuration.host.rstrip("/")
-        # Each path segment is encoded individually so that reserved characters
-        # (spaces, '#', '?', '/', ...) inside a document name cannot inject extra
-        # path segments or query strings into the URL.
-        encoded_application_id = quote(self.application_id, safe="")
-        encoded_version = quote(self.application_version, safe="")
-        encoded_document_name = quote(document_name, safe="")
-        endpoint_url = (
-            f"{host}/api/v1/applications/{encoded_application_id}"
-            f"/versions/{encoded_version}/documents/{encoded_document_name}/file"
+        endpoint_url = self._build_document_endpoint_url(
+            host=configuration.host.rstrip("/"),
+            application_id=self.application_id,
+            version=self.application_version,
+            document_name=document_name,
         )
-        proxy = getattr(configuration, "proxy", None)
         ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
         verify_ssl = getattr(configuration, "verify_ssl", True)
         ssl_verify: bool | str = ssl_ca_cert or verify_ssl
@@ -456,40 +445,7 @@ class Documents:
         # Fall back to get_token() only when the configuration was built outside
         # of Client (e.g. unit tests with bare PublicApi).
         token_provider = getattr(configuration, "token_provider", None) or get_token
-
-        def stream_once() -> None:
-            try:
-                with requests.get(
-                    endpoint_url,
-                    headers={
-                        "Authorization": f"Bearer {token_provider()}",
-                        "User-Agent": user_agent(),
-                    },
-                    allow_redirects=True,
-                    timeout=settings().application_version_timeout,
-                    proxies={"http": proxy, "https": proxy} if proxy else None,
-                    verify=ssl_verify,
-                    stream=True,
-                ) as response:
-                    if response.status_code == HTTPStatus.NOT_FOUND:
-                        raise NotFoundException(
-                            status=HTTPStatus.NOT_FOUND.value,
-                            reason=(
-                                f"Document '{document_name}' not found for application "
-                                f"'{self.application_id}' version '{self.application_version}'"
-                            ),
-                        )
-                    if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-                        raise ServiceException(status=response.status_code, reason=response.reason)
-                    response.raise_for_status()
-                    with destination_path.open("wb") as out_file:
-                        for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
-                            if chunk:
-                                out_file.write(chunk)
-            except requests.Timeout as e:
-                raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request timed out") from e
-            except requests.ConnectionError as e:
-                raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Connection failed") from e
+        proxy = getattr(configuration, "proxy", None)
 
         Retrying(
             retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -500,8 +456,97 @@ class Documents:
             ),
             before_sleep=_log_retry_attempt,
             reraise=True,
-        )(stream_once)
+        )(
+            lambda: self._stream_document(
+                url=endpoint_url,
+                destination_path=destination_path,
+                document_name=document_name,
+                token_provider=token_provider,
+                ssl_verify=ssl_verify,
+                proxy=proxy,
+            )
+        )
         return destination_path
+
+    @staticmethod
+    def _resolve_destination_path(destination: Path | str, document_name: str) -> Path:
+        """Resolve the on-disk path to write a document to and ensure its parent exists.
+
+        Returns:
+            Path: The absolute, parent-created destination path.
+        """
+        destination_path = Path(destination)
+        if destination_path.is_dir() or (not destination_path.exists() and not destination_path.suffix):
+            destination_path /= document_name
+        destination_path = destination_path.resolve()
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        return destination_path
+
+    @staticmethod
+    def _build_document_endpoint_url(host: str, application_id: str, version: str, document_name: str) -> str:
+        """Build the document file endpoint URL with each path segment encoded individually.
+
+        Per-segment encoding ensures reserved characters (spaces, '#', '?', '/', ...) inside
+        a document name cannot inject extra path segments or query strings into the URL.
+
+        Returns:
+            str: The fully-qualified ``/api/v1/applications/.../documents/.../file`` URL.
+        """
+        encoded_application_id = quote(application_id, safe="")
+        encoded_version = quote(version, safe="")
+        encoded_document_name = quote(document_name, safe="")
+        return (
+            f"{host}/api/v1/applications/{encoded_application_id}"
+            f"/versions/{encoded_version}/documents/{encoded_document_name}/file"
+        )
+
+    def _stream_document(  # noqa: PLR0913, PLR0917 -- private helper, splitting params would require a thin DTO
+        self,
+        url: str,
+        destination_path: Path,
+        document_name: str,
+        token_provider: t.Callable[[], str],
+        ssl_verify: bool | str,
+        proxy: str | None,
+    ) -> None:
+        """Stream a single document download to disk, mapping HTTP errors to platform exceptions.
+
+        Raises:
+            NotFoundException: When the platform returns 404 for the document.
+            ServiceException: For 5xx responses, request timeouts, or connection errors.
+        """
+        try:
+            with requests.get(
+                url,
+                headers={
+                    "Authorization": f"Bearer {token_provider()}",
+                    "User-Agent": user_agent(),
+                },
+                allow_redirects=True,
+                timeout=settings().application_version_timeout,
+                proxies={"http": proxy, "https": proxy} if proxy else None,
+                verify=ssl_verify,
+                stream=True,
+            ) as response:
+                if response.status_code == HTTPStatus.NOT_FOUND:
+                    raise NotFoundException(
+                        status=HTTPStatus.NOT_FOUND.value,
+                        reason=(
+                            f"Document '{document_name}' not found for application "
+                            f"'{self.application_id}' version '{self.application_version}'"
+                        ),
+                    )
+                if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    raise ServiceException(status=response.status_code, reason=response.reason)
+                response.raise_for_status()
+                with destination_path.open("wb") as out_file:
+                    for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
+                        if chunk:
+                            out_file.write(chunk)
+        except requests.Timeout as e:
+            raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request timed out") from e
+        except requests.ConnectionError as e:
+            raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Connection failed") from e
 
 
 class Applications:
