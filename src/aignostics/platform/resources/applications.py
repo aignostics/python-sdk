@@ -9,6 +9,7 @@ import builtins
 import typing as t
 from datetime import datetime
 from http import HTTPStatus
+from io import BytesIO
 from operator import itemgetter
 from pathlib import Path
 from urllib.parse import quote
@@ -429,23 +430,20 @@ class Documents:
             requests.HTTPError: For other 4xx errors or signed-URL download failures.
         """
         destination_path = self._resolve_destination_path(destination, document_name)
-        configuration = self._api.api_client.configuration
-        endpoint_url = self._build_document_endpoint_url(
-            host=configuration.host.rstrip("/"),
-            application_id=self.application_id,
-            version=self.application_version,
-            document_name=document_name,
+        endpoint_url, token_provider, ssl_verify, proxy = self._prepare_document_request(
+            document_name=document_name, suffix="file"
         )
-        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
-        verify_ssl = getattr(configuration, "verify_ssl", True)
-        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
-        # Honor the codegen client's token_provider when set: Client.get_api_client()
-        # wires it up with use_cache=cache_token, so a user who instantiates
-        # Client(cache_token=False) does not want us to read/write the token cache.
-        # Fall back to get_token() only when the configuration was built outside
-        # of Client (e.g. unit tests with bare PublicApi).
-        token_provider = getattr(configuration, "token_provider", None) or get_token
-        proxy = getattr(configuration, "proxy", None)
+
+        def _stream_to_disk() -> None:
+            with destination_path.open("wb") as out_file:
+                self._stream_document(
+                    url=endpoint_url,
+                    write_chunk=out_file.write,
+                    document_name=document_name,
+                    token_provider=token_provider,
+                    ssl_verify=ssl_verify,
+                    proxy=proxy,
+                )
 
         Retrying(
             retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -456,16 +454,7 @@ class Documents:
             ),
             before_sleep=_log_retry_attempt,
             reraise=True,
-        )(
-            lambda: self._stream_document(
-                url=endpoint_url,
-                destination_path=destination_path,
-                document_name=document_name,
-                token_provider=token_provider,
-                ssl_verify=ssl_verify,
-                proxy=proxy,
-            )
-        )
+        )(_stream_to_disk)
         return destination_path
 
     @staticmethod
@@ -483,33 +472,77 @@ class Documents:
         return destination_path
 
     @staticmethod
-    def _build_document_endpoint_url(host: str, application_id: str, version: str, document_name: str) -> str:
-        """Build the document file endpoint URL with each path segment encoded individually.
+    def _build_document_endpoint_url(
+        host: str, application_id: str, version: str, document_name: str, suffix: str
+    ) -> str:
+        """Build a per-document endpoint URL with each path segment encoded individually.
 
         Per-segment encoding ensures reserved characters (spaces, '#', '?', '/', ...) inside
         a document name cannot inject extra path segments or query strings into the URL.
 
+        Args:
+            host: API host (without trailing slash).
+            application_id: Application ID.
+            version: Application version (semver string).
+            document_name: Document filename.
+            suffix: Endpoint variant — ``"file"`` for browser-attachment downloads or
+                ``"content"`` for programmatic raw-content streaming.
+
         Returns:
-            str: The fully-qualified ``/api/v1/applications/.../documents/.../file`` URL.
+            str: The fully-qualified ``/api/v1/applications/.../documents/.../{suffix}`` URL.
         """
         encoded_application_id = quote(application_id, safe="")
         encoded_version = quote(version, safe="")
         encoded_document_name = quote(document_name, safe="")
         return (
             f"{host}/api/v1/applications/{encoded_application_id}"
-            f"/versions/{encoded_version}/documents/{encoded_document_name}/file"
+            f"/versions/{encoded_version}/documents/{encoded_document_name}/{suffix}"
         )
+
+    def _prepare_document_request(
+        self, document_name: str, suffix: str
+    ) -> tuple[str, t.Callable[[], str], bool | str, str | None]:
+        """Resolve the endpoint URL and the codegen client's transport settings for a document.
+
+        Honors the codegen client's ``token_provider`` when set: ``Client.get_api_client()``
+        wires it up with ``use_cache=cache_token``, so a user who instantiates
+        ``Client(cache_token=False)`` does not want us to read/write the token cache.
+        Falls back to ``get_token()`` only when the configuration was built outside of
+        ``Client`` (e.g. unit tests with bare ``PublicApi``).
+
+        Returns:
+            tuple of (endpoint_url, token_provider, ssl_verify, proxy).
+        """
+        configuration = self._api.api_client.configuration
+        endpoint_url = self._build_document_endpoint_url(
+            host=configuration.host.rstrip("/"),
+            application_id=self.application_id,
+            version=self.application_version,
+            document_name=document_name,
+            suffix=suffix,
+        )
+        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
+        verify_ssl = getattr(configuration, "verify_ssl", True)
+        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
+        token_provider = getattr(configuration, "token_provider", None) or get_token
+        proxy = getattr(configuration, "proxy", None)
+        return endpoint_url, token_provider, ssl_verify, proxy
 
     def _stream_document(  # noqa: PLR0913, PLR0917 -- private helper, splitting params would require a thin DTO
         self,
         url: str,
-        destination_path: Path,
+        write_chunk: t.Callable[[bytes], object],
         document_name: str,
         token_provider: t.Callable[[], str],
         ssl_verify: bool | str,
         proxy: str | None,
     ) -> None:
-        """Stream a single document download to disk, mapping HTTP errors to platform exceptions.
+        """Stream a single document download into a caller-provided sink.
+
+        ``write_chunk`` is invoked for each non-empty body chunk; the caller decides
+        where the bytes go (file on disk, in-memory buffer, ...). Return type is
+        ``object`` so both ``BinaryIO.write`` and ``BytesIO.write`` (which return
+        the number of bytes written) are accepted without a cast.
 
         Raises:
             NotFoundException: When the platform returns 404 for the document.
@@ -539,14 +572,66 @@ class Documents:
                 if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
                     raise ServiceException(status=response.status_code, reason=response.reason)
                 response.raise_for_status()
-                with destination_path.open("wb") as out_file:
-                    for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
-                        if chunk:
-                            out_file.write(chunk)
+                for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
+                    if chunk:
+                        write_chunk(chunk)
         except requests.Timeout as e:
             raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request timed out") from e
         except requests.ConnectionError as e:
             raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Connection failed") from e
+
+    def read_content(self, document_name: str) -> bytes:
+        """Fetch a release document's raw content into memory.
+
+        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/content``,
+        which returns a ``307`` redirect to a short-lived GCS signed URL. Unlike ``/file``,
+        no ``Content-Disposition`` override is set — GCS serves the object body with its
+        stored ``Content-Type`` and ``Cache-Control: no-store``.
+
+        Use this for small documents (JSON manifests, license text, etc.) where holding
+        the bytes in memory is appropriate. For large files, prefer ``download_to_path``,
+        which streams directly to disk.
+
+        Document downloads do not carry a CRC32C checksum (unlike run artifacts);
+        integrity is bounded by HTTPS transport and the signed-URL lifetime.
+
+        Args:
+            document_name (str): The document filename.
+
+        Returns:
+            bytes: The raw document content.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
+            requests.HTTPError: For other 4xx errors or signed-URL download failures.
+        """
+        endpoint_url, token_provider, ssl_verify, proxy = self._prepare_document_request(
+            document_name=document_name, suffix="content"
+        )
+
+        def _stream_to_buffer() -> bytes:
+            buffer = BytesIO()
+            self._stream_document(
+                url=endpoint_url,
+                write_chunk=buffer.write,
+                document_name=document_name,
+                token_provider=token_provider,
+                ssl_verify=ssl_verify,
+                proxy=proxy,
+            )
+            return buffer.getvalue()
+
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().application_version_retry_attempts),
+            wait=wait_exponential_jitter(
+                initial=settings().application_version_retry_wait_min,
+                max=settings().application_version_retry_wait_max,
+            ),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(_stream_to_buffer)
 
 
 class Applications:

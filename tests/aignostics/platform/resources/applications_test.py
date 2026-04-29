@@ -336,6 +336,47 @@ def test_documents_download_to_path_404_raises_not_found(documents: Documents, t
 
 
 @pytest.mark.unit
+def test_documents_read_content_returns_bytes(documents: Documents) -> None:
+    """read_content() follows the /content redirect and returns the body as bytes."""
+    body_response = MagicMock()
+    body_response.status_code = HTTPStatus.OK
+    body_response.iter_content.return_value = [b"hello ", b"world"]
+    body_response.raise_for_status = MagicMock()
+    body_response.__enter__.return_value = body_response
+    body_response.__exit__.return_value = False
+
+    with patch(
+        "aignostics.platform.resources.applications.requests.get",
+        return_value=body_response,
+    ) as mock_get:
+        result = documents.read_content(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
+
+    assert result == b"hello world"
+    mock_get.assert_called_once()
+    called_url = mock_get.call_args.args[0]
+    assert called_url.endswith(
+        f"/api/v1/applications/heta/versions/1.0.0/documents/{DOCUMENT_OUTPUT_DESCRIPTION_PDF}/content"
+    )
+    assert mock_get.call_args.kwargs["allow_redirects"] is True
+
+
+@pytest.mark.unit
+def test_documents_read_content_404_raises_not_found(documents: Documents) -> None:
+    """A 404 from the /content endpoint is mapped to NotFoundException."""
+    response = MagicMock()
+    response.status_code = HTTPStatus.NOT_FOUND
+    response.reason = "Not Found"
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+
+    with (
+        patch("aignostics.platform.resources.applications.requests.get", return_value=response),
+        pytest.raises(NotFoundException),
+    ):
+        documents.read_content("missing.pdf")
+
+
+@pytest.mark.unit
 def test_versions_documents_returns_documents_resource(mock_api: Mock) -> None:
     """Versions.documents() returns a Documents instance bound to the version pair."""
     versions = Versions(mock_api)
