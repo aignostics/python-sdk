@@ -1848,3 +1848,25 @@ ls $test_file
 ---
 
 *This documentation provides comprehensive guidance for working with the Aignostics Python SDK. Each module has detailed CLAUDE.md files with implementation specifics, usage examples, and best practices.*
+
+## SDLC Configuration
+
+- **JIRA Project Key:** PYSDK
+- **Atlassian Cloud ID:** fff788d2-8a2a-4c36-a884-dde2bb4a2b49
+- **Ketryx Project:** Python SDK (KXPRJ2Q4PA8AADY975SFMKF276TYV75)
+
+**Item type locations:**
+- Change Requests: Ketryx Change Request (JIRA)
+- Stakeholder Requirements: requirements/SHR-*.md (Git)
+- Software Requirements: Requirement (JIRA) | requirements/SWR-*.md (Git, preferred)
+- Risks: Risk (JIRA)
+- Software Item Specs: Software Item Spec (JIRA) | specifications/SPEC-*.md (Git, preferred)
+- Test Cases: tests/**/TC-*.feature (Git)
+
+**Approval structure:**
+- Ketryx Change Request: Product Manager → Engineering Tech Lead → Quality Managers → Risk Managers
+- Software Requirement: Area Lead (BD) → Security Engineer → Regulatory Affairs Specialist → Engineer → Engineering Tech Lead → Product Manager
+- Software Item Spec: Engineer → Engineering Tech Lead
+- Risk: Quality Managers → Security Engineer → Product Managers → Tech Lead → Engineer → Engineering Tech Lead → Product Manager → Engineer
+- Test Case: Engineer → Engineering Tech Lead
+- Anomaly: Engineer → Engineering Tech Lead
