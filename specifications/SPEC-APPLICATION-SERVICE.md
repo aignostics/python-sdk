@@ -2,7 +2,7 @@
 itemId: SPEC-APPLICATION-SERVICE
 itemTitle: Application Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SHR-APPLICATION-3, SWR-APPLICATION-2-12, SWR-APPLICATION-2-11, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-5, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-3-3
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SHR-APPLICATION-3, SWR-APPLICATION-2-12, SWR-APPLICATION-2-11, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-5, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-3-3
 Module: Application
 Layer: Domain Service
 Version: 0.2.106
@@ -21,7 +21,7 @@ The module implements a domain service layer that orchestrates interactions betw
 
 The Application Module shall:
 
-- **FR-01** **Application Discovery**: List and browse available applications with filtering capabilities and detailed information retrieval
+- **FR-01** **Application Discovery**: List and browse available applications with filtering capabilities and detailed information retrieval, including listing, describing, and downloading public release documents (e.g. output schemas, model manuals) attached to application versions
 - **FR-02** **Data Preparation**: Automatically scan directories for whole slide images (WSI), extract comprehensive metadata, and validate file formats
 - **FR-03** **File Upload Management**: Provide secure, chunked file upload to cloud storage with progress tracking and integrity verification
 - **FR-04** **Run Lifecycle Management**: Submit, monitor, cancel, and delete application runs with real-time status updates
@@ -410,6 +410,9 @@ uvx aignostics application [subcommand] [options]
 - `list`: List all available applications with filtering
 - `describe`: Get detailed information about a specific application
 - `dump-schemata`: Export application schemata
+- `version document list APPLICATION_VERSION_ID`: List public release documents attached to an application version
+- `version document describe APPLICATION_VERSION_ID DOCUMENT_NAME`: Show metadata for a single public release document
+- `version document download APPLICATION_VERSION_ID DOCUMENT_NAME [--output PATH]`: Download a public release document to a local path
 - `run execute`: Combined prepare, upload, and submit workflow
 - `run prepare`: Generate metadata from source directory
 - `run upload`: Upload files to cloud storage

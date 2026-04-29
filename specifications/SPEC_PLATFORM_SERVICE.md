@@ -2,7 +2,7 @@
 itemId: SPEC-PLATFORM-SERVICE
 itemTitle: Platform Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3
 Module: Platform
 Layer: Platform Service
 Version: 1.0.0
@@ -27,7 +27,7 @@ The Platform Module shall:
 - **[FR-06]** Handle authentication errors with retry mechanisms and fallback flows
 - **[FR-07]** Support proxy configurations and SSL certificate handling for enterprise environments
 - **[FR-08]** Provide health monitoring for both public and authenticated API endpoints
-- **[FR-09]** Manage application and application version resources with listing and filtering capabilities
+- **[FR-09]** Manage application, application version, and application version release document resources with listing, filtering, metadata retrieval, and file download capabilities (release documents follow the platform `307` redirect to short-lived GCS signed URLs and are filtered to public visibility and uploaded status by the public API)
 - **[FR-10]** Create and manage application runs with status monitoring and result retrieval
 - **[FR-11]** Download and verify file integrity using CRC32C checksums for run artifacts
 - **[FR-12]** Generate signed URLs for secure Google Cloud Storage access
@@ -81,7 +81,8 @@ platform/
 | `Applications`   | Class  | Application resource management                         | `list()`, `versions` accessor                                                 |
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`, `artifact()`, `get_artifact_download_url()`, `ensure_artifacts_downloaded()` |
 | `Artifact`       | Class  | Per-artifact handle for resolving fresh presigned download URLs via the `/api/v1/runs/{run_id}/artifacts/{artifact_id}/file` endpoint | `get_download_url()`                                                          |
-| `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`                            |
+| `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`, `documents()`             |
+| `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`, `get_content_url()`              |
 | `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
 
@@ -166,6 +167,35 @@ UserInfo:
       properties:
         expires_in: { type: integer }
   required: [user, organization, role, token]
+```
+
+**Application Version Document Schema:**
+
+```yaml
+ApplicationVersionDocument:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Stable identifier for the document
+    name:
+      type: string
+      description: Document filename, unique per application version (e.g. "output_description.pdf")
+    mime_type:
+      type: string
+      description: IANA media type stored alongside the object (e.g. "application/pdf")
+    visibility:
+      type: string
+      enum: [public]
+      description: Documents exposed via the public API are always public; internal documents are not surfaced
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+  required: [id, name, mime_type, visibility, created_at, updated_at]
 ```
 
 ### 3.4 Data Flow
@@ -275,6 +305,64 @@ class Versions:
 
     def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
         """Retrieves details for a specific application version."""
+
+    def documents(self, application_version: ApplicationVersion | str) -> "Documents":
+        """Returns a Documents resource bound to the given application version."""
+```
+
+```python
+class Documents:
+    """Resource class for retrieving release documents attached to an application version.
+
+    Backed by ``GET /api/v1/applications/{application_id}/versions/{version_id}/documents``
+    and the per-document ``/{name}``, ``/{name}/file``, and ``/{name}/content`` endpoints.
+    The public API exposes only documents with ``visibility=public`` and ``status=uploaded``.
+    """
+
+    def __init__(self, api: PublicApi, application_version_id: str) -> None:
+        """Initializes the Documents resource bound to an application version."""
+
+    def list(self, nocache: bool = False) -> Iterator[ApplicationVersionDocument]:
+        """List metadata for all public, uploaded release documents for the bound version.
+
+        Args:
+            nocache: If True, bypass cache and force a fresh API call.
+
+        Raises:
+            NotFoundException: When the application version does not exist or is not accessible.
+        """
+
+    def details(self, document_name: str, nocache: bool = False) -> ApplicationVersionDocument:
+        """Retrieves metadata for a single release document by name.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+        """
+
+    def download_to_path(self, document_name: str, destination: Path | str) -> Path:
+        """Downloads the document file to a local path.
+
+        Follows the platform ``307`` redirect from the ``/file`` endpoint to a short-lived
+        GCS signed URL with ``Content-Disposition: attachment; filename="{name}"`` and
+        writes the response body to disk. Returns the absolute path to the written file.
+        The presigned URL is short-lived; this method resolves and consumes it in a single call.
+
+        Note: Document downloads do not carry a CRC32C checksum (unlike run artifacts);
+        integrity is bounded by HTTPS transport and the signed-URL lifetime.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+        """
+
+    def get_content_url(self, document_name: str) -> str:
+        """Resolves a fresh, short-lived presigned URL for the inline-content endpoint.
+
+        Calls ``GET /api/v1/applications/{application_id}/versions/{version_id}/documents/{name}/content``
+        with ``allow_redirects=False`` and returns the presigned URL from the redirect
+        ``Location`` header. Unlike ``download_to_path``, the response from the resolved
+        URL is served with the stored ``Content-Type`` and no ``Content-Disposition``,
+        intended for programmatic clients that consume content inline.
+        """
 ```
 
 ```python
