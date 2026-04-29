@@ -96,6 +96,7 @@ from ._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
+from .resources.applications import ApplicationVersionDocument, Documents
 from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Artifact, Run
 
 __all__ = [
@@ -150,9 +151,11 @@ __all__ = [
     "Application",
     "ApplicationSummary",
     "ApplicationVersion",
+    "ApplicationVersionDocument",
     "Artifact",
     "ArtifactOutput",
     "Client",
+    "Documents",
     "ForbiddenException",
     "InputArtifact",
     "InputArtifactData",

@@ -1,21 +1,28 @@
 """Applications resource module for the Aignostics platform.
 
 This module provides classes for interacting with application resources in the Aignostics API.
-It includes functionality for listing applications and managing application versions.
+It includes functionality for listing applications, managing application versions,
+and retrieving application version release documents.
 """
 
 import builtins
 import typing as t
+from datetime import datetime
+from http import HTTPStatus
 from operator import itemgetter
+from pathlib import Path
 
+import requests
 import semver
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.exceptions import NotFoundException, ServiceException
+from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
+from aignx.codegen.models import VersionDocumentResponse as VersionDocumentData
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 from loguru import logger
+from pydantic import BaseModel, ConfigDict
 from tenacity import (
     RetryCallState,
     Retrying,
@@ -26,10 +33,21 @@ from tenacity import (
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics.platform._authentication import get_token
 from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
+
+_REDIRECT_STATUSES = frozenset({
+    HTTPStatus.MOVED_PERMANENTLY,
+    HTTPStatus.FOUND,
+    HTTPStatus.SEE_OTHER,
+    HTTPStatus.TEMPORARY_REDIRECT,
+    HTTPStatus.PERMANENT_REDIRECT,
+})
+
+_DOCUMENT_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,
@@ -222,6 +240,373 @@ class Versions:
         """
         sorted_versions = self.list_sorted(application=application, nocache=nocache)
         return sorted_versions[0] if sorted_versions else None
+
+    def documents(self, application_id: str, application_version: VersionTuple | str) -> "Documents":
+        """Returns a Documents resource bound to the given application version.
+
+        Args:
+            application_id (str): The ID of the application (e.g. "heta").
+            application_version (VersionTuple | str): The application version, either as a
+                VersionTuple or a semantic version string (e.g. "1.0.0").
+
+        Returns:
+            Documents: A Documents resource bound to the (application_id, version) pair.
+        """
+        if isinstance(application_version, VersionTuple):
+            version_number = application_version.number
+        else:
+            version_number = application_version
+        return Documents(self._api, application_id=application_id, application_version=version_number)
+
+
+class ApplicationVersionDocument(BaseModel):
+    """Public release document attached to an application version.
+
+    The Aignostics public API exposes only documents with ``visibility=public`` and
+    ``status=uploaded``. Internal-visibility documents are not surfaced.
+    """
+
+    id: str
+    name: str
+    mime_type: str
+    visibility: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+
+    @classmethod
+    def from_response(cls, data: VersionDocumentData) -> "ApplicationVersionDocument":
+        """Build an ApplicationVersionDocument from the codegen response model."""
+        return cls(
+            id=data.id,
+            name=data.name,
+            mime_type=data.mime_type,
+            visibility=data.visibility.value if hasattr(data.visibility, "value") else str(data.visibility),
+            created_at=data.created_at,
+            updated_at=data.updated_at,
+        )
+
+
+class Documents:
+    """Resource class for retrieving release documents attached to an application version.
+
+    Backed by ``GET /api/v1/applications/{application_id}/versions/{version}/documents``
+    and the per-document ``/{name}``, ``/{name}/file``, and ``/{name}/content`` endpoints.
+
+    The public API exposes only documents with ``visibility=public`` and
+    ``status=uploaded``. Internal-visibility documents are not surfaced.
+
+    Document downloads do not carry a CRC32C checksum (unlike run artifacts);
+    integrity is bounded by HTTPS transport and the signed-URL lifetime.
+    """
+
+    def __init__(self, api: PublicApi, application_id: str, application_version: str) -> None:
+        """Initializes the Documents resource bound to an application version.
+
+        Args:
+            api (PublicApi): The configured API client.
+            application_id (str): The ID of the application (e.g. "heta").
+            application_version (str): The semantic version number (e.g. "1.0.0").
+        """
+        self._api = api
+        self.application_id = application_id
+        self.application_version = application_version
+
+    def list(self, nocache: bool = False) -> builtins.list[ApplicationVersionDocument]:
+        """List metadata for all public, uploaded release documents for the bound version.
+
+        Retries on network and server errors. Cached for the configured application-version TTL.
+
+        Args:
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
+
+        Returns:
+            list[ApplicationVersionDocument]: Metadata for each public, uploaded document.
+
+        Raises:
+            NotFoundException: When the application version does not exist or is not accessible.
+            aignx.codegen.exceptions.ApiException: If the API request fails.
+        """
+
+        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        def list_with_retry(application_id: str, application_version: str) -> builtins.list[VersionDocumentData]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_version_retry_attempts),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_version_retry_wait_min,
+                    max=settings().application_version_retry_wait_max,
+                ),
+                before_sleep=_log_retry_attempt,
+                reraise=True,
+            )(
+                lambda: self._api.list_version_documents(
+                    application_id=application_id,
+                    version=application_version,
+                    _request_timeout=settings().application_version_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        documents = list_with_retry(self.application_id, self.application_version, nocache=nocache)  # type: ignore[call-arg]
+        return [ApplicationVersionDocument.from_response(doc) for doc in (documents or [])]
+
+    def details(self, document_name: str, nocache: bool = False) -> ApplicationVersionDocument:
+        """Retrieve metadata for a single release document by name.
+
+        Retries on network and server errors. Cached for the configured application-version TTL.
+
+        Args:
+            document_name (str): The document filename (e.g. "output_description.pdf").
+            nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
+                The fresh result will still be cached for subsequent calls. Defaults to False.
+
+        Returns:
+            ApplicationVersionDocument: The document metadata.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+            aignx.codegen.exceptions.ApiException: If the API request fails.
+        """
+
+        @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
+        def details_with_retry(
+            application_id: str, application_version: str, document_name: str
+        ) -> VersionDocumentData:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().application_version_retry_attempts),
+                wait=wait_exponential_jitter(
+                    initial=settings().application_version_retry_wait_min,
+                    max=settings().application_version_retry_wait_max,
+                ),
+                before_sleep=_log_retry_attempt,
+                reraise=True,
+            )(
+                lambda: self._api.get_version_document(
+                    application_id=application_id,
+                    version=application_version,
+                    name=document_name,
+                    _request_timeout=settings().application_version_timeout,
+                    _headers={"User-Agent": user_agent()},
+                )
+            )
+
+        data = details_with_retry(  # type: ignore[call-arg]
+            self.application_id,
+            self.application_version,
+            document_name,
+            nocache=nocache,
+        )
+        return ApplicationVersionDocument.from_response(data)
+
+    def _resolve_redirect_url(self, document_name: str, suffix: str) -> str:
+        """Issue an unredirected GET to ``/file`` or ``/content`` and return the Location URL.
+
+        The generated client cannot be used directly because urllib3 follows the
+        redirect automatically and would fetch the document body — losing the
+        short-lived presigned URL exposed in the ``Location`` header.
+
+        Args:
+            document_name: The document filename.
+            suffix: Either ``"file"`` (server sets ``Content-Disposition: attachment``) or
+                ``"content"`` (no ``Content-Disposition``; for inline programmatic use).
+
+        Returns:
+            str: A time-limited presigned GCS URL.
+
+        Raises:
+            NotFoundException: 404 — document not found, not public, or not uploaded.
+            ApiException: Other 4xx (e.g. 403 forbidden, 410 gone).
+            ServiceException: 5xx, request timeouts, or connection errors
+                (after retry attempts have been exhausted).
+            RuntimeError: 3xx response with no Location header, or any other
+                unexpected status the API contract does not define.
+        """
+        configuration = self._api.api_client.configuration
+        host = configuration.host.rstrip("/")
+        endpoint_url = (
+            f"{host}/api/v1/applications/{self.application_id}"
+            f"/versions/{self.application_version}/documents/{document_name}/{suffix}"
+        )
+        proxy = getattr(configuration, "proxy", None)
+        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
+        verify_ssl = getattr(configuration, "verify_ssl", True)
+        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
+        # Honor the codegen client's token_provider when set: Client.get_api_client()
+        # wires it up with use_cache=cache_token, so a user who instantiates
+        # Client(cache_token=False) does not want us to read/write the token cache.
+        # Fall back to get_token() only when the configuration was built outside
+        # of Client (e.g. unit tests with bare PublicApi).
+        token_provider = getattr(configuration, "token_provider", None) or get_token
+
+        return Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().application_version_retry_attempts),
+            wait=wait_exponential_jitter(
+                initial=settings().application_version_retry_wait_min,
+                max=settings().application_version_retry_wait_max,
+            ),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(lambda: self._fetch_redirect_url(endpoint_url, document_name, ssl_verify, proxy, token_provider))
+
+    def _fetch_redirect_url(
+        self,
+        endpoint_url: str,
+        document_name: str,
+        ssl_verify: bool | str,
+        proxy: str | None,
+        token_provider: t.Callable[[], str],
+    ) -> str:
+        """Issue the GET and return the presigned URL from the 3xx Location header."""
+        try:
+            with requests.get(
+                endpoint_url,
+                headers={
+                    "Authorization": f"Bearer {token_provider()}",
+                    "User-Agent": user_agent(),
+                },
+                allow_redirects=False,
+                timeout=settings().application_version_timeout,
+                proxies={"http": proxy, "https": proxy} if proxy else None,
+                verify=ssl_verify,
+                stream=True,
+            ) as response:
+                if response.status_code in _REDIRECT_STATUSES:
+                    location = response.headers.get("Location")
+                    if not location:
+                        msg = (
+                            f"Redirect response {response.status_code} from documents endpoint "
+                            f"missing Location header for document '{document_name}' on "
+                            f"application '{self.application_id}' version '{self.application_version}'"
+                        )
+                        raise RuntimeError(msg)
+                    return location
+                if response.status_code == HTTPStatus.NOT_FOUND:
+                    raise NotFoundException(
+                        status=HTTPStatus.NOT_FOUND.value,
+                        reason=(
+                            f"Document '{document_name}' not found for application "
+                            f"'{self.application_id}' version '{self.application_version}'"
+                        ),
+                    )
+                if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                    raise ServiceException(status=response.status_code, reason=response.reason)
+                if response.status_code >= HTTPStatus.BAD_REQUEST:
+                    raise ApiException(status=response.status_code, reason=response.reason)
+                msg = (
+                    f"Unexpected status {response.status_code} from documents endpoint for "
+                    f"document '{document_name}' on application '{self.application_id}' "
+                    f"version '{self.application_version}'; expected a redirect"
+                )
+                raise RuntimeError(msg)
+        except requests.Timeout as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason="Request timed out",
+            ) from e
+        except requests.ConnectionError as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason="Connection failed",
+            ) from e
+        except requests.RequestException as e:
+            raise ServiceException(
+                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
+                reason=f"Request failed: {e}",
+            ) from e
+
+    def get_content_url(self, document_name: str) -> str:
+        """Resolve a fresh, short-lived presigned URL for the inline-content endpoint.
+
+        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/content``
+        with ``allow_redirects=False`` and returns the presigned URL from the redirect
+        ``Location`` header. The response from the resolved URL is served with the stored
+        ``Content-Type`` and no ``Content-Disposition`` header — intended for programmatic
+        clients that consume document content inline. The presigned URL is short-lived;
+        resolve immediately before fetching.
+
+        Args:
+            document_name (str): The document filename.
+
+        Returns:
+            str: A time-limited presigned URL.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+            ApiException: Other 4xx errors.
+            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
+            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
+        """
+        return self._resolve_redirect_url(document_name, "content")
+
+    def get_download_url(self, document_name: str) -> str:
+        """Resolve a fresh, short-lived presigned URL for the file (attachment) endpoint.
+
+        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/file``
+        with ``allow_redirects=False`` and returns the presigned URL from the redirect
+        ``Location`` header. The response from the resolved URL is served with
+        ``Content-Disposition: attachment; filename="{name}"`` — intended for browser-style
+        downloads. The presigned URL is short-lived; resolve immediately before fetching.
+
+        Args:
+            document_name (str): The document filename.
+
+        Returns:
+            str: A time-limited presigned URL.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+            ApiException: Other 4xx errors.
+            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
+            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
+        """
+        return self._resolve_redirect_url(document_name, "file")
+
+    def download_to_path(self, document_name: str, destination: Path | str) -> Path:
+        """Download a release document file to a local path.
+
+        Follows the platform ``307`` redirect from the ``/file`` endpoint to a short-lived
+        GCS signed URL with ``Content-Disposition: attachment; filename="{name}"`` and
+        streams the response body to disk.
+
+        If ``destination`` is a directory, the file is written as
+        ``{destination}/{document_name}``. If it is a file path, the file is written there
+        verbatim. Parent directories are created if they do not yet exist.
+
+        Document downloads do not carry a CRC32C checksum (unlike run artifacts);
+        integrity is bounded by HTTPS transport and the signed-URL lifetime.
+
+        Args:
+            document_name (str): The document filename.
+            destination (Path | str): Target file path or directory to write into.
+
+        Returns:
+            Path: The absolute path to the written file.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+            ApiException: Other 4xx errors.
+            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
+            requests.HTTPError: If the signed-URL download itself fails.
+        """
+        destination_path = Path(destination)
+        if destination_path.is_dir() or (not destination_path.exists() and destination_path.suffix == ""):
+            destination_path = destination_path / document_name
+        destination_path = destination_path.resolve()
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+
+        signed_url = self.get_download_url(document_name)
+        with requests.get(signed_url, stream=True, timeout=settings().application_version_timeout) as response:
+            response.raise_for_status()
+            with destination_path.open("wb") as out_file:
+                for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
+                    if chunk:
+                        out_file.write(chunk)
+        return destination_path
 
 
 class Applications:

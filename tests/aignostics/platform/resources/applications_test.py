@@ -1,16 +1,29 @@
 """Tests for the applications resource module.
 
-This module contains unit tests for the Applications and Versions classes,
-verifying their functionality for listing applications and application versions.
+This module contains unit tests for the Applications, Versions, and Documents
+classes, verifying their functionality for listing applications, application
+versions, and application version release documents.
 """
 
-from unittest.mock import Mock
+from datetime import UTC, datetime
+from http import HTTPStatus
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from aignx.codegen.api.public_api import PublicApi
+from aignx.codegen.exceptions import NotFoundException
 from aignx.codegen.models.application_read_response import ApplicationReadResponse
+from aignx.codegen.models.version_document_response import VersionDocumentResponse
+from aignx.codegen.models.version_document_visibility import VersionDocumentVisibility
 
-from aignostics.platform.resources.applications import Applications, Versions
+from aignostics.platform._operation_cache import operation_cache_clear
+from aignostics.platform.resources.applications import (
+    Applications,
+    ApplicationVersionDocument,
+    Documents,
+    Versions,
+)
 from aignostics.platform.resources.utils import PAGE_SIZE
 
 API_ERROR = "API error"
@@ -162,3 +175,214 @@ def test_versions_property_returns_versions_instance(applications) -> None:
     # Assert
     assert isinstance(versions, Versions)
     assert versions._api == applications._api
+
+
+# ----------------------------------------------------------------------------------
+# Documents resource tests
+# ----------------------------------------------------------------------------------
+
+
+def _make_doc(name: str = "output_description.pdf") -> VersionDocumentResponse:
+    """Build a VersionDocumentResponse codegen model for tests."""
+    return VersionDocumentResponse(
+        id="11111111-1111-1111-1111-111111111111",
+        name=name,
+        mime_type="application/pdf",
+        visibility=VersionDocumentVisibility.PUBLIC,
+        created_at=datetime(2026, 1, 1, 12, 0, tzinfo=UTC),
+        updated_at=datetime(2026, 1, 2, 12, 0, tzinfo=UTC),
+    )
+
+
+@pytest.fixture(autouse=True)
+def _clear_operation_cache_before_each_test() -> None:
+    """Ensure the global operation cache does not leak between tests."""
+    operation_cache_clear()
+
+
+@pytest.fixture
+def documents(mock_api: Mock) -> Documents:
+    """Create a Documents instance bound to a fixed (application, version) pair.
+
+    The mock is augmented with a minimal ``api_client.configuration`` so the
+    redirect-resolving methods (``download_to_path``, ``get_*_url``) can read
+    host/proxy/SSL settings without hitting the real codegen plumbing.
+    """
+    configuration = MagicMock()
+    configuration.host = "https://platform.example.com"
+    configuration.proxy = None
+    configuration.ssl_ca_cert = None
+    configuration.verify_ssl = True
+    configuration.token_provider = lambda: "test-token"  # noqa: PIE807
+    mock_api.api_client = MagicMock()
+    mock_api.api_client.configuration = configuration
+    return Documents(mock_api, application_id="heta", application_version="1.0.0")
+
+
+@pytest.mark.unit
+def test_documents_list_returns_wrapped_models(documents: Documents, mock_api: Mock) -> None:
+    """Documents.list() returns ApplicationVersionDocument instances."""
+    mock_api.list_version_documents.return_value = [_make_doc("a.pdf"), _make_doc("b.pdf")]
+
+    result = documents.list()
+
+    assert len(result) == 2
+    assert all(isinstance(item, ApplicationVersionDocument) for item in result)
+    assert {d.name for d in result} == {"a.pdf", "b.pdf"}
+    assert result[0].visibility == "public"
+    mock_api.list_version_documents.assert_called_once()
+    call_kwargs = mock_api.list_version_documents.call_args.kwargs
+    assert call_kwargs["application_id"] == "heta"
+    assert call_kwargs["version"] == "1.0.0"
+
+
+@pytest.mark.unit
+def test_documents_list_returns_empty_list(documents: Documents, mock_api: Mock) -> None:
+    """Documents.list() handles an empty response."""
+    mock_api.list_version_documents.return_value = []
+
+    result = documents.list()
+
+    assert result == []
+
+
+@pytest.mark.unit
+def test_documents_list_uses_cache_then_bypasses_with_nocache(
+    documents: Documents, mock_api: Mock
+) -> None:
+    """list() caches results across calls; nocache=True forces a fresh call."""
+    mock_api.list_version_documents.return_value = [_make_doc("a.pdf")]
+
+    # First call hits the API and caches.
+    documents.list()
+    # Second call returns cached value.
+    documents.list()
+    assert mock_api.list_version_documents.call_count == 1
+
+    # nocache=True bypasses the cache and re-fetches.
+    documents.list(nocache=True)
+    assert mock_api.list_version_documents.call_count == 2
+
+
+@pytest.mark.unit
+def test_documents_details_returns_wrapped_model(documents: Documents, mock_api: Mock) -> None:
+    """Documents.details() wraps the response in ApplicationVersionDocument."""
+    mock_api.get_version_document.return_value = _make_doc("output_description.pdf")
+
+    result = documents.details("output_description.pdf")
+
+    assert isinstance(result, ApplicationVersionDocument)
+    assert result.name == "output_description.pdf"
+    assert result.mime_type == "application/pdf"
+    call_kwargs = mock_api.get_version_document.call_args.kwargs
+    assert call_kwargs["application_id"] == "heta"
+    assert call_kwargs["version"] == "1.0.0"
+    assert call_kwargs["name"] == "output_description.pdf"
+
+
+@pytest.mark.unit
+def test_documents_details_propagates_not_found(documents: Documents, mock_api: Mock) -> None:
+    """Documents.details() propagates a 404 NotFoundException from the codegen client."""
+    mock_api.get_version_document.side_effect = NotFoundException(status=404, reason="Not Found")
+
+    with pytest.raises(NotFoundException):
+        documents.details("missing.pdf")
+
+
+@pytest.mark.unit
+def test_documents_get_download_url_resolves_redirect(documents: Documents) -> None:
+    """get_download_url() returns the Location header from a 307 redirect on /file."""
+    mock_response = MagicMock()
+    mock_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
+    mock_response.headers = {"Location": "https://signed.example/blob?token=abc"}
+    mock_response.__enter__.return_value = mock_response
+    mock_response.__exit__.return_value = False
+
+    with patch(
+        "aignostics.platform.resources.applications.requests.get", return_value=mock_response
+    ) as mock_get:
+        url = documents.get_download_url("output_description.pdf")
+
+    assert url == "https://signed.example/blob?token=abc"
+    called_url = mock_get.call_args.args[0]
+    assert called_url.endswith(
+        "/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file"
+    )
+    assert mock_get.call_args.kwargs["allow_redirects"] is False
+
+
+@pytest.mark.unit
+def test_documents_get_content_url_resolves_redirect(documents: Documents) -> None:
+    """get_content_url() targets the /content variant and returns its Location."""
+    mock_response = MagicMock()
+    mock_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
+    mock_response.headers = {"Location": "https://signed.example/content?token=def"}
+    mock_response.__enter__.return_value = mock_response
+    mock_response.__exit__.return_value = False
+
+    with patch(
+        "aignostics.platform.resources.applications.requests.get", return_value=mock_response
+    ) as mock_get:
+        url = documents.get_content_url("output_description.pdf")
+
+    assert url == "https://signed.example/content?token=def"
+    assert mock_get.call_args.args[0].endswith(
+        "/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/content"
+    )
+
+
+@pytest.mark.unit
+def test_documents_get_download_url_404_raises_not_found(documents: Documents) -> None:
+    """A 404 from the redirect endpoint is mapped to NotFoundException."""
+    mock_response = MagicMock()
+    mock_response.status_code = HTTPStatus.NOT_FOUND
+    mock_response.headers = {}
+    mock_response.reason = "Not Found"
+    mock_response.__enter__.return_value = mock_response
+    mock_response.__exit__.return_value = False
+
+    with (
+        patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response),
+        pytest.raises(NotFoundException),
+    ):
+        documents.get_download_url("missing.pdf")
+
+
+@pytest.mark.unit
+def test_documents_download_to_path_writes_file(
+    documents: Documents, tmp_path: Path
+) -> None:
+    """download_to_path() resolves the redirect and streams the body to disk."""
+    redirect_response = MagicMock()
+    redirect_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
+    redirect_response.headers = {"Location": "https://signed.example/blob"}
+    redirect_response.__enter__.return_value = redirect_response
+    redirect_response.__exit__.return_value = False
+
+    body_response = MagicMock()
+    body_response.iter_content.return_value = [b"hello ", b"world"]
+    body_response.raise_for_status = MagicMock()
+    body_response.__enter__.return_value = body_response
+    body_response.__exit__.return_value = False
+
+    with patch(
+        "aignostics.platform.resources.applications.requests.get",
+        side_effect=[redirect_response, body_response],
+    ):
+        result = documents.download_to_path("output_description.pdf", tmp_path)
+
+    assert result == (tmp_path / "output_description.pdf").resolve()
+    assert result.read_bytes() == b"hello world"
+
+
+@pytest.mark.unit
+def test_versions_documents_returns_documents_resource(mock_api: Mock) -> None:
+    """Versions.documents() returns a Documents instance bound to the version pair."""
+    versions = Versions(mock_api)
+
+    docs = versions.documents("heta", "1.0.0")
+
+    assert isinstance(docs, Documents)
+    assert docs.application_id == "heta"
+    assert docs.application_version == "1.0.0"
+    assert docs._api is mock_api
