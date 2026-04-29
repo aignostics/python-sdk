@@ -207,7 +207,7 @@ dev = [
     "watchdog>=6.0.0,<7",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "pip>=5.3",                         # CVE-2025-8869
+    "pip>=26.1",                        # CVE-2025-8869
     "uv>=0.9.7",                        # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
 ]
