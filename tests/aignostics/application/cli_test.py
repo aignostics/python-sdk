@@ -48,6 +48,9 @@ HETA_APPLICATION_DEADLINE_SECONDS = 60 * 60 * 4  # 4 hours
 
 RUN_CSV_FILENAME = "run.csv"
 
+DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
+APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics.application._cli.Client"
+
 # Full SPOT_0 CSV - single source of truth for all run submissions in this test file.
 CSV_CONTENT_SPOT0 = (
     "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;"
@@ -1677,12 +1680,12 @@ def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PL
 # ----------------------------------------------------------------------------------
 
 
-def _make_document_stub(name: str = "output_description.pdf") -> MagicMock:
+def _make_document_stub(name: str = DOCUMENT_OUTPUT_DESCRIPTION_PDF) -> MagicMock:
     """Create a stub ApplicationVersionDocument with realistic field values."""
     stub = MagicMock()
     stub.id = "11111111-1111-1111-1111-111111111111"
     stub.name = name
-    stub.mime_type = "application/pdf"
+    stub.mime_type = "application/pdf"  # NOSONAR python:S1192: standard MIME type literal is clearer than a constant
     stub.visibility = "public"
     stub.created_at = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
     stub.updated_at = datetime(2026, 1, 2, 12, 0, tzinfo=UTC)
@@ -1703,7 +1706,7 @@ def test_cli_application_version_document_list_success(runner: CliRunner, record
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
     fake_documents = MagicMock()
     fake_documents.list.return_value = [
-        _make_document_stub("output_description.pdf"),
+        _make_document_stub(DOCUMENT_OUTPUT_DESCRIPTION_PDF),
         _make_document_stub("model_card.pdf"),
     ]
     fake_client = MagicMock()
@@ -1712,12 +1715,12 @@ def test_cli_application_version_document_list_success(runner: CliRunner, record
     fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
-    with patch("aignostics.application._cli.Client", return_value=fake_client):
+    with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(cli, ["application", "version", "document", "list", "heta"])
 
     assert result.exit_code == 0
     output = normalize_output(result.output)
-    assert "output_description.pdf" in output
+    assert DOCUMENT_OUTPUT_DESCRIPTION_PDF in output
     assert "model_card.pdf" in output
     assert "application/pdf" in output
     fake_client.applications.versions.documents.assert_called_once_with("heta", "1.0.0")
@@ -1728,24 +1731,24 @@ def test_cli_application_version_document_describe_success(runner: CliRunner, re
     """`application version document describe` prints metadata for a single document."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-02")
     fake_documents = MagicMock()
-    fake_documents.details.return_value = _make_document_stub("output_description.pdf")
+    fake_documents.details.return_value = _make_document_stub(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
     fake_client = MagicMock()
     fake_client.applications.versions.documents.return_value = fake_documents
 
-    with patch("aignostics.application._cli.Client", return_value=fake_client):
+    with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
             cli,
-            ["application", "version", "document", "describe", "heta:1.0.0", "output_description.pdf"],
+            ["application", "version", "document", "describe", "heta:1.0.0", DOCUMENT_OUTPUT_DESCRIPTION_PDF],
         )
 
     assert result.exit_code == 0
     output = normalize_output(result.output)
-    assert "output_description.pdf" in output
+    assert DOCUMENT_OUTPUT_DESCRIPTION_PDF in output
     assert "application/pdf" in output
     # Explicit version supplied via "heta:1.0.0", so latest() should NOT be called.
     fake_client.applications.versions.latest.assert_not_called()
     fake_client.applications.versions.documents.assert_called_once_with("heta", "1.0.0")
-    fake_documents.details.assert_called_once_with("output_description.pdf")
+    fake_documents.details.assert_called_once_with(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
 
 
 @pytest.mark.unit
@@ -1762,7 +1765,7 @@ def test_cli_application_version_document_describe_not_found(runner: CliRunner, 
     fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
-    with patch("aignostics.application._cli.Client", return_value=fake_client):
+    with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
             cli,
             ["application", "version", "document", "describe", "heta", "missing.pdf"],
@@ -1778,7 +1781,7 @@ def test_cli_application_version_document_download_success(runner: CliRunner, tm
     """`application version document download` writes the file and prints the destination."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
     fake_documents = MagicMock()
-    expected_path = tmp_path / "output_description.pdf"
+    expected_path = tmp_path / DOCUMENT_OUTPUT_DESCRIPTION_PDF
     fake_documents.download_to_path.return_value = expected_path
     fake_client = MagicMock()
     latest_version = MagicMock()
@@ -1786,7 +1789,7 @@ def test_cli_application_version_document_download_success(runner: CliRunner, tm
     fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
-    with patch("aignostics.application._cli.Client", return_value=fake_client):
+    with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
             cli,
             [
@@ -1795,7 +1798,7 @@ def test_cli_application_version_document_download_success(runner: CliRunner, tm
                 "document",
                 "download",
                 "heta",
-                "output_description.pdf",
+                DOCUMENT_OUTPUT_DESCRIPTION_PDF,
                 "--output",
                 str(tmp_path),
             ],
@@ -1806,4 +1809,4 @@ def test_cli_application_version_document_download_success(runner: CliRunner, tm
     assert str(expected_path) in output
     fake_documents.download_to_path.assert_called_once()
     args, _ = fake_documents.download_to_path.call_args
-    assert args[0] == "output_description.pdf"
+    assert args[0] == DOCUMENT_OUTPUT_DESCRIPTION_PDF

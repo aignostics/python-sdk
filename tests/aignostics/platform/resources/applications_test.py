@@ -28,6 +28,8 @@ from aignostics.platform.resources.utils import PAGE_SIZE
 
 API_ERROR = "API error"
 
+DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
+
 
 @pytest.fixture
 def mock_api() -> Mock:
@@ -182,7 +184,7 @@ def test_versions_property_returns_versions_instance(applications) -> None:
 # ----------------------------------------------------------------------------------
 
 
-def _make_doc(name: str = "output_description.pdf") -> VersionDocumentResponse:
+def _make_doc(name: str = DOCUMENT_OUTPUT_DESCRIPTION_PDF) -> VersionDocumentResponse:
     """Build a VersionDocumentResponse codegen model for tests."""
     return VersionDocumentResponse(
         id="11111111-1111-1111-1111-111111111111",
@@ -222,7 +224,10 @@ def documents(mock_api: Mock) -> Documents:
 @pytest.mark.unit
 def test_documents_list_returns_wrapped_models(documents: Documents, mock_api: Mock) -> None:
     """Documents.list() returns ApplicationVersionDocument instances."""
-    mock_api.list_version_documents.return_value = [_make_doc("a.pdf"), _make_doc("b.pdf")]
+    mock_api.list_version_documents.return_value = [
+        _make_doc("a.pdf"),
+        _make_doc("b.pdf"),
+    ]  # NOSONAR python:S1192: arbitrary placeholder filename, a constant adds no clarity
 
     result = documents.list()
 
@@ -249,7 +254,7 @@ def test_documents_list_returns_empty_list(documents: Documents, mock_api: Mock)
 @pytest.mark.unit
 def test_documents_list_uses_cache_then_bypasses_with_nocache(documents: Documents, mock_api: Mock) -> None:
     """list() caches results across calls; nocache=True forces a fresh call."""
-    mock_api.list_version_documents.return_value = [_make_doc("a.pdf")]
+    mock_api.list_version_documents.return_value = [_make_doc("a.pdf")]  # NOSONAR python:S1192
 
     # First call hits the API and caches.
     documents.list()
@@ -265,17 +270,17 @@ def test_documents_list_uses_cache_then_bypasses_with_nocache(documents: Documen
 @pytest.mark.unit
 def test_documents_details_returns_wrapped_model(documents: Documents, mock_api: Mock) -> None:
     """Documents.details() wraps the response in ApplicationVersionDocument."""
-    mock_api.get_version_document.return_value = _make_doc("output_description.pdf")
+    mock_api.get_version_document.return_value = _make_doc(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
 
-    result = documents.details("output_description.pdf")
+    result = documents.details(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
 
     assert isinstance(result, ApplicationVersionDocument)
-    assert result.name == "output_description.pdf"
+    assert result.name == DOCUMENT_OUTPUT_DESCRIPTION_PDF
     assert result.mime_type == "application/pdf"
     call_kwargs = mock_api.get_version_document.call_args.kwargs
     assert call_kwargs["application_id"] == "heta"
     assert call_kwargs["version"] == "1.0.0"
-    assert call_kwargs["name"] == "output_description.pdf"
+    assert call_kwargs["name"] == DOCUMENT_OUTPUT_DESCRIPTION_PDF
 
 
 @pytest.mark.unit
@@ -301,14 +306,16 @@ def test_documents_download_to_path_writes_file(documents: Documents, tmp_path: 
         "aignostics.platform.resources.applications.requests.get",
         return_value=body_response,
     ) as mock_get:
-        result = documents.download_to_path("output_description.pdf", tmp_path)
+        result = documents.download_to_path(DOCUMENT_OUTPUT_DESCRIPTION_PDF, tmp_path)
 
-    assert result == (tmp_path / "output_description.pdf").resolve()
+    assert result == (tmp_path / DOCUMENT_OUTPUT_DESCRIPTION_PDF).resolve()
     assert result.read_bytes() == b"hello world"
     # Single request to the platform endpoint, requests follows the 307 internally.
     mock_get.assert_called_once()
     called_url = mock_get.call_args.args[0]
-    assert called_url.endswith("/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file")
+    assert called_url.endswith(
+        f"/api/v1/applications/heta/versions/1.0.0/documents/{DOCUMENT_OUTPUT_DESCRIPTION_PDF}/file"
+    )
     assert mock_get.call_args.kwargs["allow_redirects"] is True
 
 
