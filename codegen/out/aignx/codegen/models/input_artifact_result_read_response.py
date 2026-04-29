@@ -18,21 +18,20 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictStr
-from typing import Any, ClassVar, Dict, List
-from aignx.codegen.models.application_version import ApplicationVersion
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationReadResponse(BaseModel):
+class InputArtifactResultReadResponse(BaseModel):
     """
-    Response schema for `List available applications` and `Read Application by Id` endpoints
+    InputArtifactResultReadResponse
     """ # noqa: E501
-    application_id: StrictStr = Field(description="Application ID")
-    name: StrictStr = Field(description="Application display name")
-    regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
-    description: StrictStr = Field(description="Describing what the application can do ")
-    versions: List[ApplicationVersion] = Field(description="All version numbers available to the user")
-    __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "versions"]
+    input_artifact_id: StrictStr = Field(description="The Id of the artifact. Used internally")
+    name: StrictStr = Field(description="Name of the input from the schema from the `/v1/versions/{version_id}` endpoint.")
+    metadata: Optional[Dict[str, Any]] = None
+    download_url: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=2083)]] = None
+    __properties: ClassVar[List[str]] = ["input_artifact_id", "name", "metadata", "download_url"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +51,7 @@ class ApplicationReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationReadResponse from a JSON string"""
+        """Create an instance of InputArtifactResultReadResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,18 +72,21 @@ class ApplicationReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in versions (list)
-        _items = []
-        if self.versions:
-            for _item_versions in self.versions:
-                if _item_versions:
-                    _items.append(_item_versions.to_dict())
-            _dict['versions'] = _items
+        # set to None if metadata (nullable) is None
+        # and model_fields_set contains the field
+        if self.metadata is None and "metadata" in self.model_fields_set:
+            _dict['metadata'] = None
+
+        # set to None if download_url (nullable) is None
+        # and model_fields_set contains the field
+        if self.download_url is None and "download_url" in self.model_fields_set:
+            _dict['download_url'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationReadResponse from a dict"""
+        """Create an instance of InputArtifactResultReadResponse from a dict"""
         if obj is None:
             return None
 
@@ -92,11 +94,10 @@ class ApplicationReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "application_id": obj.get("application_id"),
+            "input_artifact_id": obj.get("input_artifact_id"),
             "name": obj.get("name"),
-            "regulatory_classes": obj.get("regulatory_classes"),
-            "description": obj.get("description"),
-            "versions": [ApplicationVersion.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
+            "metadata": obj.get("metadata"),
+            "download_url": obj.get("download_url")
         })
         return _obj
 

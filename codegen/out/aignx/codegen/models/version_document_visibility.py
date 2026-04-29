@@ -18,20 +18,20 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class ItemOutput(str, Enum):
+class VersionDocumentVisibility(str, Enum):
     """
-    ItemOutput
+    VersionDocumentVisibility
     """
 
     """
     allowed enum values
     """
-    NONE = 'NONE'
-    FULL = 'FULL'
+    PUBLIC = 'public'
+    INTERNAL = 'internal'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of ItemOutput from a JSON string"""
+        """Create an instance of VersionDocumentVisibility from a JSON string"""
         return cls(json.loads(json_str))
 
 
