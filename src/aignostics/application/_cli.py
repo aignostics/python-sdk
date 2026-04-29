@@ -1646,6 +1646,15 @@ def application_version_document_describe(
     """Show metadata for a single public release document."""
     try:
         application_id, version_number, documents = _resolve_documents(application_version_id)
+    except NotFoundException as e:
+        message = f"Application version '{application_version_id}' is unavailable."
+        logger.warning("{} ({})", message, e)
+        if format == "json":
+            print(json.dumps({"error": "not_found", "message": message}), file=sys.stderr)
+        else:
+            console.print(f"[warning]Warning:[/warning] {message}")
+        sys.exit(2)
+    try:
         doc = documents.details(document_name)
     except NotFoundException:
         message = f"Document '{document_name}' not found for application version '{application_version_id}'."
@@ -1706,6 +1715,12 @@ def application_version_document_download(
     """
     try:
         _, _, documents = _resolve_documents(application_version_id)
+    except NotFoundException as e:
+        message = f"Application version '{application_version_id}' is unavailable."
+        logger.warning("{} ({})", message, e)
+        console.print(f"[warning]Warning:[/warning] {message}")
+        sys.exit(2)
+    try:
         written = documents.download_to_path(document_name, output)
     except NotFoundException:
         message = f"Document '{document_name}' not found for application version '{application_version_id}'."

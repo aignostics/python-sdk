@@ -204,9 +204,9 @@ def _clear_operation_cache_before_each_test() -> None:
 def documents(mock_api: Mock) -> Documents:
     """Create a Documents instance bound to a fixed (application, version) pair.
 
-    The mock is augmented with a minimal ``api_client.configuration`` so the
-    redirect-resolving methods (``download_to_path``, ``get_*_url``) can read
-    host/proxy/SSL settings without hitting the real codegen plumbing.
+    The mock is augmented with a minimal ``api_client.configuration`` so
+    ``download_to_path`` can read host/proxy/SSL settings without hitting the
+    real codegen plumbing.
     """
     configuration = MagicMock()
     configuration.host = "https://platform.example.com"
@@ -288,68 +288,10 @@ def test_documents_details_propagates_not_found(documents: Documents, mock_api: 
 
 
 @pytest.mark.unit
-def test_documents_get_download_url_resolves_redirect(documents: Documents) -> None:
-    """get_download_url() returns the Location header from a 307 redirect on /file."""
-    mock_response = MagicMock()
-    mock_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
-    mock_response.headers = {"Location": "https://signed.example/blob?token=abc"}
-    mock_response.__enter__.return_value = mock_response
-    mock_response.__exit__.return_value = False
-
-    with patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response) as mock_get:
-        url = documents.get_download_url("output_description.pdf")
-
-    assert url == "https://signed.example/blob?token=abc"
-    called_url = mock_get.call_args.args[0]
-    assert called_url.endswith("/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file")
-    assert mock_get.call_args.kwargs["allow_redirects"] is False
-
-
-@pytest.mark.unit
-def test_documents_get_content_url_resolves_redirect(documents: Documents) -> None:
-    """get_content_url() targets the /content variant and returns its Location."""
-    mock_response = MagicMock()
-    mock_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
-    mock_response.headers = {"Location": "https://signed.example/content?token=def"}
-    mock_response.__enter__.return_value = mock_response
-    mock_response.__exit__.return_value = False
-
-    with patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response) as mock_get:
-        url = documents.get_content_url("output_description.pdf")
-
-    assert url == "https://signed.example/content?token=def"
-    assert mock_get.call_args.args[0].endswith(
-        "/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/content"
-    )
-
-
-@pytest.mark.unit
-def test_documents_get_download_url_404_raises_not_found(documents: Documents) -> None:
-    """A 404 from the redirect endpoint is mapped to NotFoundException."""
-    mock_response = MagicMock()
-    mock_response.status_code = HTTPStatus.NOT_FOUND
-    mock_response.headers = {}
-    mock_response.reason = "Not Found"
-    mock_response.__enter__.return_value = mock_response
-    mock_response.__exit__.return_value = False
-
-    with (
-        patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response),
-        pytest.raises(NotFoundException),
-    ):
-        documents.get_download_url("missing.pdf")
-
-
-@pytest.mark.unit
 def test_documents_download_to_path_writes_file(documents: Documents, tmp_path: Path) -> None:
-    """download_to_path() resolves the redirect and streams the body to disk."""
-    redirect_response = MagicMock()
-    redirect_response.status_code = HTTPStatus.TEMPORARY_REDIRECT
-    redirect_response.headers = {"Location": "https://signed.example/blob"}
-    redirect_response.__enter__.return_value = redirect_response
-    redirect_response.__exit__.return_value = False
-
+    """download_to_path() follows the platform redirect and streams the body to disk."""
     body_response = MagicMock()
+    body_response.status_code = HTTPStatus.OK
     body_response.iter_content.return_value = [b"hello ", b"world"]
     body_response.raise_for_status = MagicMock()
     body_response.__enter__.return_value = body_response
@@ -357,12 +299,33 @@ def test_documents_download_to_path_writes_file(documents: Documents, tmp_path: 
 
     with patch(
         "aignostics.platform.resources.applications.requests.get",
-        side_effect=[redirect_response, body_response],
-    ):
+        return_value=body_response,
+    ) as mock_get:
         result = documents.download_to_path("output_description.pdf", tmp_path)
 
     assert result == (tmp_path / "output_description.pdf").resolve()
     assert result.read_bytes() == b"hello world"
+    # Single request to the platform endpoint, requests follows the 307 internally.
+    mock_get.assert_called_once()
+    called_url = mock_get.call_args.args[0]
+    assert called_url.endswith("/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file")
+    assert mock_get.call_args.kwargs["allow_redirects"] is True
+
+
+@pytest.mark.unit
+def test_documents_download_to_path_404_raises_not_found(documents: Documents, tmp_path: Path) -> None:
+    """A 404 from the documents endpoint is mapped to NotFoundException."""
+    response = MagicMock()
+    response.status_code = HTTPStatus.NOT_FOUND
+    response.reason = "Not Found"
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+
+    with (
+        patch("aignostics.platform.resources.applications.requests.get", return_value=response),
+        pytest.raises(NotFoundException),
+    ):
+        documents.download_to_path("missing.pdf", tmp_path)
 
 
 @pytest.mark.unit

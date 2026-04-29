@@ -41,4 +41,4 @@ Feature: Application Version Release Documents
     Given the user has access to an application version with a public release document
     When the user requests download of that document to a local destination
     Then the system shall follow the platform redirect to the signed storage URL
-    And the system shall write the document file using the server-provided filename
+    And the system shall write the document file using the requested document name
