@@ -1705,7 +1705,7 @@ def application_version_document_download(
     is bounded by HTTPS transport and the signed-URL lifetime.
     """
     try:
-        _application_id, _version_number, documents = _resolve_documents(application_version_id)
+        _, _, documents = _resolve_documents(application_version_id)
         written = documents.download_to_path(document_name, output)
     except NotFoundException:
         message = f"Document '{document_name}' not found for application version '{application_version_id}'."
