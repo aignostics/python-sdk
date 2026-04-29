@@ -277,7 +277,14 @@ class ApplicationVersionDocument(BaseModel):
 
     @classmethod
     def from_response(cls, data: VersionDocumentData) -> "ApplicationVersionDocument":
-        """Build an ApplicationVersionDocument from the codegen response model."""
+        """Build an ApplicationVersionDocument from the codegen response model.
+
+        Args:
+            data: The codegen ``VersionDocumentResponse`` returned by the API.
+
+        Returns:
+            ApplicationVersionDocument: Wrapped, SDK-friendly Pydantic model.
+        """
         return cls(
             id=data.id,
             name=data.name,
@@ -350,7 +357,7 @@ class Documents:
                 )
             )
 
-        documents = list_with_retry(self.application_id, self.application_version, nocache=nocache)  # type: ignore[call-arg]
+        documents = list_with_retry(self.application_id, self.application_version, nocache=nocache)  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
         return [ApplicationVersionDocument.from_response(doc) for doc in (documents or [])]
 
     def details(self, document_name: str, nocache: bool = False) -> ApplicationVersionDocument:
@@ -394,12 +401,8 @@ class Documents:
                 )
             )
 
-        data = details_with_retry(  # type: ignore[call-arg]
-            self.application_id,
-            self.application_version,
-            document_name,
-            nocache=nocache,
-        )
+        # The cached_operation decorator injects a `nocache` keyword that pyright/mypy can't see.
+        data = details_with_retry(self.application_id, self.application_version, document_name, nocache=nocache)  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
         return ApplicationVersionDocument.from_response(data)
 
     def _resolve_redirect_url(self, document_name: str, suffix: str) -> str:
@@ -461,7 +464,24 @@ class Documents:
         proxy: str | None,
         token_provider: t.Callable[[], str],
     ) -> str:
-        """Issue the GET and return the presigned URL from the 3xx Location header."""
+        """Issue the GET and return the presigned URL from the 3xx Location header.
+
+        Args:
+            endpoint_url: Full ``/file`` or ``/content`` endpoint URL.
+            document_name: The document filename (used for error messages).
+            ssl_verify: True/False or CA bundle path, mirroring the codegen client config.
+            proxy: Optional HTTP/HTTPS proxy URL, mirroring the codegen client config.
+            token_provider: Callable returning a fresh bearer token.
+
+        Returns:
+            str: The presigned URL extracted from the ``Location`` header.
+
+        Raises:
+            NotFoundException: 404 — document not found, not public, or not uploaded.
+            ApiException: Other 4xx (e.g. 403 forbidden, 410 gone).
+            ServiceException: 5xx, request timeouts, or connection errors (caught & wrapped).
+            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
+        """
         try:
             with requests.get(
                 endpoint_url,
@@ -594,8 +614,8 @@ class Documents:
             requests.HTTPError: If the signed-URL download itself fails.
         """
         destination_path = Path(destination)
-        if destination_path.is_dir() or (not destination_path.exists() and destination_path.suffix == ""):
-            destination_path = destination_path / document_name
+        if destination_path.is_dir() or (not destination_path.exists() and not destination_path.suffix):
+            destination_path /= document_name
         destination_path = destination_path.resolve()
         destination_path.parent.mkdir(parents=True, exist_ok=True)
 

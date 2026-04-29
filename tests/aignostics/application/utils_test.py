@@ -138,6 +138,7 @@ def _make_item_result(  # noqa: PLR0913
     custom_metadata: dict[str, Any] | None = None,
     custom_metadata_checksum: str | None = None,
     terminated_at: datetime | None = None,
+    input_artifacts: list[Any] | None = None,
     output_artifacts: list[OutputArtifactElement] | None = None,
 ) -> ItemResult:
     return ItemResult(
@@ -151,6 +152,7 @@ def _make_item_result(  # noqa: PLR0913
         custom_metadata=custom_metadata,
         custom_metadata_checksum=custom_metadata_checksum,
         terminated_at=terminated_at,
+        input_artifacts=input_artifacts if input_artifacts is not None else [],
         output_artifacts=output_artifacts if output_artifacts is not None else [],
     )
 
