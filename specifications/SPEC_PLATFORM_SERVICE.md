@@ -82,7 +82,7 @@ platform/
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`, `artifact()`, `get_artifact_download_url()`, `ensure_artifacts_downloaded()` |
 | `Artifact`       | Class  | Per-artifact handle for resolving fresh presigned download URLs via the `/api/v1/runs/{run_id}/artifacts/{artifact_id}/file` endpoint | `get_download_url()`                                                          |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`, `documents()`             |
-| `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`, `get_content_url()`              |
+| `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`                                   |
 | `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
 
@@ -314,15 +314,15 @@ class Versions:
 class Documents:
     """Resource class for retrieving release documents attached to an application version.
 
-    Backed by ``GET /api/v1/applications/{application_id}/versions/{version_id}/documents``
-    and the per-document ``/{name}``, ``/{name}/file``, and ``/{name}/content`` endpoints.
+    Backed by ``GET /api/v1/applications/{application_id}/versions/{version}/documents``
+    and the per-document ``/{name}`` and ``/{name}/file`` endpoints.
     The public API exposes only documents with ``visibility=public`` and ``status=uploaded``.
     """
 
-    def __init__(self, api: PublicApi, application_version_id: str) -> None:
-        """Initializes the Documents resource bound to an application version."""
+    def __init__(self, api: PublicApi, application_id: str, application_version: str) -> None:
+        """Initializes the Documents resource bound to an (application_id, version) pair."""
 
-    def list(self, nocache: bool = False) -> Iterator[ApplicationVersionDocument]:
+    def list(self, nocache: bool = False) -> list[ApplicationVersionDocument]:
         """List metadata for all public, uploaded release documents for the bound version.
 
         Args:
@@ -342,26 +342,22 @@ class Documents:
     def download_to_path(self, document_name: str, destination: Path | str) -> Path:
         """Downloads the document file to a local path.
 
-        Follows the platform ``307`` redirect from the ``/file`` endpoint to a short-lived
-        GCS signed URL with ``Content-Disposition: attachment; filename="{name}"`` and
-        writes the response body to disk. Returns the absolute path to the written file.
-        The presigned URL is short-lived; this method resolves and consumes it in a single call.
+        Issues a single ``GET`` against the ``/file`` endpoint and follows the
+        platform ``307`` redirect to a short-lived GCS signed URL, streaming the
+        response body to disk. The bearer token is stripped on the cross-host hop
+        by ``requests`` and is therefore not forwarded to the storage backend.
+        Returns the absolute path to the written file.
+
+        If ``destination`` is a directory, the file is written as
+        ``{destination}/{document_name}``; the requested document name is the
+        canonical filename and is used regardless of any ``Content-Disposition``
+        served by the storage backend.
 
         Note: Document downloads do not carry a CRC32C checksum (unlike run artifacts);
         integrity is bounded by HTTPS transport and the signed-URL lifetime.
 
         Raises:
             NotFoundException: When the document does not exist, is not public, or is not uploaded.
-        """
-
-    def get_content_url(self, document_name: str) -> str:
-        """Resolves a fresh, short-lived presigned URL for the inline-content endpoint.
-
-        Calls ``GET /api/v1/applications/{application_id}/versions/{version_id}/documents/{name}/content``
-        with ``allow_redirects=False`` and returns the presigned URL from the redirect
-        ``Location`` header. Unlike ``download_to_path``, the response from the resolved
-        URL is served with the stored ``Content-Type`` and no ``Content-Disposition``,
-        intended for programmatic clients that consume content inline.
         """
 ```
 

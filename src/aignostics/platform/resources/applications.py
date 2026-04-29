@@ -11,11 +11,12 @@ from datetime import datetime
 from http import HTTPStatus
 from operator import itemgetter
 from pathlib import Path
+from urllib.parse import quote
 
 import requests
 import semver
 from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
+from aignx.codegen.exceptions import NotFoundException, ServiceException
 from aignx.codegen.models import ApplicationReadResponse as Application
 from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
 from aignx.codegen.models import ApplicationVersion as VersionTuple
@@ -38,14 +39,6 @@ from aignostics.platform._operation_cache import cached_operation
 from aignostics.platform._settings import settings
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
-
-_REDIRECT_STATUSES = frozenset({
-    HTTPStatus.MOVED_PERMANENTLY,
-    HTTPStatus.FOUND,
-    HTTPStatus.SEE_OTHER,
-    HTTPStatus.TEMPORARY_REDIRECT,
-    HTTPStatus.PERMANENT_REDIRECT,
-})
 
 _DOCUMENT_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
 
@@ -405,196 +398,19 @@ class Documents:
         data = details_with_retry(self.application_id, self.application_version, document_name, nocache=nocache)  # type: ignore[call-arg]  # pyright: ignore[reportCallIssue]
         return ApplicationVersionDocument.from_response(data)
 
-    def _resolve_redirect_url(self, document_name: str, suffix: str) -> str:
-        """Issue an unredirected GET to ``/file`` or ``/content`` and return the Location URL.
-
-        The generated client cannot be used directly because urllib3 follows the
-        redirect automatically and would fetch the document body — losing the
-        short-lived presigned URL exposed in the ``Location`` header.
-
-        Args:
-            document_name: The document filename.
-            suffix: Either ``"file"`` (server sets ``Content-Disposition: attachment``) or
-                ``"content"`` (no ``Content-Disposition``; for inline programmatic use).
-
-        Returns:
-            str: A time-limited presigned GCS URL.
-
-        Raises:
-            NotFoundException: 404 — document not found, not public, or not uploaded.
-            ApiException: Other 4xx (e.g. 403 forbidden, 410 gone).
-            ServiceException: 5xx, request timeouts, or connection errors
-                (after retry attempts have been exhausted).
-            RuntimeError: 3xx response with no Location header, or any other
-                unexpected status the API contract does not define.
-        """
-        configuration = self._api.api_client.configuration
-        host = configuration.host.rstrip("/")
-        endpoint_url = (
-            f"{host}/api/v1/applications/{self.application_id}"
-            f"/versions/{self.application_version}/documents/{document_name}/{suffix}"
-        )
-        proxy = getattr(configuration, "proxy", None)
-        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
-        verify_ssl = getattr(configuration, "verify_ssl", True)
-        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
-        # Honor the codegen client's token_provider when set: Client.get_api_client()
-        # wires it up with use_cache=cache_token, so a user who instantiates
-        # Client(cache_token=False) does not want us to read/write the token cache.
-        # Fall back to get_token() only when the configuration was built outside
-        # of Client (e.g. unit tests with bare PublicApi).
-        token_provider = getattr(configuration, "token_provider", None) or get_token
-
-        return Retrying(
-            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-            stop=stop_after_attempt(settings().application_version_retry_attempts),
-            wait=wait_exponential_jitter(
-                initial=settings().application_version_retry_wait_min,
-                max=settings().application_version_retry_wait_max,
-            ),
-            before_sleep=_log_retry_attempt,
-            reraise=True,
-        )(lambda: self._fetch_redirect_url(endpoint_url, document_name, ssl_verify, proxy, token_provider))
-
-    def _fetch_redirect_url(
-        self,
-        endpoint_url: str,
-        document_name: str,
-        ssl_verify: bool | str,
-        proxy: str | None,
-        token_provider: t.Callable[[], str],
-    ) -> str:
-        """Issue the GET and return the presigned URL from the 3xx Location header.
-
-        Args:
-            endpoint_url: Full ``/file`` or ``/content`` endpoint URL.
-            document_name: The document filename (used for error messages).
-            ssl_verify: True/False or CA bundle path, mirroring the codegen client config.
-            proxy: Optional HTTP/HTTPS proxy URL, mirroring the codegen client config.
-            token_provider: Callable returning a fresh bearer token.
-
-        Returns:
-            str: The presigned URL extracted from the ``Location`` header.
-
-        Raises:
-            NotFoundException: 404 — document not found, not public, or not uploaded.
-            ApiException: Other 4xx (e.g. 403 forbidden, 410 gone).
-            ServiceException: 5xx, request timeouts, or connection errors (caught & wrapped).
-            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
-        """
-        try:
-            with requests.get(
-                endpoint_url,
-                headers={
-                    "Authorization": f"Bearer {token_provider()}",
-                    "User-Agent": user_agent(),
-                },
-                allow_redirects=False,
-                timeout=settings().application_version_timeout,
-                proxies={"http": proxy, "https": proxy} if proxy else None,
-                verify=ssl_verify,
-                stream=True,
-            ) as response:
-                if response.status_code in _REDIRECT_STATUSES:
-                    location = response.headers.get("Location")
-                    if not location:
-                        msg = (
-                            f"Redirect response {response.status_code} from documents endpoint "
-                            f"missing Location header for document '{document_name}' on "
-                            f"application '{self.application_id}' version '{self.application_version}'"
-                        )
-                        raise RuntimeError(msg)
-                    return location
-                if response.status_code == HTTPStatus.NOT_FOUND:
-                    raise NotFoundException(
-                        status=HTTPStatus.NOT_FOUND.value,
-                        reason=(
-                            f"Document '{document_name}' not found for application "
-                            f"'{self.application_id}' version '{self.application_version}'"
-                        ),
-                    )
-                if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
-                    raise ServiceException(status=response.status_code, reason=response.reason)
-                if response.status_code >= HTTPStatus.BAD_REQUEST:
-                    raise ApiException(status=response.status_code, reason=response.reason)
-                msg = (
-                    f"Unexpected status {response.status_code} from documents endpoint for "
-                    f"document '{document_name}' on application '{self.application_id}' "
-                    f"version '{self.application_version}'; expected a redirect"
-                )
-                raise RuntimeError(msg)
-        except requests.Timeout as e:
-            raise ServiceException(
-                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
-                reason="Request timed out",
-            ) from e
-        except requests.ConnectionError as e:
-            raise ServiceException(
-                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
-                reason="Connection failed",
-            ) from e
-        except requests.RequestException as e:
-            raise ServiceException(
-                status=HTTPStatus.SERVICE_UNAVAILABLE.value,
-                reason=f"Request failed: {e}",
-            ) from e
-
-    def get_content_url(self, document_name: str) -> str:
-        """Resolve a fresh, short-lived presigned URL for the inline-content endpoint.
-
-        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/content``
-        with ``allow_redirects=False`` and returns the presigned URL from the redirect
-        ``Location`` header. The response from the resolved URL is served with the stored
-        ``Content-Type`` and no ``Content-Disposition`` header — intended for programmatic
-        clients that consume document content inline. The presigned URL is short-lived;
-        resolve immediately before fetching.
-
-        Args:
-            document_name (str): The document filename.
-
-        Returns:
-            str: A time-limited presigned URL.
-
-        Raises:
-            NotFoundException: When the document does not exist, is not public, or is not uploaded.
-            ApiException: Other 4xx errors.
-            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
-            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
-        """
-        return self._resolve_redirect_url(document_name, "content")
-
-    def get_download_url(self, document_name: str) -> str:
-        """Resolve a fresh, short-lived presigned URL for the file (attachment) endpoint.
-
-        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/file``
-        with ``allow_redirects=False`` and returns the presigned URL from the redirect
-        ``Location`` header. The response from the resolved URL is served with
-        ``Content-Disposition: attachment; filename="{name}"`` — intended for browser-style
-        downloads. The presigned URL is short-lived; resolve immediately before fetching.
-
-        Args:
-            document_name (str): The document filename.
-
-        Returns:
-            str: A time-limited presigned URL.
-
-        Raises:
-            NotFoundException: When the document does not exist, is not public, or is not uploaded.
-            ApiException: Other 4xx errors.
-            ServiceException: 5xx errors, request timeouts, or connection errors after retries.
-            RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
-        """
-        return self._resolve_redirect_url(document_name, "file")
-
     def download_to_path(self, document_name: str, destination: Path | str) -> Path:
         """Download a release document file to a local path.
 
-        Follows the platform ``307`` redirect from the ``/file`` endpoint to a short-lived
-        GCS signed URL with ``Content-Disposition: attachment; filename="{name}"`` and
-        streams the response body to disk.
+        Calls ``GET /api/v1/applications/{application_id}/versions/{version}/documents/{name}/file``,
+        which returns a ``307`` redirect to a short-lived GCS signed URL serving the file
+        with ``Content-Disposition: attachment; filename="{name}"``. ``requests`` follows
+        the redirect automatically and strips the bearer ``Authorization`` header on the
+        cross-host hop, so the credential is not forwarded to GCS.
 
         If ``destination`` is a directory, the file is written as
-        ``{destination}/{document_name}``. If it is a file path, the file is written there
+        ``{destination}/{document_name}``; the requested document name is the canonical
+        filename and is used regardless of any ``Content-Disposition`` served by the
+        storage backend. If ``destination`` is a file path, the file is written there
         verbatim. Parent directories are created if they do not yet exist.
 
         Document downloads do not carry a CRC32C checksum (unlike run artifacts);
@@ -609,9 +425,8 @@ class Documents:
 
         Raises:
             NotFoundException: When the document does not exist, is not public, or is not uploaded.
-            ApiException: Other 4xx errors.
             ServiceException: 5xx errors, request timeouts, or connection errors after retries.
-            requests.HTTPError: If the signed-URL download itself fails.
+            requests.HTTPError: For other 4xx errors or signed-URL download failures.
         """
         destination_path = Path(destination)
         if destination_path.is_dir() or (not destination_path.exists() and not destination_path.suffix):
@@ -619,13 +434,73 @@ class Documents:
         destination_path = destination_path.resolve()
         destination_path.parent.mkdir(parents=True, exist_ok=True)
 
-        signed_url = self.get_download_url(document_name)
-        with requests.get(signed_url, stream=True, timeout=settings().application_version_timeout) as response:
-            response.raise_for_status()
-            with destination_path.open("wb") as out_file:
-                for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
-                    if chunk:
-                        out_file.write(chunk)
+        configuration = self._api.api_client.configuration
+        host = configuration.host.rstrip("/")
+        # Each path segment is encoded individually so that reserved characters
+        # (spaces, '#', '?', '/', ...) inside a document name cannot inject extra
+        # path segments or query strings into the URL.
+        encoded_application_id = quote(self.application_id, safe="")
+        encoded_version = quote(self.application_version, safe="")
+        encoded_document_name = quote(document_name, safe="")
+        endpoint_url = (
+            f"{host}/api/v1/applications/{encoded_application_id}"
+            f"/versions/{encoded_version}/documents/{encoded_document_name}/file"
+        )
+        proxy = getattr(configuration, "proxy", None)
+        ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
+        verify_ssl = getattr(configuration, "verify_ssl", True)
+        ssl_verify: bool | str = ssl_ca_cert or verify_ssl
+        # Honor the codegen client's token_provider when set: Client.get_api_client()
+        # wires it up with use_cache=cache_token, so a user who instantiates
+        # Client(cache_token=False) does not want us to read/write the token cache.
+        # Fall back to get_token() only when the configuration was built outside
+        # of Client (e.g. unit tests with bare PublicApi).
+        token_provider = getattr(configuration, "token_provider", None) or get_token
+
+        def stream_once() -> None:
+            try:
+                with requests.get(
+                    endpoint_url,
+                    headers={
+                        "Authorization": f"Bearer {token_provider()}",
+                        "User-Agent": user_agent(),
+                    },
+                    allow_redirects=True,
+                    timeout=settings().application_version_timeout,
+                    proxies={"http": proxy, "https": proxy} if proxy else None,
+                    verify=ssl_verify,
+                    stream=True,
+                ) as response:
+                    if response.status_code == HTTPStatus.NOT_FOUND:
+                        raise NotFoundException(
+                            status=HTTPStatus.NOT_FOUND.value,
+                            reason=(
+                                f"Document '{document_name}' not found for application "
+                                f"'{self.application_id}' version '{self.application_version}'"
+                            ),
+                        )
+                    if response.status_code >= HTTPStatus.INTERNAL_SERVER_ERROR:
+                        raise ServiceException(status=response.status_code, reason=response.reason)
+                    response.raise_for_status()
+                    with destination_path.open("wb") as out_file:
+                        for chunk in response.iter_content(chunk_size=_DOCUMENT_DOWNLOAD_CHUNK_SIZE):
+                            if chunk:
+                                out_file.write(chunk)
+            except requests.Timeout as e:
+                raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request timed out") from e
+            except requests.ConnectionError as e:
+                raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Connection failed") from e
+
+        Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().application_version_retry_attempts),
+            wait=wait_exponential_jitter(
+                initial=settings().application_version_retry_wait_min,
+                max=settings().application_version_retry_wait_max,
+            ),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(stream_once)
         return destination_path
 
 
