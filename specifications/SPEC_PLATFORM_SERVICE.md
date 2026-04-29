@@ -82,7 +82,7 @@ platform/
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`, `artifact()`, `get_artifact_download_url()`, `ensure_artifacts_downloaded()` |
 | `Artifact`       | Class  | Per-artifact handle for resolving fresh presigned download URLs via the `/api/v1/runs/{run_id}/artifacts/{artifact_id}/file` endpoint | `get_download_url()`                                                          |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`, `documents()`             |
-| `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`                                   |
+| `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`, `read_content()`                 |
 | `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
 
@@ -306,7 +306,7 @@ class Versions:
     def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
         """Retrieves details for a specific application version."""
 
-    def documents(self, application_version: ApplicationVersion | str) -> "Documents":
+    def documents(self, application_id: str, application_version: ApplicationVersion | str) -> "Documents":
         """Returns a Documents resource bound to the given application version."""
 ```
 
@@ -315,7 +315,7 @@ class Documents:
     """Resource class for retrieving release documents attached to an application version.
 
     Backed by ``GET /api/v1/applications/{application_id}/versions/{version}/documents``
-    and the per-document ``/{name}`` and ``/{name}/file`` endpoints.
+    and the per-document ``/{name}``, ``/{name}/file``, and ``/{name}/content`` endpoints.
     The public API exposes only documents with ``visibility=public`` and ``status=uploaded``.
     """
 
@@ -355,6 +355,20 @@ class Documents:
 
         Note: Document downloads do not carry a CRC32C checksum (unlike run artifacts);
         integrity is bounded by HTTPS transport and the signed-URL lifetime.
+
+        Raises:
+            NotFoundException: When the document does not exist, is not public, or is not uploaded.
+        """
+
+    def read_content(self, document_name: str) -> bytes:
+        """Fetches the document's raw content into memory.
+
+        Issues a single ``GET`` against the ``/content`` endpoint and follows the
+        platform ``307`` redirect to a short-lived GCS signed URL. Unlike ``/file``,
+        no ``Content-Disposition`` override is set — GCS serves the body with its
+        stored ``Content-Type`` and ``Cache-Control: no-store``. Intended for small
+        documents (JSON manifests, license text, etc.) where holding the bytes in
+        memory is appropriate; prefer ``download_to_path`` for large files.
 
         Raises:
             NotFoundException: When the document does not exist, is not public, or is not uploaded.
