@@ -927,6 +927,7 @@ def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
         termination_reason=ItemTerminationReason.SUCCEEDED,
         error_message=None,
         error_code=None,
+        input_artifacts=[],
         output_artifacts=[],
     )
 
