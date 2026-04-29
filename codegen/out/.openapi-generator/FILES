@@ -14,6 +14,7 @@ aignx/codegen/models/custom_metadata_update_response.py
 aignx/codegen/models/http_validation_error.py
 aignx/codegen/models/input_artifact.py
 aignx/codegen/models/input_artifact_creation_request.py
+aignx/codegen/models/input_artifact_result_read_response.py
 aignx/codegen/models/item_creation_request.py
 aignx/codegen/models/item_output.py
 aignx/codegen/models/item_result_read_response.py
@@ -37,6 +38,8 @@ aignx/codegen/models/scheduling_response.py
 aignx/codegen/models/user_read_response.py
 aignx/codegen/models/validation_error.py
 aignx/codegen/models/validation_error_loc_inner.py
+aignx/codegen/models/version_document_response.py
+aignx/codegen/models/version_document_visibility.py
 aignx/codegen/models/version_read_response.py
 aignx/codegen/rest.py
 docs/PublicApi.md

@@ -17,22 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List
-from aignx.codegen.models.application_version import ApplicationVersion
+from aignx.codegen.models.version_document_visibility import VersionDocumentVisibility
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationReadResponse(BaseModel):
+class VersionDocumentResponse(BaseModel):
     """
-    Response schema for `List available applications` and `Read Application by Id` endpoints
+    VersionDocumentResponse
     """ # noqa: E501
-    application_id: StrictStr = Field(description="Application ID")
-    name: StrictStr = Field(description="Application display name")
-    regulatory_classes: List[StrictStr] = Field(description="Regulatory classes, to which the applications comply with. Possible values include: RUO, IVDR, FDA.")
-    description: StrictStr = Field(description="Describing what the application can do ")
-    versions: List[ApplicationVersion] = Field(description="All version numbers available to the user")
-    __properties: ClassVar[List[str]] = ["application_id", "name", "regulatory_classes", "description", "versions"]
+    id: StrictStr
+    name: StrictStr
+    mime_type: StrictStr
+    visibility: VersionDocumentVisibility
+    created_at: datetime
+    updated_at: datetime
+    __properties: ClassVar[List[str]] = ["id", "name", "mime_type", "visibility", "created_at", "updated_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -52,7 +54,7 @@ class ApplicationReadResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationReadResponse from a JSON string"""
+        """Create an instance of VersionDocumentResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -73,18 +75,11 @@ class ApplicationReadResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in versions (list)
-        _items = []
-        if self.versions:
-            for _item_versions in self.versions:
-                if _item_versions:
-                    _items.append(_item_versions.to_dict())
-            _dict['versions'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationReadResponse from a dict"""
+        """Create an instance of VersionDocumentResponse from a dict"""
         if obj is None:
             return None
 
@@ -92,11 +87,12 @@ class ApplicationReadResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "application_id": obj.get("application_id"),
+            "id": obj.get("id"),
             "name": obj.get("name"),
-            "regulatory_classes": obj.get("regulatory_classes"),
-            "description": obj.get("description"),
-            "versions": [ApplicationVersion.from_dict(_item) for _item in obj["versions"]] if obj.get("versions") is not None else None
+            "mime_type": obj.get("mime_type"),
+            "visibility": obj.get("visibility"),
+            "created_at": obj.get("created_at"),
+            "updated_at": obj.get("updated_at")
         })
         return _obj
 

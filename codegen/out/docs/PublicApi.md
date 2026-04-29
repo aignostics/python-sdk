@@ -12,9 +12,13 @@ Method | HTTP request | Description
 [**get_item_by_run_v1_runs_run_id_items_external_id_get**](PublicApi.md#get_item_by_run_v1_runs_run_id_items_external_id_get) | **GET** /v1/runs/{run_id}/items/{external_id} | Get Item By Run
 [**get_me_v1_me_get**](PublicApi.md#get_me_v1_me_get) | **GET** /v1/me | Get current user
 [**get_run_v1_runs_run_id_get**](PublicApi.md#get_run_v1_runs_run_id_get) | **GET** /v1/runs/{run_id} | Get run details
+[**get_version_document**](PublicApi.md#get_version_document) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name} | Get version document metadata
+[**get_version_document_content**](PublicApi.md#get_version_document_content) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name}/content | Stream version document content (programmatic)
+[**get_version_document_file**](PublicApi.md#get_version_document_file) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name}/file | Download version document (browser)
 [**list_applications_v1_applications_get**](PublicApi.md#list_applications_v1_applications_get) | **GET** /v1/applications | List available applications
 [**list_run_items_v1_runs_run_id_items_get**](PublicApi.md#list_run_items_v1_runs_run_id_items_get) | **GET** /v1/runs/{run_id}/items | List Run Items
 [**list_runs_v1_runs_get**](PublicApi.md#list_runs_v1_runs_get) | **GET** /v1/runs | List Runs
+[**list_version_documents**](PublicApi.md#list_version_documents) | **GET** /v1/applications/{application_id}/versions/{version}/documents | List version documents
 [**put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put**](PublicApi.md#put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/items/{external_id}/custom-metadata | Put Item Custom Metadata By Run
 [**put_run_custom_metadata_v1_runs_run_id_custom_metadata_put**](PublicApi.md#put_run_custom_metadata_v1_runs_run_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/custom-metadata | Put Run Custom Metadata
 [**read_application_by_id_v1_applications_application_id_get**](PublicApi.md#read_application_by_id_v1_applications_application_id_get) | **GET** /v1/applications/{application_id} | Read Application By Id
@@ -644,6 +648,243 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_version_document**
+> VersionDocumentResponse get_version_document(application_id, version, name)
+
+Get version document metadata
+
+Return metadata for a single public document attached to an application version.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.version_document_response import VersionDocumentResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    application_id = 'application_id_example' # str | 
+    version = 'version_example' # str | 
+    name = 'name_example' # str | 
+
+    try:
+        # Get version document metadata
+        api_response = api_instance.get_version_document(application_id, version, name)
+        print("The response of PublicApi->get_version_document:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_version_document: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **application_id** | **str**|  | 
+ **version** | **str**|  | 
+ **name** | **str**|  | 
+
+### Return type
+
+[**VersionDocumentResponse**](VersionDocumentResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**404** | Document not found, not public, or version not accessible |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_version_document_content**
+> get_version_document_content(application_id, version, name)
+
+Stream version document content (programmatic)
+
+307 redirect to a short-lived GCS signed URL for streaming document content.  Unlike ``/file``, no ``Content-Disposition`` override is set — GCS serves the object body with its stored ``Content-Type``. Intended for programmatic clients that follow redirects and consume the content directly. Response carries ``Cache-Control: no-store``.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    application_id = 'application_id_example' # str | 
+    version = 'version_example' # str | 
+    name = 'name_example' # str | 
+
+    try:
+        # Stream version document content (programmatic)
+        api_instance.get_version_document_content(application_id, version, name)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_version_document_content: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **application_id** | **str**|  | 
+ **version** | **str**|  | 
+ **name** | **str**|  | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**307** | Temporary redirect to signed GCS URL; GCS serves the object with its stored Content-Type |  -  |
+**404** | Document not found, not public, or version not accessible |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_version_document_file**
+> get_version_document_file(application_id, version, name)
+
+Download version document (browser)
+
+307 redirect to a short-lived GCS signed URL for downloading a document.  The signed URL includes ``response-content-disposition=attachment; filename=\"<name>\"`` so browsers prompt a save-as dialog rather than rendering inline. Response carries ``Cache-Control: no-store``.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    application_id = 'application_id_example' # str | 
+    version = 'version_example' # str | 
+    name = 'name_example' # str | 
+
+    try:
+        # Download version document (browser)
+        api_instance.get_version_document_file(application_id, version, name)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_version_document_file: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **application_id** | **str**|  | 
+ **version** | **str**|  | 
+ **name** | **str**|  | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**307** | Temporary redirect to signed GCS URL with Content-Disposition: attachment |  -  |
+**404** | Document not found, not public, or version not accessible |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **list_applications_v1_applications_get**
 > List[ApplicationReadShortResponse] list_applications_v1_applications_get(page=page, page_size=page_size, sort=sort)
 
@@ -907,6 +1148,85 @@ Name | Type | Description  | Notes
 |-------------|-------------|------------------|
 **200** | Successful Response |  -  |
 **404** | Run not found |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **list_version_documents**
+> List[VersionDocumentResponse] list_version_documents(application_id, version)
+
+List version documents
+
+List public documents attached to an application version.  Returns only documents with ``visibility=public`` and ``status=uploaded``.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.version_document_response import VersionDocumentResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    application_id = 'application_id_example' # str | 
+    version = 'version_example' # str | 
+
+    try:
+        # List version documents
+        api_response = api_instance.list_version_documents(application_id, version)
+        print("The response of PublicApi->list_version_documents:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->list_version_documents: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **application_id** | **str**|  | 
+ **version** | **str**|  | 
+
+### Return type
+
+[**List[VersionDocumentResponse]**](VersionDocumentResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**404** | Application version not found or not accessible |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

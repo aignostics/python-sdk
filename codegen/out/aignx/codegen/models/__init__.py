@@ -9,6 +9,7 @@ from .scheduling_request import *
 from .organization_read_response import *
 from .validation_error import *
 from .application_read_response import *
+from .version_document_response import *
 from .application_read_short_response import *
 from .output_artifact_scope import *
 from .scheduling_response import *
@@ -20,8 +21,10 @@ from .auth0_organization import *
 from .application_version import *
 from .http_validation_error import *
 from .custom_metadata_update_response import *
+from .version_document_visibility import *
 from .user_read_response import *
 from .run_termination_reason import *
+from .input_artifact_result_read_response import *
 from .input_artifact import *
 from .output_artifact_result_read_response import *
 from .version_read_response import *
