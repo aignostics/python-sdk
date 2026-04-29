@@ -213,7 +213,7 @@ def documents(mock_api: Mock) -> Documents:
     configuration.proxy = None
     configuration.ssl_ca_cert = None
     configuration.verify_ssl = True
-    configuration.token_provider = lambda: "test-token"  # noqa: PIE807
+    configuration.token_provider = lambda: "test-token"
     mock_api.api_client = MagicMock()
     mock_api.api_client.configuration = configuration
     return Documents(mock_api, application_id="heta", application_version="1.0.0")
@@ -247,9 +247,7 @@ def test_documents_list_returns_empty_list(documents: Documents, mock_api: Mock)
 
 
 @pytest.mark.unit
-def test_documents_list_uses_cache_then_bypasses_with_nocache(
-    documents: Documents, mock_api: Mock
-) -> None:
+def test_documents_list_uses_cache_then_bypasses_with_nocache(documents: Documents, mock_api: Mock) -> None:
     """list() caches results across calls; nocache=True forces a fresh call."""
     mock_api.list_version_documents.return_value = [_make_doc("a.pdf")]
 
@@ -298,16 +296,12 @@ def test_documents_get_download_url_resolves_redirect(documents: Documents) -> N
     mock_response.__enter__.return_value = mock_response
     mock_response.__exit__.return_value = False
 
-    with patch(
-        "aignostics.platform.resources.applications.requests.get", return_value=mock_response
-    ) as mock_get:
+    with patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response) as mock_get:
         url = documents.get_download_url("output_description.pdf")
 
     assert url == "https://signed.example/blob?token=abc"
     called_url = mock_get.call_args.args[0]
-    assert called_url.endswith(
-        "/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file"
-    )
+    assert called_url.endswith("/api/v1/applications/heta/versions/1.0.0/documents/output_description.pdf/file")
     assert mock_get.call_args.kwargs["allow_redirects"] is False
 
 
@@ -320,9 +314,7 @@ def test_documents_get_content_url_resolves_redirect(documents: Documents) -> No
     mock_response.__enter__.return_value = mock_response
     mock_response.__exit__.return_value = False
 
-    with patch(
-        "aignostics.platform.resources.applications.requests.get", return_value=mock_response
-    ) as mock_get:
+    with patch("aignostics.platform.resources.applications.requests.get", return_value=mock_response) as mock_get:
         url = documents.get_content_url("output_description.pdf")
 
     assert url == "https://signed.example/content?token=def"
@@ -349,9 +341,7 @@ def test_documents_get_download_url_404_raises_not_found(documents: Documents) -
 
 
 @pytest.mark.unit
-def test_documents_download_to_path_writes_file(
-    documents: Documents, tmp_path: Path
-) -> None:
+def test_documents_download_to_path_writes_file(documents: Documents, tmp_path: Path) -> None:
     """download_to_path() resolves the redirect and streams the body to disk."""
     redirect_response = MagicMock()
     redirect_response.status_code = HTTPStatus.TEMPORARY_REDIRECT

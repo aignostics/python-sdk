@@ -20,6 +20,7 @@ from aignostics.platform import (
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
     Client,
+    Documents,
     ForbiddenException,
     NotFoundException,
     RunState,
@@ -1563,7 +1564,7 @@ _APPLICATION_VERSION_ID_HELP = (
 )
 
 
-def _resolve_documents(application_version_id: str) -> tuple[str, str, "object"]:
+def _resolve_documents(application_version_id: str) -> tuple[str, str, Documents]:
     """Resolve a CLI APPLICATION_VERSION_ID into (application_id, version_number, Documents).
 
     Returns:
@@ -1589,9 +1590,7 @@ def _resolve_documents(application_version_id: str) -> tuple[str, str, "object"]
 
 @document_app.command("list")
 def application_version_document_list(
-    application_version_id: Annotated[
-        str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)
-    ],
+    application_version_id: Annotated[str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)],
     format: Annotated[  # noqa: A002
         str,
         typer.Option(help="Output format: 'text' (default) or 'json'"),
@@ -1602,9 +1601,7 @@ def application_version_document_list(
         application_id, version_number, documents = _resolve_documents(application_version_id)
         items = documents.list()
     except NotFoundException as e:
-        message = (
-            f"No release documents found: application version '{application_version_id}' is unavailable."
-        )
+        message = f"No release documents found: application version '{application_version_id}' is unavailable."
         logger.warning("{} ({})", message, e)
         if format == "json":
             print(json.dumps({"error": "not_found", "message": message}), file=sys.stderr)
@@ -1616,10 +1613,7 @@ def application_version_document_list(
         if format == "json":
             print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
         else:
-            console.print(
-                f"[error]Error:[/error] Failed to list release documents for "
-                f"'{application_version_id}': {e}"
-            )
+            console.print(f"[error]Error:[/error] Failed to list release documents for '{application_version_id}': {e}")
         sys.exit(1)
 
     if format == "json":
@@ -1627,9 +1621,7 @@ def application_version_document_list(
         print(json.dumps(payload, indent=2, default=str))
         return
 
-    console.print(
-        f"[bold]Release documents for {application_id} {version_number}[/bold]"
-    )
+    console.print(f"[bold]Release documents for {application_id} {version_number}[/bold]")
     console.print("=" * 80)
     if not items:
         console.print("[dim]No public release documents are attached to this version.[/dim]")
@@ -1644,9 +1636,7 @@ def application_version_document_list(
 
 @document_app.command("describe")
 def application_version_document_describe(
-    application_version_id: Annotated[
-        str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)
-    ],
+    application_version_id: Annotated[str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)],
     document_name: Annotated[str, typer.Argument(..., help="Document filename (e.g. 'output_description.pdf').")],
     format: Annotated[  # noqa: A002
         str,
@@ -1658,10 +1648,7 @@ def application_version_document_describe(
         application_id, version_number, documents = _resolve_documents(application_version_id)
         doc = documents.details(document_name)
     except NotFoundException:
-        message = (
-            f"Document '{document_name}' not found for application version "
-            f"'{application_version_id}'."
-        )
+        message = f"Document '{document_name}' not found for application version '{application_version_id}'."
         logger.warning(message)
         if format == "json":
             print(json.dumps({"error": "not_found", "message": message}), file=sys.stderr)
@@ -1669,9 +1656,7 @@ def application_version_document_describe(
             console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
     except Exception as e:
-        logger.exception(
-            f"Failed to describe release document '{document_name}' for '{application_version_id}'"
-        )
+        logger.exception(f"Failed to describe release document '{document_name}' for '{application_version_id}'")
         if format == "json":
             print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
         else:
@@ -1685,9 +1670,7 @@ def application_version_document_describe(
         print(json.dumps(doc.model_dump(mode="json"), indent=2, default=str))
         return
 
-    console.print(
-        f"[bold]Release document '{doc.name}' on {application_id} {version_number}[/bold]"
-    )
+    console.print(f"[bold]Release document '{doc.name}' on {application_id} {version_number}[/bold]")
     console.print("=" * 80)
     console.print(f"[bold]Id:[/bold] {doc.id}")
     console.print(f"[bold]Name:[/bold] {doc.name}")
@@ -1699,9 +1682,7 @@ def application_version_document_describe(
 
 @document_app.command("download")
 def application_version_document_download(
-    application_version_id: Annotated[
-        str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)
-    ],
+    application_version_id: Annotated[str, typer.Argument(..., help=_APPLICATION_VERSION_ID_HELP)],
     document_name: Annotated[str, typer.Argument(..., help="Document filename (e.g. 'output_description.pdf').")],
     output: Annotated[
         Path,
@@ -1727,17 +1708,12 @@ def application_version_document_download(
         _application_id, _version_number, documents = _resolve_documents(application_version_id)
         written = documents.download_to_path(document_name, output)
     except NotFoundException:
-        message = (
-            f"Document '{document_name}' not found for application version "
-            f"'{application_version_id}'."
-        )
+        message = f"Document '{document_name}' not found for application version '{application_version_id}'."
         logger.warning(message)
         console.print(f"[warning]Warning:[/warning] {message}")
         sys.exit(2)
     except Exception as e:
-        logger.exception(
-            f"Failed to download release document '{document_name}' for '{application_version_id}'"
-        )
+        logger.exception(f"Failed to download release document '{document_name}' for '{application_version_id}'")
         console.print(
             f"[error]Error:[/error] Failed to download release document "
             f"'{document_name}' for '{application_version_id}': {e}"

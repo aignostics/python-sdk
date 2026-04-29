@@ -1698,9 +1698,7 @@ def _make_document_stub(name: str = "output_description.pdf") -> MagicMock:
 
 
 @pytest.mark.unit
-def test_cli_application_version_document_list_success(
-    runner: CliRunner, record_property
-) -> None:
+def test_cli_application_version_document_list_success(runner: CliRunner, record_property) -> None:
     """`application version document list` prints document metadata."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
     fake_documents = MagicMock()
@@ -1726,9 +1724,7 @@ def test_cli_application_version_document_list_success(
 
 
 @pytest.mark.unit
-def test_cli_application_version_document_describe_success(
-    runner: CliRunner, record_property
-) -> None:
+def test_cli_application_version_document_describe_success(runner: CliRunner, record_property) -> None:
     """`application version document describe` prints metadata for a single document."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-02")
     fake_documents = MagicMock()
@@ -1753,9 +1749,7 @@ def test_cli_application_version_document_describe_success(
 
 
 @pytest.mark.unit
-def test_cli_application_version_document_describe_not_found(
-    runner: CliRunner, record_property
-) -> None:
+def test_cli_application_version_document_describe_not_found(runner: CliRunner, record_property) -> None:
     """`application version document describe` exits 2 with a clear message on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
     from aignx.codegen.exceptions import NotFoundException as ApiNotFound
@@ -1780,9 +1774,7 @@ def test_cli_application_version_document_describe_not_found(
 
 
 @pytest.mark.unit
-def test_cli_application_version_document_download_success(
-    runner: CliRunner, tmp_path: Path, record_property
-) -> None:
+def test_cli_application_version_document_download_success(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """`application version document download` writes the file and prints the destination."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
     fake_documents = MagicMock()
@@ -1815,4 +1807,3 @@ def test_cli_application_version_document_download_success(
     fake_documents.download_to_path.assert_called_once()
     args, _ = fake_documents.download_to_path.call_args
     assert args[0] == "output_description.pdf"
-
