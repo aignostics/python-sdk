@@ -27,10 +27,12 @@ from aignostics.platform.resources.applications import (
 from aignostics.platform.resources.utils import PAGE_SIZE
 
 API_ERROR = "API error"
+API_REASON_NOT_FOUND = "Not Found"
 
 DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
+DOCUMENT_MISSING_PDF = "missing.pdf"
 DOC_FILENAME_A = "a.pdf"
-
+REQUESTS_GET_PATCH_TARGET = "aignostics.platform.resources.applications.requests.get"
 
 @pytest.fixture
 def mock_api() -> Mock:
@@ -287,10 +289,10 @@ def test_documents_details_returns_wrapped_model(documents: Documents, mock_api:
 @pytest.mark.unit
 def test_documents_details_propagates_not_found(documents: Documents, mock_api: Mock) -> None:
     """Documents.details() propagates a 404 NotFoundException from the codegen client."""
-    mock_api.get_version_document.side_effect = NotFoundException(status=404, reason="Not Found")
+    mock_api.get_version_document.side_effect = NotFoundException(status=404, reason=API_REASON_NOT_FOUND)
 
     with pytest.raises(NotFoundException):
-        documents.details("missing.pdf")
+        documents.details(DOCUMENT_MISSING_PDF)
 
 
 @pytest.mark.unit
@@ -304,7 +306,7 @@ def test_documents_download_to_path_writes_file(documents: Documents, tmp_path: 
     body_response.__exit__.return_value = False
 
     with patch(
-        "aignostics.platform.resources.applications.requests.get",
+        REQUESTS_GET_PATCH_TARGET,
         return_value=body_response,
     ) as mock_get:
         result = documents.download_to_path(DOCUMENT_OUTPUT_DESCRIPTION_PDF, tmp_path)
@@ -325,15 +327,15 @@ def test_documents_download_to_path_404_raises_not_found(documents: Documents, t
     """A 404 from the documents endpoint is mapped to NotFoundException."""
     response = MagicMock()
     response.status_code = HTTPStatus.NOT_FOUND
-    response.reason = "Not Found"
+    response.reason = API_REASON_NOT_FOUND
     response.__enter__.return_value = response
     response.__exit__.return_value = False
 
     with (
-        patch("aignostics.platform.resources.applications.requests.get", return_value=response),
+        patch(REQUESTS_GET_PATCH_TARGET, return_value=response),
         pytest.raises(NotFoundException),
     ):
-        documents.download_to_path("missing.pdf", tmp_path)
+        documents.download_to_path(DOCUMENT_MISSING_PDF, tmp_path)
 
 
 @pytest.mark.unit
@@ -347,7 +349,7 @@ def test_documents_read_content_returns_bytes(documents: Documents) -> None:
     body_response.__exit__.return_value = False
 
     with patch(
-        "aignostics.platform.resources.applications.requests.get",
+        REQUESTS_GET_PATCH_TARGET,
         return_value=body_response,
     ) as mock_get:
         result = documents.read_content(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
@@ -366,15 +368,15 @@ def test_documents_read_content_404_raises_not_found(documents: Documents) -> No
     """A 404 from the /content endpoint is mapped to NotFoundException."""
     response = MagicMock()
     response.status_code = HTTPStatus.NOT_FOUND
-    response.reason = "Not Found"
+    response.reason = API_REASON_NOT_FOUND
     response.__enter__.return_value = response
     response.__exit__.return_value = False
 
     with (
-        patch("aignostics.platform.resources.applications.requests.get", return_value=response),
+        patch(REQUESTS_GET_PATCH_TARGET, return_value=response),
         pytest.raises(NotFoundException),
     ):
-        documents.read_content("missing.pdf")
+        documents.read_content(DOCUMENT_MISSING_PDF)
 
 
 @pytest.mark.unit
