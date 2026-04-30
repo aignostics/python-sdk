@@ -1696,14 +1696,12 @@ def _make_document_stub(name: str = DOCUMENT_OUTPUT_DESCRIPTION_PDF) -> MagicMoc
     stub.id = "11111111-1111-1111-1111-111111111111"
     stub.name = name
     stub.mime_type = "application/pdf"  # NOSONAR python:S1192: standard MIME type literal is clearer than a constant
-    stub.visibility = "public"
     stub.created_at = datetime(2026, 1, 1, 12, 0, tzinfo=UTC)
     stub.updated_at = datetime(2026, 1, 2, 12, 0, tzinfo=UTC)
     stub.model_dump.return_value = {
         "id": stub.id,
         "name": stub.name,
         "mime_type": stub.mime_type,
-        "visibility": stub.visibility,
         "created_at": stub.created_at.isoformat(),
         "updated_at": stub.updated_at.isoformat(),
     }
@@ -1720,9 +1718,6 @@ def test_cli_application_version_document_list_success(runner: CliRunner, record
         _make_document_stub(DOCUMENT_MODEL_CARD_PDF),
     ]
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1733,7 +1728,7 @@ def test_cli_application_version_document_list_success(runner: CliRunner, record
     assert DOCUMENT_OUTPUT_DESCRIPTION_PDF in output
     assert DOCUMENT_MODEL_CARD_PDF in output
     assert "application/pdf" in output  # NOSONAR python:S1192: standard MIME type literal is clearer than a constant
-    fake_client.applications.versions.documents.assert_called_once_with("heta", DOCUMENT_LATEST_VERSION_NUMBER)
+    fake_client.applications.versions.documents.assert_called_once_with("heta", None)
 
 
 @pytest.mark.unit
@@ -1748,15 +1743,22 @@ def test_cli_application_version_document_describe_success(runner: CliRunner, re
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
             cli,
-            ["application", "version", "document", "describe", "heta:1.0.0", DOCUMENT_OUTPUT_DESCRIPTION_PDF],
+            [
+                "application",
+                "version",
+                "document",
+                "describe",
+                "heta",
+                DOCUMENT_OUTPUT_DESCRIPTION_PDF,
+                "--application-version",
+                DOCUMENT_LATEST_VERSION_NUMBER,
+            ],
         )
 
     assert result.exit_code == 0
     output = normalize_output(result.output)
     assert DOCUMENT_OUTPUT_DESCRIPTION_PDF in output
     assert "application/pdf" in output  # NOSONAR python:S1192: standard MIME type literal is clearer than a constant
-    # Explicit version supplied via "heta:1.0.0", so latest() should NOT be called.
-    fake_client.applications.versions.latest.assert_not_called()
     fake_client.applications.versions.documents.assert_called_once_with("heta", DOCUMENT_LATEST_VERSION_NUMBER)
     fake_documents.details.assert_called_once_with(DOCUMENT_OUTPUT_DESCRIPTION_PDF)
 
@@ -1770,9 +1772,6 @@ def test_cli_application_version_document_describe_not_found(runner: CliRunner, 
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1794,9 +1793,6 @@ def test_cli_application_version_document_download_success(runner: CliRunner, tm
     expected_path = tmp_path / DOCUMENT_OUTPUT_DESCRIPTION_PDF
     fake_documents.download_to_path.return_value = expected_path
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1832,9 +1828,6 @@ def test_cli_application_version_document_list_json_success(runner: CliRunner, r
         _make_document_stub(DOCUMENT_MODEL_CARD_PDF),
     ]
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1858,9 +1851,6 @@ def test_cli_application_version_document_list_json_empty(runner: CliRunner, rec
     fake_documents = MagicMock()
     fake_documents.list.return_value = []
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1872,11 +1862,12 @@ def test_cli_application_version_document_list_json_empty(runner: CliRunner, rec
 
 @pytest.mark.unit
 def test_cli_application_version_document_list_resolve_not_found_text(runner: CliRunner, record_property) -> None:
-    """`application version document list` exits 2 when no versions exist (text format)."""
+    """`application version document list` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
+    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+
     fake_client = MagicMock()
-    # `latest()` returning None triggers `_resolve_documents` to raise NotFoundException.
-    fake_client.applications.versions.latest.return_value = None
+    fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(cli, ["application", "version", "document", "list", "heta"])
@@ -1884,15 +1875,17 @@ def test_cli_application_version_document_list_resolve_not_found_text(runner: Cl
     assert result.exit_code == 2
     output = normalize_output(result.output)
     assert "No release documents found" in output
-    assert "'heta'" in output
+    assert "heta" in output
 
 
 @pytest.mark.unit
 def test_cli_application_version_document_list_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`application version document list --format json` emits structured error on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
+    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+
     fake_client = MagicMock()
-    fake_client.applications.versions.latest.return_value = None
+    fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(cli, ["application", "version", "document", "list", "heta", "--format", "json"])
@@ -1910,9 +1903,6 @@ def test_cli_application_version_document_list_failed_text(runner: CliRunner, re
     fake_documents = MagicMock()
     fake_documents.list.side_effect = RuntimeError(DOCUMENT_TEST_FAILURE_MESSAGE)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1931,9 +1921,6 @@ def test_cli_application_version_document_list_failed_json(runner: CliRunner, re
     fake_documents = MagicMock()
     fake_documents.list.side_effect = RuntimeError(DOCUMENT_TEST_FAILURE_MESSAGE)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -1962,8 +1949,10 @@ def test_cli_application_version_document_describe_json_success(runner: CliRunne
                 "version",
                 "document",
                 "describe",
-                "heta:1.0.0",
+                "heta",
                 DOCUMENT_OUTPUT_DESCRIPTION_PDF,
+                "--application-version",
+                DOCUMENT_LATEST_VERSION_NUMBER,
                 "--format",
                 "json",
             ],
@@ -1975,15 +1964,16 @@ def test_cli_application_version_document_describe_json_success(runner: CliRunne
     assert (
         payload["mime_type"] == "application/pdf"
     )  # NOSONAR python:S1192: standard MIME type literal is clearer than a constant
-    assert payload["visibility"] == "public"
 
 
 @pytest.mark.unit
 def test_cli_application_version_document_describe_resolve_not_found_text(runner: CliRunner, record_property) -> None:
     """`describe` exits 2 when the application version cannot be resolved (text format)."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+
     fake_client = MagicMock()
-    fake_client.applications.versions.latest.return_value = None
+    fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
@@ -2000,8 +1990,10 @@ def test_cli_application_version_document_describe_resolve_not_found_text(runner
 def test_cli_application_version_document_describe_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`describe --format json` emits structured error when version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+
     fake_client = MagicMock()
-    fake_client.applications.versions.latest.return_value = None
+    fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
@@ -2033,9 +2025,6 @@ def test_cli_application_version_document_describe_not_found_json(runner: CliRun
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -2066,9 +2055,6 @@ def test_cli_application_version_document_describe_failed_text(runner: CliRunner
     fake_documents = MagicMock()
     fake_documents.details.side_effect = RuntimeError(DOCUMENT_TEST_FAILURE_MESSAGE)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -2090,9 +2076,6 @@ def test_cli_application_version_document_describe_failed_json(runner: CliRunner
     fake_documents = MagicMock()
     fake_documents.details.side_effect = RuntimeError(DOCUMENT_TEST_FAILURE_MESSAGE)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -2122,8 +2105,10 @@ def test_cli_application_version_document_download_resolve_not_found(
 ) -> None:
     """`download` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
+    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+
     fake_client = MagicMock()
-    fake_client.applications.versions.latest.return_value = None
+    fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
         result = runner.invoke(
@@ -2156,9 +2141,6 @@ def test_cli_application_version_document_download_not_found(
     fake_documents = MagicMock()
     fake_documents.download_to_path.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
@@ -2188,9 +2170,6 @@ def test_cli_application_version_document_download_failed(runner: CliRunner, tmp
     fake_documents = MagicMock()
     fake_documents.download_to_path.side_effect = RuntimeError(DOCUMENT_TEST_FAILURE_MESSAGE)
     fake_client = MagicMock()
-    latest_version = MagicMock()
-    latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
-    fake_client.applications.versions.latest.return_value = latest_version
     fake_client.applications.versions.documents.return_value = fake_documents
 
     with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):

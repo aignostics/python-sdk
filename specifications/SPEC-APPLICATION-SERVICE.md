@@ -410,14 +410,14 @@ uvx aignostics application [subcommand] [options]
 - `list`: List all available applications with filtering
 - `describe`: Get detailed information about a specific application
 - `dump-schemata`: Export application schemata
-- `version document list APPLICATION_VERSION_ID`: List public release documents attached to an application version
-- `version document describe APPLICATION_VERSION_ID DOCUMENT_NAME`: Show metadata for a single public release document
-- `version document download APPLICATION_VERSION_ID DOCUMENT_NAME [--output PATH]`: Download a public release document to a local path
+- `version document list`: List public release documents attached to an application version
+- `version document describe`: Show metadata for a single public release document
+- `version document download`: Download a public release document to a local path
 - `run execute`: Combined prepare, upload, and submit workflow
 - `run prepare`: Generate metadata from source directory
 - `run upload`: Upload files to cloud storage
 - `run submit`: Submit application run
-- `run list [--for-organization ORG_ID]`: List application runs; supports listing all runs for an organization with `--for-organization` (only available to org admins)
+- `run list`: List application runs
 - `run describe`: Get detailed run information
 - `run cancel`: Cancel running application
 - `run result download`: Download run results
