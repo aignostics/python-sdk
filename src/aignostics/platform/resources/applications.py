@@ -528,7 +528,8 @@ class Documents:
         proxy = getattr(configuration, "proxy", None)
         return endpoint_url, token_provider, ssl_verify, proxy
 
-    def _stream_document(  # noqa: PLR0913, PLR0917 -- private helper, splitting params would require a thin DTO
+    # Private helper; splitting params would require a thin DTO.
+    def _stream_document(  # noqa: PLR0913, PLR0917
         self,
         url: str,
         write_chunk: t.Callable[[bytes], object],

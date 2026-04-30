@@ -29,6 +29,7 @@ from aignostics.platform.resources.utils import PAGE_SIZE
 API_ERROR = "API error"
 
 DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
+DOC_FILENAME_A = "a.pdf"
 
 
 @pytest.fixture
@@ -225,15 +226,15 @@ def documents(mock_api: Mock) -> Documents:
 def test_documents_list_returns_wrapped_models(documents: Documents, mock_api: Mock) -> None:
     """Documents.list() returns ApplicationVersionDocument instances."""
     mock_api.list_version_documents.return_value = [
-        _make_doc("a.pdf"),
+        _make_doc(DOC_FILENAME_A),
         _make_doc("b.pdf"),
-    ]  # NOSONAR python:S1192: arbitrary placeholder filename, a constant adds no clarity
+    ]
 
     result = documents.list()
 
     assert len(result) == 2
     assert all(isinstance(item, ApplicationVersionDocument) for item in result)
-    assert {d.name for d in result} == {"a.pdf", "b.pdf"}
+    assert {d.name for d in result} == {DOC_FILENAME_A, "b.pdf"}
     assert result[0].visibility == "public"
     mock_api.list_version_documents.assert_called_once()
     call_kwargs = mock_api.list_version_documents.call_args.kwargs
@@ -254,7 +255,7 @@ def test_documents_list_returns_empty_list(documents: Documents, mock_api: Mock)
 @pytest.mark.unit
 def test_documents_list_uses_cache_then_bypasses_with_nocache(documents: Documents, mock_api: Mock) -> None:
     """list() caches results across calls; nocache=True forces a fresh call."""
-    mock_api.list_version_documents.return_value = [_make_doc("a.pdf")]  # NOSONAR python:S1192
+    mock_api.list_version_documents.return_value = [_make_doc(DOC_FILENAME_A)]
 
     # First call hits the API and caches.
     documents.list()
