@@ -39,6 +39,7 @@ from tests.constants_test import (
 )
 
 MESSAGE_RUN_NOT_FOUND = "Warning: Run with ID '4711' not found"
+API_REASON_NOT_FOUND = "Not Found"
 
 TEST_APPLICATION_DEADLINE_SECONDS = 60 * 45  # 45 minutes
 TEST_APPLICATION_DUE_DATE_SECONDS = 60 * 10  # 10 minutes
@@ -1767,7 +1768,7 @@ def test_cli_application_version_document_describe_not_found(runner: CliRunner, 
     from aignx.codegen.exceptions import NotFoundException as ApiNotFound
 
     fake_documents = MagicMock()
-    fake_documents.details.side_effect = ApiNotFound(status=404, reason="Not Found")
+    fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
     latest_version = MagicMock()
     latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
@@ -2030,7 +2031,7 @@ def test_cli_application_version_document_describe_not_found_json(runner: CliRun
     from aignx.codegen.exceptions import NotFoundException as ApiNotFound
 
     fake_documents = MagicMock()
-    fake_documents.details.side_effect = ApiNotFound(status=404, reason="Not Found")
+    fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
     latest_version = MagicMock()
     latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
@@ -2153,7 +2154,7 @@ def test_cli_application_version_document_download_not_found(
     from aignx.codegen.exceptions import NotFoundException as ApiNotFound
 
     fake_documents = MagicMock()
-    fake_documents.download_to_path.side_effect = ApiNotFound(status=404, reason="Not Found")
+    fake_documents.download_to_path.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
     latest_version = MagicMock()
     latest_version.number = DOCUMENT_LATEST_VERSION_NUMBER
