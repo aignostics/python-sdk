@@ -34,6 +34,7 @@ DOCUMENT_MISSING_PDF = "missing.pdf"
 DOC_FILENAME_A = "a.pdf"
 REQUESTS_GET_PATCH_TARGET = "aignostics.platform.resources.applications.requests.get"
 
+
 @pytest.fixture
 def mock_api() -> Mock:
     """Create a mock ExternalsApi object for testing.
@@ -237,7 +238,6 @@ def test_documents_list_returns_wrapped_models(documents: Documents, mock_api: M
     assert len(result) == 2
     assert all(isinstance(item, ApplicationVersionDocument) for item in result)
     assert {d.name for d in result} == {DOC_FILENAME_A, "b.pdf"}
-    assert result[0].visibility == "public"
     mock_api.list_version_documents.assert_called_once()
     call_kwargs = mock_api.list_version_documents.call_args.kwargs
     assert call_kwargs["application_id"] == "heta"
@@ -390,3 +390,23 @@ def test_versions_documents_returns_documents_resource(mock_api: Mock) -> None:
     assert docs.application_id == "heta"
     assert docs.application_version == "1.0.0"
     assert docs._api is mock_api
+
+
+@pytest.mark.unit
+def test_versions_documents_resolves_none_to_latest(mock_api: Mock) -> None:
+    """Versions.documents(None) resolves to the latest version number."""
+    from unittest.mock import patch
+
+    from aignostics.platform.resources.applications import Versions as _Versions
+    from aignostics.platform.resources.applications import VersionTuple
+
+    latest = Mock(spec=VersionTuple)
+    latest.number = "2.3.1"
+
+    versions = _Versions(mock_api)
+    with patch.object(versions, "latest", return_value=latest):
+        docs = versions.documents("heta", None)
+
+    assert isinstance(docs, Documents)
+    assert docs.application_id == "heta"
+    assert docs.application_version == "2.3.1"

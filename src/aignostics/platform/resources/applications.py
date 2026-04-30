@@ -86,6 +86,36 @@ class Versions:
         """
         self._api = api
 
+    def _get_application_version_validated(
+        self, application_id: str, application_version: VersionTuple | str | None
+    ) -> str:
+        """Validate and extract the version string from a VersionTuple or str.
+
+        Args:
+            application_id (str): The ID of the application.
+            application_version (VersionTuple | str | None): The version to validate.
+
+        Returns:
+            str: The validated version string.
+
+        Raises:
+            ValueError: If the version is not a valid semver string.
+            NotFoundException: If the version is None and no versions are found for the application.
+        """
+        # Handle version resolution and validation first (not retried)
+        if application_version is None:
+            application_version = self.latest(application=application_id)
+            if application_version is None:
+                message = f"No versions found for application '{application_id}'."
+                raise NotFoundException(message)
+            application_version = application_version.number
+        elif isinstance(application_version, VersionTuple):
+            application_version = application_version.number
+        elif application_version and not semver.Version.is_valid(application_version):
+            message = f"Invalid version format: '{application_version}' not compliant with semantic versioning."
+            raise ValueError(message)
+        return application_version
+
     def list(self, application: Application | str, nocache: bool = False) -> builtins.list[VersionTuple]:
         """Find all versions for a specific application.
 
@@ -147,18 +177,7 @@ class Versions:
             NotFoundException: If the application or version is not found.
             aignx.codegen.exceptions.ApiException: If the API request fails.
         """
-        # Handle version resolution and validation first (not retried)
-        if application_version is None:
-            application_version = self.latest(application=application_id)
-            if application_version is None:
-                message = f"No versions found for application '{application_id}'."
-                raise NotFoundException(message)
-            application_version = application_version.number
-        elif isinstance(application_version, VersionTuple):
-            application_version = application_version.number
-        elif application_version and not semver.Version.is_valid(application_version):
-            message = f"Invalid version format: '{application_version}' not compliant with semantic versioning."
-            raise ValueError(message)
+        application_version = self._get_application_version_validated(application_id, application_version)
 
         # Make the API call with retry logic and caching
         @cached_operation(ttl=settings().application_version_cache_ttl, use_token=True)
@@ -235,22 +254,20 @@ class Versions:
         sorted_versions = self.list_sorted(application=application, nocache=nocache)
         return sorted_versions[0] if sorted_versions else None
 
-    def documents(self, application_id: str, application_version: VersionTuple | str) -> "Documents":
+    def documents(self, application_id: str, application_version: VersionTuple | str | None) -> "Documents":
         """Returns a Documents resource bound to the given application version.
 
         Args:
             application_id (str): The ID of the application (e.g. "heta").
-            application_version (VersionTuple | str): The application version, either as a
-                VersionTuple or a semantic version string (e.g. "1.0.0").
+            application_version (VersionTuple | str | None): The application version, either as a
+                VersionTuple, a semantic version string (e.g. "1.0.0"), or None to use the latest version.
 
         Returns:
             Documents: A Documents resource bound to the (application_id, version) pair.
         """
-        if isinstance(application_version, VersionTuple):
-            version_number = application_version.number
-        else:
-            version_number = application_version
-        return Documents(self._api, application_id=application_id, application_version=version_number)
+        application_version = self._get_application_version_validated(application_id, application_version)
+
+        return Documents(self._api, application_id=application_id, application_version=application_version)
 
 
 class ApplicationVersionDocument(BaseModel):
@@ -263,7 +280,6 @@ class ApplicationVersionDocument(BaseModel):
     id: str
     name: str
     mime_type: str
-    visibility: str
     created_at: datetime
     updated_at: datetime
 
@@ -283,7 +299,6 @@ class ApplicationVersionDocument(BaseModel):
             id=data.id,
             name=data.name,
             mime_type=data.mime_type,
-            visibility=data.visibility.value if hasattr(data.visibility, "value") else str(data.visibility),
             created_at=data.created_at,
             updated_at=data.updated_at,
         )
@@ -302,17 +317,20 @@ class Documents:
     integrity is bounded by HTTPS transport and the signed-URL lifetime.
     """
 
-    def __init__(self, api: PublicApi, application_id: str, application_version: str) -> None:
+    def __init__(self, api: PublicApi, application_id: str, application_version: str | VersionTuple) -> None:
         """Initializes the Documents resource bound to an application version.
 
         Args:
             api (PublicApi): The configured API client.
             application_id (str): The ID of the application (e.g. "heta").
-            application_version (str): The semantic version number (e.g. "1.0.0").
+            application_version (str | VersionTuple): The semantic version number (e.g. "1.0.0") or a VersionTuple.
         """
         self._api = api
         self.application_id = application_id
-        self.application_version = application_version
+        if isinstance(application_version, str):
+            self.application_version = application_version
+        else:
+            self.application_version = application_version.number
 
     def list(self, nocache: bool = False) -> builtins.list[ApplicationVersionDocument]:
         """List metadata for all public, uploaded release documents for the bound version.
