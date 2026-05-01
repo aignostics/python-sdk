@@ -3,7 +3,7 @@ itemId: SPEC-LAUNCHPAD-STATUS-PAGE
 itemTitle: Per-Environment Betterstack Status Page in Launchpad
 itemType: Software Item Spec
 itemFulfills: SWR-SYSTEM-GUI-STATUS-PAGE-1
-itemIsRelatedTo: SPEC_GUI_SERVICE, SPEC_PLATFORM_SERVICE, SPEC_SYSTEM_SERVICE
+itemIsRelatedTo: SPEC-GUI-SERVICE, SPEC-PLATFORM-SERVICE, SPEC-SYSTEM-SERVICE
 Module: System
 Layer: GUI / Platform Service
 Version: 1.0.0
