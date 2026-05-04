@@ -276,7 +276,7 @@ dev = [
     { name = "tomli", specifier = ">=2.3.0,<3" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915,<7" },
     { name = "types-requests", specifier = ">=2.32.4.20250913,<3" },
-    { name = "uv", specifier = ">=0.11.6" },
+    { name = "uv", specifier = ">=0.9.7" },
     { name = "watchdog", specifier = ">=6.0.0,<7" },
 ]
 
