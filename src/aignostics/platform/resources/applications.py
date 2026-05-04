@@ -437,7 +437,7 @@ class Documents:
 
         Args:
             document_name (str): The document filename.
-            destination (Path | str): Target file path or directory to write into.
+            destination (Path | str): Target directory to write into.
 
         Returns:
             Path: The absolute path to the written file.
@@ -481,10 +481,17 @@ class Documents:
 
         Returns:
             Path: The absolute, parent-created destination path.
+
+        Raises:
+            ValueError: If the destination is an existing file or a non-existent path
+                with an existing parent that is a file.
         """
         destination_path = Path(destination)
-        if destination_path.is_dir() or (not destination_path.exists() and not destination_path.suffix):
-            destination_path /= document_name
+        if destination_path.is_file() or (destination_path.exists() and not destination_path.is_dir()):
+            msg = f"Destination '{destination}' is an existing file. Please provide a directory or a non-existent path."
+            raise ValueError(msg)
+
+        destination_path /= document_name
         destination_path = destination_path.resolve()
         destination_path.parent.mkdir(parents=True, exist_ok=True)
         return destination_path

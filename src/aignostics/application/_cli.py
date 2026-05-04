@@ -1660,8 +1660,8 @@ def application_version_document_download(
         Path,
         typer.Option(
             "--output",
-            help="Destination file path or directory. Defaults to the current working directory.",
-            file_okay=True,
+            help="Destination directory. Defaults to the current working directory.",
+            file_okay=False,
             dir_okay=True,
             writable=True,
             resolve_path=True,

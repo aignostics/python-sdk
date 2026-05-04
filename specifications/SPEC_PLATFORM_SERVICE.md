@@ -306,8 +306,9 @@ class Versions:
     def details(self, application_version: ApplicationVersion | str) -> ApplicationVersion:
         """Retrieves details for a specific application version."""
 
-    def documents(self, application_id: str, application_version: ApplicationVersion | str) -> "Documents":
-        """Returns a Documents resource bound to the given application version."""
+    def documents(self, application_id: str, application_version: VersionTuple | str | None) -> "Documents":
+        """Returns a Documents resource bound to the given application version.
+        Pass None to resolve the latest version automatically."""
 ```
 
 ```python
@@ -340,7 +341,7 @@ class Documents:
         """
 
     def download_to_path(self, document_name: str, destination: Path | str) -> Path:
-        """Downloads the document file to a local path.
+        """Downloads the document file to a local directory.
 
         Issues a single ``GET`` against the ``/file`` endpoint and follows the
         platform ``307`` redirect to a short-lived GCS signed URL, streaming the
@@ -348,8 +349,8 @@ class Documents:
         by ``requests`` and is therefore not forwarded to the storage backend.
         Returns the absolute path to the written file.
 
-        If ``destination`` is a directory, the file is written as
-        ``{destination}/{document_name}``; the requested document name is the
+        ``destination`` must be an existing directory; the file is written as
+        ``{destination}/{document_name}``. The requested document name is the
         canonical filename and is used regardless of any ``Content-Disposition``
         served by the storage backend.
 
@@ -357,6 +358,7 @@ class Documents:
         integrity is bounded by HTTPS transport and the signed-URL lifetime.
 
         Raises:
+            ValueError: When ``destination`` is not an existing directory.
             NotFoundException: When the document does not exist, is not public, or is not uploaded.
         """
 
