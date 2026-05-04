@@ -1,5 +1,157 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [v1.3.0](https://github.com/aignostics/python-sdk/compare/v1.2.0..v1.3.0) - 2026-05-04
+
+### ⛰️  Features
+
+- *(application)* Add OTHER as valid tissue value in GUI metadata grid ([#522](https://github.com/aignostics/python-sdk/pull/522)) - ([15a6063](https://github.com/aignostics/python-sdk/commit/15a60633176dea19d39774743e6cf82b1427b531))
+- *(platform)* Add organization parameter to OAuth authorization redirect ([#550](https://github.com/aignostics/python-sdk/pull/550)) - ([321d4de](https://github.com/aignostics/python-sdk/commit/321d4de86ee42fffddc7e956cac6fd7b018e754e))
+- *(platform)* Add organization parameter to OAuth authorization redirect - ([321d4de](https://github.com/aignostics/python-sdk/commit/321d4de86ee42fffddc7e956cac6fd7b018e754e))
+- *(platform)* Add 'for_organization' to list all runs of an org ([#510](https://github.com/aignostics/python-sdk/pull/510)) - ([3f06055](https://github.com/aignostics/python-sdk/commit/3f06055d240d6fb24e7b32f320265cfe94fe5f2a))
+- *(utils, platform)* Add DEGRADED state to Health model - ([21e95ba](https://github.com/aignostics/python-sdk/commit/21e95ba73d2500dc1cdc9647fc9c393da4b939e0))
+- Oliver Meyer <42039965+olivermeyer@users.noreply.github.com> - ([321d4de](https://github.com/aignostics/python-sdk/commit/321d4de86ee42fffddc7e956cac6fd7b018e754e))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([15a6063](https://github.com/aignostics/python-sdk/commit/15a60633176dea19d39774743e6cf82b1427b531))
+- Make BaseService methods async ([#474](https://github.com/aignostics/python-sdk/pull/474)) - ([84c826a](https://github.com/aignostics/python-sdk/commit/84c826a0f324d8bcd4353d96ec0549ce7ecdeb12))
+
+### 🐛 Bug Fixes
+
+- *(application)* Sort query results by submitted_at before limit - ([a2480ed](https://github.com/aignostics/python-sdk/commit/a2480ed34b7a128ed8ecd3bdfa2e70f7866242a6))
+- *(ci)* Fix publish-release workflow - ([a97ccb9](https://github.com/aignostics/python-sdk/commit/a97ccb903f57e2c7f76b8bc3e9aaf8a6eaeef59e))
+- *(ci)* Pin HETA version in E2E test - ([d124c17](https://github.com/aignostics/python-sdk/commit/d124c173981ddab8aa401de9435c2bdb63e8ffaf))
+- *(ci)* Include v prefix in release_version output for Ketryx - ([6d7720f](https://github.com/aignostics/python-sdk/commit/6d7720fbf87147b9b073f9c66bfcc03f9cebc2db))
+- *(ci)* Replace \d with [0-9] in semver validation grep pattern - ([62aa11f](https://github.com/aignostics/python-sdk/commit/62aa11fc96ec6826e99aef7c8503145fe12bece1))
+- *(ci)* Prevent PYTHONHOME from leaking into nox sub-sessions on Windows - ([adb1fa0](https://github.com/aignostics/python-sdk/commit/adb1fa098b7f26122895d38486e641acfed2b8f1))
+- *(deps)* Update dependency packaging to v26 - ([6f1df69](https://github.com/aignostics/python-sdk/commit/6f1df69cbda038a2647c6b8b4e0e00153098b87b))
+- *(deps)* Update minor and patch dependencies - ([d1f565e](https://github.com/aignostics/python-sdk/commit/d1f565efc81ac3b82658ff872f222bba5f2eaace))
+- *(system)* Replace uptime with psutil - ([346a9f6](https://github.com/aignostics/python-sdk/commit/346a9f67dc15236e4cc4d776eed27c70c16f7176))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([6d7720f](https://github.com/aignostics/python-sdk/commit/6d7720fbf87147b9b073f9c66bfcc03f9cebc2db))
+- Claude Opus 4.6 <noreply@anthropic.com> - ([adb1fa0](https://github.com/aignostics/python-sdk/commit/adb1fa098b7f26122895d38486e641acfed2b8f1))
+- Use renovate vulnerabiltyAlerts ([#549](https://github.com/aignostics/python-sdk/pull/549)) - ([3a77e30](https://github.com/aignostics/python-sdk/commit/3a77e30a28ac67f6e33c1be264c9f17179949177))
+- Update requests dependency to 2.33.0 for CVE-2026-25645 compliance ([#511](https://github.com/aignostics/python-sdk/pull/511)) - ([8ad550d](https://github.com/aignostics/python-sdk/commit/8ad550d252bc14897bfd053c6b614f92f21af96e))
+- Add CVE-2026-4539 to the list of ignored vulnerabilities in noxfile ([#508](https://github.com/aignostics/python-sdk/pull/508)) - ([1e2e0a5](https://github.com/aignostics/python-sdk/commit/1e2e0a5874aa21db5c5289c660e95f93c2ef083b))
+- Prevent microsecond drift when offsets are equal in e2e test ([#504](https://github.com/aignostics/python-sdk/pull/504)) - ([e59a5db](https://github.com/aignostics/python-sdk/commit/e59a5dbf5e7d9c6f6ad50383c2b39f9528745e42))
+- Prevent microsecond drift when offsets are equal in e2e test - ([e59a5db](https://github.com/aignostics/python-sdk/commit/e59a5dbf5e7d9c6f6ad50383c2b39f9528745e42))
+- System health exits with 0 when degraded - ([d24c285](https://github.com/aignostics/python-sdk/commit/d24c28504b525dd8fee91e55c7dc15a354560db9))
+
+### 🚜 Refactor
+
+- *(tests)* Extract submitted_run context manager - ([8cf4c1d](https://github.com/aignostics/python-sdk/commit/8cf4c1d7932d154b118a95ef2b40cf8166ecd53f))
+
+### 📚 Documentation
+
+- *(spec)* Document organization parameter in platform service specification - ([321d4de](https://github.com/aignostics/python-sdk/commit/321d4de86ee42fffddc7e956cac6fd7b018e754e))
+- *(specs)* Document scheduling support in SPEC-APPLICATION-SERVICE - ([299f66b](https://github.com/aignostics/python-sdk/commit/299f66bc3b121c22b29617233cd95461a54e5951))
+- *(specs)* Update specs for for_organization list flag - ([ad8b55c](https://github.com/aignostics/python-sdk/commit/ad8b55c7e2ba8bf7353a9b42c67c962915944bf4))
+- Claude Sonnet 4.6 (1M context) <noreply@anthropic.com> - ([299f66b](https://github.com/aignostics/python-sdk/commit/299f66bc3b121c22b29617233cd95461a54e5951))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([ad8b55c](https://github.com/aignostics/python-sdk/commit/ad8b55c7e2ba8bf7353a9b42c67c962915944bf4))
+- Link risks to SHRs - ([69740ad](https://github.com/aignostics/python-sdk/commit/69740ad385d0d0b38318b7ed381d4fd3bcfe78a9))
+- Remove dates from specs - ([027657b](https://github.com/aignostics/python-sdk/commit/027657b66ff216bee02143f8947f5546b8e530fb))
+- Remove README alpha note and run make docs - ([deef45a](https://github.com/aignostics/python-sdk/commit/deef45af598a7de81ebbbdd5c47d0d46b12ad28e))
+
+### ⚡ Performance
+
+- *(application)* Replace like_regex with == for tag filtering ([#516](https://github.com/aignostics/python-sdk/pull/516)) - ([aacb20a](https://github.com/aignostics/python-sdk/commit/aacb20aed62e4a08d1756282a340946fcdd90b51))
+- *(application)* Replace like_regex with == for tag filtering in application_runs - ([aacb20a](https://github.com/aignostics/python-sdk/commit/aacb20aed62e4a08d1756282a340946fcdd90b51))
+- Claude Opus 4.6 (1M context) <noreply@anthropic.com> - ([aacb20a](https://github.com/aignostics/python-sdk/commit/aacb20aed62e4a08d1756282a340946fcdd90b51))
+
+### 🧪 Testing
+
+- Increase deadline for flaky tests - ([fa90a99](https://github.com/aignostics/python-sdk/commit/fa90a9938ea3138fc084c28689bf3e51865db7ba))
+- Run heavy test on ubuntu-latest only - ([01e1ec2](https://github.com/aignostics/python-sdk/commit/01e1ec2ea0aed60891056da1a87453fd01d3f1f4))
+- Split health CLI format tests from live platform monitoring - ([1360d9a](https://github.com/aignostics/python-sdk/commit/1360d9a2b27defb9a6ab01fffc97ca690e8ee50f))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([1360d9a](https://github.com/aignostics/python-sdk/commit/1360d9a2b27defb9a6ab01fffc97ca690e8ee50f))
+- Increase timeout for test_cli_run_submit_succeeds_when_system_degraded_and_no_force - ([f2fb6d1](https://github.com/aignostics/python-sdk/commit/f2fb6d18d422ec4c706daebf132e0f4a273f3bd7))
+- Limit list operation in CLI test - ([e4dfc98](https://github.com/aignostics/python-sdk/commit/e4dfc98b9f640cc963eeaf33dc7e025be697323c))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(OP-2780)* Pin GitHub Actions to commit SHA - ([48015bc](https://github.com/aignostics/python-sdk/commit/48015bc81b4d98dc9346c580e29bdd60646f80a1))
+- *(deps)* Upgrade pip to 26.1 - ([a86898b](https://github.com/aignostics/python-sdk/commit/a86898bd3539c8d2083db70316094debce43ea2b))
+- *(deps)* Bump nbconvert from 7.17.0 to 7.17.1 ([#553](https://github.com/aignostics/python-sdk/pull/553)) - ([b75aaf2](https://github.com/aignostics/python-sdk/commit/b75aaf23a0bd2deefae3dad1fe9479475b78217b))
+- *(deps)* Bump python-dotenv from 1.2.1 to 1.2.2 ([#554](https://github.com/aignostics/python-sdk/pull/554)) - ([0b5a4c4](https://github.com/aignostics/python-sdk/commit/0b5a4c4fc42e692ab0014fc0b489f4b0d5eb91a7))
+- *(deps)* Bump authlib from 1.6.9 to 1.6.11 ([#544](https://github.com/aignostics/python-sdk/pull/544)) - ([5fd0054](https://github.com/aignostics/python-sdk/commit/5fd005402df4eab3ebd36e9fbab58a51908dbe01))
+- *(deps)* Bump python-multipart from 0.0.22 to 0.0.26 ([#543](https://github.com/aignostics/python-sdk/pull/543)) - ([eeffb59](https://github.com/aignostics/python-sdk/commit/eeffb5974f6d64f056a3734db25458882e168382))
+- *(deps)* Bump cryptography from 46.0.6 to 46.0.7 - ([2aa57c7](https://github.com/aignostics/python-sdk/commit/2aa57c764573781aeeb634c9c4a381f1bfd5ea78))
+- *(deps)* Update github actions - ([a9aa0f9](https://github.com/aignostics/python-sdk/commit/a9aa0f9242dd343bdaec4932bcc09496281c7b6b))
+- *(deps)* Bump pygments from 2.19.2 to 2.20.0 - ([b54f245](https://github.com/aignostics/python-sdk/commit/b54f245e73b94b0bcb687da0e280cd61bd9c0638))
+- *(deps)* Bump cryptography from 46.0.5 to 46.0.6 - ([7950c3f](https://github.com/aignostics/python-sdk/commit/7950c3fdcdc3bb257f4d04681c9cb3352393b31c))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.77 ([#503](https://github.com/aignostics/python-sdk/pull/503)) - ([dc400d1](https://github.com/aignostics/python-sdk/commit/dc400d121c3160ce9fde2b9c8351d411ff93cf2f))
+- *(deps)* Bump pydicom from 3.0.1 to 3.0.2 ([#502](https://github.com/aignostics/python-sdk/pull/502)) - ([cec28b1](https://github.com/aignostics/python-sdk/commit/cec28b19543a8c3655c6ec472b4d765af2d29528))
+- *(deps)* Bump ujson from 5.11.0 to 5.12.0 - ([c2fb241](https://github.com/aignostics/python-sdk/commit/c2fb2414197f35b9dd6f6cc025cd6e321cfbc4f6))
+- *(deps)* Bump pyasn1 from 0.6.2 to 0.6.3 ([#490](https://github.com/aignostics/python-sdk/pull/490)) - ([fe0ca62](https://github.com/aignostics/python-sdk/commit/fe0ca6261148efca9021d988064ee14e4fde0d48))
+- *(deps)* Bump orjson from 3.11.5 to 3.11.6 - ([3f583ca](https://github.com/aignostics/python-sdk/commit/3f583cae2923083acba86eb91b22d2ebdcb2e898))
+- *(deps)* Bump pyjwt from 2.10.1 to 2.12.0 - ([3638ebc](https://github.com/aignostics/python-sdk/commit/3638ebccabb947c7720e61d7752484df75a2b0ed))
+- *(deps)* Bump tornado from 6.5.2 to 6.5.5 - ([f72a15b](https://github.com/aignostics/python-sdk/commit/f72a15bc111a52f30b4bfe7e0527fc2ed0ef271d))
+- Auto-enable very_long_running tests on release branch pushes - ([b0eefcc](https://github.com/aignostics/python-sdk/commit/b0eefcc39a0980a76c7317b2d5ae2f53fe5de745))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([b0eefcc](https://github.com/aignostics/python-sdk/commit/b0eefcc39a0980a76c7317b2d5ae2f53fe5de745))
+- Run CI/CD for PRs targeting release/v* branches - ([2eb340f](https://github.com/aignostics/python-sdk/commit/2eb340f602eab9f1162cc97109c4b600db0d641c))
+- Pass release version to ketryx on release/v* branches - ([50ffbc4](https://github.com/aignostics/python-sdk/commit/50ffbc4f38065b617d78b045f4353d92ec5180b2))
+- Add concurrency to release workflows - ([a2fd65f](https://github.com/aignostics/python-sdk/commit/a2fd65f5c5128ee53342aab88f4e2decdeec5685))
+- Update release strategy - ([c06bf1d](https://github.com/aignostics/python-sdk/commit/c06bf1df9189d6269f194300f820380b67bfafae))
+- Nbconvert - ([b75aaf2](https://github.com/aignostics/python-sdk/commit/b75aaf23a0bd2deefae3dad1fe9479475b78217b))
+- Dependabot[bot] <support@github.com> - ([b75aaf2](https://github.com/aignostics/python-sdk/commit/b75aaf23a0bd2deefae3dad1fe9479475b78217b))
+- Dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com> - ([b75aaf2](https://github.com/aignostics/python-sdk/commit/b75aaf23a0bd2deefae3dad1fe9479475b78217b))
+- Python-dotenv - ([0b5a4c4](https://github.com/aignostics/python-sdk/commit/0b5a4c4fc42e692ab0014fc0b489f4b0d5eb91a7))
+- Authlib - ([5fd0054](https://github.com/aignostics/python-sdk/commit/5fd005402df4eab3ebd36e9fbab58a51908dbe01))
+- Python-multipart - ([eeffb59](https://github.com/aignostics/python-sdk/commit/eeffb5974f6d64f056a3734db25458882e168382))
+- Update CODEOWNERS ([#501](https://github.com/aignostics/python-sdk/pull/501)) - ([e1b914f](https://github.com/aignostics/python-sdk/commit/e1b914fef6014b9379738ae6af8160c32b6efeeb))
+- Moritz Krügener <kruegener@users.noreply.github.com> - ([e1b914f](https://github.com/aignostics/python-sdk/commit/e1b914fef6014b9379738ae6af8160c32b6efeeb))
+- Cryptography - ([2aa57c7](https://github.com/aignostics/python-sdk/commit/2aa57c764573781aeeb634c9c4a381f1bfd5ea78))
+- Pygments - ([b54f245](https://github.com/aignostics/python-sdk/commit/b54f245e73b94b0bcb687da0e280cd61bd9c0638))
+- Bump Python to 3.14.3 - ([442c2a8](https://github.com/aignostics/python-sdk/commit/442c2a8903645b6d0b26b57db2240a19697d9d57))
+- Update .python-version to 3.14.2 - ([aacb20a](https://github.com/aignostics/python-sdk/commit/aacb20aed62e4a08d1756282a340946fcdd90b51))
+- Use SAMIA run artifact file endpoint to download artifacts ([#507](https://github.com/aignostics/python-sdk/pull/507)) - ([d552c89](https://github.com/aignostics/python-sdk/commit/d552c8968890b2c15edf0e6652ef3c2f15684477))
+- Update renovate schedule - ([ba74ebe](https://github.com/aignostics/python-sdk/commit/ba74ebe7e155d6e6e3207ffa46a4387a912b4948))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([dc400d1](https://github.com/aignostics/python-sdk/commit/dc400d121c3160ce9fde2b9c8351d411ff93cf2f))
+- Pydicom - ([cec28b1](https://github.com/aignostics/python-sdk/commit/cec28b19543a8c3655c6ec472b4d765af2d29528))
+- Use scheduling payload when creating runs - ([8f4445b](https://github.com/aignostics/python-sdk/commit/8f4445b9a9847f755a0f8f390223a37af171143c))
+- Bump FastMCP to v3.x and make the necessary changes to support it ([#425](https://github.com/aignostics/python-sdk/pull/425)) - ([2509265](https://github.com/aignostics/python-sdk/commit/2509265b518bf9a4e59d3e0195ebe901a9414a87))
+- Oliver Meyer <42039965+olivermeyer@users.noreply.github.com> - ([2509265](https://github.com/aignostics/python-sdk/commit/2509265b518bf9a4e59d3e0195ebe901a9414a87))
+- Run SonarCloud analysis immediately on PRs - ([d2b4f88](https://github.com/aignostics/python-sdk/commit/d2b4f8872fd0f9612b1a308183f4d75fa2bff56f))
+- Update test suite name when reporting failures - ([e409213](https://github.com/aignostics/python-sdk/commit/e40921358c0b711586cdb2a81f5f72daed13837c))
+- Ujson - ([647f75b](https://github.com/aignostics/python-sdk/commit/647f75b1e151578a2c45a3b9010cbd63d5ebb338))
+- Run all tests even on failure in previous steps ([#481](https://github.com/aignostics/python-sdk/pull/481)) - ([485f86f](https://github.com/aignostics/python-sdk/commit/485f86f5a232538dedfdeb409203da35743241ce))
+- Pyasn1 - ([fe0ca62](https://github.com/aignostics/python-sdk/commit/fe0ca6261148efca9021d988064ee14e4fde0d48))
+- Update Renovate and Dependabot config ([#467](https://github.com/aignostics/python-sdk/pull/467)) - ([4a1ef54](https://github.com/aignostics/python-sdk/commit/4a1ef543d5638cb780930f037bcd7dfb13678f51))
+- Point CICD badge to main branch ([#480](https://github.com/aignostics/python-sdk/pull/480)) - ([e523bce](https://github.com/aignostics/python-sdk/commit/e523bce9f79a3780624717bdd31b7b6ddaf31f18))
+- Orjson - ([889dab7](https://github.com/aignostics/python-sdk/commit/889dab7991e4388d95353dc65be624778cbb1c78))
+- Pyjwt - ([aac87a3](https://github.com/aignostics/python-sdk/commit/aac87a3d7eac8f5c35982af29d9736d6ccfd70fe))
+- Tornado - ([2413fa6](https://github.com/aignostics/python-sdk/commit/2413fa65fa8df68060b3be976150e527cea9ece6))
+
+### 🛡️ Security
+
+- *(deps)* Update dependency lxml to v6.1.0 [security] ([#556](https://github.com/aignostics/python-sdk/pull/556)) - ([12ec0c7](https://github.com/aignostics/python-sdk/commit/12ec0c73f1ca280fba7bb5612ae17dc699547e54))
+- *(deps)* Update dependency uv to v0.11.6 [security] - ([32daf66](https://github.com/aignostics/python-sdk/commit/32daf6636288ec4a72762e73e441d151fdb131a2))
+- *(deps)* Update dependency pytest to v9.0.3 [security] - ([269f072](https://github.com/aignostics/python-sdk/commit/269f07234d357386ac9e79fe432a2bc31b64b1f5))
+- *(deps)* Update dependency pillow to v12.2.0 [security] - ([a510df1](https://github.com/aignostics/python-sdk/commit/a510df1f3fd6c8b131c91414feada9a0d4f2fb93))
+- *(deps)* Update dependency marimo to v0.23.0 [security] - ([1b1b4b6](https://github.com/aignostics/python-sdk/commit/1b1b4b6b4dfdc88a65b745f4ebd6d63995b35b20))
+- *(deps)* Update dependency aiohttp to v3.13.4 [security] - ([61d3472](https://github.com/aignostics/python-sdk/commit/61d34728e23c5ccc5a7801dab13e5bbba34d8b56))
+- *(deps)* Update dependency fastmcp to v3.2.0 [security] - ([a9bccae](https://github.com/aignostics/python-sdk/commit/a9bccaed9037c8f9e06fffc2739259ef6ed8cf50))
+- *(deps)* Update dependency nicegui to v3.9.0 [security] - ([65d553f](https://github.com/aignostics/python-sdk/commit/65d553f1aa592feb2ca01873c7645946c83410e9))
+- *(security)* Prevent script and commit-message injections ([#512](https://github.com/aignostics/python-sdk/pull/512)) - ([24737e0](https://github.com/aignostics/python-sdk/commit/24737e05326a4ee304616fa442f2fa22b46a34f1))
+- Renovate[bot] <29139614+renovate[bot]@users.noreply.github.com> - ([12ec0c7](https://github.com/aignostics/python-sdk/commit/12ec0c73f1ca280fba7bb5612ae17dc699547e54))
+- Claude Sonnet 4.6 <noreply@anthropic.com> - ([24737e0](https://github.com/aignostics/python-sdk/commit/24737e05326a4ee304616fa442f2fa22b46a34f1))
+- Merge pull request #498 from aignostics/renovate/pypi-nicegui-vulnerability - ([65d553f](https://github.com/aignostics/python-sdk/commit/65d553f1aa592feb2ca01873c7645946c83410e9))
+
+### Build
+
+- Decrease renovate noise ([#529](https://github.com/aignostics/python-sdk/pull/529)) - ([d4e2f75](https://github.com/aignostics/python-sdk/commit/d4e2f754912c57f4551b2c981ed8f2461d966dcd))
+
+
+
+* @olivermeyer made their first contribution in [#561](https://github.com/aignostics/python-sdk/pull/561)
+* @renovate[bot] made their first contribution in [#486](https://github.com/aignostics/python-sdk/pull/486)
+* @dependabot[bot] made their first contribution in [#553](https://github.com/aignostics/python-sdk/pull/553)
+* @santi698 made their first contribution in [#550](https://github.com/aignostics/python-sdk/pull/550)
+* @aig-hannes made their first contribution in [#549](https://github.com/aignostics/python-sdk/pull/549)
+* @omid-aignostics made their first contribution in [#522](https://github.com/aignostics/python-sdk/pull/522)
+* @akunft made their first contribution in [#510](https://github.com/aignostics/python-sdk/pull/510)
+* @zonorti made their first contribution in [#515](https://github.com/aignostics/python-sdk/pull/515)
+* @arne-aignx made their first contribution
+* @nahua-aignx made their first contribution in [#514](https://github.com/aignostics/python-sdk/pull/514)
+* @marmarciniak95 made their first contribution in [#511](https://github.com/aignostics/python-sdk/pull/511)
+* @neelay-aign made their first contribution in [#425](https://github.com/aignostics/python-sdk/pull/425)
+
 # [1.2.0](https://github.com/aignostics/python-sdk/compare/v1.1.0..1.2.0) - 2026-03-10
 
 ### ⛰️  Features
