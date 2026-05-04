@@ -339,6 +339,16 @@ def test_documents_download_to_path_404_raises_not_found(documents: Documents, t
 
 
 @pytest.mark.unit
+def test_documents_download_to_path_rejects_non_directory(documents: Documents, tmp_path: Path) -> None:
+    """download_to_path() raises ValueError when destination is not an existing directory."""
+    file_path = tmp_path / "some_file.pdf"
+    file_path.write_bytes(b"content")
+
+    with pytest.raises(ValueError, match="must be a directory"):
+        documents.download_to_path(DOCUMENT_OUTPUT_DESCRIPTION_PDF, file_path)
+
+
+@pytest.mark.unit
 def test_documents_read_content_returns_bytes(documents: Documents) -> None:
     """read_content() follows the /content redirect and returns the body as bytes."""
     body_response = MagicMock()

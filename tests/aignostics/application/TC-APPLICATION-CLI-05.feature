@@ -13,7 +13,6 @@ Feature: Application Version Release Documents
     Given the user has access to an application version with release documents attached
     When the user requests the list of release documents for the application version
     Then the system shall return metadata for documents with public visibility and uploaded status
-    And the system shall exclude documents with internal visibility or pending status
 
   @tests:SPEC-APPLICATION-SERVICE
   @tests:SPEC-PLATFORM-SERVICE
@@ -37,8 +36,8 @@ Feature: Application Version Release Documents
   @tests:SPEC-PLATFORM-SERVICE
   @tests:SWR-APPLICATION-1-3
   @id:TC-APPLICATION-CLI-05-04
-  Scenario: System downloads a release document file to a local path
+  Scenario: System downloads a release document file to a local directory
     Given the user has access to an application version with a public release document
-    When the user requests download of that document to a local destination
+    When the user requests download of that document to a local directory
     Then the system shall follow the platform redirect to the signed storage URL
     And the system shall write the document file using the requested document name
