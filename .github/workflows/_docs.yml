@@ -1,11 +1,11 @@
-name: "> Audit"
+name: "> Docs"
 
 on:
   workflow_call:
     # No secrets needed
 
 jobs:
-  audit:
+  docs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,20 +32,6 @@ jobs:
         shell: bash
         run: uv sync --all-extras --frozen --link-mode=copy
 
-      - name: Audit
+      - name: Docs
         shell: bash
-        run: make audit
-        
-      - name: Upload audit results
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: ${{ always() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
-        with:
-          name: audit-results
-          path: |
-            reports/sbom.json
-            reports/sbom.spdx
-            reports/licenses.csv
-            reports/licenses.json
-            reports/licenses_grouped.json
-            reports/vulnerabilities.json
-          retention-days: 30
+        run: make docs

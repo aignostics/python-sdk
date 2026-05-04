@@ -43,7 +43,9 @@ ENV_VAR_MAPPINGS = {
     f"{__project_name__.upper()}_ENVIRONMENT": lambda env: env,
     "ENV": lambda env: env,
     "VERCEL_ENV": lambda env: env,  # See https://vercel.com/docs/environment-variables/system-environment-variables
-    "RAILWAY_ENVIRONMENT": lambda env: env,  # See https://docs.railway.com/reference/variables#railway-provided-variables
+    "RAILWAY_ENVIRONMENT": lambda env: (
+        env
+    ),  # See https://docs.railway.com/reference/variables#railway-provided-variables
 }
 __env__ = "local"  # Default
 for env_var, mapper in ENV_VAR_MAPPINGS.items():
@@ -65,8 +67,12 @@ if env_file_path:
 
 # Determine __base_url__
 PLATFORM_URL_MAPPINGS = {
-    "VERCEL_URL": lambda url: f"https://{url}",  # See https://vercel.com/docs/environment-variables/system-environment-variables
-    "RAILWAY_PUBLIC_DOMAIN": lambda url: f"https://{url}",  # See https://docs.railway.com/reference/variables#railway-provided-variables
+    "VERCEL_URL": lambda url: (
+        f"https://{url}"
+    ),  # See https://vercel.com/docs/environment-variables/system-environment-variables
+    "RAILWAY_PUBLIC_DOMAIN": lambda url: (
+        f"https://{url}"
+    ),  # See https://docs.railway.com/reference/variables#railway-provided-variables
 }
 __base__url__ = os.getenv(f"{__project_name__.upper()}_BASE_URL")
 if not __base__url__:

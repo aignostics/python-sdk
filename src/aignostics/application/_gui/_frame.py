@@ -66,7 +66,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     raise RuntimeError(message)  # noqa: TRY301
                 for application in applications:
                     with (
-                        ui.item(
+                        ui
+                        .item(
                             on_click=lambda app_id=application.application_id: ui.navigate.to(f"/application/{app_id}")
                         )
                         .mark(f"SIDEBAR_APPLICATION:{application.application_id}")
@@ -143,7 +144,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
                     runs_column.clear()
                     for index, run_data in enumerate(runs) if runs else []:
                         with (
-                            ui.item(
+                            ui
+                            .item(
                                 on_click=lambda run_id=run_data["run_id"]: ui.navigate.to(f"/application/run/{run_id}")
                             )
                             .props("clickable")
@@ -226,7 +228,8 @@ async def _frame(  # noqa: C901, PLR0913, PLR0915, PLR0917
         @ui.refreshable
         async def _runs_list() -> None:
             with (
-                ui.scroll_area()
+                ui
+                .scroll_area()
                 .props('id="runs-list-container"')
                 .classes("w-full")
                 .style("height: calc(100vh - 250px);")

@@ -90,6 +90,7 @@ The Aignostics Python SDK uses a **sophisticated multi-stage CI/CD pipeline** bu
 | Workflow | Purpose | Duration | Key Outputs |
 |----------|---------|----------|-------------|
 | **_lint.yml** | Code quality (ruff, pyright, mypy) | ~5 min | Formatted code, type safety |
+| **_docs.yml** | Documentation build (Sphinx) | ~3 min | HTML docs, validation |
 | **_audit.yml** | Security + license compliance | ~3 min | SBOM (CycloneDX, SPDX), vulnerabilities, licenses |
 | **_test.yml** | Multi-stage test execution | ~15 min | Coverage reports, JUnit XML |
 | **_codeql.yml** | Security vulnerability scanning | ~10 min | CodeQL SARIF results |
@@ -115,9 +116,11 @@ The SDK has **7 test categories** with different execution strategies.
 def test_something():
     pass
 
+
 # ❌ INCORRECT - No category marker, will NOT run in CI
 def test_something_else():
     pass
+
 
 # ✅ CORRECT - Multiple markers including category
 @pytest.mark.e2e
@@ -1099,6 +1102,7 @@ make dist_native
 | `audit-scheduled.yml` | Entry | Security audit | ~5 min |
 | `codeql-scheduled.yml` | Entry | CodeQL scan | ~10 min |
 | `_lint.yml` | Reusable | Code quality checks | ~5 min |
+| `_docs.yml` | Reusable | Documentation build | ~3 min |
 | `_audit.yml` | Reusable | Security & license | ~3 min |
 | `_test.yml` | Reusable | Test execution | ~15 min |
 | `_codeql.yml` | Reusable | Security scanning | ~10 min |

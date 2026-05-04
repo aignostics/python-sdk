@@ -315,7 +315,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     # Show force checkbox for internal users
                     if user_info and user_info.is_internal_user:
 
-                        def on_force_change(e: ValueChangeEventArguments) -> None:
+                        def on_force_change(e: ValueChangeEventArguments[bool | None]) -> None:
                             if e.value:
                                 version_next_button.enable()
                                 if unhealthy_tooltip:
@@ -324,7 +324,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 version_next_button.disable()
                                 if unhealthy_tooltip:
                                     unhealthy_tooltip.set_visibility(True)
-                            submit_form.force = e.value
+                            submit_form.force = bool(e.value)
 
                         ui.checkbox("Force (skip health check)", on_change=on_force_change).mark("CHECKBOX_FORCE")
 
@@ -530,7 +530,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """
 
             submit_form.metadata_grid = (
-                ui.aggrid({
+                ui
+                .aggrid({
                     "columnDefs": [
                         {"headerName": "Reference", "field": "path_short", "checkboxSelection": True},
                         {
@@ -620,15 +621,17 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 .mark("GRID_METADATA")
             )
             # use ui timer to update the grid class depending on dark mode, with a frequency of once per second
-            ui.timer(
-                interval=1,
-                callback=lambda: submit_form.metadata_grid.classes(
-                    add="ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham",
-                    remove="ag-theme-balham" if app.storage.general.get("dark_mode", False) else "ag-theme-balham-dark",
+
+            def _sync_metadata_grid_theme() -> None:
+                if not submit_form.metadata_grid:
+                    return
+                dark_mode = app.storage.general.get("dark_mode", False)
+                submit_form.metadata_grid.classes(
+                    add="ag-theme-balham-dark" if dark_mode else "ag-theme-balham",
+                    remove="ag-theme-balham" if dark_mode else "ag-theme-balham-dark",
                 )
-                if submit_form.metadata_grid
-                else None,
-            )
+
+            ui.timer(interval=1, callback=_sync_metadata_grid_theme)
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Select", on_click=_pytest_meta, icon="folder").mark("BUTTON_PYTEST_META")
@@ -679,13 +682,15 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 with ui.row().classes("full-width"):
                     ui.label("")
                     due_date_date_picker = (
-                        ui.date(mask=DATETIME_MASK)
+                        ui
+                        .date(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props(f":options=\"(date) => date >= '{today}'\"")
                         .mark("DATE_DUE_DATE")
                     )
                     due_date_time_picker = (
-                        ui.time(mask=DATETIME_MASK)
+                        ui
+                        .time(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props("format24h now-btn")
                         .mark("TIME_DUE_DATE")
@@ -762,11 +767,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     custom_metadata=None,
                     note=submit_form.note,
                     tags=set(submit_form.tags) if submit_form.tags else None,
-                    due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
+                    due_date=datetime
+                    .strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
-                    deadline=datetime.strptime(submit_form.deadline, "%Y-%m-%d %H:%M")
+                    deadline=datetime
+                    .strptime(submit_form.deadline, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
@@ -909,7 +916,8 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
                     # Show flex start duration input only when FLEX_START is selected
                     with (
-                        ui.row()
+                        ui
+                        .row()
                         .classes("w-full gap-4")
                         .bind_visibility_from(submit_form, "gpu_provisioning_mode", lambda v: v == "FLEX_START")
                     ):

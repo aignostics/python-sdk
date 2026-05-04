@@ -79,7 +79,8 @@ platform/
 | `Service`        | Class  | Core service with health monitoring and user operations | `login()`, `logout()`, `get_user_info()`, `health()`, `info()`                |
 | `Settings`       | Class  | Environment-aware configuration management              | Property accessors for all auth endpoints                                     |
 | `Applications`   | Class  | Application resource management                         | `list()`, `versions` accessor                                                 |
-| `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`                  |
+| `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`, `artifact()`, `get_artifact_download_url()`, `ensure_artifacts_downloaded()` |
+| `Artifact`       | Class  | Per-artifact handle for resolving fresh presigned download URLs via the `/api/v1/runs/{run_id}/artifacts/{artifact_id}/file` endpoint | `get_download_url()`                                                          |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`                            |
 | `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
 | `utils`          | Module | Resource utility functions and pagination helpers       | `paginate()`                                                                  |
@@ -368,8 +369,54 @@ class ApplicationRun:
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run."""
 
-    def download_to_folder(self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c") -> None:
-        """Downloads all result artifacts to a folder."""
+    def download_to_folder(
+        self, download_base: Path | str, checksum_attribute_key: str = "checksum_base64_crc32c"
+    ) -> None:
+        """Downloads all result artifacts to a folder.
+
+        Internally resolves a fresh presigned URL for each AVAILABLE artifact via the
+        ``/api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` endpoint immediately
+        before the download, replacing the deprecated ``OutputArtifactResultReadResponse.download_url``
+        field. The user-facing behaviour is unchanged.
+        """
+
+    def artifact(self, artifact_id: str) -> "Artifact":
+        """Returns an Artifact handle bound to this run and the given output_artifact_id."""
+
+    def get_artifact_download_url(self, artifact_id: str) -> str:
+        """Resolves a fresh, short-lived presigned download URL for one output artifact.
+
+        Thin delegate to ``Artifact.get_download_url()``; the URL is fetched on-demand from the
+        SAMIA ``/file`` endpoint. Maps responses to typed exceptions:
+        404 -> NotFoundException, other 4xx -> ApiException, 5xx + transient network errors -> ServiceException
+        (with tenacity-based retry consistent with the rest of the resource layer).
+        """
+
+    def ensure_artifacts_downloaded(
+        self,
+        base_folder: Path,
+        item: ItemResultReadResponse,
+        checksum_attribute_key: str = "checksum_base64_crc32c",
+        print_status: bool = True,
+    ) -> None:
+        """Ensures all AVAILABLE artifacts for an item are downloaded with checksum verification."""
+```
+
+```python
+class Artifact:
+    """Represents a single output artifact belonging to a run."""
+
+    def __init__(self, api: PublicApi, run_id: str, artifact_id: str) -> None:
+        """Initializes an Artifact instance bound to (run_id, artifact_id)."""
+
+    def get_download_url(self) -> str:
+        """Resolves a fresh presigned download URL for this artifact.
+
+        Calls ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` with
+        ``allow_redirects=False`` and returns the presigned URL from the redirect
+        ``Location`` header. The presigned URL is short-lived; resolve immediately
+        before downloading.
+        """
 ```
 
 ```python

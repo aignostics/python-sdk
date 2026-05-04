@@ -117,6 +117,14 @@
   description: Trigger Claude Code automation
   color: "b41d8f"
 
+- name: claude:review:passed
+  description: Automated Claude PR review found no blocking issues on the current head commit
+  color: "0e8a16"
+
+- name: claude:review:failed
+  description: Automated Claude PR review found blocking issues on the current head commit
+  color: "b60205"
+
 - name: copilot
   description: GitHub Copilot related
   color: "e6dac6"
@@ -133,3 +141,76 @@
 - name: documentation-drift
   description: Documentation out of sync with code
   color: "ff6b6b"
+
+# SOP Labels — governance trail on every PR (one mandatory)
+- name: sop:pr-sop-01
+  description: PR-SOP-01 Problem Resolution (bug / anomaly fix)
+  color: "5319e7"
+
+- name: sop:cc-sop-01
+  description: CC-SOP-01 Change Control (feature / planned change)
+  color: "1d76db"
+
+# Type Labels — conventional-commits taxonomy (one per PR)
+# Extends the legacy `bug` / `documentation` / `enhancement` labels with
+# the rest of the conventional-commit vocabulary. Legacy labels remain
+# for backward-compatibility with issue templates and external tooling;
+# the `type:*` namespace is the source of truth for PR-level filtering.
+- name: type:feature
+  description: New functionality (conventional feat)
+  color: "a2eeef"
+
+- name: type:fix
+  description: Bug fix (conventional fix)
+  color: "d73a4a"
+
+- name: type:chore
+  description: Tooling, maintenance, routine task (conventional chore)
+  color: "c5def5"
+
+- name: type:refactor
+  description: Refactor without behaviour change
+  color: "fbca04"
+
+- name: type:docs
+  description: Documentation-only change
+  color: "0075ca"
+
+- name: type:test
+  description: Test-only change
+  color: "006b75"
+
+- name: type:perf
+  description: Performance improvement
+  color: "4b0082"
+
+- name: type:build
+  description: Build / packaging change
+  color: "5319e7"
+
+- name: type:ci
+  description: CI/CD change
+  color: "000000"
+
+# Security Labels — orthogonal axis (0–2 per PR)
+- name: security
+  description: Addresses a security advisory, CVE, or hardens security posture
+  color: "b60205"
+
+- name: security:supply-chain
+  description: Supply-chain (dependency) vulnerability remediation
+  color: "d93f0b"
+
+# Scope Labels — who the change affects (0–1 per PR)
+- name: scope:sdk-consumers
+  description: Affects downstream SDK consumers (uvx aignostics / uv add aignostics)
+  color: "0e8a16"
+
+- name: scope:dev-only
+  description: Affects only our dev/CI env; consumers unaffected
+  color: "bfdadc"
+
+# Automation Labels
+- name: auto-merge
+  description: Eligible for auto-merge once CI is green
+  color: "0e8a16"

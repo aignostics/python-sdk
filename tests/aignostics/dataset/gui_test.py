@@ -123,8 +123,10 @@ async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913, PLR0917
     [
         (
             "4711",
-            "Download failed: None of the values passed matched any of the identifiers: "
-            "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID.",
+            (
+                "Download failed: None of the values passed matched any of the identifiers: "
+                "collection_id, PatientID, StudyInstanceUID, SeriesInstanceUID, SOPInstanceUID."
+            ),
         ),
     ],
 )

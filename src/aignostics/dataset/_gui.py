@@ -88,7 +88,7 @@ class PageBuilder(BasePageBuilder):
                     """
                 )
 
-            def _on_source_input_change(e: ValueChangeEventArguments) -> None:
+            def _on_source_input_change(e: ValueChangeEventArguments[str | None]) -> None:
                 """On change event."""
                 if download_form.download_button is None:
                     return
@@ -198,7 +198,8 @@ class PageBuilder(BasePageBuilder):
                 ui.label("Download Dataset").classes("text-h6")
                 with ui.row(align_items="center").classes("w-full"):
                     source_input = (
-                        ui.input(
+                        ui
+                        .input(
                             label="Enter ID of collection, patient case, study, series or instance.",
                             placeholder="Click 🔍 Explore Portal to find IDs",
                             on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108
@@ -249,7 +250,7 @@ class PageBuilder(BasePageBuilder):
                         with ui.button("Download", icon="cloud_download").mark("BUTTON_DOWNLOAD") as download_button:
                             ui.tooltip("Download the selected dataset")
                         download_form.download_button = download_button
-                        download_form.download_button.on("click", lambda _: _download(source_input.value))
+                        download_form.download_button.on("click", lambda _: _download(source_input.value or ""))
                         download_form.download_button.disable()
 
             def update_progress() -> None:

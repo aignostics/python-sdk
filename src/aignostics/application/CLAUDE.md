@@ -176,24 +176,20 @@ DownloadProgress:
 **Actual Semantic Version Validation:**
 
 ```python
-def application_version(self, application_id: str,
-                       version_number: str | None = None) -> ApplicationVersion:
+def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
     """Validate and retrieve application version.
-    
+
     Args:
         application_id: The ID of the application (e.g., 'heta')
         version_number: The semantic version number (e.g., '1.0.0')
                        If None, returns the latest version
-    
+
     Returns:
         ApplicationVersion with application_id and version_number attributes
     """
     # Delegates to platform client which validates semver format
     # Platform client uses Versions resource internally
-    return self.platform_client.application_version(
-        application_id=application_id,
-        version_number=version_number
-    )
+    return self.platform_client.application_version(application_id=application_id, version_number=version_number)
 ```
 
 **Key Points:**
@@ -323,6 +319,7 @@ def process_with_qupath(self, ...):
 ```python
 class DownloadProgressState(StrEnum):
     """Enum for download progress states."""
+
     INITIALIZING = "Initializing ..."
     DOWNLOADING_INPUT = "Downloading input slide ..."  # NEW in v1.0.0-beta.7
     QUPATH_ADD_INPUT = "Adding input slides to QuPath project ..."
@@ -357,6 +354,7 @@ def extract_filename_from_url(url: str) -> str:
         'sample.svs'
     """
 
+
 def download_url_to_file_with_progress(
     progress: DownloadProgress,
     url: str,
@@ -388,6 +386,7 @@ def download_url_to_file_with_progress(
         RuntimeError: If download fails
     """
 
+
 def download_available_items(
     progress: DownloadProgress,
     application_run: Run,
@@ -414,6 +413,7 @@ def download_available_items(
         download_progress_queue: Optional queue for GUI updates
         download_progress_callable: Optional callback for CLI updates
     """
+
 
 def download_item_artifact(
     progress: DownloadProgress,
@@ -492,16 +492,16 @@ try:
     # Application ID and version are separate parameters
     app_version = service.application_version(
         application_id="heta",
-        version_number="2.1.0"  # Semantic version without 'v' prefix
+        version_number="2.1.0",  # Semantic version without 'v' prefix
     )
     # Access attributes
     print(f"Application: {app_version.application_id}")
     print(f"Version: {app_version.version_number}")
-    
+
     # Get latest version
     latest = service.application_version(
         application_id="heta",
-        version_number=None  # Returns latest version
+        version_number=None,  # Returns latest version
     )
 except ValueError as e:
     # Handle invalid version format
@@ -514,7 +514,7 @@ except NotFoundException as e:
 run = service.run_application(
     application_id="heta",
     application_version="2.1.0",  # Optional, uses latest if omitted
-    files=["slide1.svs", "slide2.tiff"]
+    files=["slide1.svs", "slide2.tiff"],
 )
 ```
 
@@ -554,18 +554,20 @@ from pathlib import Path
 # Create progress object
 progress = DownloadProgress()
 
+
 # Define progress callback
 def on_progress(p: DownloadProgress):
     if p.input_slide_size:
         percent = (p.input_slide_downloaded_size / p.input_slide_size) * 100
         print(f"Downloaded: {percent:.1f}%")
 
+
 # Download from gs://, http://, or https://
 downloaded_file = download_url_to_file_with_progress(
     progress=progress,
     url="gs://my-bucket/slides/sample.svs",
     destination_path=Path("./downloads/sample.svs"),
-    download_progress_callable=on_progress
+    download_progress_callable=on_progress,
 )
 
 print(f"Downloaded to: {downloaded_file}")
@@ -585,7 +587,7 @@ download_url_to_file_with_progress(
     progress=DownloadProgress(),
     url="https://example.com/slide.tiff",
     destination_path=Path("./slide.tiff"),
-    download_progress_queue=progress_queue  # Non-blocking updates
+    download_progress_queue=progress_queue,  # Non-blocking updates
 )
 
 # In GUI thread, poll queue
@@ -609,7 +611,7 @@ download_available_items(
     destination_directory=Path("./results"),
     downloaded_items=downloaded_items,
     create_subdirectory_per_item=True,  # Create dirs per item
-    download_progress_callable=lambda p: print(f"Item {p.item_index}/{p.item_count}")
+    download_progress_callable=lambda p: print(f"Item {p.item_index}/{p.item_count}"),
 )
 ```
 
@@ -633,10 +635,7 @@ def test_application_version_valid_semver_formats():
 
     for version in valid_versions:
         try:
-            result = service.application_version(
-                application_id="test-app",
-                version_number=version
-            )
+            result = service.application_version(application_id="test-app", version_number=version)
             assert result.application_id == "test-app"
             assert result.version_number == version
         except ValueError as e:
@@ -645,22 +644,20 @@ def test_application_version_valid_semver_formats():
             # Application doesn't exist, but format is valid
             pytest.skip(f"Application not found for test-app")
 
+
 def test_application_version_invalid_semver_formats():
     """Test invalid formats are rejected."""
     invalid_versions = [
-        "v1.0.0",      # 'v' prefix not allowed
-        "1.0",         # Incomplete version
-        "1.0.0-",      # Trailing dash
-        "",            # Empty string
+        "v1.0.0",  # 'v' prefix not allowed
+        "1.0",  # Incomplete version
+        "1.0.0-",  # Trailing dash
+        "",  # Empty string
         "not-semver",  # Not a valid semver
     ]
 
     for version in invalid_versions:
         with pytest.raises(ValueError, match="Invalid version format"):
-            service.application_version(
-                application_id="test-app",
-                version_number=version
-            )
+            service.application_version(application_id="test-app", version_number=version)
 ```
 
 ### Use Latest Fallback Test
@@ -674,7 +671,7 @@ def test_application_version_use_latest_fallback():
         # Get latest version by passing None
         result = service.application_version(
             application_id=HETA_APPLICATION_ID,
-            version_number=None  # Falls back to latest
+            version_number=None,  # Falls back to latest
         )
         assert result is not None
         assert result.application_id == HETA_APPLICATION_ID
@@ -711,19 +708,11 @@ def test_application_version_use_latest_fallback():
 **Logging Patterns (Actual):**
 
 ```python
-
-
-logger.debug("Starting application run", extra={
-    "application_id": app_id,
-    "file_count": len(files)
-})
+logger.debug("Starting application run", extra={"application_id": app_id, "file_count": len(files)})
 
 logger.warning("QuPath integration not available (ijson not installed)")
 
-logger.error("Application version validation failed", extra={
-    "version_id": version_id,
-    "error": str(e)
-})
+logger.error("Application version validation failed", extra={"version_id": version_id, "error": str(e)})
 ```
 
 ## Common Pitfalls & Solutions
@@ -738,7 +727,7 @@ logger.error("Application version validation failed", extra={
 # Correct: Separate application_id and version_number
 app_version = service.application_version(
     application_id="heta",
-    version_number="1.2.3"  # No 'v' prefix
+    version_number="1.2.3",  # No 'v' prefix
 )
 
 # Wrong: Old combined format
@@ -769,7 +758,7 @@ if not has_qupath_extra:
 ```python
 # Use streaming with appropriate chunk size
 chunk_size = APPLICATION_RUN_FILE_READ_CHUNK_SIZE  # 1GB
-with open(file_path, 'rb') as f:
+with open(file_path, "rb") as f:
     while chunk := f.read(chunk_size):
         process_chunk(chunk)
 ```

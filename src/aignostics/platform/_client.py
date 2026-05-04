@@ -169,12 +169,12 @@ class Client:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
 
+        Returns:
+            Application: The application object.
+
         Raises:
             NotFoundException: If the application with the given ID is not found.
             aignx.codegen.exceptions.ApiException: If the API call fails.
-
-        Returns:
-            Application: The application object.
         """
 
         @cached_operation(ttl=settings().application_cache_ttl, use_token=True)
@@ -211,13 +211,13 @@ class Client:
             nocache (bool): If True, skip reading from cache and fetch fresh data from the API.
                 The fresh result will still be cached for subsequent calls. Defaults to False.
 
+        Returns:
+            ApplicationVersion: The application version object.
+
         Raises:
             NotFoundException: If the application with the given ID and version number is not found.
             ValueError: If the version is not valid semver.
             aignx.codegen.exceptions.ApiException: If the API call fails.
-
-        Returns:
-            ApplicationVersion: The application version object.
         """
         # Handle version resolution and validation first (not retried)
         if version_number is None:

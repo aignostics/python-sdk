@@ -12,7 +12,8 @@ concurrency:
 jobs:
   claude-review:
     if: |
-      contains(github.event.pull_request.labels.*.name, 'claude') ||
+      (github.event.action == 'labeled' && github.event.label.name == 'claude') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'claude')) ||
       github.event.action == 'ready_for_review'
     uses: ./.github/workflows/_claude-code.yml
     with:
@@ -213,6 +214,49 @@ jobs:
         4. **Reference documentation**: Link to relevant CLAUDE.md sections
 
         Use `gh pr comment` with your Bash tool to leave your comprehensive review as a comment on the PR.
+
+        ## Machine-Readable Verdict (MANDATORY)
+
+        After posting your review comment, you MUST emit a single-label verdict on the PR. This label is consumed by branch-protection rules to gate auto-merge — it is the only deterministic signal of your review outcome.
+
+        **Verdict criteria** (all must hold for PASS):
+
+        - No blocking findings under "CRITICAL CHECKS" — i.e. no missing test markers, no coverage drop below 85%, no `make lint` failures, no conventional-commit violations.
+        - No blocking architecture or security violations under "Repository-Specific Review Areas".
+        - Suggestions / nice-to-haves do NOT block the verdict.
+
+        If any blocking finding remains: verdict is **FAIL**.
+        Otherwise: verdict is **PASS**.
+
+        **Apply the label** (the two labels are mutually exclusive — always remove the opposite one):
+
+        ```bash
+        # PASS:
+        gh pr edit ${{ github.event.pull_request.number }} \
+          --add-label "claude:review:passed" \
+          --remove-label "claude:review:failed"
+
+        # FAIL:
+        gh pr edit ${{ github.event.pull_request.number }} \
+          --add-label "claude:review:failed" \
+          --remove-label "claude:review:passed"
+        ```
+
+        Note: `--remove-label` is a no-op if the label is not present, so it is safe to always include it.
+
+        Also include the verdict as the final line of your sticky review comment, formatted exactly as:
+
+        ```
+        **Verdict**: ✅ claude:review:passed
+        ```
+
+        or
+
+        ```
+        **Verdict**: ❌ claude:review:failed
+        ```
+
+        This makes the verdict visible to humans without scrolling through all findings.
 
         ---
 

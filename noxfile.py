@@ -145,23 +145,16 @@ def audit(session: nox.Session) -> None:
     """Run security audit and license checks."""
     _setup_venv(session)
 
-    # pip-audit to check for vulnerabilities
+    # pip-audit to check for vulnerabilities.
+    # Every --ignore-vuln entry must correspond to a row in SUPPLY_CHAIN_VULNERABILITIES.md
+    # with rationale, scope, downstream-exposure assessment, and removal condition.
     try:
         session.run(
-            # TODO(Helmut): Ignore pip vuln until pip achieved to build v5.3
             "pip-audit",
             "-f",
             "json",
             "-o",
             "reports/vulnerabilities.json",
-            "--ignore-vuln",
-            "GHSA-4xh5-x5gv-qwph",  # https://pyinstaller.org/en/stable/license.html
-            "--ignore-vuln",
-            "CVE-2025-53000",  # no fix available
-            "--ignore-vuln",
-            "CVE-2025-69872",  # no fix available
-            "--ignore-vuln",
-            "CVE-2026-4539",  # no fix available
         )
     except CommandFailed:
         _format_json_with_jq(session, "reports/vulnerabilities.json")

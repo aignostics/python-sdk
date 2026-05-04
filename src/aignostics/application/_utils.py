@@ -419,7 +419,6 @@ def _retrieve_and_print_run_items(run_handle: Run, summarize: bool = False) -> N
                     f"\n    - Name: {artifact.name}"
                     f"\n      MIME Type: {get_mime_type_for_artifact(artifact)}"
                     f"\n      Artifact ID: {artifact.output_artifact_id}"
-                    f"\n      Download URL: {artifact.download_url}"
                 )
             item_output += artifacts_output
 
@@ -519,11 +518,11 @@ def application_run_status_to_str(
     Args:
         status (RunState): The application status
 
-    Raises:
-        RuntimeError: If the status is invalid or unknown
-
     Returns:
         str: Human-readable string representation of the status
+
+    Raises:
+        RuntimeError: If the status is invalid or unknown
     """
     status_mapping = {
         RunState.PENDING: "pending",

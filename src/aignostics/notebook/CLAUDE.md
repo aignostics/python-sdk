@@ -66,30 +66,16 @@ Start → Monitor Output → Extract URL → Ready
 ```python
 MARIMO_SERVER_STARTUP_TIMEOUT = 60  # seconds
 
+
 def start(self, notebook_path: Path, host: str, port: int):
     """Start Marimo server subprocess."""
 
-    cmd = [
-        sys.executable, "-m", "marimo",
-        "run", str(notebook_path),
-        "--host", host,
-        "--port", str(port),
-        "--headless"
-    ]
+    cmd = [sys.executable, "-m", "marimo", "run", str(notebook_path), "--host", host, "--port", str(port), "--headless"]
 
-    self._marimo_server = Popen(
-        cmd,
-        stdout=PIPE,
-        stderr=STDOUT,
-        text=True,
-        creationflags=SUBPROCESS_CREATION_FLAGS
-    )
+    self._marimo_server = Popen(cmd, stdout=PIPE, stderr=STDOUT, text=True, creationflags=SUBPROCESS_CREATION_FLAGS)
 
     # Monitor thread watches for server URL
-    self._monitor_thread = Thread(
-        target=self._monitor_output,
-        daemon=True
-    )
+    self._monitor_thread = Thread(target=self._monitor_output, daemon=True)
 ```
 
 **URL Extraction Pattern:**
@@ -115,12 +101,8 @@ def health(self) -> Health:
     """Check server and monitor thread health."""
 
     components = {
-        "marimo_server": Health(
-            status=Health.Code.UP if self.is_marimo_server_running() else Health.Code.DOWN
-        ),
-        "monitor_thread": Health(
-            status=Health.Code.UP if self.is_monitor_thread_alive() else Health.Code.DOWN
-        )
+        "marimo_server": Health(status=Health.Code.UP if self.is_marimo_server_running() else Health.Code.DOWN),
+        "monitor_thread": Health(status=Health.Code.UP if self.is_monitor_thread_alive() else Health.Code.DOWN),
     }
 
     return Health(status=Health.Code.UP, components=components)
@@ -138,11 +120,7 @@ service = Service()
 
 # Start Marimo server
 notebook = Path("analysis.marimo.py")
-server_url = service.start_notebook(
-    notebook_path=notebook,
-    host="127.0.0.1",
-    port=8080
-)
+server_url = service.start_notebook(notebook_path=notebook, host="127.0.0.1", port=8080)
 
 # Server URL available after startup
 print(f"Notebook running at: {server_url}")
@@ -162,6 +140,7 @@ The notebook module integrates with the main GUI launchpad:
 ```python
 # In GUI context
 from aignostics.notebook._gui import create_notebook_interface
+
 
 def setup_notebook_tab(ui):
     """Add notebook tab to GUI."""
@@ -208,16 +187,9 @@ def setup_notebook_tab(ui):
 **Logging Patterns:**
 
 ```python
-logger.debug("Starting Marimo server", extra={
-    "notebook": str(notebook_path),
-    "host": host,
-    "port": port
-})
+logger.debug("Starting Marimo server", extra={"notebook": str(notebook_path), "host": host, "port": port})
 
-logger.warning("Server startup timeout", extra={
-    "timeout": MARIMO_SERVER_STARTUP_TIMEOUT,
-    "output": self._output
-})
+logger.warning("Server startup timeout", extra={"timeout": MARIMO_SERVER_STARTUP_TIMEOUT, "output": self._output})
 ```
 
 ## Common Pitfalls & Solutions
@@ -232,9 +204,10 @@ logger.warning("Server startup timeout", extra={
 def find_free_port(start=8080, end=9000):
     """Find available port."""
     import socket
+
     for port in range(start, end):
         with socket.socket() as s:
-            if s.connect_ex(('127.0.0.1', port)) != 0:
+            if s.connect_ex(("127.0.0.1", port)) != 0:
                 return port
     raise RuntimeError("No free ports")
 ```
@@ -265,8 +238,9 @@ if not notebook_path.exists():
 def cleanup_zombie_processes():
     """Kill any lingering Marimo processes."""
     import psutil
-    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-        if 'marimo' in proc.info['cmdline']:
+
+    for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+        if "marimo" in proc.info["cmdline"]:
             proc.terminate()
 ```
 
@@ -316,6 +290,7 @@ def mock_marimo_server():
         process.poll.return_value = None
         mock.return_value = process
         yield mock
+
 
 def test_server_startup(mock_marimo_server):
     """Test server starts and extracts URL."""

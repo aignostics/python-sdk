@@ -293,6 +293,7 @@ For detailed information about each module, see:
    ```python
    from aignostics.utils import BaseService
 
+
    class Service(BaseService):
        async def health(self) -> Health:
            return Health(status=Health.Code.UP)
@@ -305,7 +306,9 @@ For detailed information about each module, see:
 
    ```python
    import typer
+
    cli = typer.Typer(name="module", help="Module description")
+
 
    @cli.command("action")
    def action_command():
@@ -318,6 +321,7 @@ For detailed information about each module, see:
 
    ```python
    from nicegui import ui
+
 
    def create_page():
        ui.label("Module Interface")

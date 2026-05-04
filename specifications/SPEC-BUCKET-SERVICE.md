@@ -178,8 +178,9 @@ graph LR
 class Service(BaseService):
     """Bucket service for S3-compatible cloud storage operations."""
 
-    def upload(self, source_path: Path, destination_prefix: str,
-              callback: Callable[[int, Path], None] | None = None) -> dict[str, list[str]]:
+    def upload(
+        self, source_path: Path, destination_prefix: str, callback: Callable[[int, Path], None] | None = None
+    ) -> dict[str, list[str]]:
         """Upload file or directory to cloud storage.
 
         Args:
@@ -195,10 +196,13 @@ class Service(BaseService):
             BotoClientError: S3 API operation failure
         """
 
-    def download(self, what: list[str] | None = None,
-                destination: Path = get_user_data_directory("bucket_downloads"),
-                what_is_key: bool = False,
-                progress_callback: Callable[[DownloadProgress], None] | None = None) -> DownloadResult:
+    def download(
+        self,
+        what: list[str] | None = None,
+        destination: Path = get_user_data_directory("bucket_downloads"),
+        what_is_key: bool = False,
+        progress_callback: Callable[[DownloadProgress], None] | None = None,
+    ) -> DownloadResult:
         """Download files from cloud storage with optional pattern matching.
 
         Args:
@@ -215,8 +219,7 @@ class Service(BaseService):
             BotoClientError: S3 API operation failure
         """
 
-    def delete(self, what: list[str] | None, what_is_key: bool = False,
-              dry_run: bool = True) -> int:
+    def delete(self, what: list[str] | None, what_is_key: bool = False, dry_run: bool = True) -> int:
         """Delete objects from cloud storage.
 
         Args:

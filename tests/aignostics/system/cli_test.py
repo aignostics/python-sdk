@@ -299,6 +299,7 @@ def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Pat
 
 @pytest.mark.integration
 @pytest.mark.sequential
+@pytest.mark.timeout(timeout=60)
 def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path, record_property) -> None:  # noqa: PLR0915
     """Check disable/enable remote diagnostics."""
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
