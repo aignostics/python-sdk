@@ -458,7 +458,6 @@ owner = "aignostics"
 repo = "python-sdk"
 
 [tool.git-cliff.changelog]
-output = "CHANGELOG.md"
 render = true
 # template for the changelog header
 header = """
