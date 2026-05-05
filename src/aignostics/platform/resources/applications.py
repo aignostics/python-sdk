@@ -429,11 +429,7 @@ class Documents:
         If ``destination`` is a directory, the file is written as
         ``{destination}/{document_name}``; the requested document name is the canonical
         filename and is used regardless of any ``Content-Disposition`` served by the
-        storage backend. If ``destination`` is a file path, the file is written there
-        verbatim. Parent directories are created if they do not yet exist.
-
-        Document downloads do not carry a CRC32C checksum (unlike run artifacts);
-        integrity is bounded by HTTPS transport and the signed-URL lifetime.
+        storage backend. Parent directories are created if they do not yet exist.
 
         Args:
             document_name (str): The document filename.
@@ -605,6 +601,8 @@ class Documents:
             raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request timed out") from e
         except requests.ConnectionError as e:
             raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Connection failed") from e
+        except requests.RequestException as e:
+            raise ServiceException(status=HTTPStatus.SERVICE_UNAVAILABLE.value, reason="Request failed") from e
 
     def read_content(self, document_name: str) -> bytes:
         """Fetch a release document's raw content into memory.

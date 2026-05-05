@@ -349,7 +349,7 @@ class Documents:
         by ``requests`` and is therefore not forwarded to the storage backend.
         Returns the absolute path to the written file.
 
-        ``destination`` must be an existing directory; the file is written as
+        ``destination`` must be a directory; the file is written as
         ``{destination}/{document_name}``. The requested document name is the
         canonical filename and is used regardless of any ``Content-Disposition``
         served by the storage backend.

@@ -344,7 +344,7 @@ def test_documents_download_to_path_rejects_non_directory(documents: Documents, 
     file_path = tmp_path / "some_file.pdf"
     file_path.write_bytes(b"content")
 
-    with pytest.raises(ValueError, match="must be a directory"):
+    with pytest.raises(ValueError, match="is an existing file"):
         documents.download_to_path(DOCUMENT_OUTPUT_DESCRIPTION_PDF, file_path)
 
 

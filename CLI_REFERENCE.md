@@ -145,6 +145,7 @@ $ aignostics application [OPTIONS] COMMAND [ARGS]...
 * `list`: List available applications.
 * `dump-schemata`: Output the input schema of the application...
 * `describe`: Describe application.
+* `version`: Inspect application versions and their release documents.
 * `run`: List, submit and manage application runs
 
 ### `aignostics application list`
@@ -202,6 +203,106 @@ $ aignostics application describe [OPTIONS] APPLICATION_ID
 
 * `--verbose / --no-verbose`: Show application details  [default: no-verbose]
 * `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
+* `--help`: Show this message and exit.
+
+### `aignostics application version`
+
+Inspect application versions and their release documents.
+
+**Usage**:
+
+```console
+$ aignostics application version [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `document`: List, describe, and download public release documents attached to an application version.
+
+#### `aignostics application version document`
+
+List, describe, and download public release documents attached to an application version (e.g. output schemas, model manuals).
+
+**Usage**:
+
+```console
+$ aignostics application version document [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `list`: List public release documents attached to an application version.
+* `describe`: Show metadata for a single public release document.
+* `download`: Download a public release document to a local path.
+
+##### `aignostics application version document list`
+
+List public release documents attached to an application version.
+
+**Usage**:
+
+```console
+$ aignostics application version document list [OPTIONS] APPLICATION_ID
+```
+
+**Arguments**:
+
+* `APPLICATION_ID`: Id of application to list release documents for.  [required]
+
+**Options**:
+
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
+* `--help`: Show this message and exit.
+
+##### `aignostics application version document describe`
+
+Show metadata for a single public release document.
+
+**Usage**:
+
+```console
+$ aignostics application version document describe [OPTIONS] APPLICATION_ID DOCUMENT_NAME
+```
+
+**Arguments**:
+
+* `APPLICATION_ID`: Id of application to describe release documents for.  [required]
+* `DOCUMENT_NAME`: Document filename (e.g. &#x27;output_description.pdf&#x27;).  [required]
+
+**Options**:
+
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--format TEXT`: Output format: &#x27;text&#x27; (default) or &#x27;json&#x27;  [default: text]
+* `--help`: Show this message and exit.
+
+##### `aignostics application version document download`
+
+Download a public release document to a local path.
+
+**Usage**:
+
+```console
+$ aignostics application version document download [OPTIONS] APPLICATION_ID DOCUMENT_NAME
+```
+
+**Arguments**:
+
+* `APPLICATION_ID`: Id of application to download release documents for.  [required]
+* `DOCUMENT_NAME`: Document filename (e.g. &#x27;output_description.pdf&#x27;).  [required]
+
+**Options**:
+
+* `--application-version TEXT`: Version of the application. If not provided, the latest version will be used.
+* `--output PATH`: Destination directory. Defaults to the current working directory.  [default: (&lt;current-working-directory&gt;)]
 * `--help`: Show this message and exit.
 
 ### `aignostics application run`
@@ -579,9 +680,9 @@ $ aignostics application run result download [OPTIONS] RUN_ID [DESTINATION_DIREC
 * `--create-subdirectory-for-run / --no-create-subdirectory-for-run`: Create a subdirectory for the results of the run in the destination directory  [default: create-subdirectory-for-run]
 * `--create-subdirectory-per-item / --no-create-subdirectory-per-item`: Create a subdirectory per item in the destination directory  [default: create-subdirectory-per-item]
 * `--wait-for-completion / --no-wait-for-completion`: Wait for run completion and download results incrementally  [default: wait-for-completion]
-* `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results. 
-The QuPath project will be created in a subfolder of the destination directory. 
-This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...` 
+* `--qupath-project / --no-qupath-project`: Create a QuPath project referencing input slides and results.
+The QuPath project will be created in a subfolder of the destination directory.
+This option requires the QuPath extension for Launchpad: start the Launchpad with `uvx --with &quot;aignostics&quot; aignostics ...`
 This options requires installation of the QuPath application: Run uvx --with &quot;aignostics&quot; aignostics qupath install  [default: no-qupath-project]
 * `--help`: Show this message and exit.
 
