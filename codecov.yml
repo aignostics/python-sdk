@@ -9,3 +9,11 @@ coverage:
       default:
         target: 75%
         informational: false
+
+flags:
+  ci:
+    carryforward: false
+  scheduled_staging:
+    carryforward: true
+  scheduled_production:
+    carryforward: true

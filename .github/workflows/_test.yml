@@ -251,6 +251,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
+          flags: ci
 
       - name: Upload test results to Codecov
         if: |
