@@ -72,7 +72,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         shell: bash
         run: |
-          TOML_VERSION=$(uv run python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TOML_VERSION=$(uv run --frozen python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
       - name: Run Claude Code (Interactive Mode)
