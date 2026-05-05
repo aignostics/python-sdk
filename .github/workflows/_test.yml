@@ -251,7 +251,9 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
-          flags: ci
+          # No flag: unflagged uploads feed the "default" project check.
+          # Codecov's default check excludes flagged uploads, making PR vs
+          # main comparison symmetric (both sides see only this CI upload).
 
       - name: Upload test results to Codecov
         if: |

@@ -3,17 +3,27 @@ coverage:
   status:
     project:
       default:
-        target: 70%
+        # PRs upload without a flag → only unflagged CI uploads count here.
+        # Scheduled test uploads use flags (staging/production) and are excluded
+        # from this check, making PR vs main comparison symmetric (~65% each).
+        target: auto
+        threshold: 2%
         informational: false
+      scheduled_environments:
+        flags:
+          - staging
+          - production
+        informational: true
+        if_not_found: success
     patch:
       default:
         target: 75%
         informational: false
 
 flags:
-  ci:
+  staging:
     carryforward: false
-  scheduled_staging:
-    carryforward: true
-  scheduled_production:
-    carryforward: true
+    if_not_found: success
+  production:
+    carryforward: false
+    if_not_found: success

@@ -330,7 +330,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: aignostics/python-sdk
-          flags: scheduled_${{ inputs.platform_environment }}
+          flags: ${{ inputs.platform_environment }}
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
