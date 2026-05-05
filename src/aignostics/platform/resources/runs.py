@@ -596,11 +596,17 @@ class Run(_AuthenticatedResource):
     def update_custom_metadata(
         self,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Update custom metadata for this application run.
 
         Args:
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic concurrency
+                control. When provided, the server returns HTTP 412 (and rejects the update) if
+                the metadata was modified since the checksum was read. Pass ``None`` to skip
+                the precondition check.
 
         Raises:
             Exception: If the API request fails.
@@ -615,7 +621,8 @@ class Run(_AuthenticatedResource):
         self._api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(
             self.run_id,
             custom_metadata_update_request=CustomMetadataUpdateRequest(
-                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata))
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
+                custom_metadata_checksum=custom_metadata_checksum,
             ),
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},
@@ -626,12 +633,18 @@ class Run(_AuthenticatedResource):
         self,
         external_id: str,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Update custom metadata for an item in this application run.
 
         Args:
             external_id (str): The external ID of the item.
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic concurrency
+                control. When provided, the server returns HTTP 412 (and rejects the update) if
+                the metadata was modified since the checksum was read. Pass ``None`` to skip
+                the precondition check.
 
         Raises:
             Exception: If the API request fails.
@@ -647,7 +660,8 @@ class Run(_AuthenticatedResource):
             self.run_id,
             external_id,
             custom_metadata_update_request=CustomMetadataUpdateRequest(
-                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata))
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
+                custom_metadata_checksum=custom_metadata_checksum,
             ),
             _request_timeout=settings().run_submit_timeout,
             _headers={"User-Agent": user_agent()},

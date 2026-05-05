@@ -1213,9 +1213,21 @@ def run_update_metadata(
     metadata_json: Annotated[
         str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
     ],
+    checksum: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum",
+            help=(
+                "Optional checksum for optimistic concurrency control. "
+                "The server rejects the update with HTTP 412 if the metadata was modified since this checksum was read."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
+
+    from aignostics.system._exceptions import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for run with ID '{}'", run_id)
 
@@ -1230,12 +1242,16 @@ def run_update_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+        Service().application_run_update_custom_metadata(run_id, custom_metadata, custom_metadata_checksum=checksum)
         logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except ConcurrencyConflictError as e:
+        logger.warning(f"Concurrency conflict updating metadata for run '{run_id}': {e}")
+        console.print(f"[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry: {e}")
         sys.exit(2)
     except ValueError as e:
         logger.warning(f"Run ID '{run_id}' invalid or metadata invalid: {e}")
@@ -1254,9 +1270,21 @@ def run_update_item_metadata(
     metadata_json: Annotated[
         str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
     ],
+    checksum: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum",
+            help=(
+                "Optional checksum for optimistic concurrency control. "
+                "The server rejects the update with HTTP 412 if the metadata was modified since this checksum was read."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
+
+    from aignostics.system._exceptions import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
@@ -1271,12 +1299,18 @@ def run_update_item_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
+        Service().application_run_update_item_custom_metadata(
+            run_id, external_id, custom_metadata, custom_metadata_checksum=checksum
+        )
         logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' or item '{external_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' or item '{external_id}' not found.")
+        sys.exit(2)
+    except ConcurrencyConflictError as e:
+        logger.warning("Concurrency conflict updating metadata for item '{}' in run '{}': {}", external_id, run_id, e)
+        console.print(f"[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry: {e}")
         sys.exit(2)
     except ValueError as e:
         logger.warning(

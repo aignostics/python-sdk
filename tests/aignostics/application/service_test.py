@@ -1,6 +1,7 @@
 """Tests to verify the service functionality of the application module."""
 
 from datetime import UTC, datetime, timedelta
+from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,6 +9,8 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.platform import NotFoundException, RunData, RunOutput
+from aignostics.platform.resources.runs import ApiException
+from aignostics.system._exceptions import ConcurrencyConflictError
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -511,7 +514,7 @@ def test_application_run_update_custom_metadata_success(mock_get_client: MagicMo
     # Verify the run() method was called with correct run_id
     mock_client.run.assert_called_once_with("run-123")
     # Verify the update_custom_metadata method was called with correct arguments
-    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata)
+    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata, custom_metadata_checksum=None)
 
 
 @pytest.mark.unit
@@ -548,7 +551,9 @@ def test_application_run_update_item_custom_metadata_success(mock_get_client: Ma
     # Verify the run() method was called with correct run_id
     mock_client.run.assert_called_once_with("run-123")
     # Verify the update_item_custom_metadata method was called with correct arguments
-    mock_run.update_item_custom_metadata.assert_called_once_with("item-ext-id", custom_metadata)
+    mock_run.update_item_custom_metadata.assert_called_once_with(
+        "item-ext-id", custom_metadata, custom_metadata_checksum=None
+    )
 
 
 @pytest.mark.unit
@@ -565,3 +570,71 @@ def test_application_run_update_item_custom_metadata_not_found(mock_get_client: 
 
     with pytest.raises(NotFoundException, match="not found"):
         service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_with_checksum(mock_get_client: MagicMock) -> None:
+    """Checksum is forwarded through the service layer to Run.update_custom_metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    service.application_run_update_custom_metadata("run-123", {"key": "value"}, custom_metadata_checksum="abc123")
+
+    mock_run.update_custom_metadata.assert_called_once_with({"key": "value"}, custom_metadata_checksum="abc123")
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_412_raises_concurrency_error(mock_get_client: MagicMock) -> None:
+    """HTTP 412 from server (optimistic concurrency conflict) raises ConcurrencyConflictError."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_custom_metadata.side_effect = ApiException(status=HTTPStatus.PRECONDITION_FAILED)
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(ConcurrencyConflictError, match="optimistic concurrency conflict"):
+        service.application_run_update_custom_metadata("run-123", {"key": "value"}, custom_metadata_checksum="stale")
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_with_checksum(mock_get_client: MagicMock) -> None:
+    """Checksum is forwarded through the service layer to Run.update_item_custom_metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    service.application_run_update_item_custom_metadata(
+        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+    mock_run.update_item_custom_metadata.assert_called_once_with(
+        "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_412_raises_concurrency_error(mock_get_client: MagicMock) -> None:
+    """HTTP 412 from server raises ConcurrencyConflictError for item metadata update."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_run.update_item_custom_metadata.side_effect = ApiException(status=HTTPStatus.PRECONDITION_FAILED)
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+
+    with pytest.raises(ConcurrencyConflictError, match="optimistic concurrency conflict"):
+        service.application_run_update_item_custom_metadata(
+            "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="stale"
+        )
