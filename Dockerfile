@@ -49,7 +49,7 @@ COPY examples /app/examples
 # Nothing yet
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-editable  # NOSONAR - local project built from trusted source; --frozen enforces lockfile hash verification
+    uv sync --frozen --no-dev --no-editable
 
 
 # The all builder takes in all extras
@@ -78,7 +78,7 @@ COPY examples /app/examples
 COPY codegen/out/aignx /app/codegen/out/aignx
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --all-extras --no-dev --no-editable  # NOSONAR - local project built from trusted source; --frozen enforces lockfile hash verification
+    uv sync --frozen --all-extras --no-dev --no-editable
 
 
 # Base of our build targets

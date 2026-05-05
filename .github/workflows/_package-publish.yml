@@ -66,7 +66,7 @@ jobs:
       - name: Validate installation
         shell: bash
         run: |
-          OUTPUT=$(uv run --all-extras --no-dev aignostics --help)
+          OUTPUT=$(uv run --frozen --all-extras --no-dev aignostics --help)
           if [[ "$OUTPUT" != *"built with love in Berlin"* ]]; then
           echo "Output does not contain 'built with love in Berlin'"
           exit 1
@@ -149,7 +149,7 @@ jobs:
       - name: Final smoke test
         shell: bash
         run: |
-          uv run --no-dev aignostics --help
+          uv run --frozen --no-dev aignostics --help
 
       - name: Docs
         shell: bash
