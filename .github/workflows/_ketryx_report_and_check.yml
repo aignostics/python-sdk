@@ -7,9 +7,13 @@ on:
         description: 'Commit message to check for skip markers'
         required: false
         type: string
-
       commit-sha:
-        required: true
+        description: 'Commit SHA to associate the build with (used when version is not set)'
+        required: false
+        type: string
+      version:
+        description: 'Ketryx version ID to associate the build with; takes precedence over commit-sha (use on release/v* branches)'
+        required: false
         type: string
     secrets:
       KETRYX_PROJECT:
@@ -59,7 +63,8 @@ jobs:
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
-          commit-sha: ${{ inputs.commit-sha }}
+          commit-sha: ${{ inputs.version == '' && inputs.commit-sha || '' }}
+          version: ${{ inputs.version }}
           build-name: "ci-cd"
           test-junit-path: test-results/junit_*.xml
           cyclonedx-json-path: |

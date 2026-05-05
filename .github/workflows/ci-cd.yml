@@ -8,7 +8,9 @@ on:
     tags:
       - "v*.*.*"
   pull_request:
-    branches: [main]
+    branches:
+      - "main"
+      - "release/v*"
     types: [opened, synchronize, reopened]
   release:
     types: [created]
@@ -35,11 +37,25 @@ jobs:
       contents: read
     outputs:
       commit_message: ${{ steps.get-commit-message.outputs.commit_message }}
+      release_version: ${{ steps.get-release-version.outputs.release_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Get release version from branch name
+        id: get-release-version
+        shell: bash
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^release/v(.+)$ ]]; then
+            # Ketryx version names start with "v", so we must preserve the prefix.
+            echo "release_version=v${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_version=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Get commit message
         id: get-commit-message
@@ -179,6 +195,7 @@ jobs:
     uses: ./.github/workflows/_ketryx_report_and_check.yml
     with:
       commit-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      version: ${{ needs.get-commit-message.outputs.release_version }}
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       attestations: write
