@@ -146,8 +146,8 @@ def audit(session: nox.Session) -> None:
     _setup_venv(session)
 
     # pip-audit to check for vulnerabilities.
-    # Every --ignore-vuln entry must correspond to a row in SUPPLY_CHAIN_VULNERABILITIES.md
-    # with rationale, scope, downstream-exposure assessment, and removal condition.
+    # Every --ignore-vuln entry must be documented with rationale (inline comment below)
+    # explaining severity, scope, downstream-exposure assessment, and removal condition.
     try:
         session.run(
             "pip-audit",

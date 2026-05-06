@@ -125,7 +125,7 @@ dependencies = [
     "urllib3>=2.6.3,<3", # CVE-2026-21441 requires >= 2.6.3
     "wsidicom>=0.28.1,<1",
     "fastmcp>=3.2.0,<4",
-    # Transitive overrides (see SUPPLY_CHAIN_VULNERABILITIES.md)
+    # Transitive overrides: lower bounds enforced to shield consumers from known CVEs/GHSAs.
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
