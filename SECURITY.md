@@ -31,8 +31,6 @@ d. **[trivy](https://trivy.dev/latest/)**: Pre commit to GitHub scans Python dep
 
 e. **[ox.security](https://www.ox.security/)**: Monitors dependencies for vulnerabilities pre and post release on GitHub.
 
-How we handle vulnerabilities in our Python dependency supply chain — including the default path of raising lower bounds in `pyproject.toml`, and the list of advisories we have consciously accepted because no upstream fix is available yet — is documented in [SUPPLY_CHAIN_VULNERABILITIES.md](SUPPLY_CHAIN_VULNERABILITIES.md).
-
 ### 2. License Compliance Checks and Software Bill of Materials (SBOM)
 
 a. **[pip-licenses](https://pypi.org/project/pip-licenses/)**: Inspects and matches the licenses of all dependencies with allow list to ensure compliance with licensing requirements and avoid using components with problematic licenses. `licenses.csv`, `licenses.json` and `licenses_grouped.json` published [per release](https://github.com/aignostics/python-sdk/releases).
