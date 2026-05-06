@@ -23,6 +23,7 @@ from aignx.codegen.models import (
     ItemOutput,
     ItemResultReadResponse,
     ItemState,
+    ItemTerminationReason,
     RunCreationRequest,
     RunCreationResponse,
     RunState,
@@ -375,11 +376,15 @@ class Run:
         )
         operation_cache_clear()  # Clear all caches since we added a new run
 
-    def results(
+    def results(  # noqa: PLR0913
         self,
         nocache: bool = False,
         item_ids: list[str] | None = None,
         external_ids: list[str] | None = None,
+        *,
+        state: ItemState | None = None,
+        termination_reason: ItemTerminationReason | None = None,
+        custom_metadata: str | None = None,
     ) -> t.Iterator[ItemResultData]:
         """Retrieves the results of all items in the run.
 
@@ -390,6 +395,11 @@ class Run:
                 The fresh result will still be cached for subsequent calls. Defaults to False.
             item_ids (list[str] | None): Optional list of item IDs to filter results by.
             external_ids (list[str] | None): Optional list of external IDs to filter results by.
+            state (ItemState | None): Optional filter by item state (server-side).
+            termination_reason (ItemTerminationReason | None): Optional filter by termination reason
+                (server-side, only applies to TERMINATED items).
+            custom_metadata (str | None): Optional JSONPath expression to filter items by their
+                custom_metadata (server-side).
 
         Returns:
             Iterator[ItemResultData]: An iterator over item results.
@@ -422,6 +432,12 @@ class Run:
             filter_kwargs["item_id__in"] = item_ids
         if external_ids:
             filter_kwargs["external_id__in"] = external_ids
+        if state is not None:
+            filter_kwargs["state"] = state
+        if termination_reason is not None:
+            filter_kwargs["termination_reason"] = termination_reason
+        if custom_metadata is not None:
+            filter_kwargs["custom_metadata"] = custom_metadata
 
         return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
 

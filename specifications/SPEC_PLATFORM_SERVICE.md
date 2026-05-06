@@ -462,9 +462,20 @@ class ApplicationRun:
         self,
         nocache: bool = False,
         item_ids: list[str] | None = None,
+        *,
         external_ids: list[str] | None = None,
+        state: ItemState | None = None,
+        termination_reason: ItemTerminationReason | None = None,
+        custom_metadata: str | None = None,
     ) -> Iterator[ItemResultData]:
-        """Retrieves the results of items in the run, optionally filtered by item or external IDs."""
+        """Retrieves the results of items in the run, optionally filtered server-side.
+
+        Filters: ``item_ids`` / ``external_ids`` (identifier-based), ``state`` /
+        ``termination_reason`` (lifecycle), and ``custom_metadata`` (JSONPath
+        expression evaluated against the item's custom metadata). All filters
+        are forwarded to ``GET /v1/runs/{run_id}/items``; ``None`` parameters
+        are omitted from the request.
+        """
 
     def item_status(self) -> dict[str, ItemStatus]:
         """Retrieves the status of all items in the run."""

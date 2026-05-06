@@ -1243,3 +1243,79 @@ def test_ensure_artifacts_downloaded_is_instance_method_not_static(app_run, tmp_
     bound = app_run.ensure_artifacts_downloaded
     # On a method, __self__ is the instance; on a staticmethod, __self__ doesn't exist.
     assert getattr(bound, "__self__", None) is app_run
+
+
+# ---------------------------------------------------------------------------
+# Run.results() — server-side state / termination_reason / custom_metadata filters
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+def test_results_passes_state_filter(app_run, mock_api) -> None:
+    """state= is forwarded to the API call on every page."""
+    from aignx.codegen.models import ItemState
+
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    list(app_run.results(state=ItemState.TERMINATED))
+
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert call_kwargs["state"] == ItemState.TERMINATED
+
+
+@pytest.mark.unit
+def test_results_passes_termination_reason_filter(app_run, mock_api) -> None:
+    """termination_reason= is forwarded to the API call on every page."""
+    from aignx.codegen.models import ItemTerminationReason
+
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    list(app_run.results(termination_reason=ItemTerminationReason.SUCCEEDED))
+
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert call_kwargs["termination_reason"] == ItemTerminationReason.SUCCEEDED
+
+
+@pytest.mark.unit
+def test_results_passes_custom_metadata_filter(app_run, mock_api) -> None:
+    """custom_metadata= is forwarded to the API call on every page."""
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    list(app_run.results(custom_metadata="$.key"))
+
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert call_kwargs["custom_metadata"] == "$.key"
+
+
+@pytest.mark.unit
+def test_results_combines_all_filters(app_run, mock_api) -> None:
+    """All three new filters are forwarded together when all are provided."""
+    from aignx.codegen.models import ItemState, ItemTerminationReason
+
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    list(
+        app_run.results(
+            state=ItemState.TERMINATED,
+            termination_reason=ItemTerminationReason.SUCCEEDED,
+            custom_metadata="$.batch_id=='x'",
+        )
+    )
+
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert call_kwargs["state"] == ItemState.TERMINATED
+    assert call_kwargs["termination_reason"] == ItemTerminationReason.SUCCEEDED
+    assert call_kwargs["custom_metadata"] == "$.batch_id=='x'"
+
+
+@pytest.mark.unit
+def test_results_omits_none_filters(app_run, mock_api) -> None:
+    """When state/termination_reason/custom_metadata are not provided they must not appear in API call."""
+    mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
+
+    list(app_run.results())
+
+    call_kwargs = mock_api.list_run_items_v1_runs_run_id_items_get.call_args[1]
+    assert "state" not in call_kwargs
+    assert "termination_reason" not in call_kwargs
+    assert "custom_metadata" not in call_kwargs
