@@ -153,9 +153,11 @@ jupyter = [
     "jupyter>=1.1.1,<2",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "jupyter-core>=5.8.1",              # CVE-2025-30167
-    "jupyterlab>=4.4.9",                # CVE-2025-59842
-    "nbconvert>=7.17.1",                # CVE-2025-53000 (>=7.17.0, Dependabot #424); CVE-2026-39377, CVE-2026-39378 (>=7.17.1, Dependabot #553)
+    "jupyter-core>=5.8.1",              # CVE-2025-30167 (High)
+    "jupyterlab>=4.5.7",                # CVE-2025-59842 (Low, >=4.4.9); CVE-2026-40171 (High, >=4.5.7, Renovate #616); CVE-2026-42266 (High, >=4.5.7); CVE-2026-42557 (High, >=4.5.7)
+    "nbconvert>=7.17.1",                # CVE-2025-53000 (High, >=7.17.0, Dependabot #424); CVE-2026-39377, CVE-2026-39378 (High, >=7.17.1, Dependabot #553)
+    "notebook>=7.5.6",                  # CVE-2026-40171 (High, >=7.5.6, Dependabot #614); CVE-2026-42557 (High, >=7.5.6)
+    "jupyter-server>=2.18.0",           # CVE-2025-61669 (Medium, >=2.18.0, Dependabot #628); CVE-2026-35397 (High, >=2.18.0); CVE-2026-40110 (High, >=2.18.0); CVE-2026-40934 (Medium, >=2.18.0)
 ]
 marimo = [
     "cloudpathlib>=0.23.0,<1",

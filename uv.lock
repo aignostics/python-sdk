@@ -101,8 +101,10 @@ dependencies = [
 jupyter = [
     { name = "jupyter" },
     { name = "jupyter-core" },
+    { name = "jupyter-server" },
     { name = "jupyterlab" },
     { name = "nbconvert" },
+    { name = "notebook" },
 ]
 marimo = [
     { name = "cloudpathlib" },
@@ -199,7 +201,8 @@ requires-dist = [
     { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1,<5" },
     { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1,<2" },
     { name = "jupyter-core", marker = "extra == 'jupyter'", specifier = ">=5.8.1" },
-    { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=4.4.9" },
+    { name = "jupyter-server", marker = "extra == 'jupyter'", specifier = ">=2.18.0" },
+    { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=4.5.7" },
     { name = "loguru", specifier = ">=0.7.3,<1" },
     { name = "lxml", specifier = ">=6.1.0" },
     { name = "lxml-html-clean", specifier = ">=0.4.4" },
@@ -208,6 +211,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
     { name = "nbconvert", marker = "extra == 'jupyter'", specifier = ">=7.17.1" },
     { name = "nicegui", extras = ["native"], specifier = ">=3.11.0,<4" },
+    { name = "notebook", marker = "extra == 'jupyter'", specifier = ">=7.5.6" },
     { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
     { name = "openslide-python", specifier = ">=1.4.3,<2" },
     { name = "packaging", specifier = ">=26,<27" },
