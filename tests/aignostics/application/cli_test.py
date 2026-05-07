@@ -1224,6 +1224,96 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
     assert "Metadata must be a JSON object" in result.output
 
 
+@pytest.mark.unit
+def test_cli_run_update_metadata_success_with_checksum(runner: CliRunner) -> None:
+    """Check run update-metadata command succeeds and forwards --checksum to the service."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-metadata",
+                "run-123",
+                '{"key": "value"}',
+                "--checksum",
+                "abc123",
+            ],
+        )
+    assert result.exit_code == 0
+    assert "Successfully updated" in result.output
+    mock_service_cls.return_value.application_run_update_custom_metadata.assert_called_once_with(
+        "run-123", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_metadata_concurrency_conflict(runner: CliRunner) -> None:
+    """Check run update-metadata exits 2 with a clear message on ConcurrencyConflictError."""
+    from aignostics.system import ConcurrencyConflictError
+
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run_update_custom_metadata.side_effect = ConcurrencyConflictError(
+            "stale checksum"
+        )
+        result = runner.invoke(
+            cli,
+            ["application", "run", "update-metadata", "run-123", '{"key": "value"}', "--checksum", "old"],
+        )
+    assert result.exit_code == 2
+    assert "modified by another process" in result.output
+
+
+@pytest.mark.unit
+def test_cli_run_update_item_metadata_success_with_checksum(runner: CliRunner) -> None:
+    """Check run update-item-metadata command succeeds and forwards --checksum to the service."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-item-metadata",
+                "run-123",
+                "item-ext-id",
+                '{"key": "value"}',
+                "--checksum",
+                "abc123",
+            ],
+        )
+    assert result.exit_code == 0
+    assert "Successfully updated" in result.output
+    mock_service_cls.return_value.application_run_update_item_custom_metadata.assert_called_once_with(
+        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) -> None:
+    """Check run update-item-metadata exits 2 with a clear message on ConcurrencyConflictError."""
+    from aignostics.system import ConcurrencyConflictError
+
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run_update_item_custom_metadata.side_effect = (
+            ConcurrencyConflictError("stale checksum")
+        )
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-item-metadata",
+                "run-123",
+                "item-ext-id",
+                '{"key": "value"}',
+                "--checksum",
+                "old",
+            ],
+        )
+    assert result.exit_code == 2
+    assert "modified by another process" in result.output
+
+
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
 @pytest.mark.sequential
