@@ -67,6 +67,8 @@ DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
 DOCUMENT_MODEL_CARD_PDF = "model_card.pdf"
 DOCUMENT_MISSING_PDF = "missing.pdf"
 APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics.application._cli.Client"
+APPLICATION_CLI_SERVICE_PATCH_TARGET = "aignostics.application._cli.Service"
+_TEST_METADATA_JSON = '{"key": "value"}'
 
 # Stub values reused across the document CLI tests.
 DOCUMENT_TEST_FAILURE_MESSAGE = "kaboom"  # canonical exception body for unexpected-failure paths
@@ -957,7 +959,7 @@ def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
 
     with (
         patch("aignostics.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
-        patch("aignostics.application._cli.Service") as mock_service_cls,
+        patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls,
     ):
         mock_service_cls.return_value.application_run.return_value = mock_run_handle
 
@@ -1227,7 +1229,7 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
 @pytest.mark.unit
 def test_cli_run_update_metadata_success_with_checksum(runner: CliRunner) -> None:
     """Check run update-metadata command succeeds and forwards --checksum to the service."""
-    with patch("aignostics.application._cli.Service") as mock_service_cls:
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         result = runner.invoke(
             cli,
             [
@@ -1235,7 +1237,7 @@ def test_cli_run_update_metadata_success_with_checksum(runner: CliRunner) -> Non
                 "run",
                 "update-metadata",
                 "run-123",
-                '{"key": "value"}',
+                _TEST_METADATA_JSON,
                 "--checksum",
                 "abc123",
             ],
@@ -1252,13 +1254,13 @@ def test_cli_run_update_metadata_concurrency_conflict(runner: CliRunner) -> None
     """Check run update-metadata exits 2 with a clear message on ConcurrencyConflictError."""
     from aignostics.system import ConcurrencyConflictError
 
-    with patch("aignostics.application._cli.Service") as mock_service_cls:
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         mock_service_cls.return_value.application_run_update_custom_metadata.side_effect = ConcurrencyConflictError(
             "stale checksum"
         )
         result = runner.invoke(
             cli,
-            ["application", "run", "update-metadata", "run-123", '{"key": "value"}', "--checksum", "old"],
+            ["application", "run", "update-metadata", "run-123", _TEST_METADATA_JSON, "--checksum", "old"],
         )
     assert result.exit_code == 2
     assert "modified by another process" in result.output
@@ -1267,7 +1269,7 @@ def test_cli_run_update_metadata_concurrency_conflict(runner: CliRunner) -> None
 @pytest.mark.unit
 def test_cli_run_update_item_metadata_success_with_checksum(runner: CliRunner) -> None:
     """Check run update-item-metadata command succeeds and forwards --checksum to the service."""
-    with patch("aignostics.application._cli.Service") as mock_service_cls:
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         result = runner.invoke(
             cli,
             [
@@ -1276,7 +1278,7 @@ def test_cli_run_update_item_metadata_success_with_checksum(runner: CliRunner) -
                 "update-item-metadata",
                 "run-123",
                 "item-ext-id",
-                '{"key": "value"}',
+                _TEST_METADATA_JSON,
                 "--checksum",
                 "abc123",
             ],
@@ -1293,7 +1295,7 @@ def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) ->
     """Check run update-item-metadata exits 2 with a clear message on ConcurrencyConflictError."""
     from aignostics.system import ConcurrencyConflictError
 
-    with patch("aignostics.application._cli.Service") as mock_service_cls:
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         mock_service_cls.return_value.application_run_update_item_custom_metadata.side_effect = (
             ConcurrencyConflictError("stale checksum")
         )
@@ -1305,7 +1307,7 @@ def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) ->
                 "update-item-metadata",
                 "run-123",
                 "item-ext-id",
-                '{"key": "value"}',
+                _TEST_METADATA_JSON,
                 "--checksum",
                 "old",
             ],
