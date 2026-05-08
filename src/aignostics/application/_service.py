@@ -23,6 +23,7 @@ from aignostics.platform import (
     ApplicationSummary,
     ApplicationVersion,
     Client,
+    ConcurrencyConflictError,
     ForbiddenException,
     InputArtifact,
     InputItem,
@@ -33,7 +34,6 @@ from aignostics.platform import (
     RunState,
 )
 from aignostics.platform import Service as PlatformService
-from aignostics.system import ConcurrencyConflictError
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 

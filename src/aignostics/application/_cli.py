@@ -1227,7 +1227,7 @@ def run_update_metadata(
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
 
-    from aignostics.system import ConcurrencyConflictError  # noqa: PLC0415
+    from aignostics.platform import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for run with ID '{}'", run_id)
 
@@ -1252,7 +1252,7 @@ def run_update_metadata(
     except ConcurrencyConflictError as e:
         logger.warning(f"Concurrency conflict updating metadata for run '{run_id}': {e}")
         console.print(f"[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry: {e}")
-        sys.exit(2)
+        sys.exit(3)
     except ValueError as e:
         logger.warning(f"Run ID '{run_id}' invalid or metadata invalid: {e}")
         console.print(f"[warning]Warning:[/warning] Run ID '{run_id}' invalid or metadata invalid: {e}")
@@ -1284,7 +1284,7 @@ def run_update_item_metadata(
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
 
-    from aignostics.system import ConcurrencyConflictError  # noqa: PLC0415
+    from aignostics.platform import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
@@ -1311,7 +1311,7 @@ def run_update_item_metadata(
     except ConcurrencyConflictError as e:
         logger.warning("Concurrency conflict updating metadata for item '{}' in run '{}': {}", external_id, run_id, e)
         console.print(f"[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry: {e}")
-        sys.exit(2)
+        sys.exit(3)
     except ValueError as e:
         logger.warning(
             "Run ID '{}' or item external ID '{}' invalid or metadata invalid: {}",

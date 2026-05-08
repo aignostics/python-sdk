@@ -81,6 +81,7 @@ from ._constants import (
     TOKEN_URL_STAGING,
     TOKEN_URL_TEST,
 )
+from ._exceptions import ConcurrencyConflictError
 from ._messages import AUTHENTICATION_FAILED, NOT_YET_IMPLEMENTED, UNKNOWN_ENDPOINT_URL
 from ._sdk_metadata import (
     PipelineConfig,
@@ -155,6 +156,7 @@ __all__ = [
     "Artifact",
     "ArtifactOutput",
     "Client",
+    "ConcurrencyConflictError",
     "Documents",
     "ForbiddenException",
     "InputArtifact",

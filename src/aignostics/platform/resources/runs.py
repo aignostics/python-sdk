@@ -621,7 +621,7 @@ class Run(_AuthenticatedResource):
         self._api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(
             self.run_id,
             custom_metadata_update_request=CustomMetadataUpdateRequest(
-                custom_metadata=cast(dict[str, Any], convert_to_json_serializable(custom_metadata)),  # noqa: TC006
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
                 custom_metadata_checksum=custom_metadata_checksum,
             ),
             _request_timeout=settings().run_submit_timeout,
@@ -660,7 +660,7 @@ class Run(_AuthenticatedResource):
             self.run_id,
             external_id,
             custom_metadata_update_request=CustomMetadataUpdateRequest(
-                custom_metadata=cast(dict[str, Any], convert_to_json_serializable(custom_metadata)),  # noqa: TC006
+                custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
                 custom_metadata_checksum=custom_metadata_checksum,
             ),
             _request_timeout=settings().run_submit_timeout,
@@ -765,7 +765,7 @@ class Runs(_AuthenticatedResource):
         payload = RunCreationRequest(
             application_id=application_id,
             version_number=application_version,
-            custom_metadata=cast(dict[str, Any], convert_to_json_serializable(custom_metadata)),  # noqa: TC006
+            custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
             scheduling=scheduling,
             callback_context=callback_context,
@@ -945,7 +945,7 @@ class Runs(_AuthenticatedResource):
                     validate_item_sdk_metadata(base_sdk_metadata)
                 item_custom_metadata["sdk"] = base_sdk_metadata
 
-            item.custom_metadata = cast(dict[str, Any], convert_to_json_serializable(item_custom_metadata))  # noqa: TC006
+            item.custom_metadata = cast("dict[str, Any]", convert_to_json_serializable(item_custom_metadata))
 
     def _validate_input_items(self, payload: RunCreationRequest) -> None:
         """Validates the input items in a run creation request.

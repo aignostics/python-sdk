@@ -1251,8 +1251,8 @@ def test_cli_run_update_metadata_success_with_checksum(runner: CliRunner) -> Non
 
 @pytest.mark.unit
 def test_cli_run_update_metadata_concurrency_conflict(runner: CliRunner) -> None:
-    """Check run update-metadata exits 2 with a clear message on ConcurrencyConflictError."""
-    from aignostics.system import ConcurrencyConflictError
+    """Check run update-metadata exits 3 with a clear message on ConcurrencyConflictError."""
+    from aignostics.platform import ConcurrencyConflictError
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         mock_service_cls.return_value.application_run_update_custom_metadata.side_effect = ConcurrencyConflictError(
@@ -1262,7 +1262,7 @@ def test_cli_run_update_metadata_concurrency_conflict(runner: CliRunner) -> None
             cli,
             ["application", "run", "update-metadata", "run-123", _TEST_METADATA_JSON, "--checksum", "old"],
         )
-    assert result.exit_code == 2
+    assert result.exit_code == 3
     assert "modified by another process" in result.output
 
 
@@ -1292,8 +1292,8 @@ def test_cli_run_update_item_metadata_success_with_checksum(runner: CliRunner) -
 
 @pytest.mark.unit
 def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) -> None:
-    """Check run update-item-metadata exits 2 with a clear message on ConcurrencyConflictError."""
-    from aignostics.system import ConcurrencyConflictError
+    """Check run update-item-metadata exits 3 with a clear message on ConcurrencyConflictError."""
+    from aignostics.platform import ConcurrencyConflictError
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
         mock_service_cls.return_value.application_run_update_item_custom_metadata.side_effect = (
@@ -1312,7 +1312,7 @@ def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) ->
                 "old",
             ],
         )
-    assert result.exit_code == 2
+    assert result.exit_code == 3
     assert "modified by another process" in result.output
 
 
