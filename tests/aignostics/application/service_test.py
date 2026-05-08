@@ -8,9 +8,8 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
-from aignostics.platform import NotFoundException, RunData, RunOutput
-from aignostics.platform.resources.runs import ApiException
-from aignostics.system._exceptions import ConcurrencyConflictError
+from aignostics.platform import ApiException, NotFoundException, RunData, RunOutput
+from aignostics.system import ConcurrencyConflictError
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
