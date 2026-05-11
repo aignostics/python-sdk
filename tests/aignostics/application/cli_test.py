@@ -205,21 +205,27 @@ def test_cli_application_describe_not_found(runner: CliRunner, record_property) 
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
 
 
-@pytest.mark.e2e
+# @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application dump schemata works as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(
-        cli, ["application", "dump-schemata", HETA_APPLICATION_ID, "--destination", str(tmp_path), "--zip"]
+        cli,
+        [
+            "application",
+            "dump-schemata",
+            HETA_APPLICATION_ID,
+            "--application-version",
+            HETA_APPLICATION_VERSION,
+            "--destination",
+            str(tmp_path),
+            "--zip",
+        ],
     )
-    application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
-    application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
-    zip_file = sanitize_path(
-        Path(tmp_path / f"{HETA_APPLICATION_ID}_{application_version.version_number}_schemata.zip")
-    )
+    zip_file = sanitize_path(Path(tmp_path / f"{HETA_APPLICATION_ID}_{HETA_APPLICATION_VERSION}_schemata.zip"))
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
