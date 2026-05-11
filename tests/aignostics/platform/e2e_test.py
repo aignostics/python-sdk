@@ -36,17 +36,17 @@ from tests.constants_test import (
     PIPELINE_GPU_TYPE,
     PIPELINE_MAX_GPUS_PER_SLIDE,
     PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES,
-    SPECIAL_APPLICATION_ID,
-    SPECIAL_APPLICATION_VERSION,
     SPOT_0_CRC32C,
     SPOT_0_GS_URL,
     SPOT_0_HEIGHT,
     SPOT_0_RESOLUTION_MPP,
     SPOT_0_WIDTH,
     SPOT_1_CRC32C,
+    SPOT_1_DISEASE,
     SPOT_1_GS_URL,
     SPOT_1_HEIGHT,
     SPOT_1_RESOLUTION_MPP,
+    SPOT_1_TISSUE,
     SPOT_1_WIDTH,
     SPOT_2_CRC32C,
     SPOT_2_GS_URL,
@@ -87,152 +87,119 @@ HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 5  # 5 minutes
 # Plan to have 100.000 slides processed in total, with 100 slides per application run,
 # one application run starting every 5 minutes, with a throughput of 1 slide per minute,
 # given no GPU.
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT = 100
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00 = 2000  # Minute 0..9
-SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20 = 2000  # Minute 20..29
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 20  # 20 hours
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 2  # 2 hours
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
-SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
-SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
+TEST_APP_STRESS_SLIDE_PER_RUN_COUNT = 100
+TEST_APP_STRESS_SLIDE_PER_RUN_COUNT_ON_00 = 2000  # Minute 0..9
+TEST_APP_STRESS_SLIDE_PER_RUN_COUNT_ON_20 = 2000  # Minute 20..29
+TEST_APP_STRESS_SUBMIT_AND_FIND_DUE_DATE_SECONDS = 60 * 60 * 20  # 20 hours
+TEST_APP_STRESS_SUBMIT_AND_FIND_DEADLINE_SECONDS = 60 * 60 * 24  # 24 hours
+TEST_APP_STRESS_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40 = 60 * 60 * 2  # 2 hours
+TEST_APP_STRESS_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40 = 60 * 60 * 3  # 3 hours
+TEST_APP_STRESS_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
+TEST_APP_STRESS_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
+
+
+def _build_wsi_input_item(  # noqa: PLR0913, PLR0917
+    gs_url: str,
+    crc32c: str,
+    width: int,
+    height: int,
+    resolution_mpp: float,
+    expires_seconds: int,
+    *,
+    tissue: str = "LUNG",
+    disease: str = "LUNG_CANCER",
+) -> platform.InputItem:
+    """Build a single WSI InputItem from spot metadata."""
+    return platform.InputItem(
+        external_id=gs_url,
+        input_artifacts=[
+            platform.InputArtifact(
+                name="whole_slide_image",
+                download_url=platform.generate_signed_url(
+                    url=gs_url,
+                    expires_seconds=expires_seconds,
+                ),
+                metadata={
+                    "checksum_base64_crc32c": crc32c,
+                    "width_px": width,
+                    "height_px": height,
+                    "resolution_mpp": resolution_mpp,
+                    "media_type": "image/tiff",
+                    "staining_method": "H&E",
+                    "specimen": {
+                        "tissue": tissue,
+                        "disease": disease,
+                    },
+                },
+            )
+        ],
+    )
+
+
+def _build_minimal_wsi_input_item(gs_url: str, crc32c: str, expires_seconds: int) -> platform.InputItem:
+    """Build a minimal WSI InputItem supplying only the CRC32C and image URL."""
+    return platform.InputItem(
+        external_id=gs_url,
+        input_artifacts=[
+            platform.InputArtifact(
+                name="whole_slide_image",
+                download_url=platform.generate_signed_url(url=gs_url, expires_seconds=expires_seconds),
+                metadata={
+                    "checksum_base64_crc32c": crc32c,
+                    "media_type": "image/tiff",
+                },
+            )
+        ],
+    )
 
 
 def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
-        platform.InputItem(
-            external_id=SPOT_0_GS_URL,
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=platform.generate_signed_url(
-                        url=SPOT_0_GS_URL,
-                        expires_seconds=expires_seconds,
-                    ),
-                    metadata={
-                        "checksum_base64_crc32c": SPOT_0_CRC32C,
-                        "resolution_mpp": SPOT_0_RESOLUTION_MPP,
-                        "width_px": SPOT_0_WIDTH,
-                        "height_px": SPOT_0_HEIGHT,
-                        "media_type": "image/tiff",
-                        "staining_method": "H&E",
-                        "specimen": {
-                            "tissue": "LUNG",
-                            "disease": "LUNG_CANCER",
-                        },
-                    },
-                )
-            ],
-        ),
+        _build_wsi_input_item(
+            SPOT_0_GS_URL, SPOT_0_CRC32C, SPOT_0_WIDTH, SPOT_0_HEIGHT, SPOT_0_RESOLUTION_MPP, expires_seconds
+        )
     ]
 
 
 def _get_three_spots_payload_for_test(expires_seconds: int) -> list[platform.InputItem]:
     """Generates a payload using three spots."""
     return [
-        platform.InputItem(
-            external_id=SPOT_1_GS_URL,
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=platform.generate_signed_url(
-                        url=SPOT_1_GS_URL,
-                        expires_seconds=expires_seconds,
-                    ),
-                    metadata={
-                        "checksum_base64_crc32c": SPOT_1_CRC32C,
-                        "width_px": SPOT_1_WIDTH,
-                        "height_px": SPOT_1_HEIGHT,
-                        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-                        "media_type": "image/tiff",
-                    },
-                )
-            ],
+        _build_wsi_input_item(
+            SPOT_1_GS_URL,
+            SPOT_1_CRC32C,
+            SPOT_1_WIDTH,
+            SPOT_1_HEIGHT,
+            SPOT_1_RESOLUTION_MPP,
+            expires_seconds,
+            tissue=SPOT_1_TISSUE,
+            disease=SPOT_1_DISEASE,
         ),
-        platform.InputItem(
-            external_id=SPOT_2_GS_URL,
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=platform.generate_signed_url(
-                        url=SPOT_2_GS_URL,
-                        expires_seconds=expires_seconds,
-                    ),
-                    metadata={
-                        "checksum_base64_crc32c": SPOT_2_CRC32C,
-                        "width_px": SPOT_2_WIDTH,
-                        "height_px": SPOT_2_HEIGHT,
-                        "resolution_mpp": SPOT_2_RESOLUTION_MPP,
-                        "media_type": "image/tiff",
-                    },
-                )
-            ],
+        _build_wsi_input_item(
+            SPOT_2_GS_URL, SPOT_2_CRC32C, SPOT_2_WIDTH, SPOT_2_HEIGHT, SPOT_2_RESOLUTION_MPP, expires_seconds
         ),
-        platform.InputItem(
-            external_id=SPOT_3_GS_URL,
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=platform.generate_signed_url(
-                        url=SPOT_3_GS_URL,
-                        expires_seconds=expires_seconds,
-                    ),
-                    metadata={
-                        "checksum_base64_crc32c": SPOT_3_CRC32C,
-                        "width_px": SPOT_3_WIDTH,
-                        "height_px": SPOT_3_HEIGHT,
-                        "resolution_mpp": SPOT_3_RESOLUTION_MPP,
-                        "media_type": "image/tiff",
-                    },
-                )
-            ],
+        _build_wsi_input_item(
+            SPOT_3_GS_URL, SPOT_3_CRC32C, SPOT_3_WIDTH, SPOT_3_HEIGHT, SPOT_3_RESOLUTION_MPP, expires_seconds
         ),
     ]
 
 
-def _get_spots_payload_for_special(expires_seconds: int, count: int) -> list[platform.InputItem]:
-    """Generates a payload using count many spots.
+def _get_spots_payload_for_test_app(expires_seconds: int, count: int) -> list[platform.InputItem]:
+    """Generates a minimal payload for the test application using count many spots.
 
-    Optimized for large counts (e.g., 100k items):
-    - Generates signed URL once (all items use same source file)
-    - Pre-builds metadata dicts once (identical across all items)
-
-    Args:
-        expires_seconds: Expiration time for signed URLs in seconds.
-        count: Number of items to generate.
-
-    Returns:
-        List of InputItem objects for the special application.
+    Optimized for large counts (e.g., 2000 items):
+    - Generates signed URL once (all items use the same source file)
+    - Pre-builds metadata dict once (identical across all items)
     """
     if count <= 0:
         return []
-
-    signed_url = platform.generate_signed_url(
-        url=SPOT_1_GS_URL,
-        expires_seconds=expires_seconds,
-    )
-    wsi_metadata = {
-        "checksum_base64_crc32c": SPOT_1_CRC32C,
-        "width_px": SPOT_1_WIDTH,
-        "height_px": SPOT_1_HEIGHT,
-        "resolution_mpp": SPOT_1_RESOLUTION_MPP,
-        "media_type": "image/tiff",
-        "staining_method": "H&E",
-        "specimen": {
-            "tissue": "LUNG",
-            "disease": "LUNG_CANCER",
-        },
-    }
+    signed_url = platform.generate_signed_url(url=SPOT_1_GS_URL, expires_seconds=expires_seconds)
+    metadata = {"checksum_base64_crc32c": SPOT_1_CRC32C, "media_type": "image/tiff"}
     return [
         platform.InputItem(
             external_id=f"{SPOT_1_GS_URL}&spot_index={index}",
             input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url=signed_url,
-                    metadata=wsi_metadata,
-                ),
+                platform.InputArtifact(name="whole_slide_image", download_url=signed_url, metadata=metadata),
             ],
         )
         for index in range(count)
@@ -608,95 +575,6 @@ def test_platform_heta_app_submit() -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.stress_only
-@pytest.mark.long_running
-@pytest.mark.skipif(SPECIAL_APPLICATION_ID is None, reason="Special application not configured for this environment")
-@pytest.mark.timeout(timeout=SPECIAL_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
-def test_platform_special_app_submit() -> None:
-    """Test application runs with the special application.
-
-    This test submits an application run with the special application and validates the submission.
-
-    The test behavior varies based on the current minute when triggered by cron (*/10):
-    - Minutes 0-9 (every 6th run): Uses 1000 items instead of 100
-    - Minutes 40-49 (every 4th run): Uses 2h due date / 3h deadline instead of 20h due date / 24h deadline
-
-    Raises:
-        AssertionError: If any of the validation checks fail.
-    """
-    # Determine run configuration based on current minute
-    # Cron runs every 10 minutes (*/10, in _scheduled-test-stress.yml),
-    # so we check which 10-minute window we're in
-    current_minute = datetime.now(tz=UTC).minute
-    is_on_00 = 0 <= current_minute <= 9
-    is_on_20 = 20 <= current_minute <= 29
-    is_on_40 = 40 <= current_minute <= 49
-
-    if is_on_00:
-        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_00
-    elif is_on_20:
-        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT_ON_20
-    else:
-        slide_count = SPECIAL_APPLICATION_SLIDE_PER_RUN_COUNT
-
-    deadline_seconds = (
-        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40
-        if is_on_40
-        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DEADLINE_SECONDS
-    )
-    due_date_seconds = (
-        SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40
-        if is_on_40
-        else SPECIAL_APPLICATION_SUBMIT_AND_FIND_DUE_DATE_SECONDS
-    )
-
-    logger.info(
-        f"Special app submit config: minute={current_minute}, is_on_00={is_on_00}, is_on_40={is_on_40}, "
-        f"slide_count={slide_count}, deadline_seconds={deadline_seconds}, due_date_seconds={due_date_seconds}"
-    )
-
-    logger.trace(
-        f"Generating special application payload with {slide_count} spots for "
-        f"{SPECIAL_APPLICATION_ID} version {SPECIAL_APPLICATION_VERSION}"
-    )
-    payload = _get_spots_payload_for_special(
-        expires_seconds=deadline_seconds + 60 * 5,
-        count=slide_count,
-    )
-    logger.debug(f"Generated special application payload: {payload}")
-    _submit_and_validate(
-        application_id=SPECIAL_APPLICATION_ID,
-        application_version=SPECIAL_APPLICATION_VERSION,
-        payload=payload,
-        deadline_seconds=deadline_seconds,
-        due_date_seconds=due_date_seconds,
-        tags={"test_platform_special_app_submit", "special", "stress", "stress_only"},
-    )
-    logger.debug("Special application payload submitted successfully")
-
-
-@pytest.mark.e2e
-@pytest.mark.stress_only
-@pytest.mark.long_running
-@pytest.mark.scheduled_only
-@pytest.mark.skipif(SPECIAL_APPLICATION_ID is None, reason="Special application not configured for this environment")
-@pytest.mark.timeout(timeout=SPECIAL_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
-def test_platform_special_app_find_and_validate() -> None:
-    """Test application runs with the special application.
-
-    This test finds an application run with the special application submitted earlier and
-    validates it completed successfully and in time.
-
-    Raises:
-        AssertionError: If any of the validation checks fail.
-    """
-    _find_and_validate(
-        application_id=SPECIAL_APPLICATION_ID,
-        application_version=SPECIAL_APPLICATION_VERSION,
-    )
-
-
-@pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
@@ -712,6 +590,82 @@ def test_platform_heta_app_find_and_validate() -> None:
     _find_and_validate(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.stress_only
+@pytest.mark.long_running
+@pytest.mark.timeout(timeout=TEST_APP_STRESS_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
+def test_platform_test_app_stress_submit() -> None:
+    """Test application runs with the test application under stress conditions.
+
+    Submits a large batch of slides and validates the submission. Batch size and
+    scheduling vary based on the current minute when triggered by cron (*/10):
+    - Minutes 0-9 (every 6th run): 2000 items
+    - Minutes 20-29 (every 6th run): 2000 items
+    - Minutes 40-49 (every 4th run): 2h due date / 3h deadline instead of defaults
+    - All other minutes: 100 items
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    current_minute = datetime.now(tz=UTC).minute
+    is_on_00 = 0 <= current_minute <= 9
+    is_on_20 = 20 <= current_minute <= 29
+    is_on_40 = 40 <= current_minute <= 49
+
+    if is_on_00:
+        slide_count = TEST_APP_STRESS_SLIDE_PER_RUN_COUNT_ON_00
+    elif is_on_20:
+        slide_count = TEST_APP_STRESS_SLIDE_PER_RUN_COUNT_ON_20
+    else:
+        slide_count = TEST_APP_STRESS_SLIDE_PER_RUN_COUNT
+
+    deadline_seconds = (
+        TEST_APP_STRESS_SUBMIT_AND_FIND_DEADLINE_SECONDS_ON_40
+        if is_on_40
+        else TEST_APP_STRESS_SUBMIT_AND_FIND_DEADLINE_SECONDS
+    )
+    due_date_seconds = (
+        TEST_APP_STRESS_SUBMIT_AND_FIND_DUE_DATE_SECONDS_ON_40
+        if is_on_40
+        else TEST_APP_STRESS_SUBMIT_AND_FIND_DUE_DATE_SECONDS
+    )
+
+    logger.info(
+        f"Test app stress submit: minute={current_minute}, is_on_00={is_on_00}, is_on_40={is_on_40}, "
+        f"slide_count={slide_count}, deadline_seconds={deadline_seconds}, due_date_seconds={due_date_seconds}"
+    )
+
+    payload = _get_spots_payload_for_test_app(
+        expires_seconds=deadline_seconds + 60 * 5,
+        count=slide_count,
+    )
+    _submit_and_validate(
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
+        payload=payload,
+        deadline_seconds=deadline_seconds,
+        due_date_seconds=due_date_seconds,
+        tags={"test_platform_test_app_stress_submit", "stress", "stress_only"},
+    )
+
+
+@pytest.mark.e2e
+@pytest.mark.stress_only
+@pytest.mark.long_running
+@pytest.mark.scheduled_only
+@pytest.mark.timeout(timeout=TEST_APP_STRESS_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
+def test_platform_test_app_stress_find_and_validate() -> None:
+    """Find and validate a previously submitted test application stress run.
+
+    Raises:
+        AssertionError: If any of the validation checks fail.
+    """
+    _find_and_validate(
+        application_id=TEST_APPLICATION_ID,
+        application_version=TEST_APPLICATION_VERSION,
     )
 
 
