@@ -122,7 +122,7 @@ dependencies = [
     "tenacity>=9.1.2,<10",
     "tqdm>=4.67.1,<5",
     "truststore>=0.10.4,<1",
-    "urllib3>=2.6.3,<3", # CVE-2026-21441 requires >= 2.6.3
+    "urllib3>=2.5.0", # CVE-2026-21441 requires >= 2.6.3
     "wsidicom>=0.28.1,<1",
     "fastmcp>=3.2.0,<4",
     # Transitive overrides: lower bounds enforced to shield consumers from known CVEs/GHSAs.
