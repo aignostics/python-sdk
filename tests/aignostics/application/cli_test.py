@@ -211,15 +211,21 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record
     """Check application dump schemata works as expected."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(
-        cli, ["application", "dump-schemata", HETA_APPLICATION_ID, "--destination", str(tmp_path), "--zip"]
+        cli,
+        [
+            "application",
+            "dump-schemata",
+            HETA_APPLICATION_ID,
+            "--application-version",
+            HETA_APPLICATION_VERSION,
+            "--destination",
+            str(tmp_path),
+            "--zip",
+        ],
     )
-    application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
-    application_version = ApplicationService().application_version(HETA_APPLICATION_ID)
     assert result.exit_code == 0
     assert "Zipped 11 files" in normalize_output(result.output)
-    zip_file = sanitize_path(
-        Path(tmp_path / f"{HETA_APPLICATION_ID}_{application_version.version_number}_schemata.zip")
-    )
+    zip_file = sanitize_path(Path(tmp_path / f"{HETA_APPLICATION_ID}_{HETA_APPLICATION_VERSION}_schemata.zip"))
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 
 
