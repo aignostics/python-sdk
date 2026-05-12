@@ -205,7 +205,7 @@ def test_cli_application_describe_not_found(runner: CliRunner, record_property) 
     assert "Application with ID 'unknown' not found." in normalize_output(result.output)
 
 
-# @pytest.mark.e2e
+@pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record_property) -> None:
     """Check application dump schemata works as expected."""
