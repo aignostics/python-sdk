@@ -1,5 +1,98 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [v1.4.0](https://github.com/aignostics/python-sdk/compare/v1.3.0..v1.4.0) - 2026-05-13
+
+### ⛰️  Features
+
+- *(application)* Add CLI version document {list,describe,download} commands [PYSDK-122] - ([ed8d80c](https://github.com/aignostics/python-sdk/commit/ed8d80cbba79cad7d0665a7f678bffd77657420e))
+- *(launchpad)* Conditional Betterstack status page per environment [PYSDK-107] ([#599](https://github.com/aignostics/python-sdk/pull/599)) - ([1b838cc](https://github.com/aignostics/python-sdk/commit/1b838ccfc44ff85b1b0743e0bf5d93858efced9c))
+- *(platform)* Support external token providers and simplify caching - ([9007e37](https://github.com/aignostics/python-sdk/commit/9007e372426b9ca67e50278cfb302c6c9aa849c6))
+- *(platform)* Expose state/reason/metadata filters in Run.results() - ([fd34a7a](https://github.com/aignostics/python-sdk/commit/fd34a7a01ed3afd725022c5c2c82a52208c07628))
+- *(platform)* Add Documents.read_content() for /content endpoint [PYSDK-122] - ([a17d3f5](https://github.com/aignostics/python-sdk/commit/a17d3f55aa1bddcc1c301cce2c24db10df08a458))
+- *(platform)* Add Documents resource for application version release documents [PYSDK-122] - ([2c79b43](https://github.com/aignostics/python-sdk/commit/2c79b43c3cbfe82490e72b0a7676becab521608a))
+- *(platform)* Replace deprecated download_url with /file endpoint [PYSDK-109] ([#598](https://github.com/aignostics/python-sdk/pull/598)) - ([500012b](https://github.com/aignostics/python-sdk/commit/500012b0d26d05e8dee66eea42fefb0b6d181181))
+
+### 🐛 Bug Fixes
+
+- *(application)* Silence pyright unused-variable warnings in document download - ([f3785e8](https://github.com/aignostics/python-sdk/commit/f3785e8b9720ad8f6ba969628ad503711ee9d8a4))
+- *(ci)* Add --frozen to uv run commands in CI workflows - ([88612d4](https://github.com/aignostics/python-sdk/commit/88612d4c4447c235651d02f37919ed2ff3b5c37e))
+- *(ci)* Fix slack release announcement json payload - ([5b081f7](https://github.com/aignostics/python-sdk/commit/5b081f7cad59c522976e7c9f973f63ff46bb1771))
+- *(ci)* Bump Dockerfile uv pin to 0.11.7 to match pyproject.toml >=0.11.6 PYSDK-98 ([#583](https://github.com/aignostics/python-sdk/pull/583)) - ([9f63222](https://github.com/aignostics/python-sdk/commit/9f63222779014027f22c721aa7c21a32792c1ab3))
+- *(deps)* Bump uv lower bound to >=0.11.6 for GHSA-pjjw-68hj-v9mw - ([4af3e90](https://github.com/aignostics/python-sdk/commit/4af3e90a2becddd8e6ab23041e88c17d0dafd3ed))
+- *(deps)* Bump pip lower bound to >=26.1 for CVE-2026-3219 [PYSDK-115] ([#606](https://github.com/aignostics/python-sdk/pull/606)) - ([487193f](https://github.com/aignostics/python-sdk/commit/487193f6c68a541f212b498000d2a54460e1af75))
+- *(deps)* Update dependency pyarrow to v23 ([#488](https://github.com/aignostics/python-sdk/pull/488)) - ([f75eb61](https://github.com/aignostics/python-sdk/commit/f75eb6126e58e0e13902197d91b5ec6228d15ede))
+- *(deps)* Update dependency fastparquet to v2026 ([#500](https://github.com/aignostics/python-sdk/pull/500)) - ([8f5d85a](https://github.com/aignostics/python-sdk/commit/8f5d85a43f41c29e22aa08364bbd4f714ef6e500))
+- *(deps)* Update dependency idc-index-data to v23.10.1 ([#506](https://github.com/aignostics/python-sdk/pull/506)) - ([9ce367c](https://github.com/aignostics/python-sdk/commit/9ce367c7ef0ca93dffb0d10206367ef29ccf06ae))
+- *(docker)* Add --no-build to uv sync --no-install-project stages - ([11cbe47](https://github.com/aignostics/python-sdk/commit/11cbe4715e3e35c5a154bbecc1d3a8ee3d2ee12b))
+- *(docs)* Correct skip:test:long_running label name in CLAUDE.md ([#577](https://github.com/aignostics/python-sdk/pull/577)) - ([709e166](https://github.com/aignostics/python-sdk/commit/709e166979147ff24f852472728874f223abdebb))
+- *(test)* Enable E2E pytest mark - ([d8eb626](https://github.com/aignostics/python-sdk/commit/d8eb626e3bca811f70e144bdfb62f5643d653a1f))
+- *(test)* Pin application version in E2E test - ([88f6ce4](https://github.com/aignostics/python-sdk/commit/88f6ce40ff92a2ec50a0e6a2b8f18f39698a9215))
+- Test after model update - ([18817d3](https://github.com/aignostics/python-sdk/commit/18817d3bc7468dc8e1d0c575715fa32e71028f4f))
+- Add page_size validation to paginate() to prevent infinite loop [PYSDK-108] ([#597](https://github.com/aignostics/python-sdk/pull/597)) - ([8dd4930](https://github.com/aignostics/python-sdk/commit/8dd4930c074dcde8b6a87e4384c9ff86fc0178ae))
+- Use correct board URL for classic Jira project in compass.yml PYSDK-86 ([#574](https://github.com/aignostics/python-sdk/pull/574)) - ([e6e846d](https://github.com/aignostics/python-sdk/commit/e6e846da418cb123f9118f50502b0aabe331bf69))
+- Use UUID for Process Level single_select in compass.yml PYSDK-85 ([#573](https://github.com/aignostics/python-sdk/pull/573)) - ([836956a](https://github.com/aignostics/python-sdk/commit/836956ac028270b571fba1326f6043b2012239b5))
+- Correct invalid compass.yml link types and custom field type PYSDK-83 ([#571](https://github.com/aignostics/python-sdk/pull/571)) - ([188e632](https://github.com/aignostics/python-sdk/commit/188e63292d07bbb16c8035ffad8664b6300feeea))
+
+### 🚜 Refactor
+
+- *(platform)* Address SonarCloud findings on documents PR [PYSDK-122] - ([83c8962](https://github.com/aignostics/python-sdk/commit/83c896243d46308ef7d364c4a03e447268083468))
+- *(platform)* Simplify document download and address PR review [PYSDK-122] - ([6194fc5](https://github.com/aignostics/python-sdk/commit/6194fc57d414e15e61380fb05b9cb8fd8d8570a4))
+
+### 📚 Documentation
+
+- *(claude)* Add SDLC Configuration block to CLAUDE.md - ([2d2aad3](https://github.com/aignostics/python-sdk/commit/2d2aad33adbf219f0b1f25a1364da66b49f25566))
+- *(specs)* Fix Ketryx itemId cross-references — use hyphens not underscores [PYSDK-121] - ([9492c95](https://github.com/aignostics/python-sdk/commit/9492c95b3f7669f4da970baed0bad29722e5d302))
+- Remove redundant SWR/SPEC for Betterstack feature [PYSDK-127] - ([32c592c](https://github.com/aignostics/python-sdk/commit/32c592c5f0026eb3bc05a641026d27017c1457b9))
+- Revert supply-chain vulnerability documentation from #580 - ([59506a2](https://github.com/aignostics/python-sdk/commit/59506a28e571bdaf14f631fb0bac9c24111a8ff7))
+
+### 🧪 Testing
+
+- *(application)* Cover document CLI error paths and JSON output [PYSDK-122] - ([ad40a7b](https://github.com/aignostics/python-sdk/commit/ad40a7b838a6349ecf680c1afb08d6f2f1c0f0c8))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ci)* Disable split_commits in git-cliff config - ([ef28b07](https://github.com/aignostics/python-sdk/commit/ef28b0729f17ecbb59be4624d17f178db9d1749f))
+- *(ci)* Exclude .claude/worktrees from pyright + gitignore [PYSDK-103] ([#591](https://github.com/aignostics/python-sdk/pull/591)) - ([206adde](https://github.com/aignostics/python-sdk/commit/206added394eadcd6f3b77861ac72b53f866a216))
+- *(codegen)* Regenerate aignx.codegen client from openapi v1.5.0 [PYSDK-122] - ([90ec7a4](https://github.com/aignostics/python-sdk/commit/90ec7a4678dcbe0bb0def4ba55b4e2a2b4110484))
+- *(deps)* Lock file maintenance - ([970a676](https://github.com/aignostics/python-sdk/commit/970a67620cc8e318679a11da65af27a91394ee8b))
+- *(deps)* Lock file maintenance ([#604](https://github.com/aignostics/python-sdk/pull/604)) - ([e1a8dbd](https://github.com/aignostics/python-sdk/commit/e1a8dbd7369ad6cfe7cd4a25193075c443ee3cb2))
+- *(deps)* Lock file maintenance ([#489](https://github.com/aignostics/python-sdk/pull/489)) - ([0c31a8b](https://github.com/aignostics/python-sdk/commit/0c31a8b5cf41886b9201de4fa08ab17433a7264b))
+- *(deps)* Upgrade myst-parser to v5, sphinx <10, swagger-plugin-for-sphinx to v7 ([#596](https://github.com/aignostics/python-sdk/pull/596)) - ([d3bdf6f](https://github.com/aignostics/python-sdk/commit/d3bdf6fd9d2f1ca3aed3e163b4e21f8a4ecdfc13))
+- *(deps)* Update actions/create-github-app-token action to v3.1.1 ([#595](https://github.com/aignostics/python-sdk/pull/595)) - ([d1bdc18](https://github.com/aignostics/python-sdk/commit/d1bdc18b67ec6a223da053b44dff07c8d324952f))
+- *(deps)* Update pandas requirement from <3,>=2.3.3 to >=2.3.3,<4 ([#396](https://github.com/aignostics/python-sdk/pull/396)) - ([292ca4c](https://github.com/aignostics/python-sdk/commit/292ca4cde16516fa19f97777092cdfa538844cd1))
+- *(deps)* Update github actions ([#560](https://github.com/aignostics/python-sdk/pull/560)) - ([a15d5b2](https://github.com/aignostics/python-sdk/commit/a15d5b22cd1ae6d9725a0f91ba947c2d54728897))
+- *(deps)* Remove pygments lower bound (intentional gap to test daily audit-vulnerabilities routine) [PYSDK-104] ([#592](https://github.com/aignostics/python-sdk/pull/592)) - ([daf15a0](https://github.com/aignostics/python-sdk/commit/daf15a0f7517706628430c1c082744e3523ac6ea))
+- *(deps)* Sweep Renovate/Dependabot bumps into pyproject.toml lower bounds PYSDK-93 ([#580](https://github.com/aignostics/python-sdk/pull/580)) - ([765cd70](https://github.com/aignostics/python-sdk/commit/765cd706f5eaa0ebc9a2a50d56f2ba8c6ece1c8f))
+- *(dev)* Update scalene profile target for v2 API [PYSDK-91] ([#579](https://github.com/aignostics/python-sdk/pull/579)) - ([10cd232](https://github.com/aignostics/python-sdk/commit/10cd232495e45e22c6a7664e9bf02da7ed5dabc4))
+- *(docs)* Sync supply-chain record with pyproject after #531/#553 [PYSDK-114] ([#605](https://github.com/aignostics/python-sdk/pull/605)) - ([3ee8ac2](https://github.com/aignostics/python-sdk/commit/3ee8ac2596b52805b77ae4ae293306a409a9da15))
+- *(renovate)* Run long_running tests on bumps of runtime-critical packages PYSDK-111 ([#601](https://github.com/aignostics/python-sdk/pull/601)) - ([866ac7b](https://github.com/aignostics/python-sdk/commit/866ac7b1423ad127ed068bef56d4ed1abcd7cca9))
+- Enable build in uv sync in Dockerfile - ([48eda3d](https://github.com/aignostics/python-sdk/commit/48eda3d9533a10b2ca223a0bcc00ca162dc268d1))
+- Address comments - ([668526c](https://github.com/aignostics/python-sdk/commit/668526cdde24eeca24b6b219dda8b77ef439e688))
+- Address review comments - ([c9d8a15](https://github.com/aignostics/python-sdk/commit/c9d8a15012520b27b1171b3d411fbc6cf321a908))
+- Bump SPEC dates and fix lint/test fallout from documents codegen [PYSDK-122] - ([c72c3dd](https://github.com/aignostics/python-sdk/commit/c72c3dda8311c1d951304c1bcef8efd47c9769ee))
+- TODO - add commit content - ([e8394b2](https://github.com/aignostics/python-sdk/commit/e8394b221ba98e0301ba34e64071dce43e82a883))
+- Revert uv.lock to release/v1.3.0 to avoid merge conflict with main - ([d66c597](https://github.com/aignostics/python-sdk/commit/d66c597f94538b24287aaef0c4dd7d6194224c10))
+- Add Playwright MCP server config to .mcp.json [PYSDK-117] ([#608](https://github.com/aignostics/python-sdk/pull/608)) - ([c15534f](https://github.com/aignostics/python-sdk/commit/c15534feeae706ad268eb2946346b3140a6d9f27))
+- Fix PR review re-triggered by claude:review verdict labels PYSDK-116 ([#607](https://github.com/aignostics/python-sdk/pull/607)) - ([93f83aa](https://github.com/aignostics/python-sdk/commit/93f83aa64a56a98129e81bb0a3453e823fce501c))
+- Add #python-sdk-announcements to compass.yml PYSDK-113 ([#602](https://github.com/aignostics/python-sdk/pull/602)) - ([c472080](https://github.com/aignostics/python-sdk/commit/c472080879d6f8c3de2d38af459ffda3b0d8859d))
+- Add docs build as parallel CI job [PYSDK-110] ([#600](https://github.com/aignostics/python-sdk/pull/600)) - ([3c9fe08](https://github.com/aignostics/python-sdk/commit/3c9fe088a5ceaca71f71e43d9c7cc6cad7f01f39))
+- Enable aignostics/claude-plugins qms plugin project-wide [PYSDK-96] ([#582](https://github.com/aignostics/python-sdk/pull/582)) - ([32025d3](https://github.com/aignostics/python-sdk/commit/32025d370d408a668d17e60b9720d7ed53c99591))
+- Remove broken codecov VS Code extension from recommendations ([#578](https://github.com/aignostics/python-sdk/pull/578)) - ([e02bab9](https://github.com/aignostics/python-sdk/commit/e02bab9432352f41a566a158155db3e071a4277d))
+- Fix link types and add missing Ketryx link in compass.yml [PYSDK-88] ([#576](https://github.com/aignostics/python-sdk/pull/576)) - ([2db76b2](https://github.com/aignostics/python-sdk/commit/2db76b2ccaf1be811ba1867c3efcfa3a27d3d4d0))
+- Add #python-sdk-notifications Slack channel to compass.yml PYSDK-87 ([#575](https://github.com/aignostics/python-sdk/pull/575)) - ([47bbc4b](https://github.com/aignostics/python-sdk/commit/47bbc4b82188bb617bb3f5571342e72d57ce1edf))
+- Add service dependencies and process level to compass.yml [PYSDK-84] ([#572](https://github.com/aignostics/python-sdk/pull/572)) - ([af2a321](https://github.com/aignostics/python-sdk/commit/af2a3214abb69052c84142192abec5a7a419d5a5))
+- Trigger Compass compass.yml re-sync - ([e941b27](https://github.com/aignostics/python-sdk/commit/e941b27ac368bda7137cdd8f0923c3dd94d359e4))
+- Update compass.yml — Jira board, status page, tier, lifecycle and metadata [PYSDK-82] ([#570](https://github.com/aignostics/python-sdk/pull/570)) - ([1fd4536](https://github.com/aignostics/python-sdk/commit/1fd4536db2299dd8f21dcec95fea18d5c3a040bf))
+
+### 🛡️ Security
+
+- *(ci)* Add sop:*, type:*, security:*, scope:*, auto-merge labels [PYSDK-94] ([#581](https://github.com/aignostics/python-sdk/pull/581)) - ([234e358](https://github.com/aignostics/python-sdk/commit/234e3586e9e943aa79b5d7fbafcf82fe027a5104))
+- *(deps)* Update dependency urllib3 to v2.7.0 [security] ([#637](https://github.com/aignostics/python-sdk/pull/637)) - ([b4bcf89](https://github.com/aignostics/python-sdk/commit/b4bcf892d7562f7803b71cdca0159690b366a8d0))
+- *(deps)* Update dependency jupyterlab to v4.5.7 [security] ([#616](https://github.com/aignostics/python-sdk/pull/616)) - ([f5ab258](https://github.com/aignostics/python-sdk/commit/f5ab258b74a045266626529dd218f3488106f420))
+- *(deps)* Bump nicegui to v3.11.0 [security] + adapt to 3.10/3.11 GUI lifecycle changes ([#531](https://github.com/aignostics/python-sdk/pull/531)) - ([6682f84](https://github.com/aignostics/python-sdk/commit/6682f847afc5a1c9f299fab459b7fb7caa3652d7))
+- *(deps)* Bump pygments lower bound to >=2.20.0 for CVE-2026-4539 [PYSDK-106] ([#594](https://github.com/aignostics/python-sdk/pull/594)) - ([43e91b2](https://github.com/aignostics/python-sdk/commit/43e91b296426580dcf3b72849aff5a53b561f1cc))
+
+
 # [v1.3.0](https://github.com/aignostics/python-sdk/compare/v1.2.0..v1.3.0) - 2026-05-04
 
 ### ⛰️  Features
