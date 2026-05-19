@@ -11,7 +11,8 @@ from pathlib import Path
 from time import sleep
 from unittest.mock import MagicMock, patch
 
-import pandas as pd
+import ijson
+import pyarrow.parquet as pq
 import pytest
 from aignx.codegen.exceptions import ForbiddenException
 from aignx.codegen.exceptions import NotFoundException as ApiNotFound
@@ -1110,8 +1111,10 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
     results_dir = tmp_path / SPOT_1_FILENAME.replace(".tiff", "")
     assert results_dir.is_dir(), f"Expected directory {results_dir} not found"
     files_in_dir = list(results_dir.glob("*"))
-    assert len(files_in_dir) == 12, (
-        f"Expected 12 files in {results_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
+    expected_count = len(SPOT_1_EXPECTED_RESULT_FILES)
+    assert len(files_in_dir) == expected_count, (
+        f"Expected {expected_count} files in {results_dir}, but found {len(files_in_dir)}: "
+        f"{[f.name for f in files_in_dir]}"
     )
     print(f"Found files in {results_dir}:")
     for filename, expected_size, tolerance_percent in SPOT_1_EXPECTED_RESULT_FILES:
@@ -1141,9 +1144,9 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
     for parquet_filename, geojson_filename in parquet_geojson_pairs:
         parquet_path = results_dir / parquet_filename
         geojson_path = results_dir / geojson_filename
-        parquet_row_count = len(pd.read_parquet(parquet_path))
-        with geojson_path.open() as f:
-            geojson_feature_count = len(json.load(f)["features"])
+        parquet_row_count = pq.read_metadata(parquet_path).num_rows
+        with geojson_path.open("rb") as f:
+            geojson_feature_count = sum(1 for _ in ijson.items(f, "features.item"))
         assert parquet_row_count == geojson_feature_count, (
             f"Row count mismatch between {parquet_filename} ({parquet_row_count} rows) "
             f"and {geojson_filename} ({geojson_feature_count} features)"

@@ -136,23 +136,6 @@ def _build_wsi_input_item(  # noqa: PLR0913, PLR0917
     )
 
 
-def _build_minimal_wsi_input_item(gs_url: str, crc32c: str, expires_seconds: int) -> platform.InputItem:
-    """Build a minimal WSI InputItem supplying only the CRC32C and image URL."""
-    return platform.InputItem(
-        external_id=gs_url,
-        input_artifacts=[
-            platform.InputArtifact(
-                name="whole_slide_image",
-                download_url=platform.generate_signed_url(url=gs_url, expires_seconds=expires_seconds),
-                metadata={
-                    "checksum_base64_crc32c": crc32c,
-                    "media_type": "image/tiff",
-                },
-            )
-        ],
-    )
-
-
 def _get_single_spot_payload_for_heta(expires_seconds: int) -> list[platform.InputItem]:
     """Generates a payload using a single spot."""
     return [
