@@ -164,6 +164,7 @@ def test_cli_application_list_non_verbose(runner: CliRunner, record_property) ->
 
 @pytest.mark.e2e
 @pytest.mark.scheduled
+@pytest.mark.platform_api
 @pytest.mark.timeout(timeout=60)
 def test_cli_application_list_verbose(runner: CliRunner, record_property) -> None:
     """Check application list command runs successfully."""
@@ -801,6 +802,7 @@ def test_cli_run_submit_and_describe_and_cancel_and_download_and_delete(  # noqa
 
 @pytest.mark.e2e
 @pytest.mark.scheduled
+@pytest.mark.platform_api
 @pytest.mark.timeout(timeout=60)
 def test_cli_run_list_limit_10(runner: CliRunner, record_property) -> None:
     """Check run list command runs successfully."""

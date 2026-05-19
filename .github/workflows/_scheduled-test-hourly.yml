@@ -22,6 +22,10 @@ on:
         required: true
       BETTERSTACK_HEARTBEAT_URL_STAGING:
         required: true
+      BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_STAGING:
+        required: false
+      BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_STAGING:
+        required: false
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
@@ -30,6 +34,10 @@ on:
         required: true
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: true
+      BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_PRODUCTION:
+        required: false
+      BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_PRODUCTION:
+        required: false
       SENTRY_DSN:
         required: true
 
@@ -90,18 +98,59 @@ jobs:
           echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
           echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
-      - name: Test / scheduled
+      - name: Test / scheduled / sdk
+        id: test_sdk
         env:
-          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}"
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         shell: bash
         run: |
           set +e
-          make test_scheduled
-          EXIT_CODE=$?
-          # Show test execution in GitHub Job summary
+          XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- \
+            -m "(scheduled or scheduled_only) and not platform_api and not platform_applications and not stress_only"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Test / scheduled / platform-api
+        id: test_platform_api
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        shell: bash
+        run: |
+          set +e
+          XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- \
+            -m "(scheduled or scheduled_only) and platform_api and not stress_only"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Test / scheduled / platform-applications
+        id: test_platform_applications
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        shell: bash
+        run: |
+          set +e
+          XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- \
+            -m "(scheduled or scheduled_only) and platform_applications and not stress_only"
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+
+      - name: Collect combined exit code and publish summary
+        id: collect
+        if: always()
+        shell: bash
+        run: |
+          SDK_EXIT=${{ steps.test_sdk.outputs.exit_code || '1' }}
+          PLATFORM_API_EXIT=${{ steps.test_platform_api.outputs.exit_code || '1' }}
+          PLATFORM_APPLICATIONS_EXIT=${{ steps.test_platform_applications.outputs.exit_code || '1' }}
+          if [ "$SDK_EXIT" != "0" ] || [ "$PLATFORM_API_EXIT" != "0" ] || [ "$PLATFORM_APPLICATIONS_EXIT" != "0" ]; then
+            COMBINED_EXIT=1
+          else
+            COMBINED_EXIT=0
+          fi
+          echo "sdk_exit=${SDK_EXIT}" >> $GITHUB_OUTPUT
+          echo "platform_api_exit=${PLATFORM_API_EXIT}" >> $GITHUB_OUTPUT
+          echo "platform_applications_exit=${PLATFORM_APPLICATIONS_EXIT}" >> $GITHUB_OUTPUT
+          echo "combined_exit=${COMBINED_EXIT}" >> $GITHUB_OUTPUT
+
           found_files=0
-          for file in reports/pytest_*.md; do
+          for file in reports/pytest_*.md reports/pytest.md; do
             if [ -f "$file" ]; then
               cat "$file" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
@@ -112,7 +161,6 @@ jobs:
             echo "# All scheduled tests passed" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-          # Show test coverage in GitHub Job summary
           if [ -f "reports/coverage.md" ]; then
             cat "reports/coverage.md" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -121,53 +169,46 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Send heartbeat to Sentry, defining the schedule on the fly
-          SENTRY_EXIT_CODE=$(sentry-cli monitors run -e CI --schedule "0 * * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" -- sh -c "exit $EXIT_CODE")
+      - name: Heartbeat / Sentry
+        if: always()
+        shell: bash
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          COMBINED_EXIT: ${{ steps.collect.outputs.combined_exit }}
+        run: |
+          sentry-cli monitors run -e CI --schedule "0 * * * *" --check-in-margin 30 --max-runtime 1 \
+            scheduled-testing-${{ inputs.platform_environment }}-hourly \
+            --timezone "Europe/Berlin" -- sh -c "exit ${COMBINED_EXIT}" || true
 
-          # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
-          if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
-            BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
-              --arg github_workflow "${{ github.workflow }}" \
-              --arg github_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg github_run_id "${{ github.run_id }}" \
-              --arg github_job "${{ github.job }}" \
-              --arg github_sha "${{ github.sha }}" \
-              --arg github_actor "${{ github.actor }}" \
-              --arg github_repository "${{ github.repository }}" \
-              --arg github_ref "${{ github.ref }}" \
-              --arg job_status "${{ job.status }}" \
-              --arg github_event_name "${{ github.event_name }}" \
-              --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-              '{
-                github: {
-                  workflow: $github_workflow,
-                  run_url: $github_run_url,
-                  run_id: $github_run_id,
-                  job: $github_job,
-                  sha: $github_sha,
-                  actor: $github_actor,
-                  repository: $github_repository,
-                  ref: $github_ref,
-                  event_name: $github_event_name
-                },
-                job: {
-                  status: $job_status,
-                },
-                timestamp: $timestamp,
-              }'
-            )
-            curl \
-              --fail-with-body \
-              --silent \
-              --request POST \
-              --header "Content-Type: application/json" \
-              --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
-              "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
-            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
-          else
-            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
-          fi
-          exit $EXIT_CODE
+      - name: Heartbeat / BetterStack / SDK
+        if: always()
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}"
+          BETTERSTACK_EXIT_CODE: ${{ steps.collect.outputs.sdk_exit }}
+          BETTERSTACK_LABEL: SDK
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: python3 .github/workflows/_betterstack_heartbeat.py
+
+      - name: Heartbeat / BetterStack / Platform API
+        if: always()
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_PRODUCTION }}"
+          BETTERSTACK_EXIT_CODE: ${{ steps.collect.outputs.platform_api_exit }}
+          BETTERSTACK_LABEL: "Platform API"
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: python3 .github/workflows/_betterstack_heartbeat.py
+
+      - name: Heartbeat / BetterStack / Platform Applications
+        if: always()
+        env:
+          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_PRODUCTION }}"
+          BETTERSTACK_EXIT_CODE: ${{ steps.collect.outputs.platform_applications_exit }}
+          BETTERSTACK_LABEL: "Platform Applications"
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: python3 .github/workflows/_betterstack_heartbeat.py
 
       - name: Upload test results
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -175,9 +216,14 @@ jobs:
         with:
           name: test-results-scheduled
           path: |
-            reports/junit.xml
+            reports/junit_*.xml
             reports/coverage.xml
             reports/coverage.md
             reports/coverage_html
             aignostics.log
           retention-days: 7
+
+      - name: Fail job if any tests failed
+        if: always()
+        shell: bash
+        run: exit ${{ steps.collect.outputs.combined_exit }}

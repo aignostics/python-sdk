@@ -500,6 +500,7 @@ def _find_and_validate(
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS + 60 * 5)
 def test_platform_test_app_submit_and_wait(record_property) -> None:
     """Test application runs with the test application.
@@ -529,6 +530,7 @@ def test_platform_test_app_submit_and_wait(record_property) -> None:
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.scheduled_only
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_WAIT_TIMEOUT_SECONDS + 60 * 5)
 def test_platform_heta_app_submit_and_wait(record_property) -> None:
     """Test application runs with the HETA application.
@@ -557,6 +559,7 @@ def test_platform_heta_app_submit_and_wait(record_property) -> None:
 
 @pytest.mark.skip(reason="Using submit and wait approach")
 @pytest.mark.e2e
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=TEST_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_test_app_submit() -> None:
     """Test application submission with the test application.
@@ -580,6 +583,7 @@ def test_platform_test_app_submit() -> None:
 
 @pytest.mark.e2e
 @pytest.mark.scheduled_only
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=TEST_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_test_app_find_and_validate() -> None:
     """Test application runs with the test application.
@@ -598,6 +602,7 @@ def test_platform_test_app_find_and_validate() -> None:
 
 @pytest.mark.e2e
 @pytest.mark.scheduled_only
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
 def test_platform_heta_app_submit() -> None:
     """Test application runs with the HETA application.
@@ -709,6 +714,7 @@ def test_platform_special_app_find_and_validate() -> None:
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.scheduled_only
+@pytest.mark.platform_applications
 @pytest.mark.timeout(timeout=HETA_APPLICATION_FIND_AND_VALIDATE_TIMEOUT_SECONDS)
 def test_platform_heta_app_find_and_validate() -> None:
     """Test application runs with the HETA application.
