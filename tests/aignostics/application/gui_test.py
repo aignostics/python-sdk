@@ -1,6 +1,7 @@
 """Tests to verify the GUI functionality of the application module."""
 
 import contextlib
+import json
 import re
 import tempfile
 from asyncio import sleep, to_thread
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pandas as pd
 import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
@@ -354,7 +356,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(  # noqa: PLR0915
+async def test_gui_run_download(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a run result via the GUI."""
@@ -440,8 +442,8 @@ async def test_gui_run_download(  # noqa: PLR0915
 
         # Check for files in the results directory
         files_in_results_dir = list(results_dir.glob("*"))
-        assert len(files_in_results_dir) == 9, (
-            f"Expected 9 files in {results_dir}, but found {len(files_in_results_dir)}: "
+        assert len(files_in_results_dir) == 12, (
+            f"Expected 12 files in {results_dir}, but found {len(files_in_results_dir)}: "
             f"{[f.name for f in files_in_results_dir]}"
         )
 
@@ -462,6 +464,23 @@ async def test_gui_run_download(  # noqa: PLR0915
             assert min_size <= actual_size <= max_size, (
                 f"File size for {filename} ({actual_size} bytes) is outside allowed range "
                 f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
+            )
+
+        # Validate parquet <-> GeoJSON row count parity for the 3 paired outputs
+        parquet_geojson_pairs = [
+            ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
+            ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
+            ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
+        ]
+        for parquet_filename, geojson_filename in parquet_geojson_pairs:
+            parquet_path = results_dir / parquet_filename
+            geojson_path = results_dir / geojson_filename
+            parquet_row_count = len(pd.read_parquet(parquet_path))
+            with geojson_path.open() as f:
+                geojson_feature_count = len(json.load(f)["features"])
+            assert parquet_row_count == geojson_feature_count, (
+                f"Row count mismatch between {parquet_filename} ({parquet_row_count} rows) "
+                f"and {geojson_filename} ({geojson_feature_count} features)"
             )
 
 

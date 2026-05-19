@@ -3,6 +3,7 @@
 import contextlib
 import json
 import platform
+import random
 import re
 from collections.abc import Generator
 from datetime import UTC, datetime, timedelta
@@ -10,7 +11,21 @@ from pathlib import Path
 from time import sleep
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
 import pytest
+from aignx.codegen.exceptions import ForbiddenException
+from aignx.codegen.exceptions import NotFoundException as ApiNotFound
+from aignx.codegen.models import (
+    ItemOutput,
+    ItemResultReadResponse,
+    ItemState,
+    ItemTerminationReason,
+    RunItemStatistics,
+    RunOutput,
+    RunReadResponse,
+    RunState,
+    RunTerminationReason,
+)
 from loguru import logger
 from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
 from typer.testing import CliRunner
@@ -847,8 +862,6 @@ def test_cli_run_list_for_organization(runner: CliRunner) -> None:
 @pytest.mark.unit
 def test_cli_run_list_forbidden_with_organization(runner: CliRunner) -> None:
     """Check ForbiddenException with --for-organization shows org-specific access denied message."""
-    from aignx.codegen.exceptions import ForbiddenException
-
     with patch.object(
         ApplicationService, "application_runs", side_effect=ForbiddenException(status=403, reason="Forbidden")
     ):
@@ -862,8 +875,6 @@ def test_cli_run_list_forbidden_with_organization(runner: CliRunner) -> None:
 @pytest.mark.unit
 def test_cli_run_list_forbidden_without_organization(runner: CliRunner) -> None:
     """Check ForbiddenException without --for-organization shows generic access denied message."""
-    from aignx.codegen.exceptions import ForbiddenException
-
     with patch.object(
         ApplicationService, "application_runs", side_effect=ForbiddenException(status=403, reason="Forbidden")
     ):
@@ -897,18 +908,6 @@ def test_cli_run_describe_not_found(runner: CliRunner, record_property) -> None:
 @pytest.mark.integration
 def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
     """Check run describe --format=json includes items in output."""
-    from aignx.codegen.models import (
-        ItemOutput,
-        ItemResultReadResponse,
-        ItemState,
-        ItemTerminationReason,
-        RunItemStatistics,
-        RunOutput,
-        RunReadResponse,
-        RunState,
-        RunTerminationReason,
-    )
-
     mock_run_data = RunReadResponse(
         run_id="test-run-id-123",
         application_id="test-app",
@@ -1111,8 +1110,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
     results_dir = tmp_path / SPOT_1_FILENAME.replace(".tiff", "")
     assert results_dir.is_dir(), f"Expected directory {results_dir} not found"
     files_in_dir = list(results_dir.glob("*"))
-    assert len(files_in_dir) == 9, (
-        f"Expected 9 files in {results_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
+    assert len(files_in_dir) == 12, (
+        f"Expected 12 files in {results_dir}, but found {len(files_in_dir)}: {[f.name for f in files_in_dir]}"
     )
     print(f"Found files in {results_dir}:")
     for filename, expected_size, tolerance_percent in SPOT_1_EXPECTED_RESULT_FILES:
@@ -1131,6 +1130,23 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
         assert min_size <= actual_size <= max_size, (
             f"File size for {filename} ({actual_size} bytes) is outside allowed range "
             f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
+        )
+
+    # Validate parquet <-> GeoJSON row count parity for the 3 paired outputs
+    parquet_geojson_pairs = [
+        ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
+        ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
+        ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
+    ]
+    for parquet_filename, geojson_filename in parquet_geojson_pairs:
+        parquet_path = results_dir / parquet_filename
+        geojson_path = results_dir / geojson_filename
+        parquet_row_count = len(pd.read_parquet(parquet_path))
+        with geojson_path.open() as f:
+            geojson_feature_count = len(json.load(f)["features"])
+        assert parquet_row_count == geojson_feature_count, (
+            f"Row count mismatch between {parquet_filename} ({parquet_row_count} rows) "
+            f"and {geojson_filename} ({geojson_feature_count} features)"
         )
 
     # Validate the execute command exited successfully
@@ -1222,9 +1238,6 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
 @pytest.mark.sequential
 def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:
     """Test dumping and updating custom metadata via CLI commands."""
-    import json
-    import random
-
     unique_tag = f"test_metadata_{datetime.now(tz=UTC).timestamp()}"
     with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--tags", unique_tag, "--force"]) as run_id:
         # Step 1: Dump initial custom metadata of run
@@ -1313,11 +1326,8 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Pa
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=240)
 @pytest.mark.sequential
-def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:  # noqa: PLR0915
+def test_cli_run_dump_and_update_item_custom_metadata(runner: CliRunner, tmp_path: Path) -> None:
     """Test dumping and updating item custom metadata via CLI commands."""
-    import json
-    import random
-
     unique_tag = f"test_item_metadata_{datetime.now(tz=UTC).timestamp()}"
     # CSV_CONTENT_SPOT0 uses SPOT_0_FILENAME as external_id, which the describe output surfaces
     # as "Item External ID: `...`" — the get_external_id() helper below captures it dynamically.
@@ -1773,8 +1783,6 @@ def test_cli_application_version_document_describe_success(runner: CliRunner, re
 def test_cli_application_version_document_describe_not_found(runner: CliRunner, record_property) -> None:
     """`application version document describe` exits 2 with a clear message on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
@@ -1870,8 +1878,6 @@ def test_cli_application_version_document_list_json_empty(runner: CliRunner, rec
 def test_cli_application_version_document_list_resolve_not_found_text(runner: CliRunner, record_property) -> None:
     """`application version document list` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -1888,8 +1894,6 @@ def test_cli_application_version_document_list_resolve_not_found_text(runner: Cl
 def test_cli_application_version_document_list_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`application version document list --format json` emits structured error on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -1976,8 +1980,6 @@ def test_cli_application_version_document_describe_json_success(runner: CliRunne
 def test_cli_application_version_document_describe_resolve_not_found_text(runner: CliRunner, record_property) -> None:
     """`describe` exits 2 when the application version cannot be resolved (text format)."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -1996,8 +1998,6 @@ def test_cli_application_version_document_describe_resolve_not_found_text(runner
 def test_cli_application_version_document_describe_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`describe --format json` emits structured error when version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2026,8 +2026,6 @@ def test_cli_application_version_document_describe_resolve_not_found_json(runner
 def test_cli_application_version_document_describe_not_found_json(runner: CliRunner, record_property) -> None:
     """`describe --format json` emits structured error when the document is missing."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
@@ -2111,8 +2109,6 @@ def test_cli_application_version_document_download_resolve_not_found(
 ) -> None:
     """`download` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2142,8 +2138,6 @@ def test_cli_application_version_document_download_not_found(
 ) -> None:
     """`download` exits 2 with a clear message when the document does not exist."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
-    from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-
     fake_documents = MagicMock()
     fake_documents.download_to_path.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
