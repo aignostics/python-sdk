@@ -239,7 +239,7 @@ def test_cli_application_dump_schemata(runner: CliRunner, tmp_path: Path, record
         ],
     )
     assert result.exit_code == 0
-    assert "Zipped 11 files" in normalize_output(result.output)
+    assert "Zipped 16 files" in normalize_output(result.output)
     zip_file = sanitize_path(Path(tmp_path / f"{HETA_APPLICATION_ID}_{HETA_APPLICATION_VERSION}_schemata.zip"))
     assert zip_file.exists(), f"Expected zip file {zip_file} not found"
 

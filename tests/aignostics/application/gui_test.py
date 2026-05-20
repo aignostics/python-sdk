@@ -32,6 +32,7 @@ from tests.constants_test import (
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
     SPOT_1_FILENAME,
+    SPOT_1_FILESIZE,
     SPOT_1_GS_URL,
 )
 
@@ -215,7 +216,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
             assert SPOT_1_FILENAME in normalize_output(result.stdout)
             expected_file = Path(tmp_path) / SPOT_1_FILENAME
             assert expected_file.exists(), f"Expected file {expected_file} not found"
-            assert expected_file.stat().st_size == 14681750
+            assert expected_file.stat().st_size == SPOT_1_FILESIZE
 
             # Open the GUI and navigate to Atlas H&E-TME application
             await user.open("/")
