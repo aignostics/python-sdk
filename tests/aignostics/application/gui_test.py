@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import ijson
-import pyarrow.parquet as pq
 import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
@@ -473,6 +472,8 @@ async def test_gui_run_download(  # noqa: PLR0914, PLR0915
             ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
             ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
         ]
+        import pyarrow.parquet as pq
+
         for parquet_filename, geojson_filename in parquet_geojson_pairs:
             parquet_path = results_dir / parquet_filename
             geojson_path = results_dir / geojson_filename

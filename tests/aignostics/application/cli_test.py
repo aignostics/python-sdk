@@ -12,7 +12,6 @@ from time import sleep
 from unittest.mock import MagicMock, patch
 
 import ijson
-import pyarrow.parquet as pq
 import pytest
 from aignx.codegen.exceptions import ForbiddenException
 from aignx.codegen.exceptions import NotFoundException as ApiNotFound
@@ -1141,6 +1140,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
         ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
         ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
     ]
+    import pyarrow.parquet as pq
+
     for parquet_filename, geojson_filename in parquet_geojson_pairs:
         parquet_path = results_dir / parquet_filename
         geojson_path = results_dir / geojson_filename
