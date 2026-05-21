@@ -99,7 +99,7 @@ dependencies = [
     "highdicom>=0.26.1,<1; python_version < '3.14'", # transitive dependency pyjpegls not yet supporting Python 3.14
     "html-sanitizer>=2.6.0,<3",
     "httpx>=0.28.1,<1",
-    "idc-index-data==23.10.1",
+    "idc-index-data==24.0.3",
     "ijson>=3.4.0.post0,<4",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
