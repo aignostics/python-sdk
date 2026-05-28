@@ -269,6 +269,55 @@ def test_runs_submit_returns_application_run(runs, mock_api) -> None:
     assert call_args.application_id == "test"
     assert call_args.items == mock_items
     assert call_args.version_number == "1.0.0"
+    assert call_args.callback_context is None
+
+
+@pytest.mark.unit
+def test_runs_submit_forwards_callback_context(runs, mock_api) -> None:
+    """Test that Runs.submit() forwards callback_context to RunCreationRequest verbatim."""
+    run_id = "new-run-id"
+    mock_items = [
+        ItemCreationRequest(
+            external_id="item-1",
+            input_artifacts=[
+                InputArtifactCreationRequest(name="artifact-1", download_url="url", metadata={"key": "value"})
+            ],
+        )
+    ]
+    mock_api.create_run_v1_runs_post.return_value = RunCreationResponse(run_id=run_id)
+    runs._validate_input_items = Mock()
+
+    callback_context = {"job_id": "abc-123", "trace_id": "t-7"}
+    runs.submit(
+        application_id="test",
+        items=mock_items,
+        application_version="1.0.0",
+        callback_context=callback_context,
+    )
+
+    call_args = mock_api.create_run_v1_runs_post.call_args[0][0]
+    assert call_args.callback_context == callback_context
+
+
+@pytest.mark.unit
+def test_runs_submit_omits_callback_context_when_not_provided(runs, mock_api) -> None:
+    """Test that Runs.submit() defaults callback_context to None on RunCreationRequest."""
+    run_id = "new-run-id"
+    mock_items = [
+        ItemCreationRequest(
+            external_id="item-1",
+            input_artifacts=[
+                InputArtifactCreationRequest(name="artifact-1", download_url="url", metadata={"key": "value"})
+            ],
+        )
+    ]
+    mock_api.create_run_v1_runs_post.return_value = RunCreationResponse(run_id=run_id)
+    runs._validate_input_items = Mock()
+
+    runs.submit(application_id="test", items=mock_items, application_version="1.0.0")
+
+    call_args = mock_api.create_run_v1_runs_post.call_args[0][0]
+    assert call_args.callback_context is None
 
 
 @pytest.mark.unit
