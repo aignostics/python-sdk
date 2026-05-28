@@ -12,7 +12,8 @@
         "**/dist-packages/**",
         "**/dist_vercel/.vercel/**",
         "**/dist_native/**",
-        "**/site-packages/**"
+        "**/site-packages/**",
+        "**/aignx/**"
     ],
     "ignore": [
         "**/third_party/**",
