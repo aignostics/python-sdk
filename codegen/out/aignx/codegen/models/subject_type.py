@@ -18,20 +18,22 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class OutputArtifactScope(str, Enum):
+class SubjectType(str, Enum):
     """
-    OutputArtifactScope
+    SubjectType
     """
 
     """
     allowed enum values
     """
-    ITEM = 'ITEM'
-    GLOBAL = 'GLOBAL'
+    USER = 'user'
+    ORGANIZATION_ADMIN = 'organization_admin'
+    ORGANIZATION_USER = 'organization_user'
+    SHARE_TOKEN = 'share_token'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of OutputArtifactScope from a JSON string"""
+        """Create an instance of SubjectType from a JSON string"""
         return cls(json.loads(json_str))
 
 
