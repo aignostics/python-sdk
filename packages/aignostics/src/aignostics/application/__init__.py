@@ -1,9 +1,12 @@
-"""Application module."""
+"""Application module — re-exports from slim aignostics_sdk.application."""
 
-from ._cli import cli
-from ._models import DownloadProgress, DownloadProgressState
-from ._service import Service
-from ._settings import Settings
+from aignostics_sdk.application import (
+    DownloadProgress,
+    DownloadProgressState,
+    Service,
+    Settings,
+    cli,
+)
 
 __all__ = ["DownloadProgress", "DownloadProgressState", "Service", "Settings", "cli"]
 
@@ -11,7 +14,7 @@ from importlib.util import find_spec
 
 # advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
-    from ._gui._page_builder import PageBuilder
+    from aignostics_sdk.application import PageBuilder
 
     __all__ += [
         "PageBuilder",

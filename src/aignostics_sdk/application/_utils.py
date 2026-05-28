@@ -18,7 +18,7 @@ from typing import Any, Protocol
 import humanize
 from loguru import logger
 
-from aignostics.constants import (
+from aignostics_sdk.constants import (
     HETA_APPLICATION_ID,
     TEST_APP_APPLICATION_ID,
     WSI_SUPPORTED_FILE_EXTENSIONS,

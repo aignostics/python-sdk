@@ -1,10 +1,8 @@
-"""System module — re-exports from slim aignostics_sdk.system."""
+"""System module."""
 
-from aignostics_sdk.system import (
-    Service,
-    Settings,
-    cli,
-)
+from ._cli import cli
+from ._service import Service
+from ._settings import Settings
 
 __all__ = [
     "Service",
@@ -12,11 +10,12 @@ __all__ = [
     "cli",
 ]
 
+
 from importlib.util import find_spec
 
 # advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
-    from aignostics_sdk.system import PageBuilder
+    from ._gui import PageBuilder
 
     __all__ += [
         "PageBuilder",

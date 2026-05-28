@@ -14,9 +14,7 @@ import crc32c
 import requests
 from loguru import logger
 
-from aignostics.bucket import Service as BucketService
-from aignostics.constants import TEST_APP_APPLICATION_ID
-from aignostics.wsi import Service as WSIService
+from aignostics_sdk.constants import TEST_APP_APPLICATION_ID
 from aignostics_sdk.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
@@ -361,6 +359,8 @@ class Service(BaseService):  # noqa: PLR0904
         _ = Service().application_version(application_id, application_version)
 
         metadata: list[dict[str, Any]] = []
+        from aignostics.wsi import Service as WSIService  # noqa: PLC0415
+
         wsi_service = WSIService()
 
         try:
@@ -455,6 +455,7 @@ class Service(BaseService):  # noqa: PLR0904
             requests.HTTPError: If the upload fails with an HTTP error.
         """
         import psutil  # noqa: PLC0415
+        from aignostics.bucket import Service as BucketService  # noqa: PLC0415
 
         logger.trace("Uploading files with upload ID '{}'", upload_prefix)
         app_version = Service().application_version(application_id, application_version=application_version)
@@ -864,6 +865,8 @@ class Service(BaseService):  # noqa: PLR0904
                 or if due_date not in the future.
             RuntimeError: If submitting the run failed unexpectedly.
         """
+        from aignostics.bucket import Service as BucketService  # noqa: PLC0415
+
         validate_due_date(due_date)
         logger.trace("Submitting application run with metadata: {}", metadata)
         app_version = self.application_version(application_id, application_version=application_version)
@@ -1089,7 +1092,7 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:
-                from aignostics_sdk.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415, PLC2701
+                from aignostics_sdk.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
 
                 try:
                     PipelineConfig.model_validate(sdk_metadata["pipeline"])

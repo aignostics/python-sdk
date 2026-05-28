@@ -22,7 +22,6 @@ from dotenv import unset_key as dotenv_unset_key
 from loguru import logger
 from pydantic_settings import BaseSettings
 
-from aignostics.utils import locate_subclasses
 from aignostics_sdk.utils import (
     ENV_PREFIX,
     UNHIDE_SENSITIVE_INFO,
@@ -143,9 +142,14 @@ class Service(BaseService):
             Health: The aggregate health of the system.
         """
         components: dict[str, Health] = {}
-        for service_class in locate_subclasses(BaseService):
-            if service_class is not Service:
-                components[f"{service_class.__module__}.{service_class.__name__}"] = await service_class().health()
+        try:
+            from aignostics.utils import locate_subclasses  # noqa: PLC0415
+
+            for service_class in locate_subclasses(BaseService):
+                if service_class is not Service:
+                    components[f"{service_class.__module__}.{service_class.__name__}"] = await service_class().health()
+        except ImportError:
+            pass
         components["network"] = await self._determine_network_health()
 
         # Set the system health status based on is_healthy attribute
@@ -262,6 +266,10 @@ class Service(BaseService):
             dict[str, Any]: Flattened settings dictionary with env_prefix + key as the key.
         """
         settings: dict[str, Any] = {}
+        try:
+            from aignostics.utils import locate_subclasses  # noqa: PLC0415
+        except ImportError:
+            return {}
         for settings_class in locate_subclasses(BaseSettings):
             settings_instance = load_settings(settings_class)
             env_prefix = settings_instance.model_config.get("env_prefix", "")
@@ -411,10 +419,15 @@ class Service(BaseService):
         # Convert the TypedDict to a regular dict before adding dynamic service keys
         result_dict: dict[str, Any] = dict(rtn)
 
-        for service_class in locate_subclasses(BaseService):
-            if service_class is not Service:
-                service = service_class()
-                result_dict[service.key()] = await service.info(mask_secrets=mask_secrets)
+        try:
+            from aignostics.utils import locate_subclasses  # noqa: PLC0415
+
+            for service_class in locate_subclasses(BaseService):
+                if service_class is not Service:
+                    service = service_class()
+                    result_dict[service.key()] = await service.info(mask_secrets=mask_secrets)
+        except ImportError:
+            pass
 
         logger.debug("Service info: {}", result_dict)
         return result_dict

@@ -114,7 +114,6 @@ def dump_dot_env_file(
 
 
 if find_spec("nicegui"):
-    from aignostics.utils import gui_run
 
     @cli.command()
     def serve(
@@ -129,6 +128,8 @@ if find_spec("nicegui"):
             port (int): Port to bind the server to.
             open_browser (bool): Open app in browser after starting the server.
         """
+        from aignostics.utils import gui_run  # noqa: PLC0415
+
         console.print(f"Starting web application server at http://{host}:{port}")
         gui_run(native=False, host=host, port=port, with_api=False, show=open_browser)
 

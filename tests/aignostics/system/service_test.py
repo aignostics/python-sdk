@@ -5,7 +5,8 @@ from typing import Any
 from unittest import mock
 
 import pytest
-from aignostics.system._service import Service
+
+from aignostics_sdk.system._service import Service
 
 # ---------------------------------------------------------------------------
 # Helpers shared by uptime tests
@@ -62,11 +63,11 @@ def _patch_info_dependencies(boot_time: float = FIXED_BOOT_TIME):
             mock.patch("psutil.cpu_times_percent", return_value=cpu_times),
             mock.patch("psutil.getloadavg", return_value=(1.0, 1.0, 1.0)),
             mock.patch("psutil.Process", return_value=_make_mock_process()),
-            mock.patch("aignostics.system._service.get_process_info", return_value=mock_process_info),
+            mock.patch("aignostics_sdk.system._service.get_process_info", return_value=mock_process_info),
             mock.patch("asyncio.sleep"),
             mock.patch.object(Service, "_get_public_ipv4", return_value=None),
             mock.patch.object(Service, "_collect_all_settings", return_value={}),
-            mock.patch("aignostics.system._service.locate_subclasses", return_value=[]),
+            mock.patch("aignostics.utils.locate_subclasses", return_value=[]),
             mock.patch("time.time", return_value=now),
         ):
             yield

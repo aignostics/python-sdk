@@ -51,16 +51,8 @@ def test_aignx_codegen_importable() -> None:
 
 @pytest.mark.unit
 @pytest.mark.slim
-@pytest.mark.xfail(
-    reason="aignostics_sdk.cli module does not exist yet — pending PYSDK-137 (CLI carve-out)",
-    strict=True,
-)
 def test_slim_cli_entry_point() -> None:
-    """aignostics-sdk CLI entry point exits 0.
-
-    This test is xfail until PYSDK-137 creates the aignostics_sdk.cli module
-    that aggregates the slim subcommands (user, sdk).
-    """
+    """aignostics-sdk CLI entry point exits 0."""
     result = subprocess.run(
         [sys.executable, "-m", "aignostics_sdk.cli", "--help"],
         capture_output=True,
@@ -71,6 +63,8 @@ def test_slim_cli_entry_point() -> None:
     assert result.returncode == 0
     assert "user" in result.stdout
     assert "sdk" in result.stdout
+    assert "application" in result.stdout
+    assert "system" in result.stdout
 
 
 @pytest.mark.unit

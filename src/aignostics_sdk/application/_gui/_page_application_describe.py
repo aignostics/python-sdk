@@ -7,14 +7,13 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
-from aignostics.system import Service as SystemService
 from aignostics.utils import GUILocalFilePicker
 from loguru import logger
 from nicegui import app, binding, ui
 from nicegui import run as nicegui_run
 from nicegui.events import ValueChangeEventArguments
 
+from aignostics_sdk.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -23,6 +22,7 @@ from aignostics_sdk.platform import (
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
+from aignostics_sdk.system import Service as SystemService
 from aignostics_sdk.utils import get_user_data_directory
 
 if TYPE_CHECKING:

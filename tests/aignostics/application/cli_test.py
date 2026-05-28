@@ -13,12 +13,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
-from aignostics_sdk.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
-from aignostics_sdk.utils import Health, sanitize_path
 from loguru import logger
 from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
 from typer.testing import CliRunner
 
+from aignostics_sdk.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+from aignostics_sdk.utils import Health, sanitize_path
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -52,7 +52,7 @@ RUN_CSV_FILENAME = "run.csv"
 DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
 DOCUMENT_MODEL_CARD_PDF = "model_card.pdf"
 DOCUMENT_MISSING_PDF = "missing.pdf"
-APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics.application._cli.Client"
+APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics_sdk.application._cli.Client"
 
 # Stub values reused across the document CLI tests.
 DOCUMENT_TEST_FAILURE_MESSAGE = "kaboom"  # canonical exception body for unexpected-failure paths
@@ -296,7 +296,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -329,7 +329,7 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -344,7 +344,7 @@ def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -375,7 +375,7 @@ def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_execute_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -954,8 +954,8 @@ def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
     mock_run_handle.results.return_value = iter([mock_item])
 
     with (
-        patch("aignostics.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
-        patch("aignostics.application._cli.Service") as mock_service_cls,
+        patch("aignostics_sdk.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
+        patch("aignostics_sdk.application._cli.Service") as mock_service_cls,
     ):
         mock_service_cls.return_value.application_run.return_value = mock_run_handle
 

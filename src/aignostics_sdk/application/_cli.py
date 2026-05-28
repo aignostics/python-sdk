@@ -11,8 +11,6 @@ from typing import Annotated
 import typer
 from loguru import logger
 
-from aignostics.bucket import Service as BucketService
-from aignostics.system import Service as SystemService
 from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -26,6 +24,7 @@ from aignostics_sdk.platform import (
     RunState,
 )
 from aignostics_sdk.platform import Service as PlatformService
+from aignostics_sdk.system import Service as SystemService
 from aignostics_sdk.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
@@ -670,6 +669,7 @@ def run_upload(  # noqa: PLR0913, PLR0917
     2. Uploads the files referenced in the CSV file to the Aignostics platform.
     3. Incrementally updates the CSV file with upload progress and the signed URLs for the uploaded files.
     """
+    from aignostics.bucket import Service as BucketService  # noqa: PLC0415
     from rich.progress import (  # noqa: PLC0415
         BarColumn,
         FileSizeColumn,
