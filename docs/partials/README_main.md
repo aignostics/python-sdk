@@ -69,8 +69,8 @@ from aignostics.dataset import ...       # IDC dataset downloads
 Platform/utils imports (updated namespace in v2):
 
 ```python
-from aignostics_sdk.platform import Client   # was: from aignostics.platform import Client
-from aignostics_sdk.utils import BaseService # was: from aignostics.utils import BaseService
+from aignostics_sdk.platform import Client  # was: from aignostics.platform import Client
+from aignostics_sdk.utils import BaseService  # was: from aignostics.utils import BaseService
 ```
 
 CLI (unchanged):
