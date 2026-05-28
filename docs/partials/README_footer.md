@@ -1,5 +1,8 @@
 ## Further Reading
 
+1. **Upgrading from v1?** Read the
+   [v2 Migration Guide](https://aignostics.readthedocs.io/en/latest/migration.html)
+   for updated import paths and install instructions.
 1. Inspect our
    [security policy](https://aignostics.readthedocs.io/en/latest/security.html)
    with detailed documentation of checks, tools and principles.

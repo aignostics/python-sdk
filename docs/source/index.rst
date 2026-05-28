@@ -12,6 +12,7 @@
    :hidden:
 
    main
+   migration
    platform_overview
    cli_reference
    lib_reference

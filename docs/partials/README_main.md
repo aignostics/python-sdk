@@ -24,6 +24,62 @@ more about how we achieve
 
 ## Installation
 
+> **v2 dual-package distribution**: The SDK is now published as two separate PyPI packages.
+> Use `aignostics-sdk` for the slim API client, or `aignostics` for the full SDK with GUI, WSI
+> processing, and dataset downloads. See the [v2 Migration Guide](#migrating-from-v1-to-v2)
+> if you are upgrading from v1.
+
+### API client only (slim)
+
+For users who only need the platform API client with minimal dependencies:
+
+```bash
+pip install aignostics-sdk
+```
+
+Python imports:
+
+```python
+from aignostics_sdk.platform import Client
+```
+
+CLI:
+
+```bash
+aignostics-sdk user login
+aignostics-sdk user whoami
+```
+
+### Full SDK
+
+For users who need WSI processing, dataset downloads, the desktop Launchpad, and all features:
+
+```bash
+pip install aignostics
+```
+
+Python imports (full SDK modules unchanged from v1):
+
+```python
+from aignostics.application import ...   # ML application orchestration
+from aignostics.wsi import ...           # Whole slide image processing
+from aignostics.dataset import ...       # IDC dataset downloads
+```
+
+Platform/utils imports (updated namespace in v2):
+
+```python
+from aignostics_sdk.platform import Client   # was: from aignostics.platform import Client
+from aignostics_sdk.utils import BaseService # was: from aignostics.utils import BaseService
+```
+
+CLI (unchanged):
+
+```bash
+aignostics user login
+aignostics application list
+```
+
 The **Aignostics Python SDK** can be installed via the [uv package manager](https://docs.astral.sh/uv/). The installation process sets up the SDK along with the necessary dependencies, including the **uv** package manager itself if not already present.
 
 Before proceeding, ensure you have an **Aignostics Platform account**. You can get access either through your organization admin (if your organization has an Aignostics account) or directly from Aignostics. Check your email for an invitation before proceeding.
@@ -656,3 +712,41 @@ Now that you have an overview of the Aignostics Python SDK and its interfaces, h
 - **Review detailed documentation**: See the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
 - **Explore QuPath integration**: Use the QuPath extension to visualize and interact with your results
 - **Get support**: Contact [support@aignostics.com](mailto:support@aignostics.com) or check the [full documentation](https://aignostics.readthedocs.io/en/latest/)
+- **Upgrading from v1?** See the [v2 Migration Guide](https://aignostics.readthedocs.io/en/latest/migration.html) for updated import paths and install instructions
+
+## Migrating from v1 to v2
+
+v2 introduces `aignostics-sdk`, a slim distribution containing only the platform API client.
+The full `aignostics` package now depends on `aignostics-sdk`.
+
+### Import path changes
+
+| v1 | v2 |
+|----|----|
+| `from aignostics.platform import Client` | `from aignostics_sdk.platform import Client` |
+| `from aignostics.utils import BaseService` | `from aignostics_sdk.utils import BaseService` |
+| `from aignostics.constants import INTERNAL_ORGS` | `from aignostics_sdk.constants import INTERNAL_ORGS` |
+
+All other modules (`application`, `wsi`, `dataset`, `bucket`, `qupath`, `notebook`, `gui`,
+`system`) remain under the `aignostics.*` namespace and are unchanged.
+
+### CLI changes
+
+The `aignostics` CLI is unchanged. A new `aignostics-sdk` CLI is available when only the slim
+package is installed:
+
+```bash
+# slim install
+aignostics-sdk user login
+aignostics-sdk user whoami
+
+# full install (unchanged)
+aignostics user login
+aignostics application list
+```
+
+### If you only use the API client
+
+Replace `pip install aignostics` with `pip install aignostics-sdk` for a significantly smaller
+install footprint. See the [full migration guide](https://aignostics.readthedocs.io/en/latest/migration.html)
+for a complete checklist.

@@ -1,5 +1,12 @@
 # CLAUDE.md - Aignostics SDK Modules Overview
 
+> **v2 Architecture Note**: In v2, this `src/aignostics/` tree contains only the *heavy* modules:
+> `application`, `wsi`, `dataset`, `bucket`, `qupath`, `notebook`, `gui`, and `system`.
+> The `platform` and `utils` modules (plus `constants`) have moved to the slim package at
+> `packages/aignostics-sdk/` under the `aignostics_sdk` namespace.
+> The full `aignostics` package depends on `aignostics-sdk` and re-exports nothing from those
+> moved modules — callers must update their imports (see `migration.md` in the docs).
+
 This file provides a comprehensive overview of all modules in the Aignostics SDK, their core features, user interfaces, and interactions.
 
 ## Module Index
