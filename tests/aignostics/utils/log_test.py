@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-
 from aignostics_sdk.utils._log import _validate_file_name, logging_initialize
 
 

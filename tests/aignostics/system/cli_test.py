@@ -6,10 +6,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from typer.testing import CliRunner
-
 from aignostics.cli import cli
 from aignostics_sdk.utils import __project_name__
+from typer.testing import CliRunner
+
 from tests.conftest import normalize_output
 
 THE_VALUE = "test_secret_value_not_real_for_testing_only"

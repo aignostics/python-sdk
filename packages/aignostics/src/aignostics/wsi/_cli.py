@@ -5,9 +5,8 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
-from loguru import logger
-
 from aignostics_sdk.utils import console
+from loguru import logger
 
 from ._service import Service
 from ._utils import print_slide_info, print_study_info

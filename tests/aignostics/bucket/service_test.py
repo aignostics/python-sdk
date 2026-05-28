@@ -4,7 +4,6 @@ from typing import Any
 from unittest import mock
 
 import pytest
-
 from aignostics.bucket._service import Service
 
 # ---------------------------------------------------------------------------

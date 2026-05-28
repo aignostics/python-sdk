@@ -3,11 +3,11 @@
 from unittest.mock import patch
 
 import pytest
-from typer.testing import CliRunner
-
 from aignostics.cli import cli
 from aignostics_sdk.platform import Me
 from aignostics_sdk.platform._service import Organization, TokenInfo, User, UserInfo
+from typer.testing import CliRunner
+
 from tests.conftest import normalize_output
 
 

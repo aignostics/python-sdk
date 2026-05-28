@@ -10,12 +10,12 @@ from importlib.util import find_spec
 from typing import Any
 from urllib.parse import urljoin
 
+from aignostics_sdk.utils import __version__, open_user_data_directory
 from html_sanitizer import Sanitizer
 from humanize import naturaldelta
 from loguru import logger
 
 from aignostics.constants import WINDOW_TITLE
-from aignostics_sdk.utils import __version__, open_user_data_directory
 
 from ._theme import theme
 
@@ -50,12 +50,12 @@ def frame(  # noqa: C901, PLR0915
     Yields:
         Generator[Any, Any, Any]: The context manager for the page frame.
     """
-    from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
-
     from aignostics_sdk.platform import Service as PlatformService  # noqa: PLC0415
     from aignostics_sdk.platform import UserInfo, settings  # noqa: PLC0415
-    from aignostics.system import Service as SystemService  # noqa: PLC0415
     from aignostics_sdk.utils import NavItem, gui_get_nav_groups  # noqa: PLC0415
+    from nicegui import app, background_tasks, context, run, ui  # noqa: PLC0415
+
+    from aignostics.system import Service as SystemService  # noqa: PLC0415
 
     theme()
 

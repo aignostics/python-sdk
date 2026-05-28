@@ -10,9 +10,8 @@ from typing import Annotated
 
 import humanize
 import typer
-from loguru import logger
-
 from aignostics_sdk.utils import console, get_user_data_directory
+from loguru import logger
 
 from ._service import DownloadProgress, Service
 

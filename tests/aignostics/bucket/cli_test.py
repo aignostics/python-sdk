@@ -5,9 +5,9 @@ import uuid
 from pathlib import Path
 
 import pytest
+from aignostics.cli import cli
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
 from tests.conftest import normalize_output
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"

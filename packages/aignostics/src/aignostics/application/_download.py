@@ -8,10 +8,9 @@ from urllib.parse import urlparse
 
 import crc32c
 import requests
-from loguru import logger
-
 from aignostics_sdk.platform import ArtifactOutput, ItemOutput, ItemState, Run, generate_signed_url
 from aignostics_sdk.utils import sanitize_path_component
+from loguru import logger
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._utils import get_file_extension_for_artifact

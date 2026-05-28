@@ -4,7 +4,6 @@ from collections.abc import Callable
 from unittest.mock import Mock, patch
 
 import pytest
-
 from aignostics_sdk.platform._api import _AuthenticatedApi, _AuthenticatedResource, _OAuth2TokenProviderConfiguration
 from aignostics_sdk.platform._client import Client
 

@@ -4,10 +4,10 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from typer.testing import CliRunner
-
 from aignostics.application import Service as ApplicationService
 from aignostics_sdk.platform import NotFoundException, RunData, RunOutput
+from typer.testing import CliRunner
+
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,

@@ -4,9 +4,8 @@ from typing import Optional
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from typer.models import CommandInfo, TyperInfo
-
 from aignostics_sdk.utils._cli import prepare_cli
+from typer.models import CommandInfo, TyperInfo
 
 # Constants to avoid duplication
 LOCATE_IMPLEMENTATIONS_PATH = "aignostics.utils._cli.locate_implementations"

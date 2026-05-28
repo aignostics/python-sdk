@@ -17,12 +17,7 @@ from typing import Any, NotRequired, TypedDict
 from urllib.request import getproxies
 
 import httpx
-from dotenv import set_key as dotenv_set_key
-from dotenv import unset_key as dotenv_unset_key
-from loguru import logger
-from pydantic_settings import BaseSettings
-
-from aignostics_sdk.utils import (  # noqa: TID252
+from aignostics_sdk.utils import (
     UNHIDE_SENSITIVE_INFO,
     BaseService,
     Health,
@@ -37,6 +32,11 @@ from aignostics_sdk.utils import (  # noqa: TID252
     locate_subclasses,
     user_agent,
 )
+from dotenv import set_key as dotenv_set_key
+from dotenv import unset_key as dotenv_unset_key
+from loguru import logger
+from pydantic_settings import BaseSettings
+
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
 

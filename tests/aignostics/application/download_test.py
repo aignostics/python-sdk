@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
-
 from aignostics.application._download import (
     download_available_items,
     download_item_artifact,

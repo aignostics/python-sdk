@@ -5,8 +5,6 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pydantic import ValidationError
-
 from aignostics_sdk.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
@@ -21,6 +19,7 @@ from aignostics_sdk.platform._sdk_metadata import (
     validate_run_sdk_metadata,
     validate_run_sdk_metadata_silent,
 )
+from pydantic import ValidationError
 
 # Test constants
 TEST_USER_AGENT = "aignostics-sdk/1.0.0"

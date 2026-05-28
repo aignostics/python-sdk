@@ -2,10 +2,9 @@
 
 from typing import Annotated
 
+from aignostics_sdk.utils import OpaqueSettings, __env_file__, __project_name__
 from pydantic import Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
-
-from aignostics_sdk.utils import OpaqueSettings, __env_file__, __project_name__  # noqa: TID252
 
 
 class Settings(OpaqueSettings):

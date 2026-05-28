@@ -11,13 +11,13 @@ from unittest.mock import patch
 import platformdirs
 import psutil
 import pytest
-from nicegui.testing import User
-from typer.testing import CliRunner
-
 from aignostics.application import Service
 from aignostics.cli import cli
 from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics_sdk.utils import __project_name__
+from nicegui.testing import User
+from typer.testing import CliRunner
+
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,

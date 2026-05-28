@@ -9,6 +9,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
+from aignostics_sdk.platform._api import _AuthenticatedApi
+from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
+from aignostics_sdk.platform.resources.utils import PAGE_SIZE
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     InputArtifactCreationRequest,
@@ -17,10 +20,6 @@ from aignx.codegen.models import (
     RunCreationResponse,
     RunReadResponse,
 )
-
-from aignostics_sdk.platform._api import _AuthenticatedApi
-from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
-from aignostics_sdk.platform.resources.utils import PAGE_SIZE
 
 _PLATFORM_HOST = "https://platform-staging.aignostics.com"
 _RUN_ID = "test-run-id"

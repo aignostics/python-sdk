@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 import typer
-
 from aignostics_sdk.utils import BaseNavBuilder
 from aignostics_sdk.utils._di import _implementation_cache, _subclass_cache, discover_plugin_packages
 

@@ -6,10 +6,9 @@ from contextlib import contextmanager
 from types import ModuleType
 from unittest.mock import MagicMock, Mock, patch
 
+import aignostics_sdk.utils._di as di_module
 import pytest
 import typer
-
-import aignostics_sdk.utils._di as di_module
 from aignostics_sdk.utils._cli import (
     _add_epilog_recursively,
     _no_args_is_help_recursively,

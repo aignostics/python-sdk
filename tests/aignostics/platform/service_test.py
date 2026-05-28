@@ -4,7 +4,6 @@ from http import HTTPStatus
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from aignostics_sdk.platform._service import Service, UserInfo
 from aignostics_sdk.utils import Health
 

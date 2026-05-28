@@ -1,7 +1,6 @@
 """Tests for health models and status definitions."""
 
 import pytest
-
 from aignostics_sdk.utils._health import Health
 
 DB_FAILURE = "DB failure"

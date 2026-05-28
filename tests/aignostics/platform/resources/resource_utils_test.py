@@ -7,7 +7,6 @@ on pagination functionality that is used across resource modules.
 from unittest.mock import Mock
 
 import pytest
-
 from aignostics_sdk.platform.resources.utils import PAGE_SIZE, paginate
 
 

@@ -4,7 +4,6 @@ import typing as t
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from aignostics_sdk.platform._api import _AuthenticatedApi
 from aignostics_sdk.platform._client import Client
 from aignostics_sdk.platform._operation_cache import _operation_cache

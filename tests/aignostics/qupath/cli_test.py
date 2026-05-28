@@ -7,10 +7,10 @@ from pathlib import Path
 
 import psutil
 import pytest
-from typer.testing import CliRunner
-
 from aignostics.cli import cli
 from aignostics.qupath import QUPATH_VERSION
+from typer.testing import CliRunner
+
 from tests.conftest import normalize_output
 
 _SKIP_IF_WINDOWS = pytest.mark.skipif(platform.system() == "Windows", reason="not supported on Windows")

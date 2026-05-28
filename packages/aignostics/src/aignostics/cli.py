@@ -5,9 +5,6 @@ from importlib.util import find_spec
 from pathlib import Path
 
 import typer
-from loguru import logger
-
-from aignostics.constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
 from aignostics_sdk.utils import (
     __is_running_in_container__,
     __python_version__,
@@ -15,6 +12,9 @@ from aignostics_sdk.utils import (
     console,
     prepare_cli,
 )
+from loguru import logger
+
+from aignostics.constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
 
 cli = typer.Typer(
     help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",
@@ -97,9 +97,8 @@ def mcp_list_tools() -> None:
     """
     import operator  # noqa: PLC0415
 
-    from rich.table import Table  # noqa: PLC0415
-
     from aignostics_sdk.utils import mcp_list_tools  # noqa: PLC0415
+    from rich.table import Table  # noqa: PLC0415
 
     tools = mcp_list_tools()
 

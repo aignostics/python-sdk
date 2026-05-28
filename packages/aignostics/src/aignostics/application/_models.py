@@ -4,9 +4,8 @@ from enum import StrEnum
 from importlib.util import find_spec
 from pathlib import Path
 
-from pydantic import BaseModel, computed_field
-
 from aignostics_sdk.platform import ItemResult, OutputArtifactElement, RunData
+from pydantic import BaseModel, computed_field
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:

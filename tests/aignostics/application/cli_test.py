@@ -11,14 +11,14 @@ from time import sleep
 from unittest.mock import MagicMock, patch
 
 import pytest
-from loguru import logger
-from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
-from typer.testing import CliRunner
-
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics_sdk.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
 from aignostics_sdk.utils import Health, sanitize_path
+from loguru import logger
+from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
+from typer.testing import CliRunner
+
 from tests.conftest import normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,

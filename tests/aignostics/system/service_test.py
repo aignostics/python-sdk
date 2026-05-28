@@ -5,7 +5,6 @@ from typing import Any
 from unittest import mock
 
 import pytest
-
 from aignostics.system._service import Service
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,6 @@
 """Tests for console module."""
 
 import pytest
-
 from aignostics_sdk.utils._console import _get_console
 
 

@@ -3,11 +3,11 @@
 from multiprocessing import Manager
 from pathlib import Path
 
+from aignostics_sdk.utils import BasePageBuilder, GUILocalFilePicker, get_user_data_directory
+
 from aignostics.gui import frame
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics_sdk.utils import get_user_data_directory
 
-from aignostics_sdk.utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import TARGET_LAYOUT_DEFAULT, Service
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"

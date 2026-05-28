@@ -13,9 +13,6 @@ from unittest.mock import MagicMock, Mock, patch
 import jwt
 import pytest
 import requests
-from pydantic import SecretStr
-from requests_oauthlib import OAuth2Session
-
 from aignostics_sdk.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
@@ -33,6 +30,8 @@ from aignostics_sdk.platform._messages import (
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
     INVALID_REDIRECT_URI,
 )
+from pydantic import SecretStr
+from requests_oauthlib import OAuth2Session
 
 
 @pytest.fixture

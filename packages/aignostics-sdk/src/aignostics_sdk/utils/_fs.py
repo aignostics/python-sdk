@@ -4,9 +4,8 @@ import platform
 from pathlib import Path, PureWindowsPath
 
 import platformdirs
-from loguru import logger
-
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
+from loguru import logger
 
 from ._constants import __is_running_in_read_only_environment__, __project_name__
 

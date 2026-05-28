@@ -5,9 +5,6 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
-from pydantic import SecretStr
-from pydantic import ValidationError as PydanticValidationError
-
 from aignostics_sdk.platform import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
@@ -50,6 +47,8 @@ from aignostics_sdk.platform import (
     settings,
 )
 from aignostics_sdk.utils import __project_name__
+from pydantic import SecretStr
+from pydantic import ValidationError as PydanticValidationError
 
 
 @pytest.fixture
