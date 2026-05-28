@@ -1027,5 +1027,6 @@ def act(session: nox.Session) -> None:
 
 @nox.session()
 def dist(session: nox.Session) -> None:
-    """Build wheel and put in dist/."""
-    session.run("uv", "build", external=True)
+    """Build wheels for both packages into dist/."""
+    session.run("uv", "build", "--package", "aignostics-sdk", "--out-dir", "dist/", external=True)
+    session.run("uv", "build", "--package", "aignostics", "--out-dir", "dist/", external=True)
