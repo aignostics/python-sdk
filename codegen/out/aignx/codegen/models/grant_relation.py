@@ -18,20 +18,21 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class OutputArtifactScope(str, Enum):
+class GrantRelation(str, Enum):
     """
-    OutputArtifactScope
+    GrantRelation
     """
 
     """
     allowed enum values
     """
-    ITEM = 'ITEM'
-    GLOBAL = 'GLOBAL'
+    OWNER = 'owner'
+    EDITOR = 'editor'
+    VIEWER = 'viewer'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of OutputArtifactScope from a JSON string"""
+        """Create an instance of GrantRelation from a JSON string"""
         return cls(json.loads(json_str))
 
 

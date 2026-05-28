@@ -11,6 +11,9 @@ aignx/codegen/models/artifact_state.py
 aignx/codegen/models/artifact_termination_reason.py
 aignx/codegen/models/custom_metadata_update_request.py
 aignx/codegen/models/custom_metadata_update_response.py
+aignx/codegen/models/grant_create_request.py
+aignx/codegen/models/grant_read_response.py
+aignx/codegen/models/grant_relation.py
 aignx/codegen/models/http_validation_error.py
 aignx/codegen/models/input_artifact.py
 aignx/codegen/models/input_artifact_creation_request.py
@@ -26,6 +29,7 @@ aignx/codegen/models/output_artifact.py
 aignx/codegen/models/output_artifact_result_read_response.py
 aignx/codegen/models/output_artifact_scope.py
 aignx/codegen/models/output_artifact_visibility.py
+aignx/codegen/models/resource_type.py
 aignx/codegen/models/run_creation_request.py
 aignx/codegen/models/run_creation_response.py
 aignx/codegen/models/run_item_statistics.py
@@ -35,6 +39,10 @@ aignx/codegen/models/run_state.py
 aignx/codegen/models/run_termination_reason.py
 aignx/codegen/models/scheduling_request.py
 aignx/codegen/models/scheduling_response.py
+aignx/codegen/models/share_token_create_request.py
+aignx/codegen/models/share_token_create_response.py
+aignx/codegen/models/share_token_read_response.py
+aignx/codegen/models/subject_type.py
 aignx/codegen/models/user_read_response.py
 aignx/codegen/models/validation_error.py
 aignx/codegen/models/validation_error_loc_inner.py

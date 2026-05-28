@@ -18,26 +18,21 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing import Any, ClassVar, Dict, List
-from typing_extensions import Annotated
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationVersion(BaseModel):
+class ShareTokenCreateResponse(BaseModel):
     """
-    ApplicationVersion
+    Returned only on POST — includes the one-time share_token.
     """ # noqa: E501
-    number: Annotated[str, Field(strict=True)] = Field(description="The number of the latest version")
-    released_at: datetime = Field(description="The timestamp for when the application version was made available in the Platform")
-    __properties: ClassVar[List[str]] = ["number", "released_at"]
-
-    @field_validator('number')
-    def number_validate_regular_expression(cls, value):
-        """Validates the regular expression"""
-        if not re.match(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$", value):
-            raise ValueError(r"must validate the regular expression /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/")
-        return value
+    share_token_id: StrictStr
+    share_token: StrictStr
+    created_at: datetime
+    expires_at: Optional[datetime]
+    revoked: StrictBool
+    __properties: ClassVar[List[str]] = ["share_token_id", "share_token", "created_at", "expires_at", "revoked"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -57,7 +52,7 @@ class ApplicationVersion(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationVersion from a JSON string"""
+        """Create an instance of ShareTokenCreateResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,11 +73,16 @@ class ApplicationVersion(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if expires_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.expires_at is None and "expires_at" in self.model_fields_set:
+            _dict['expires_at'] = None
+
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationVersion from a dict"""
+        """Create an instance of ShareTokenCreateResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,8 +90,11 @@ class ApplicationVersion(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "number": obj.get("number"),
-            "released_at": obj.get("released_at")
+            "share_token_id": obj.get("share_token_id"),
+            "share_token": obj.get("share_token"),
+            "created_at": obj.get("created_at"),
+            "expires_at": obj.get("expires_at"),
+            "revoked": obj.get("revoked")
         })
         return _obj
 
