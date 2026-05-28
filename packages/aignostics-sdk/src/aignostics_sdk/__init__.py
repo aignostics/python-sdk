@@ -1,1 +1,1 @@
-"""Package stub — source migrated in Phase 2."""
+"""Aignostics SDK — slim platform client distribution."""

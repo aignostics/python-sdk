@@ -170,12 +170,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["src/*"]
-# TODO(Phase 5): Bundle codegen/out/aignx into wheel. Hatchling does not support
-# paths outside the project root (../../codegen/out/*). Options: symlink, copy
-# via a build hook, or use a hatch plugin. Deferred to the codegen migration phase.
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/aignostics_sdk"]
+packages = ["src/aignostics_sdk", "src/aignx"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
