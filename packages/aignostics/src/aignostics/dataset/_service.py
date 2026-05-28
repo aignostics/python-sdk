@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import Any
 
 import requests
+from loguru import logger
+
 from aignostics_sdk.platform import generate_signed_url as platform_generate_signed_url
 from aignostics_sdk.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health
-from loguru import logger
 
 PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"

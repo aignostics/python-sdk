@@ -13,8 +13,6 @@ from urllib.parse import quote
 
 import humanize
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics_sdk.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, Run, RunState
-from aignostics_sdk.utils import GUILocalFilePicker, get_user_data_directory
 from loguru import logger
 from nicegui import (
     app,
@@ -22,9 +20,13 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
+from aignostics_sdk.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, Run, RunState
+from aignostics_sdk.utils import GUILocalFilePicker, get_user_data_directory
+
 if TYPE_CHECKING:
-    from aignostics_sdk.platform import UserInfo
     from aignx.codegen.models import RunReadResponse
+
+    from aignostics_sdk.platform import UserInfo
 
 from .._models import DownloadProgressState  # noqa: TID252
 from .._service import Service  # noqa: TID252

@@ -17,7 +17,13 @@ from typing import Any, NotRequired, TypedDict
 from urllib.request import getproxies
 
 import httpx
+from dotenv import set_key as dotenv_set_key
+from dotenv import unset_key as dotenv_unset_key
+from loguru import logger
+from pydantic_settings import BaseSettings
+
 from aignostics_sdk.utils import (
+    ENV_PREFIX,
     UNHIDE_SENSITIVE_INFO,
     BaseService,
     Health,
@@ -32,10 +38,6 @@ from aignostics_sdk.utils import (
     locate_subclasses,
     user_agent,
 )
-from dotenv import set_key as dotenv_set_key
-from dotenv import unset_key as dotenv_unset_key
-from loguru import logger
-from pydantic_settings import BaseSettings
 
 from ._exceptions import OpenAPISchemaError
 from ._settings import Settings
@@ -522,8 +524,8 @@ class Service(BaseService):
             bool: True if remote diagnostics are enabled, False otherwise.
         """
         return (
-            Service.dotenv_get(f"{__project_name__.upper()}_SENTRY_ENABLED") == "1"
-            and Service.dotenv_get(f"{__project_name__.upper()}_LOGFIRE_ENABLED") == "1"
+            Service.dotenv_get(f"{ENV_PREFIX}_SENTRY_ENABLED") == "1"
+            and Service.dotenv_get(f"{ENV_PREFIX}_LOGFIRE_ENABLED") == "1"
         )
 
     @staticmethod
@@ -533,14 +535,14 @@ class Service(BaseService):
         Raises:
             ValueError: If the environment variable cannot be set.
         """
-        Service.dotenv_set(f"{__project_name__.upper()}_SENTRY_ENABLED", "1")
-        Service.dotenv_set(f"{__project_name__.upper()}_LOGFIRE_ENABLED", "1")
+        Service.dotenv_set(f"{ENV_PREFIX}_SENTRY_ENABLED", "1")
+        Service.dotenv_set(f"{ENV_PREFIX}_LOGFIRE_ENABLED", "1")
 
     @staticmethod
     def remote_diagnostics_disable() -> None:
         """Disable remote diagnostics."""
-        Service.dotenv_unset(f"{__project_name__.upper()}_SENTRY_ENABLED")
-        Service.dotenv_unset(f"{__project_name__.upper()}_LOGFIRE_ENABLED")
+        Service.dotenv_unset(f"{ENV_PREFIX}_SENTRY_ENABLED")
+        Service.dotenv_unset(f"{ENV_PREFIX}_LOGFIRE_ENABLED")
 
     @staticmethod
     def http_proxy_enable(

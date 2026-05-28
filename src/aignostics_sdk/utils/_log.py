@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 from pydantic import ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from ._constants import __env_file__, __is_library_mode__, __project_name__
+from ._constants import ENV_PREFIX, __env_file__, __is_library_mode__, __project_name__
 from ._settings import load_settings
 
 
@@ -107,7 +107,7 @@ class LogSettings(BaseSettings):
     """Settings for configuring logging behavior."""
 
     model_config = SettingsConfigDict(
-        env_prefix=f"{__project_name__.upper()}_LOG_",
+        env_prefix=f"{ENV_PREFIX}_LOG_",
         extra="ignore",
         env_file=__env_file__,
         env_file_encoding="utf-8",

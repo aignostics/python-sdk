@@ -116,6 +116,10 @@ dependencies = [
 [project.scripts]
 aignostics-sdk = "aignostics_sdk.cli:cli"
 
+[project.entry-points."aignostics.cli"]
+user = "aignostics_sdk.platform._cli:cli_user"
+sdk  = "aignostics_sdk.platform._cli:cli_sdk"
+
 [build-system]
 requires = ["hatchling==1.29.0"]
 build-backend = "hatchling.build"

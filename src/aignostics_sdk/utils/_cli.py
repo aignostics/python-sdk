@@ -16,8 +16,13 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
         cli (typer.Typer): Typer instance
         epilog (str): Epilog to add
     """
+    # Collect already-registered sub-typers to avoid duplicate registration
+    # (e.g. when entry-point CLIs were added before prepare_cli is called)
+    already_registered = {
+        mounted.typer_instance for mounted in cli.registered_groups if mounted.typer_instance is not None
+    }
     for subcli in locate_implementations(typer.Typer):
-        if subcli != cli:
+        if subcli != cli and subcli not in already_registered:
             cli.add_typer(subcli)
 
     cli.info.epilog = epilog

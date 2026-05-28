@@ -3,6 +3,7 @@
 from ._cli import prepare_cli
 from ._console import console
 from ._constants import (
+    ENV_PREFIX,
     __author_email__,
     __author_name__,
     __base__url__,
@@ -35,6 +36,7 @@ from ._user_agent import user_agent
 from .boot import boot
 
 __all__ = [
+    "ENV_PREFIX",
     "MCP_SERVER_NAME",
     "MCP_TRANSPORT",
     "SUBPROCESS_CREATION_FLAGS",

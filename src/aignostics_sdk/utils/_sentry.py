@@ -9,7 +9,7 @@ from loguru import logger
 from pydantic import AfterValidator, BeforeValidator, Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
 
-from ._constants import __env__, __env_file__, __project_name__, __version__
+from ._constants import ENV_PREFIX, __env__, __env_file__, __project_name__, __version__
 from ._settings import OpaqueSettings, load_settings, strip_to_none_before_validator
 
 if TYPE_CHECKING:
@@ -118,7 +118,7 @@ class SentrySettings(OpaqueSettings):
     """Configuration settings for Sentry integration."""
 
     model_config = SettingsConfigDict(
-        env_prefix=f"{__project_name__.upper()}_SENTRY_",
+        env_prefix=f"{ENV_PREFIX}_SENTRY_",
         env_file=__env_file__,
         env_file_encoding="utf-8",
         extra="ignore",

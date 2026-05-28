@@ -8,13 +8,20 @@ from importlib.metadata import entry_points
 from inspect import isclass
 from typing import Any
 
-from ._constants import __project_name__
+from ._constants import _package_name
 
 _implementation_cache: dict[Any, list[Any]] = {}
 _subclass_cache: dict[Any, list[Any]] = {}
 
 # Entry point group name for aignostics plugins
 PLUGIN_ENTRY_POINT_GROUP = "aignostics.plugins"
+
+# Packages to deep-scan for DI discovery.
+# Scans the full "aignostics" package if installed (handled gracefully via ImportError).
+# Does NOT scan the slim package (aignostics_sdk) itself for typer instances — slim CLI
+# commands are wired into the heavy CLI via [project.entry-points."aignostics.cli"].
+# BaseService subclasses in the slim package ARE scanned (needed for health checks etc.)
+_SCAN_PACKAGES = (_package_name, "aignostics")
 
 
 @lru_cache(maxsize=1)
@@ -37,9 +44,17 @@ def discover_plugin_packages() -> tuple[str, ...]:
 
 
 def load_modules() -> None:
-    package = importlib.import_module(__project_name__)
-    for _, name, _ in pkgutil.iter_modules(package.__path__):
-        importlib.import_module(f"{__project_name__}.{name}")
+    """Load all top-level modules from all scan packages."""
+    for pkg_name in _SCAN_PACKAGES:
+        try:
+            package = importlib.import_module(pkg_name)
+        except ImportError:
+            continue
+        for _, name, _ in pkgutil.iter_modules(package.__path__):
+            try:
+                importlib.import_module(f"{pkg_name}.{name}")
+            except ImportError:
+                continue
 
 
 def _scan_packages_deep(package_name: str, predicate: Callable[[object], bool]) -> list[Any]:
@@ -132,7 +147,7 @@ def locate_implementations(_class: type[Any]) -> list[Any]:
 
     results = [
         *_scan_packages_shallow(discover_plugin_packages(), predicate),
-        *_scan_packages_deep(__project_name__, predicate),
+        *(item for pkg in _SCAN_PACKAGES for item in _scan_packages_deep(pkg, predicate)),
     ]
 
     _implementation_cache[_class] = results
@@ -160,7 +175,7 @@ def locate_subclasses(_class: type[Any]) -> list[Any]:
 
     results = [
         *_scan_packages_shallow(discover_plugin_packages(), predicate),
-        *_scan_packages_deep(__project_name__, predicate),
+        *(item for pkg in _SCAN_PACKAGES for item in _scan_packages_deep(pkg, predicate)),
     ]
 
     _subclass_cache[_class] = results

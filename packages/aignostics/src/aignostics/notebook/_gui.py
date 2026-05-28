@@ -3,10 +3,10 @@
 from pathlib import Path
 from urllib.parse import quote
 
-from aignostics_sdk.utils import BasePageBuilder, get_user_data_directory
 from loguru import logger
 
 from aignostics.gui import frame, theme
+from aignostics_sdk.utils import BasePageBuilder, get_user_data_directory
 
 
 class PageBuilder(BasePageBuilder):

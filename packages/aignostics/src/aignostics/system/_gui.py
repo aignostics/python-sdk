@@ -2,13 +2,12 @@
 
 from pathlib import Path
 
+from aignostics.gui import frame
 from aignostics_sdk.utils import (
     BasePageBuilder,
     BaseService,
     locate_subclasses,
 )
-
-from aignostics.gui import frame
 
 from ._service import Service
 

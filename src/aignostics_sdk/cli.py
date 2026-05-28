@@ -15,10 +15,10 @@ from aignostics_sdk.platform import cli_sdk, cli_user
 from aignostics_sdk.utils import __python_version__, __version__
 from aignostics_sdk.utils._cli import _add_epilog_recursively, _no_args_is_help_recursively
 
-_EPILOG = f"🔬 Aignostics SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
+_EPILOG = f"🔬 aignostics-sdk v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
 
 cli = typer.Typer(
-    help="Command Line Interface (CLI) of Aignostics SDK providing access to Aignostics Platform.",
+    help="Command Line Interface (CLI) of aignostics-sdk providing access to Aignostics Platform.",
 )
 
 cli.add_typer(cli_user)

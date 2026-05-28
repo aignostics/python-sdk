@@ -19,7 +19,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from aignostics_sdk.utils import OpaqueSettings, __project_name__, load_settings
+from aignostics_sdk.utils import ENV_PREFIX, OpaqueSettings, __project_name__, load_settings
 
 from ._constants import (
     API_ROOT_DEV,
@@ -152,9 +152,9 @@ class Settings(OpaqueSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_prefix=f"{__project_name__.upper()}_",
+        env_prefix=f"{ENV_PREFIX}_",
         env_file=(
-            os.getenv(f"{__project_name__.upper()}_ENV_FILE", Path.home() / f".{__project_name__}/.env"),
+            os.getenv(f"{ENV_PREFIX}_ENV_FILE", Path.home() / f".{__project_name__}/.env"),
             Path(".env"),
         ),
         env_file_encoding="utf-8",

@@ -10,6 +10,7 @@ from typing import Annotated
 
 import typer
 import yaml
+
 from aignostics_sdk.utils import console
 
 from ..constants import API_VERSIONS  # noqa: TID252

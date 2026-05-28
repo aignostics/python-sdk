@@ -2,16 +2,17 @@
 
 from typing import Annotated
 
-from aignostics_sdk.utils import OpaqueSettings, __env_file__, __project_name__
 from pydantic import Field, PlainSerializer, SecretStr
 from pydantic_settings import SettingsConfigDict
+
+from aignostics_sdk.utils import ENV_PREFIX, OpaqueSettings, __env_file__
 
 
 class Settings(OpaqueSettings):
     """Settings."""
 
     model_config = SettingsConfigDict(
-        env_prefix=f"{__project_name__.upper()}_SYSTEM_",
+        env_prefix=f"{ENV_PREFIX}_SYSTEM_",
         extra="ignore",
         env_file=__env_file__,
         env_file_encoding="utf-8",

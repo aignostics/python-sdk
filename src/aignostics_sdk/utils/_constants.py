@@ -8,17 +8,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# __project_name__ is hardcoded to "aignostics" for backward compatibility:
-# - token cache location stays ~/.aignostics/token.json
-# - environment variable prefix stays AIGNOSTICS_*
-# TODO(PYSDK-136): decide whether to migrate to "aignostics_sdk" as part of a deliberate
-#                  breaking-change release.
-__project_name__ = "aignostics"
-# _package_name is the actual installed Python distribution name ("aignostics-sdk").
+# __project_name__ is the distribution name (PYSDK-136: migrated to "aignostics-sdk").
+__project_name__ = "aignostics-sdk"  # distribution name (hyphenated)
+# _package_name is the importable Python module name.
 # Used for importlib.metadata calls so they target the correct installed package.
-_package_name = __name__.split(".")[0]  # "aignostics_sdk"
+_package_name = "aignostics_sdk"  # importable name (underscored)
+# ENV_PREFIX is the uppercase env var prefix (hyphens become underscores).
+ENV_PREFIX = _package_name.upper()  # "AIGNOSTICS_SDK"
 load_dotenv(str(Path(".env")))
-load_dotenv(os.getenv(f"{__project_name__.upper()}_ENV_FILE", Path.home() / f".{__project_name__}/.env"))
+load_dotenv(os.getenv(f"{ENV_PREFIX}_ENV_FILE", Path.home() / f".{__project_name__}/.env"))
 
 __project_path__ = str(Path(__file__).parent.parent.parent)
 __version__ = metadata.version(_package_name)
@@ -27,20 +25,21 @@ __version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else 
 __python_version__ = platform.python_version()
 
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
-__is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
+__is_running_in_container__ = os.getenv(f"{ENV_PREFIX}_RUNNING_IN_CONTAINER")
 
 __is_cli_mode__ = (
     sys.argv[0].endswith(__project_name__)
-    or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
+    or sys.argv[0].endswith(_package_name)
+    or (len(sys.argv) > 1 and sys.argv[1] in {__project_name__, _package_name})
     or sys.argv[0].endswith("gui_watch.py")
     or (len(sys.argv) > 1 and sys.argv[1] == "gui_watch.py")
 )
-__is_library_mode__ = not __is_cli_mode__ and not os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
-__is_test_mode__ = "pytest" in sys.modules and os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
+__is_library_mode__ = not __is_cli_mode__ and not os.getenv(f"PYTEST_RUNNING_{ENV_PREFIX}")
+__is_test_mode__ = "pytest" in sys.modules and os.getenv(f"PYTEST_RUNNING_{ENV_PREFIX}")
 
 # Determine if we're running in a read-only runtime environment
 READ_ONLY_ENV_INDICATORS = [
-    f"{__project_name__.upper()}_RUNNING_IN_CONTAINER",
+    f"{ENV_PREFIX}_RUNNING_IN_CONTAINER",
     "VERCEL_ENV",
     "RAILWAY_ENVIRONMENT",
 ]
@@ -48,7 +47,7 @@ __is_running_in_read_only_environment__ = any(os.getenv(env_var) is not None for
 
 # Determine environment we are deployed on
 ENV_VAR_MAPPINGS = {
-    f"{__project_name__.upper()}_ENVIRONMENT": lambda env: env,
+    f"{ENV_PREFIX}_ENVIRONMENT": lambda env: env,
     "ENV": lambda env: env,
     "VERCEL_ENV": lambda env: env,  # See https://vercel.com/docs/environment-variables/system-environment-variables
     "RAILWAY_ENVIRONMENT": lambda env: (
@@ -69,7 +68,7 @@ __env_file__ = [
     Path(".env"),
     Path(f".env.{__env__}"),
 ]
-env_file_path = os.getenv(f"{__project_name__.upper()}_ENV_FILE")
+env_file_path = os.getenv(f"{ENV_PREFIX}_ENV_FILE")
 if env_file_path:
     __env_file__.insert(2, Path(env_file_path))
 
@@ -82,7 +81,7 @@ PLATFORM_URL_MAPPINGS = {
         f"https://{url}"
     ),  # See https://docs.railway.com/reference/variables#railway-provided-variables
 }
-__base__url__ = os.getenv(f"{__project_name__.upper()}_BASE_URL")
+__base__url__ = os.getenv(f"{ENV_PREFIX}_BASE_URL")
 if not __base__url__:
     for env_var, mappers in PLATFORM_URL_MAPPINGS.items():
         env_value = os.getenv(env_var)

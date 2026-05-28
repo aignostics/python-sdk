@@ -195,6 +195,7 @@ version = "1.4.0"
 source = { editable = "packages/aignostics-sdk" }
 dependencies = [
     { name = "certifi" },
+    { name = "crc32c" },
     { name = "cryptography" },
     { name = "fastapi", extra = ["all", "standard"] },
     { name = "fastmcp" },
@@ -231,6 +232,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "certifi", specifier = ">=2025.11.12" },
+    { name = "crc32c", specifier = ">=2.8,<3" },
     { name = "cryptography", specifier = ">=46.0.7" },
     { name = "fastapi", extras = ["all", "standard"], specifier = ">=0.123.10" },
     { name = "fastmcp", specifier = ">=3.2.0,<4" },

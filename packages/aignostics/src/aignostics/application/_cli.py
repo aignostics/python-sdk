@@ -9,6 +9,10 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from loguru import logger
+
+from aignostics.bucket import Service as BucketService
+from aignostics.system import Service as SystemService
 from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -23,10 +27,6 @@ from aignostics_sdk.platform import (
 )
 from aignostics_sdk.platform import Service as PlatformService
 from aignostics_sdk.utils import console, get_user_data_directory, sanitize_path
-from loguru import logger
-
-from aignostics.bucket import Service as BucketService
-from aignostics.system import Service as SystemService
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._service import Service

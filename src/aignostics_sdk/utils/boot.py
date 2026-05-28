@@ -41,7 +41,7 @@ if third_party_dir.is_dir() and str(third_party_dir) not in sys.path:
 if "DYLD_FALLBACK_LIBRARY_PATH" not in os.environ:
     os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = f"{os.getenv('HOMEBREW_PREFIX', '/opt/homebrew')}/lib/"
 
-from ._constants import __project_name__, __version__  # noqa: E402
+from ._constants import ENV_PREFIX, __project_name__, __version__  # noqa: E402
 from ._process import get_process_info  # noqa: E402
 
 _boot_called = False
@@ -78,7 +78,7 @@ def _parse_env_args() -> None:
     """
     i = 1  # Start after script name
     to_remove = []
-    prefix = f"{__project_name__.upper()}_"
+    prefix = f"{ENV_PREFIX}_"
 
     while i < len(sys.argv):
         current_arg = sys.argv[i]

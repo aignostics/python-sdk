@@ -21,16 +21,17 @@ import ijson
 import platformdirs
 import psutil
 import requests
+from loguru import logger
+from packaging.version import Version
+from psutil import Process, wait_procs
+from pydantic import BaseModel, computed_field
+
 from aignostics_sdk.utils import (
     SUBPROCESS_CREATION_FLAGS,
     BaseService,
     Health,
     __project_name__,
 )
-from loguru import logger
-from packaging.version import Version
-from psutil import Process, wait_procs
-from pydantic import BaseModel, computed_field
 
 from ._settings import Settings
 
