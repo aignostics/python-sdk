@@ -17,10 +17,11 @@
         "template/**",
         "tests/**",
         "codegen/**",
+        "examples/**",
         "src/aignostics/wsi/_pydicom_handler.py",
         "src/aignostics/notebook/_notebook.py",
+        "packages/aignostics/src/aignostics/wsi/_pydicom_handler.py",
+        "packages/aignostics/src/aignostics/notebook/_notebook.py",
     ],
-    "extraPaths": [
-        "./src/aignostics/utils/_"
-    ]
+    "extraPaths": []
 }
