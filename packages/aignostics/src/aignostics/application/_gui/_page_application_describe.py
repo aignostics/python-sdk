@@ -13,7 +13,7 @@ from nicegui import run as nicegui_run
 from nicegui.events import ValueChangeEventArguments
 
 from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
@@ -22,10 +22,10 @@ from aignostics.platform import (
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 from aignostics.system import Service as SystemService
-from aignostics.utils import GUILocalFilePicker, get_user_data_directory
+from aignostics_sdk.utils import GUILocalFilePicker, get_user_data_directory
 
 if TYPE_CHECKING:
-    from aignostics.platform import UserInfo
+    from aignostics_sdk.platform import UserInfo
 
 from .._service import Service  # noqa: TID252
 from .._utils import get_mime_type_for_artifact  # noqa: TID252

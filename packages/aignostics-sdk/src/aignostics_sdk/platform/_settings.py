@@ -19,7 +19,7 @@ from pydantic import (
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from aignostics.utils import OpaqueSettings, __project_name__, load_settings
+from aignostics_sdk.utils import OpaqueSettings, __project_name__, load_settings
 
 from ._constants import (
     API_ROOT_DEV,

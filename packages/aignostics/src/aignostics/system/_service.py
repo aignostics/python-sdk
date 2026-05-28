@@ -22,7 +22,7 @@ from dotenv import unset_key as dotenv_unset_key
 from loguru import logger
 from pydantic_settings import BaseSettings
 
-from ..utils import (  # noqa: TID252
+from aignostics_sdk.utils import (  # noqa: TID252
     UNHIDE_SENSITIVE_INFO,
     BaseService,
     Health,

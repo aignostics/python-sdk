@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from typer.models import CommandInfo, TyperInfo
 
-from aignostics.utils._cli import prepare_cli
+from aignostics_sdk.utils._cli import prepare_cli
 
 # Constants to avoid duplication
 LOCATE_IMPLEMENTATIONS_PATH = "aignostics.utils._cli.locate_implementations"

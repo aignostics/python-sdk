@@ -6,8 +6,8 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.cli import cli
-from aignostics.platform import Me
-from aignostics.platform._service import Organization, TokenInfo, User, UserInfo
+from aignostics_sdk.platform import Me
+from aignostics_sdk.platform._service import Organization, TokenInfo, User, UserInfo
 from tests.conftest import normalize_output
 
 

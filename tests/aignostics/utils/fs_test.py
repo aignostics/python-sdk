@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from aignostics.utils._fs import (
+from aignostics_sdk.utils._fs import (
     get_user_data_directory,
     open_user_data_directory,
     sanitize_path,

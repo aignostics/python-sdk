@@ -7,9 +7,9 @@ import humanize
 
 from aignostics.gui import frame
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
-from aignostics.utils import get_user_data_directory
+from aignostics_sdk.utils import get_user_data_directory
 
-from ..utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
+from aignostics_sdk.utils import BasePageBuilder, GUILocalFilePicker  # noqa: TID252
 from ._service import DownloadProgress, Service
 
 MESSAGE_NO_DOWNLOAD_FOLDER_SELECTED = "No download folder selected"

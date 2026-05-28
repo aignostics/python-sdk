@@ -8,12 +8,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-__project_name__ = __name__.split(".")[0]
+# __project_name__ is hardcoded to "aignostics" for backward compatibility:
+# - token cache location stays ~/.aignostics/token.json
+# - environment variable prefix stays AIGNOSTICS_*
+# TODO(PYSDK-136): decide whether to migrate to "aignostics_sdk" as part of a deliberate
+#                  breaking-change release.
+__project_name__ = "aignostics"
+# _package_name is the actual installed Python distribution name ("aignostics-sdk").
+# Used for importlib.metadata calls so they target the correct installed package.
+_package_name = __name__.split(".")[0]  # "aignostics_sdk"
 load_dotenv(str(Path(".env")))
 load_dotenv(os.getenv(f"{__project_name__.upper()}_ENV_FILE", Path.home() / f".{__project_name__}/.env"))
 
 __project_path__ = str(Path(__file__).parent.parent.parent)
-__version__ = metadata.version(__project_name__)
+__version__ = metadata.version(_package_name)
 __build_number__ = os.getenv("GITHUB_RUN_NUMBER") or os.getenv("BUILD_NUMBER") or None
 __version_full__ = f"{__version__}+{__build_number__}" if __build_number__ else __version__
 __python_version__ = platform.python_version()
@@ -94,13 +102,13 @@ def get_project_url_by_label(prefix: str) -> str:
     Returns:
         The extracted URL string if found, or an empty string if not found.
     """
-    for url_entry in metadata.metadata(__project_name__).get_all("Project-URL", []):
+    for url_entry in metadata.metadata(_package_name).get_all("Project-URL", []):
         if url_entry.startswith(prefix):
             return str(url_entry.split(", ", 1)[1])
     return ""
 
 
-_authors = metadata.metadata(__project_name__).get_all("Author-email", [])
+_authors = metadata.metadata(_package_name).get_all("Author-email", [])
 _author = _authors[0] if _authors else None
 __author_name__ = _author.split("<")[0].strip() if _author else None
 __author_email__ = _author.split("<")[1].strip(" >") if _author else None

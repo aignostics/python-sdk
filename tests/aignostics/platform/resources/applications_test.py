@@ -16,15 +16,15 @@ from aignx.codegen.models.application_read_response import ApplicationReadRespon
 from aignx.codegen.models.version_document_response import VersionDocumentResponse
 from aignx.codegen.models.version_document_visibility import VersionDocumentVisibility
 
-from aignostics.platform._api import _AuthenticatedApi
-from aignostics.platform._operation_cache import operation_cache_clear
-from aignostics.platform.resources.applications import (
+from aignostics_sdk.platform._api import _AuthenticatedApi
+from aignostics_sdk.platform._operation_cache import operation_cache_clear
+from aignostics_sdk.platform.resources.applications import (
     Applications,
     ApplicationVersionDocument,
     Documents,
     Versions,
 )
-from aignostics.platform.resources.utils import PAGE_SIZE
+from aignostics_sdk.platform.resources.utils import PAGE_SIZE
 
 API_ERROR = "API error"
 API_REASON_NOT_FOUND = "Not Found"
@@ -410,8 +410,8 @@ def test_versions_documents_resolves_none_to_latest(mock_api: Mock) -> None:
     """Versions.documents(None) resolves to the latest version number."""
     from unittest.mock import patch
 
-    from aignostics.platform.resources.applications import Versions as _Versions
-    from aignostics.platform.resources.applications import VersionTuple
+    from aignostics_sdk.platform.resources.applications import Versions as _Versions
+    from aignostics_sdk.platform.resources.applications import VersionTuple
 
     latest = Mock(spec=VersionTuple)
     latest.number = "2.3.1"

@@ -16,7 +16,7 @@ from loguru import logger
 
 from aignostics.bucket import Service as BucketService
 from aignostics.constants import TEST_APP_APPLICATION_ID
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ApiException,
     Application,
@@ -32,8 +32,8 @@ from aignostics.platform import (
     RunOutput,
     RunState,
 )
-from aignostics.platform import Service as PlatformService
-from aignostics.utils import BaseService, Health, sanitize_path_component
+from aignostics_sdk.platform import Service as PlatformService
+from aignostics_sdk.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
 from ._download import (
@@ -1089,7 +1089,7 @@ class Service(BaseService):  # noqa: PLR0904
 
             # Validate pipeline configuration if present
             if "pipeline" in sdk_metadata:
-                from aignostics.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
+                from aignostics_sdk.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
 
                 try:
                     PipelineConfig.model_validate(sdk_metadata["pipeline"])

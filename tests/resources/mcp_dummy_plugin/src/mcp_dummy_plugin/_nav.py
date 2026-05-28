@@ -1,6 +1,6 @@
 """Dummy nav builder for integration testing of plugin GUI page registration."""
 
-from aignostics.utils import BaseNavBuilder, NavItem
+from aignostics_sdk.utils import BaseNavBuilder, NavItem
 
 
 class DummyPluginNavBuilder(BaseNavBuilder):

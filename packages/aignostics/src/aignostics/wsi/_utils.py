@@ -8,7 +8,7 @@ import humanize
 import pydicom
 from loguru import logger
 
-from aignostics.utils import console
+from aignostics_sdk.utils import console
 
 
 def print_file_info(file_info: dict[str, Any], indent: int = 0) -> None:  # noqa: C901, PLR0912, PLR0915

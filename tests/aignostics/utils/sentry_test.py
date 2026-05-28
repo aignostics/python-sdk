@@ -11,7 +11,7 @@ if find_spec("sentry_sdk"):
     import pytest
     from pydantic import SecretStr
 
-    from aignostics.utils._sentry import (
+    from aignostics_sdk.utils._sentry import (
         _ERR_MSG_INVALID_DOMAIN,
         _ERR_MSG_MISSING_NETLOC,
         _ERR_MSG_MISSING_SCHEME,

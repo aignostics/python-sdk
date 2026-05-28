@@ -30,7 +30,7 @@ from aignostics.constants import (
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     ItemResult,
     ItemState,
     ItemTerminationReason,

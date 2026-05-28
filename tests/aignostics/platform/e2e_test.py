@@ -25,8 +25,8 @@ from aignx.codegen.models.run_read_response import RunReadResponse
 from loguru import logger
 from sentry_sdk import metrics
 
-from aignostics import platform
-from aignostics.platform import Run, RunSdkMetadata
+from aignostics_sdk import platform
+from aignostics_sdk.platform import Run, RunSdkMetadata
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,

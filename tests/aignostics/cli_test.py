@@ -13,7 +13,7 @@ from typer.testing import CliRunner
 
 from aignostics.cli import cli
 from aignostics.constants import WINDOW_TITLE
-from aignostics.utils import (
+from aignostics_sdk.utils import (
     __python_version__,
     __version__,
 )
@@ -134,7 +134,7 @@ if find_spec("nicegui"):
     # Import module explicitly to ensure it's loaded before monkeypatching with string paths.
     # Without this, monkeypatch.setattr("aignostics.utils._gui...") fails in CI because
     # pytest-xdist workers may not have aignostics.utils loaded as an attribute yet.
-    import aignostics.utils._gui as _utils_gui
+    import aignostics_sdk.utils._gui as _utils_gui
 
     @pytest.mark.integration
     def test_cli_gui_help(runner: CliRunner) -> None:

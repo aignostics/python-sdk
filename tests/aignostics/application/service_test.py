@@ -7,7 +7,7 @@ import pytest
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
-from aignostics.platform import NotFoundException, RunData, RunOutput
+from aignostics_sdk.platform import NotFoundException, RunData, RunOutput
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,

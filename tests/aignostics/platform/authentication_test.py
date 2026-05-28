@@ -16,7 +16,7 @@ import requests
 from pydantic import SecretStr
 from requests_oauthlib import OAuth2Session
 
-from aignostics.platform._authentication import (
+from aignostics_sdk.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
     _can_open_browser,
@@ -27,7 +27,7 @@ from aignostics.platform._authentication import (
     remove_cached_token,
     verify_and_decode_token,
 )
-from aignostics.platform._messages import (
+from aignostics_sdk.platform._messages import (
     AUTHENTICATION_FAILED,
     AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
@@ -966,7 +966,7 @@ class TestJWKClientCache:
         The LRU cache should ensure that multiple calls with the same URL return
         the same PyJWKClient instance, avoiding redundant client creation.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         url = "https://test.auth/.well-known/jwks.json"
         timeout = mock_settings.return_value.auth_timeout
@@ -993,7 +993,7 @@ class TestJWKClientCache:
         The cache should distinguish between different URLs and create separate
         PyJWKClient instances for each unique URL.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         url1 = "https://test1.auth/.well-known/jwks.json"
         url2 = "https://test2.auth/.well-known/jwks.json"
@@ -1021,7 +1021,7 @@ class TestJWKClientCache:
 
         This verifies that the LRU cache is tracking hits and misses correctly.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         info = _get_jwk_client.cache_info()
         assert info.hits == 0
@@ -1057,7 +1057,7 @@ class TestJWKClientCache:
 
         The cache should use settings values when creating PyJWKClient instances.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         url = "https://test.auth/.well-known/jwks.json"
         timeout = mock_settings.return_value.auth_timeout
@@ -1081,7 +1081,7 @@ class TestJWKClientCache:
         Multiple token verifications should reuse the cached PyJWKClient instance,
         reducing the overhead of client creation.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         mock_jwt_client = MagicMock()
         mock_signing_key = MagicMock()
@@ -1116,7 +1116,7 @@ class TestJWKClientCache:
         When more than 4 unique parameter combinations are cached, the least recently used ones
         should be evicted.
         """
-        from aignostics.platform._authentication import _get_jwk_client
+        from aignostics_sdk.platform._authentication import _get_jwk_client
 
         timeout = mock_settings.return_value.auth_timeout
         lifespan = mock_settings.return_value.auth_jwk_set_cache_ttl

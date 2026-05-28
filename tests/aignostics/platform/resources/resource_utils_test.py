@@ -8,7 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from aignostics.platform.resources.utils import PAGE_SIZE, paginate
+from aignostics_sdk.platform.resources.utils import PAGE_SIZE, paginate
 
 
 @pytest.mark.unit

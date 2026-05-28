@@ -12,7 +12,7 @@ import typer
 from loguru import logger
 
 from aignostics.bucket import Service as BucketService
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
     DEFAULT_GPU_PROVISIONING_MODE,
@@ -24,9 +24,9 @@ from aignostics.platform import (
     NotFoundException,
     RunState,
 )
-from aignostics.platform import Service as PlatformService
+from aignostics_sdk.platform import Service as PlatformService
 from aignostics.system import Service as SystemService
-from aignostics.utils import console, get_user_data_directory, sanitize_path
+from aignostics_sdk.utils import console, get_user_data_directory, sanitize_path
 
 from ._models import DownloadProgress, DownloadProgressState
 from ._service import Service

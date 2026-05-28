@@ -8,7 +8,7 @@ from typing import Annotated
 import typer
 from loguru import logger
 
-from aignostics.utils import console, get_user_data_directory
+from aignostics_sdk.utils import console, get_user_data_directory
 
 PATH_LENGTH_MAX = 260
 TARGET_LAYOUT_DEFAULT = "%collection_id/%PatientID/%StudyInstanceUID/%Modality_%SeriesInstanceUID/"

@@ -12,7 +12,7 @@ import typer
 import yaml
 
 from ..constants import API_VERSIONS  # noqa: TID252
-from ..utils import console  # noqa: TID252
+from aignostics_sdk.utils import console  # noqa: TID252
 from ._service import Service
 
 cli = typer.Typer(name="system", help="Determine health, info and further utillities.")
@@ -113,7 +113,7 @@ def dump_dot_env_file(
 
 
 if find_spec("nicegui"):
-    from ..utils import gui_run  # noqa: TID252
+    from aignostics_sdk.utils import gui_run  # noqa: TID252
 
     @cli.command()
     def serve(

@@ -8,7 +8,7 @@ import pytest
 from pydantic import SecretStr
 from pydantic import ValidationError as PydanticValidationError
 
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
     API_ROOT_STAGING,
@@ -49,7 +49,7 @@ from aignostics.platform import (
     Settings,
     settings,
 )
-from aignostics.utils import __project_name__
+from aignostics_sdk.utils import __project_name__
 
 
 @pytest.fixture
@@ -67,7 +67,7 @@ def mock_env_vars():  # noqa: ANN201
 @pytest.fixture
 def reset_cached_settings():  # noqa: ANN201
     """Reset the cached authentication settings."""
-    import aignostics.platform._settings as _settings_module
+    import aignostics_sdk.platform._settings as _settings_module
 
     original = _settings_module.__cached_settings
     _settings_module.__cached_settings = None
@@ -288,7 +288,7 @@ def test_custom_env_file_location(reset_cached_settings, record_property) -> Non
                     del sys.modules[settings_module]
 
                 # Now import Settings fresh - it should read from the custom env file
-                from aignostics.platform._settings import Settings
+                from aignostics_sdk.platform._settings import Settings
 
                 assert custom_env_file in Settings.model_config["env_file"]
                 test_settings = Settings()

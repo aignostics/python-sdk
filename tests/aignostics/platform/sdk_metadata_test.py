@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from aignostics.platform._sdk_metadata import (
+from aignostics_sdk.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
     VALIDATION_CASE_TAG_PREFIX,
@@ -994,7 +994,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_pipeline_config_defaults() -> None:
         """Test that pipeline configuration uses correct defaults."""
-        from aignostics.platform import (
+        from aignostics_sdk.platform import (
             DEFAULT_CPU_PROVISIONING_MODE,
             DEFAULT_GPU_PROVISIONING_MODE,
             DEFAULT_GPU_TYPE,
@@ -1013,7 +1013,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_pipeline_config_custom_values() -> None:
         """Test pipeline configuration with custom values."""
-        from aignostics.platform._sdk_metadata import GPUType, PipelineConfig, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUType, PipelineConfig, ProvisioningMode
 
         config = PipelineConfig(
             gpu={
@@ -1033,7 +1033,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_gpu_type_enum() -> None:
         """Test GPUType enum values."""
-        from aignostics.platform._sdk_metadata import GPUType
+        from aignostics_sdk.platform._sdk_metadata import GPUType
 
         assert GPUType.L4.value == "L4"
         assert GPUType.A100.value == "A100"
@@ -1043,7 +1043,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_provisioning_mode_enum() -> None:
         """Test ProvisioningMode enum values."""
-        from aignostics.platform._sdk_metadata import ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import ProvisioningMode
 
         assert ProvisioningMode.SPOT.value == "SPOT"
         assert ProvisioningMode.ON_DEMAND.value == "ON_DEMAND"
@@ -1054,7 +1054,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_metadata_with_pipeline_config() -> None:
         """Test that metadata validates with pipeline configuration."""
-        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUType, ProvisioningMode
 
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
@@ -1100,7 +1100,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_gpu_config_invalid_max_gpus() -> None:
         """Test that invalid max_gpus_per_slide value is rejected."""
-        from aignostics.platform._sdk_metadata import GPUConfig
+        from aignostics_sdk.platform._sdk_metadata import GPUConfig
 
         with pytest.raises(ValidationError):
             GPUConfig(max_gpus_per_slide=0)  # Must be positive
@@ -1112,7 +1112,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_flex_start_provisioning_mode_sets_default_duration() -> None:
         """Test that FLEX_START mode automatically sets default duration when not specified."""
-        from aignostics.platform._sdk_metadata import (
+        from aignostics_sdk.platform._sdk_metadata import (
             DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
             GPUConfig,
             ProvisioningMode,
@@ -1127,7 +1127,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_flex_start_with_custom_duration() -> None:
         """Test FLEX_START mode with custom duration."""
-        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUConfig, ProvisioningMode
 
         config = GPUConfig(
             provisioning_mode=ProvisioningMode.FLEX_START,
@@ -1141,7 +1141,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_non_flex_start_mode_rejects_duration() -> None:
         """Test that non-FLEX_START modes reject flex_start_max_run_duration_minutes."""
-        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUConfig, ProvisioningMode
 
         # SPOT mode should not allow flex_start_max_run_duration_minutes
         with pytest.raises(ValidationError) as exc_info:
@@ -1163,7 +1163,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_flex_start_duration_out_of_range() -> None:
         """Test that flex_start_max_run_duration_minutes validates range."""
-        from aignostics.platform._sdk_metadata import GPUConfig, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUConfig, ProvisioningMode
 
         # Too low
         with pytest.raises(ValidationError):
@@ -1183,7 +1183,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_metadata_with_flex_start_pipeline_config() -> None:
         """Test that metadata validates with FLEX_START pipeline configuration."""
-        from aignostics.platform._sdk_metadata import GPUType, ProvisioningMode
+        from aignostics_sdk.platform._sdk_metadata import GPUType, ProvisioningMode
 
         metadata = {
             "schema_version": SDK_METADATA_SCHEMA_VERSION,
@@ -1212,7 +1212,7 @@ class TestPipelineConfiguration:
     @staticmethod
     def test_default_flex_start_duration_value() -> None:
         """Test that DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES is 12 hours (720 minutes)."""
-        from aignostics.platform._sdk_metadata import DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
+        from aignostics_sdk.platform._sdk_metadata import DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES
 
         assert DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES == 12 * 60  # 720 minutes
 

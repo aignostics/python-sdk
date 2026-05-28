@@ -1,6 +1,6 @@
 """Utility functions for the application GUI."""
 
-from aignostics.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
+from aignostics_sdk.platform import ItemState, ItemTerminationReason, RunState, RunTerminationReason
 
 NONE = "none"
 

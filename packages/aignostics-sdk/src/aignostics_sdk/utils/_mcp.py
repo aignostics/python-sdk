@@ -13,7 +13,7 @@ Example:
     uv run aignostics mcp list-tools
 
     # Use programmatically
-    from aignostics.utils import mcp_create_server, mcp_run, mcp_list_tools
+    from aignostics_sdk.utils import mcp_create_server, mcp_run, mcp_list_tools
 
     server = mcp_create_server()
     mcp_run()

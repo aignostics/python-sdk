@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, computed_field
 
-from aignostics.platform import ItemResult, OutputArtifactElement, RunData
+from aignostics_sdk.platform import ItemResult, OutputArtifactElement, RunData
 
 has_qupath_extra = find_spec("ijson")
 if has_qupath_extra:

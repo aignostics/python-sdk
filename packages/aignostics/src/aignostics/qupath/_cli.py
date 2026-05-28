@@ -9,7 +9,7 @@ import typer
 from loguru import logger
 from rich.table import Table
 
-from aignostics.utils import console
+from aignostics_sdk.utils import console
 
 from ._service import QUPATH_VERSION, Service
 

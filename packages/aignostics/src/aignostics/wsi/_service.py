@@ -9,7 +9,7 @@ import requests
 from loguru import logger
 
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
-from aignostics.utils import BaseService, Health
+from aignostics_sdk.utils import BaseService, Health
 
 from ._openslide_handler import DEFAULT_MAX_SAFE_DIMENSION
 from ._utils import select_dicom_files

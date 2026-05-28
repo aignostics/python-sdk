@@ -63,7 +63,7 @@ from packaging.version import Version
 from tqdm import tqdm
 
 from loguru import logger
-from aignostics.utils import SUBPROCESS_CREATION_FLAGS
+from aignostics_sdk.utils import SUBPROCESS_CREATION_FLAGS
 
 aws_endpoint_url = "https://s3.amazonaws.com"
 gcp_endpoint_url = "https://storage.googleapis.com"

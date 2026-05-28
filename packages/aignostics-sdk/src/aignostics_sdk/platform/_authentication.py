@@ -23,14 +23,14 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics.platform._api import _log_retry_attempt
-from aignostics.platform._messages import (
+from aignostics_sdk.platform._api import _log_retry_attempt
+from aignostics_sdk.platform._messages import (
     AUTHENTICATION_FAILED,
     AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
     INVALID_REDIRECT_URI,
 )
-from aignostics.platform._settings import settings
+from aignostics_sdk.platform._settings import settings
 
 CALLBACK_PORT_RETRY_COUNT = 20
 CALLBACK_PORT_BACKOFF_DELAY = 1

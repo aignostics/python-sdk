@@ -18,9 +18,9 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
-from aignostics.platform._api import _AuthenticatedApi
-from aignostics.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
-from aignostics.platform.resources.utils import PAGE_SIZE
+from aignostics_sdk.platform._api import _AuthenticatedApi
+from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
+from aignostics_sdk.platform.resources.utils import PAGE_SIZE
 
 _PLATFORM_HOST = "https://platform-staging.aignostics.com"
 _RUN_ID = "test-run-id"

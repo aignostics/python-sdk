@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import Response
 from loguru import logger
 
-from aignostics.utils import BasePageBuilder
+from aignostics_sdk.utils import BasePageBuilder
 
 from ._openslide_handler import DEFAULT_MAX_SAFE_DIMENSION
 from ._service import Service

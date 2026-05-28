@@ -26,7 +26,7 @@ from packaging.version import Version
 from psutil import Process, wait_procs
 from pydantic import BaseModel, computed_field
 
-from aignostics.utils import (
+from aignostics_sdk.utils import (
     SUBPROCESS_CREATION_FLAGS,
     BaseService,
     Health,

@@ -24,7 +24,7 @@ from aignostics.constants import (
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     InputArtifactData,
     ItemState,
     OutputArtifactData,
@@ -34,7 +34,7 @@ from aignostics.platform import (
     RunItemStatistics,
     RunState,
 )
-from aignostics.utils import console
+from aignostics_sdk.utils import console
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 

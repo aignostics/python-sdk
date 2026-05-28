@@ -49,31 +49,31 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics.platform._api import (
+from aignostics_sdk.platform._api import (
     RETRYABLE_EXCEPTIONS,
     _AuthenticatedApi,
     _AuthenticatedResource,
     _log_retry_attempt,
 )
-from aignostics.platform._authentication import get_token
-from aignostics.platform._operation_cache import cached_operation, operation_cache_clear
-from aignostics.platform._sdk_metadata import (
+from aignostics_sdk.platform._authentication import get_token
+from aignostics_sdk.platform._operation_cache import cached_operation, operation_cache_clear
+from aignostics_sdk.platform._sdk_metadata import (
     build_item_sdk_metadata,
     build_run_sdk_metadata,
     validate_item_sdk_metadata,
     validate_run_sdk_metadata,
 )
-from aignostics.platform._settings import settings
-from aignostics.platform._utils import (
+from aignostics_sdk.platform._settings import settings
+from aignostics_sdk.platform._utils import (
     calculate_file_crc32c,
     convert_to_json_serializable,
     download_file,
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
-from aignostics.platform.resources.applications import Versions
-from aignostics.platform.resources.utils import paginate
-from aignostics.utils import user_agent
+from aignostics_sdk.platform.resources.applications import Versions
+from aignostics_sdk.platform.resources.utils import paginate
+from aignostics_sdk.utils import user_agent
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -263,7 +263,7 @@ class Run(_AuthenticatedResource):
         Returns:
             Run: The initialized Run instance.
         """
-        from aignostics.platform._client import Client  # noqa: PLC0415
+        from aignostics_sdk.platform._client import Client  # noqa: PLC0415
 
         return cls(Client.get_api_client(cache_token=cache_token), run_id)
 

@@ -13,8 +13,8 @@ from aignx.codegen.models import UserReadResponse as User
 from loguru import logger
 from pydantic import BaseModel, computed_field
 
-from aignostics.constants import INTERNAL_ORGS
-from aignostics.utils import BaseService, Health, user_agent
+from aignostics_sdk.constants import INTERNAL_ORGS
+from aignostics_sdk.utils import BaseService, Health, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client

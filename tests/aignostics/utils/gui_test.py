@@ -6,8 +6,8 @@ from unittest import mock
 
 import pytest
 
-from aignostics.utils._constants import __project_name__
-from aignostics.utils._gui import (
+from aignostics_sdk.utils._constants import __project_name__
+from aignostics_sdk.utils._gui import (
     BasePageBuilder,
     gui_register_pages,
     gui_run,

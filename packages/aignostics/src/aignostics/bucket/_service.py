@@ -15,8 +15,8 @@ from pydantic import BaseModel, computed_field
 if TYPE_CHECKING:
     from botocore.client import BaseClient
 
-from aignostics.platform import Service as PlatformService
-from aignostics.utils import BaseService, Health, get_user_data_directory
+from aignostics_sdk.platform import Service as PlatformService
+from aignostics_sdk.utils import BaseService, Health, get_user_data_directory
 
 from ._settings import Settings
 

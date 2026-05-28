@@ -6,7 +6,7 @@ from typing import Annotated
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
-from ..utils import OpaqueSettings, __env_file__, __project_name__  # noqa: TID252
+from aignostics_sdk.utils import OpaqueSettings, __env_file__, __project_name__  # noqa: TID252
 
 
 class BucketProtocol(StrEnum):

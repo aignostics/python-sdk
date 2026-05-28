@@ -10,7 +10,7 @@ from typing import Any
 from loguru import logger
 
 from aignostics.constants import NOTEBOOK_DEFAULT
-from aignostics.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_user_data_directory
+from aignostics_sdk.utils import SUBPROCESS_CREATION_FLAGS, BaseService, Health, get_user_data_directory
 
 MARIMO_SERVER_STARTUP_TIMEOUT = 60
 

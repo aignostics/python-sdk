@@ -14,7 +14,7 @@ from .constants import (  # noqa: E402
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from .utils.boot import boot  # noqa: E402
+from aignostics_sdk.utils.boot import boot  # noqa: E402
 
 # Add scheme to HTTP proxy environment variables if missing
 for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:

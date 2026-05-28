@@ -10,7 +10,7 @@ from aignx.codegen.exceptions import ServiceException
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
-from aignostics.platform._client import Client
+from aignostics_sdk.platform._client import Client
 
 
 class TestMeSuccess:

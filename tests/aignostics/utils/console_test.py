@@ -2,7 +2,7 @@
 
 import pytest
 
-from aignostics.utils._console import _get_console
+from aignostics_sdk.utils._console import _get_console
 
 
 @pytest.mark.unit
