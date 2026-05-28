@@ -125,7 +125,7 @@ def lint(session: nox.Session) -> None:
         ".",
     )
     session.run("pyright", "--pythonversion", PYTHON_VERSION, "--threads")
-    session.run("mypy", "src")
+    session.run("mypy", "packages/aignostics-sdk/src", "packages/aignostics/src")
 
 
 @nox.session(python=[PYTHON_VERSION])
@@ -596,6 +596,7 @@ def _generate_pdf_docs(session: nox.Session) -> None:
         version_match = re.search(r"Version (\d+\.\d+\w*)", str(out))
         if not version_match:
             session.error("Could not determine latexmk version")
+        assert version_match is not None  # noqa: S101
 
         version_str = version_match.group(1)
 
@@ -603,6 +604,7 @@ def _generate_pdf_docs(session: nox.Session) -> None:
         match = re.match(r"(\d+\.\d+)", version_str)
         if not match:
             session.error(f"Could not parse version number from '{version_str}'")
+        assert match is not None  # noqa: S101
         base_version = match.group(1)
 
         if float(base_version) < LATEXMK_VERSION_MIN:
@@ -665,6 +667,7 @@ def docs_pdf(session: nox.Session) -> None:
         version_match = re.search(r"Version (\d+\.\d+\w*)", str(out))
         if not version_match:
             session.error("Could not determine latexmk version")
+        assert version_match is not None  # noqa: S101
 
         version_str = version_match.group(1)
 
@@ -672,6 +675,7 @@ def docs_pdf(session: nox.Session) -> None:
         match = re.match(r"(\d+\.\d+)", version_str)
         if not match:
             session.error(f"Could not parse version number from '{version_str}'")
+        assert match is not None  # noqa: S101
         base_version = match.group(1)
 
         if float(base_version) < LATEXMK_VERSION_MIN:
@@ -1028,4 +1032,5 @@ def act(session: nox.Session) -> None:
 @nox.session()
 def dist(session: nox.Session) -> None:
     """Build wheel and put in dist/."""
-    session.run("uv", "build", external=True)
+    session.run("uv", "build", "--package", "aignostics-sdk", "--out-dir", "dist/", external=True)
+    session.run("uv", "build", "--package", "aignostics", "--out-dir", "dist/", external=True)

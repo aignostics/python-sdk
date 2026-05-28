@@ -147,7 +147,13 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["src/aignostics/third_party", "_notebook.py", "_pydicom_handler.py"]
+exclude = [
+    "packages/aignostics-sdk/src/aignostics_sdk/third_party",
+    "packages/aignostics/src/aignostics/third_party",
+    "packages/aignostics/src/aignostics/notebook/_notebook.py",
+    "packages/aignostics/src/aignostics/wsi/_pydicom_handler.py",
+    "packages/aignostics/src/aignostics/wsi/_openslide_handler.py",
+]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -170,7 +176,7 @@ warn_untyped_fields = true
 main_file = "tests/main.py"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
-addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics_sdk --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
@@ -208,20 +214,27 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 [tool.coverage.run]
 sigterm = true
 relative_files = true
-source = ["src"]
+source = [
+    "packages/aignostics-sdk/src",
+    "packages/aignostics/src",
+]
 omit = [
-    "src/aignostics/aignostics.py",
-    "src/aignostics/third_party/*",
-    "src/aignostics/notebook/_notebook.py",
-    "src/aignostics/wsi/_pydicom_handler.py",
-    "src/aignostics/wsi/_openslide_handler.py",
+    "*/aignostics/aignostics.py",
+    "*/aignostics/third_party/*",
+    "*/aignostics_sdk/third_party/*",
+    "*/aignostics/notebook/_notebook.py",
+    "*/aignostics/wsi/_pydicom_handler.py",
+    "*/aignostics/wsi/_openslide_handler.py",
 ]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.paths]
-source = ["src/"]
+source = [
+    "packages/aignostics-sdk/src",
+    "packages/aignostics/src",
+]
 
 
 [tool.bumpversion]

@@ -1,5 +1,10 @@
 {
     "typeCheckingMode": "basic",
+    "include": [
+        "packages/aignostics-sdk/src",
+        "packages/aignostics/src",
+        "noxfile.py"
+    ],
     "exclude": [
         "**/.nox/**",
         "**/.venv/**",
@@ -7,7 +12,7 @@
         "**/dist-packages/**",
         "**/dist_vercel/.vercel/**",
         "**/dist_native/**",
-        "**/site-packages/**",
+        "**/site-packages/**"
     ],
     "ignore": [
         "**/third_party/**",
@@ -18,10 +23,10 @@
         "tests/**",
         "codegen/**",
         "examples/**",
-        "src/aignostics/wsi/_pydicom_handler.py",
-        "src/aignostics/notebook/_notebook.py",
         "packages/aignostics/src/aignostics/wsi/_pydicom_handler.py",
-        "packages/aignostics/src/aignostics/notebook/_notebook.py",
+        "packages/aignostics/src/aignostics/notebook/_notebook.py"
     ],
-    "extraPaths": []
+    "extraPaths": [
+        "./packages/aignostics/src/aignostics/utils"
+    ]
 }
