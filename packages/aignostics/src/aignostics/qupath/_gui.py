@@ -5,10 +5,10 @@ from multiprocessing import Manager
 from pathlib import Path
 
 import humanize
+from aignostics_sdk.utils import BasePageBuilder
 from loguru import logger
 
 from aignostics.gui import frame
-from aignostics.utils import BasePageBuilder
 
 from ._service import InstallProgress, InstallProgressState, Service
 

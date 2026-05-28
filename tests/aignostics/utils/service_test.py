@@ -4,9 +4,8 @@ import inspect
 from typing import Any
 
 import pytest
-
-from aignostics.utils._health import Health
-from aignostics.utils._service import BaseService
+from aignostics_sdk.utils._health import Health
+from aignostics_sdk.utils._service import BaseService
 
 
 class _ConcreteService(BaseService):

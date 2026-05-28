@@ -10,10 +10,6 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from nicegui.testing import User
-from typer.testing import CliRunner
-
-from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
 from aignostics.application._gui._page_application_run_describe import (
     RESULTS_PAGE_SIZE,
@@ -21,6 +17,10 @@ from aignostics.application._gui._page_application_run_describe import (
     _resolve_artifact_url_or_notify,
 )
 from aignostics.cli import cli
+from nicegui.testing import User
+from typer.testing import CliRunner
+
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,

@@ -13,7 +13,7 @@ from typing import Any, Literal
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
-from aignostics.utils import user_agent
+from aignostics_sdk.utils import user_agent
 
 from ._constants import (
     DEFAULT_CPU_PROVISIONING_MODE,
@@ -293,7 +293,7 @@ def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> d
         dict[str, Any]: Dictionary containing SDK metadata including user agent,
             user information, and optionally CI information (GitHub workflow and pytest test context).
     """
-    from aignostics.platform._client import Client  # noqa: PLC0415
+    from aignostics_sdk.platform._client import Client  # noqa: PLC0415
 
     submission_initiator = "user"  # who/what initiated the run (user, test, bridge)
     submission_interface = "script"  # how the SDK was accessed (script, cli, launchpad)

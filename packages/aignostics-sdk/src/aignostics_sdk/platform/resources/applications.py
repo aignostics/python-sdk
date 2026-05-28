@@ -30,17 +30,17 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics.platform._api import (
+from aignostics_sdk.platform._api import (
     RETRYABLE_EXCEPTIONS,
     _AuthenticatedApi,
     _AuthenticatedResource,
     _log_retry_attempt,
 )
-from aignostics.platform._authentication import get_token
-from aignostics.platform._operation_cache import cached_operation
-from aignostics.platform._settings import settings
-from aignostics.platform.resources.utils import paginate
-from aignostics.utils import user_agent
+from aignostics_sdk.platform._authentication import get_token
+from aignostics_sdk.platform._operation_cache import cached_operation
+from aignostics_sdk.platform._settings import settings
+from aignostics_sdk.platform.resources.utils import paginate
+from aignostics_sdk.utils import user_agent
 
 _DOCUMENT_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1 MB
 

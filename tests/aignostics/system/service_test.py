@@ -5,7 +5,6 @@ from typing import Any
 from unittest import mock
 
 import pytest
-
 from aignostics.system._service import Service
 
 # ---------------------------------------------------------------------------
@@ -45,7 +44,7 @@ def _patch_info_dependencies(boot_time: float = FIXED_BOOT_TIME):
     cpu_times.system = 10.0
     cpu_times.idle = 70.0
 
-    from aignostics.utils._process import ParentProcessInfo, ProcessInfo
+    from aignostics_sdk.utils._process import ParentProcessInfo, ProcessInfo
 
     mock_process_info = ProcessInfo(
         project_root="/fake/root",

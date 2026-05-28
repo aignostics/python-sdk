@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from aignostics.utils import BasePageBuilder
+from aignostics_sdk.utils import BasePageBuilder
 
 
 class PageBuilder(BasePageBuilder):

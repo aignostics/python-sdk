@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
-
 from aignostics.application._download import (
     download_available_items,
     download_item_artifact,
@@ -13,7 +12,7 @@ from aignostics.application._download import (
     extract_filename_from_url,
 )
 from aignostics.application._models import DownloadProgress, DownloadProgressState
-from aignostics.platform import ArtifactOutput
+from aignostics_sdk.platform import ArtifactOutput
 
 
 @pytest.mark.unit
@@ -526,7 +525,7 @@ def test_download_available_items_skips_non_available_artifacts(tmp_path: Path) 
     artifacts that aren't AVAILABLE. Calling it for a NONE artifact would fail
     the whole download. This test pins the guard.
     """
-    from aignostics.platform import ItemOutput, ItemState
+    from aignostics_sdk.platform import ItemOutput, ItemState
 
     available = _mock_artifact(output_artifact_id="art-ok", output=ArtifactOutput.AVAILABLE)
     none_artifact = _mock_artifact(output_artifact_id="art-skip", output=ArtifactOutput.NONE)
@@ -563,7 +562,7 @@ def test_download_available_items_passes_run_to_download_item_artifact(tmp_path:
     so the calling site must pass it through. Pinning the call shape keeps the
     contract explicit.
     """
-    from aignostics.platform import ItemOutput, ItemState
+    from aignostics_sdk.platform import ItemOutput, ItemState
 
     artifact = _mock_artifact()
     item = MagicMock()

@@ -3,9 +3,8 @@
 from collections.abc import Generator
 
 import pytest
-from typer.testing import CliRunner
-
 from aignostics.cli import cli
+from typer.testing import CliRunner
 
 
 @pytest.fixture

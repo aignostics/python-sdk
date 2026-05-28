@@ -11,9 +11,8 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
-
-from aignostics.platform._client import Client
-from aignostics.platform._operation_cache import _operation_cache, cached_operation, operation_cache_clear
+from aignostics_sdk.platform._client import Client
+from aignostics_sdk.platform._operation_cache import _operation_cache, cached_operation, operation_cache_clear
 
 
 class TestNocacheDecoratorBehavior:
@@ -440,7 +439,7 @@ class TestRunDetailsNocache:
         """Test that Run.details() method signature supports nocache parameter."""
         from inspect import signature
 
-        from aignostics.platform.resources.runs import Run
+        from aignostics_sdk.platform.resources.runs import Run
 
         # Verify the method has nocache parameter
         sig = signature(Run.details)
@@ -459,7 +458,7 @@ class TestRunsListNocache:
         """Test that Runs.list() method signature supports nocache parameter."""
         from inspect import signature
 
-        from aignostics.platform.resources.runs import Runs
+        from aignostics_sdk.platform.resources.runs import Runs
 
         # Verify the method has nocache parameter
         sig = signature(Runs.list)
@@ -478,7 +477,7 @@ class TestApplicationsResourcesNocache:
         """Test that Versions.list() method signature supports nocache parameter."""
         from inspect import signature
 
-        from aignostics.platform.resources.applications import Versions
+        from aignostics_sdk.platform.resources.applications import Versions
 
         # Verify the method has nocache parameter
         sig = signature(Versions.list)
@@ -493,7 +492,7 @@ class TestApplicationsResourcesNocache:
         """Test that Applications.details() method signature supports nocache parameter."""
         from inspect import signature
 
-        from aignostics.platform.resources.applications import Applications
+        from aignostics_sdk.platform.resources.applications import Applications
 
         # Verify the method has nocache parameter
         sig = signature(Applications.details)

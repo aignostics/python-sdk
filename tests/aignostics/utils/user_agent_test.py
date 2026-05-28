@@ -4,8 +4,7 @@ import platform
 from unittest.mock import patch
 
 import pytest
-
-from aignostics.utils._user_agent import user_agent
+from aignostics_sdk.utils._user_agent import user_agent
 
 
 @pytest.mark.unit

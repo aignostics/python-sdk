@@ -7,6 +7,8 @@ from typing import Any
 # TODO(Helmut): remove when google_crc32c supports Python 3.14
 warnings.filterwarnings("ignore", message="As the c extension couldn't be imported", category=RuntimeWarning)
 
+from aignostics_sdk.utils.boot import boot  # noqa: E402
+
 from .constants import (  # noqa: E402
     HETA_APPLICATION_ID,
     SENTRY_INTEGRATIONS,
@@ -14,7 +16,6 @@ from .constants import (  # noqa: E402
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from .utils.boot import boot  # noqa: E402
 
 # Add scheme to HTTP proxy environment variables if missing
 for proxy_var in ["HTTP_PROXY", "HTTPS_PROXY"]:

@@ -2,7 +2,8 @@
 
 import traceback
 
-from ..utils import BasePageBuilder  # noqa: TID252
+from aignostics_sdk.utils import BasePageBuilder
+
 from ._frame import frame
 
 

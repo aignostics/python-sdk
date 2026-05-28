@@ -29,7 +29,7 @@ def _():
     from dotenv import load_dotenv
     from aignostics import dataset, WSI_SUPPORTED_FILE_EXTENSIONS
     from wsidicom import WsiDicom
-    from aignostics.utils import get_user_data_directory
+    from aignostics_sdk.utils import get_user_data_directory
 
     mo.sidebar([
         mo.md("# aignostics"),

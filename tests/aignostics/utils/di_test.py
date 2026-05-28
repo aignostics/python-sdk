@@ -6,17 +6,16 @@ from contextlib import contextmanager
 from types import ModuleType
 from unittest.mock import MagicMock, Mock, patch
 
+import aignostics_sdk.utils._di as di_module
 import pytest
 import typer
-
-import aignostics.utils._di as di_module
-from aignostics.utils._cli import (
+from aignostics_sdk.utils._cli import (
     _add_epilog_recursively,
     _no_args_is_help_recursively,
     prepare_cli,
 )
-from aignostics.utils._constants import __project_name__
-from aignostics.utils._di import (
+from aignostics_sdk.utils._constants import __project_name__
+from aignostics_sdk.utils._di import (
     PLUGIN_ENTRY_POINT_GROUP,
     _implementation_cache,
     _subclass_cache,
@@ -467,7 +466,7 @@ def test_locate_implementations_searches_plugins(clear_di_caches, record_propert
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     """Test that locate_implementations searches plugin packages."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     plugin_instance = AnotherDummyBase()
     mock_plugin_package = ModuleType("test_plugin")
@@ -599,7 +598,7 @@ def test_locate_implementations_deep_scans_main_package(clear_di_caches, record_
 def test_locate_implementations_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_implementations caches results."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -646,7 +645,7 @@ def test_locate_subclasses_searches_plugins(clear_di_caches, record_property) ->
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     """Test that locate_subclasses searches plugin packages."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     class PluginSubClass(AnotherDummyBase):
         pass
@@ -787,7 +786,7 @@ def test_locate_subclasses_deep_scans_main_package(clear_di_caches, record_prope
 def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses excludes the base class itself."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     mock_package = _mock_package()
     mock_module = ModuleType("aignostics.testmodule")
@@ -806,7 +805,7 @@ def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property)
 def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses caches results."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -826,7 +825,7 @@ def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> N
 def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for plugin packages gracefully."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -848,7 +847,7 @@ def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_p
 def test_locate_subclasses_handles_module_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for individual modules gracefully."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     mock_package = _mock_package()
     call_count = 0
@@ -898,7 +897,7 @@ def test_locate_implementations_and_subclasses_search_both_plugins_and_main_pack
 ) -> None:
     """Test that both functions search plugins first, then main package."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics.utils._di as di_module
+    import aignostics_sdk.utils._di as di_module
 
     import_order: list[str] = []
 

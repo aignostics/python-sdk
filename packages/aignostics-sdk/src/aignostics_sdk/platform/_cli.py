@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 from loguru import logger
 
-from aignostics.utils import console
+from aignostics_sdk.utils import console
 
 from ._sdk_metadata import get_item_sdk_metadata_json_schema, get_run_sdk_metadata_json_schema
 from ._service import Service

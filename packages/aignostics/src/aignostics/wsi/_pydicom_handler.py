@@ -9,12 +9,11 @@ import highdicom as hd
 import numpy as np
 import pydicom
 import pydicom.errors
+from aignostics_sdk.utils import console
 from loguru import logger
 from pydicom.sr.codedict import codes
 from pydicom.sr.coding import Code
 from shapely.geometry import Polygon
-
-from aignostics.utils import console
 
 from ._utils import select_dicom_files
 

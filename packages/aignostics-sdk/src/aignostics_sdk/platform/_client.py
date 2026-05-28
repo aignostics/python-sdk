@@ -17,17 +17,17 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics.platform._api import (
+from aignostics_sdk.platform._api import (
     RETRYABLE_EXCEPTIONS,
     _AuthenticatedApi,
     _log_retry_attempt,
     _OAuth2TokenProviderConfiguration,
 )
-from aignostics.platform._authentication import get_token
-from aignostics.platform._operation_cache import cached_operation
-from aignostics.platform.resources.applications import Applications, Versions
-from aignostics.platform.resources.runs import Run, Runs
-from aignostics.utils import user_agent
+from aignostics_sdk.platform._authentication import get_token
+from aignostics_sdk.platform._operation_cache import cached_operation
+from aignostics_sdk.platform.resources.applications import Applications, Versions
+from aignostics_sdk.platform.resources.runs import Run, Runs
+from aignostics_sdk.utils import user_agent
 
 from ._settings import settings
 

@@ -4,11 +4,10 @@ import typing as t
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from aignostics.platform._api import _AuthenticatedApi
-from aignostics.platform._client import Client
-from aignostics.platform._operation_cache import _operation_cache
-from aignostics.platform._service import Service
+from aignostics_sdk.platform._api import _AuthenticatedApi
+from aignostics_sdk.platform._client import Client
+from aignostics_sdk.platform._operation_cache import _operation_cache
+from aignostics_sdk.platform._service import Service
 
 
 @pytest.fixture
@@ -112,7 +111,7 @@ def clear_jwk_cache() -> t.Generator[None, None, None]:
     Yields:
         None: This fixture doesn't yield a value.
     """
-    from aignostics.platform._authentication import _get_jwk_client
+    from aignostics_sdk.platform._authentication import _get_jwk_client
 
     _get_jwk_client.cache_clear()
     yield

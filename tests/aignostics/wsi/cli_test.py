@@ -6,9 +6,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from aignostics.cli import cli
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
 from tests.conftest import normalize_output
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"

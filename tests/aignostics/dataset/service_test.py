@@ -4,7 +4,6 @@ import subprocess
 from unittest import mock
 
 import pytest
-
 from aignostics.dataset._service import _active_processes, _cleanup_processes, _terminate_process
 
 

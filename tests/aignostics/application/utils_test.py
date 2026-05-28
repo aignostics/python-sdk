@@ -6,8 +6,6 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
-
 from aignostics.application._utils import (
     application_run_status_to_str,
     get_mime_type_for_artifact,
@@ -30,7 +28,7 @@ from aignostics.constants import (
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     ItemResult,
     ItemState,
     ItemTerminationReason,
@@ -41,6 +39,7 @@ from aignostics.platform import (
     RunState,
     RunTerminationReason,
 )
+from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 SUBMITTED_BY = "user@example.com"

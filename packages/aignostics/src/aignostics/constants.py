@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from aignostics.utils import __version__
+from aignostics_sdk.utils import __version__
 
 if TYPE_CHECKING:
     from sentry_sdk.integrations import Integration

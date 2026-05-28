@@ -9,9 +9,7 @@ if find_spec("sentry_sdk"):
     from unittest import mock
 
     import pytest
-    from pydantic import SecretStr
-
-    from aignostics.utils._sentry import (
+    from aignostics_sdk.utils._sentry import (
         _ERR_MSG_INVALID_DOMAIN,
         _ERR_MSG_MISSING_NETLOC,
         _ERR_MSG_MISSING_SCHEME,
@@ -23,6 +21,7 @@ if find_spec("sentry_sdk"):
         _validate_url_scheme,
         sentry_initialize,
     )
+    from pydantic import SecretStr
 
     VALID_DSN = "https://abcdef1234567890@o12345.ingest.us.sentry.io/1234567890"
 

@@ -1,8 +1,7 @@
 """Tests for health models and status definitions."""
 
 import pytest
-
-from aignostics.utils._health import Health
+from aignostics_sdk.utils._health import Health
 
 DB_FAILURE = "DB failure"
 CACHE_SLOW = "cache slow"

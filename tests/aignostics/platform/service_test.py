@@ -4,9 +4,8 @@ from http import HTTPStatus
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from aignostics.platform._service import Service, UserInfo
-from aignostics.utils import Health
+from aignostics_sdk.platform._service import Service, UserInfo
+from aignostics_sdk.utils import Health
 
 _PATCH_AUTH_GETTER = "aignostics.platform._service.get_token"
 _PATCH_HTTPX_ASYNC_CLIENT = "aignostics.platform._service.httpx.AsyncClient"

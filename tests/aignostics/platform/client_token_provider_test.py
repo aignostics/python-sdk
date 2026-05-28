@@ -4,9 +4,8 @@ from collections.abc import Callable
 from unittest.mock import Mock, patch
 
 import pytest
-
-from aignostics.platform._api import _AuthenticatedApi, _AuthenticatedResource, _OAuth2TokenProviderConfiguration
-from aignostics.platform._client import Client
+from aignostics_sdk.platform._api import _AuthenticatedApi, _AuthenticatedResource, _OAuth2TokenProviderConfiguration
+from aignostics_sdk.platform._client import Client
 
 # Module-level constants for repeated string literals (extracted to satisfy
 # SonarQube python:S1192 — "Define a constant instead of duplicating this literal").
@@ -221,7 +220,7 @@ def test_none_token_provider_no_warning() -> None:
 @pytest.mark.unit
 def test_external_provider_cache_bounded() -> None:
     """Test that _api_client_external is bounded to _MAX_EXTERNAL_CLIENTS entries."""
-    from aignostics.platform._client import _MAX_EXTERNAL_CLIENTS
+    from aignostics_sdk.platform._client import _MAX_EXTERNAL_CLIENTS
 
     with (
         patch(_APICLIENT_PATCH),

@@ -6,10 +6,9 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from aignostics_sdk.utils import console
 from loguru import logger
 from rich.table import Table
-
-from aignostics.utils import console
 
 from ._service import QUPATH_VERSION, Service
 

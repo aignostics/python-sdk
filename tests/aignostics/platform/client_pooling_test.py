@@ -1,8 +1,7 @@
 """Tests for API client connection pooling."""
 
 import pytest
-
-from aignostics.platform._client import Client
+from aignostics_sdk.platform._client import Client
 
 
 @pytest.mark.unit
