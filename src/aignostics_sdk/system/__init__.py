@@ -11,12 +11,3 @@ __all__ = [
 ]
 
 
-from importlib.util import find_spec
-
-# advertise PageBuilder to enable auto-discovery
-if find_spec("nicegui"):
-    from ._gui import PageBuilder
-
-    __all__ += [
-        "PageBuilder",
-    ]
