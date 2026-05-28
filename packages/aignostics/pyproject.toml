@@ -114,14 +114,16 @@ dependencies = [
 pyinstaller = ["pyinstaller>=6.14.0,<7"]
 jupyter = [
     "jupyter>=1.1.1,<2",
-    "jupyter-core>=5.8.1",
-    "jupyterlab>=4.4.9",
-    "nbconvert>=7.17.1",
+    # Transitive overrides
+    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
+    "jupyter-core>=5.8.1",              # CVE-2025-30167
+    "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "nbconvert>=7.17.1",                # CVE-2025-53000 (>=7.17.0, Dependabot #424); CVE-2026-39377, CVE-2026-39378 (>=7.17.1, Dependabot #553)
 ]
 marimo = [
     "cloudpathlib>=0.23.0,<1",
     "ipython>=9.8.0,<10",
-    "marimo>=0.23.0,<1",
+    "marimo>=0.23.0,<1", # GHSA-2679-6mx9-h9xc (Renovate #533)
     "matplotlib>=3.10.7,<4",
     "shapely>=2.1.0,<3",
 ]
