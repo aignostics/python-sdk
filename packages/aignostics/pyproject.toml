@@ -1,0 +1,123 @@
+[project]
+name = "aignostics"
+version = "1.4.0"
+description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
+readme = "../../README.md"
+authors = [
+    { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
+    { name = "Andreas Kunft", email = "andreas@aignostics.com" },
+]
+license = { file = "../../LICENSE" }
+
+keywords = [
+    "aignostics",
+    "atlas",
+    "whole-slide-imaging",
+    "machine-learning",
+    "digital-pathology",
+    "medical-imaging",
+    "qupath",
+    "dicom",
+    "pydicom",
+    "openslide",
+    "image-data-commons",
+    "act",
+    "codecov",
+    "copier",
+    "cyclonedx",
+    "devcontainer",
+    "detect-secrets",
+    "docker",
+    "git-cliff",
+    "jupyter",
+    "marimo",
+    "mypy",
+    "nox",
+    "nicegui",
+    "oe-python-template",
+    "pip-audit",
+    "pip-licenses",
+    "pre-commit",
+    "pydantic",
+    "pytest",
+    "python",
+    "pypi",
+    "readthedocs",
+    "ruff",
+    "sonarqube",
+    "sonarcloud",
+    "sphinx",
+    "typer",
+    "uv",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Framework :: Pydantic",
+    "Framework :: Pytest",
+    "Typing :: Typed",
+    "Natural Language :: English",
+]
+
+# WARNING: The upper bound of requires-python is *not* respected by uvx
+requires-python = ">=3.11, <3.15"
+
+dependencies = [
+    "aignostics-sdk==1.4.0",
+    # Heavy deps will be moved here from aignostics-sdk in Phase 5
+]
+
+[project.optional-dependencies]
+pyinstaller = ["pyinstaller>=6.14.0,<7"]
+jupyter = [
+    "jupyter>=1.1.1,<2",
+    "jupyter-core>=5.8.1",
+    "jupyterlab>=4.4.9",
+    "nbconvert>=7.17.1",
+]
+marimo = [
+    "cloudpathlib>=0.23.0,<1",
+    "ipython>=9.8.0,<10",
+    "marimo>=0.23.0,<1",
+    "matplotlib>=3.10.7,<4",
+    "shapely>=2.1.0,<3",
+]
+qupath = []
+
+[project.scripts]
+aignostics = "aignostics.cli:cli"
+
+[project.urls]
+Homepage = "https://aignostics.readthedocs.io/en/latest/"
+Documentation = "https://aignostics.readthedocs.io/en/latest/"
+Source = "https://github.com/aignostics/python-sdk"
+Changelog = "https://github.com/aignostics/python-sdk/releases"
+Issues = "https://github.com/aignostics/python-sdk/issues"
+
+[build-system]
+requires = ["hatchling==1.29.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["src/*"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aignostics"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv.sources]
+aignostics-sdk = { workspace = true }
