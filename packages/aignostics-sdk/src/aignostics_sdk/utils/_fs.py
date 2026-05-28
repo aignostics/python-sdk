@@ -4,7 +4,6 @@ import platform
 from pathlib import Path, PureWindowsPath
 
 import platformdirs
-from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from loguru import logger
 
 from ._constants import __is_running_in_read_only_environment__, __project_name__
@@ -106,7 +105,11 @@ def open_user_data_directory(scope: str | None = None) -> Path:
     directory = get_user_data_directory(scope)
 
     try:
+        from aignostics.third_party.showinfm.showinfm import show_in_file_manager  # noqa: PLC0415
+
         show_in_file_manager(str(directory.resolve()))
+    except ImportError:
+        pass  # full aignostics package not installed; skip file-manager open
     except (OSError, RuntimeError, FileNotFoundError) as error:
         logger.warning(
             "Failed to open user data directory in file manager: %s. Directory path: %s",
