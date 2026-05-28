@@ -22,6 +22,7 @@ from dotenv import unset_key as dotenv_unset_key
 from loguru import logger
 from pydantic_settings import BaseSettings
 
+from aignostics.utils import locate_subclasses
 from aignostics_sdk.utils import (
     ENV_PREFIX,
     UNHIDE_SENSITIVE_INFO,
@@ -35,7 +36,6 @@ from aignostics_sdk.utils import (
     __version__,
     get_process_info,
     load_settings,
-    locate_subclasses,
     user_agent,
 )
 

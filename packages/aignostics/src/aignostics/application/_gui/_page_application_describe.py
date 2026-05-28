@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.system import Service as SystemService
+from aignostics.utils import GUILocalFilePicker
 from loguru import logger
 from nicegui import app, binding, ui
 from nicegui import run as nicegui_run
@@ -22,7 +23,7 @@ from aignostics_sdk.platform import (
     DEFAULT_MAX_GPUS_PER_SLIDE,
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
-from aignostics_sdk.utils import GUILocalFilePicker, get_user_data_directory
+from aignostics_sdk.utils import get_user_data_directory
 
 if TYPE_CHECKING:
     from aignostics_sdk.platform import UserInfo

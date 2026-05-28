@@ -13,6 +13,7 @@ from urllib.parse import quote
 
 import humanize
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
+from aignostics.utils import GUILocalFilePicker
 from loguru import logger
 from nicegui import (
     app,
@@ -21,7 +22,7 @@ from nicegui import (
 from nicegui import run as nicegui_run
 
 from aignostics_sdk.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, Run, RunState
-from aignostics_sdk.utils import GUILocalFilePicker, get_user_data_directory
+from aignostics_sdk.utils import get_user_data_directory
 
 if TYPE_CHECKING:
     from aignx.codegen.models import RunReadResponse

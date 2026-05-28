@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from aignostics_sdk.utils import BasePageBuilder
+from aignostics.utils import BasePageBuilder
 
 HOME_PAGE_TIMEOUT_SECONDS = 30
 APPLICATION_DESCRIBE_PAGE_TIMEOUT_SECONDS = 30

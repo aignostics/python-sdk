@@ -6,7 +6,8 @@ from urllib.parse import quote
 from loguru import logger
 
 from aignostics.gui import frame, theme
-from aignostics_sdk.utils import BasePageBuilder, get_user_data_directory
+from aignostics.utils import BasePageBuilder
+from aignostics_sdk.utils import get_user_data_directory
 
 
 class PageBuilder(BasePageBuilder):

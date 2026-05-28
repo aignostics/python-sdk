@@ -8,8 +8,6 @@ from importlib.metadata import entry_points
 from inspect import isclass
 from typing import Any
 
-from ._constants import _package_name
-
 _implementation_cache: dict[Any, list[Any]] = {}
 _subclass_cache: dict[Any, list[Any]] = {}
 
@@ -17,11 +15,12 @@ _subclass_cache: dict[Any, list[Any]] = {}
 PLUGIN_ENTRY_POINT_GROUP = "aignostics.plugins"
 
 # Packages to deep-scan for DI discovery.
+# "aignostics_sdk" is the slim package name (importable module name).
 # Scans the full "aignostics" package if installed (handled gracefully via ImportError).
 # Does NOT scan the slim package (aignostics_sdk) itself for typer instances — slim CLI
 # commands are wired into the heavy CLI via [project.entry-points."aignostics.cli"].
 # BaseService subclasses in the slim package ARE scanned (needed for health checks etc.)
-_SCAN_PACKAGES = (_package_name, "aignostics")
+_SCAN_PACKAGES = ("aignostics_sdk", "aignostics")
 
 
 @lru_cache(maxsize=1)

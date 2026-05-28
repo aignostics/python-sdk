@@ -13,8 +13,8 @@ __project_name__ = "aignostics-sdk"  # distribution name (hyphenated)
 # _package_name is the importable Python module name.
 # Used for importlib.metadata calls so they target the correct installed package.
 _package_name = "aignostics_sdk"  # importable name (underscored)
-# ENV_PREFIX is the uppercase env var prefix (hyphens become underscores).
-ENV_PREFIX = _package_name.upper()  # "AIGNOSTICS_SDK"
+# ENV_PREFIX is the uppercase env var prefix — kept as "AIGNOSTICS" for backward compatibility.
+ENV_PREFIX = "AIGNOSTICS"
 load_dotenv(str(Path(".env")))
 load_dotenv(os.getenv(f"{ENV_PREFIX}_ENV_FILE", Path.home() / f".{__project_name__}/.env"))
 

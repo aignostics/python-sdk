@@ -30,7 +30,7 @@ if find_spec("nicegui") and find_spec("webview") and not __is_running_in_contain
     @cli.command()
     def launchpad() -> None:
         """Open Aignostics Launchpad, the graphical user interface of the Aignostics Platform."""
-        from aignostics_sdk.utils import gui_run  # noqa: PLC0415
+        from aignostics.utils import gui_run  # noqa: PLC0415
 
         gui_run(native=True, with_api=False, title=WINDOW_TITLE, icon="🔬")
 
@@ -84,7 +84,7 @@ def mcp_run() -> None:
     Examples:
         uv run aignostics mcp run
     """
-    from aignostics_sdk.utils import mcp_run  # noqa: PLC0415
+    from aignostics.utils import mcp_run  # noqa: PLC0415
 
     mcp_run()
 
@@ -104,7 +104,7 @@ def mcp_list_tools() -> None:
 
     from rich.table import Table  # noqa: PLC0415
 
-    from aignostics_sdk.utils import mcp_list_tools  # noqa: PLC0415
+    from aignostics.utils import mcp_list_tools  # noqa: PLC0415
 
     tools = mcp_list_tools()
 

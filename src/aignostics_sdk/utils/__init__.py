@@ -23,12 +23,9 @@ from ._constants import (
     __version__,
     __version_full__,
 )
-from ._di import discover_plugin_packages, load_modules, locate_implementations, locate_subclasses
 from ._fs import get_user_data_directory, open_user_data_directory, sanitize_path, sanitize_path_component
 from ._health import Health, HealthStatus
 from ._log import LogSettings
-from ._mcp import MCP_SERVER_NAME, MCP_TRANSPORT, mcp_create_server, mcp_discover_servers, mcp_list_tools, mcp_run
-from ._nav import BaseNavBuilder, NavGroup, NavItem, gui_get_nav_groups
 from ._process import SUBPROCESS_CREATION_FLAGS, ProcessInfo, get_process_info
 from ._service import BaseService
 from ._settings import UNHIDE_SENSITIVE_INFO, OpaqueSettings, load_settings, strip_to_none_before_validator
@@ -37,17 +34,12 @@ from .boot import boot
 
 __all__ = [
     "ENV_PREFIX",
-    "MCP_SERVER_NAME",
-    "MCP_TRANSPORT",
     "SUBPROCESS_CREATION_FLAGS",
     "UNHIDE_SENSITIVE_INFO",
-    "BaseNavBuilder",
     "BaseService",
     "Health",
     "HealthStatus",
     "LogSettings",
-    "NavGroup",
-    "NavItem",
     "OpaqueSettings",
     "ProcessInfo",
     "__author_email__",
@@ -70,18 +62,9 @@ __all__ = [
     "__version_full__",
     "boot",
     "console",
-    "discover_plugin_packages",
     "get_process_info",
     "get_user_data_directory",
-    "gui_get_nav_groups",
-    "load_modules",
     "load_settings",
-    "locate_implementations",
-    "locate_subclasses",
-    "mcp_create_server",
-    "mcp_discover_servers",
-    "mcp_list_tools",
-    "mcp_run",
     "open_user_data_directory",
     "prepare_cli",
     "sanitize_path",
@@ -96,11 +79,6 @@ if find_spec("sentry"):
     from ._sentry import SentrySettings
 
     __all__ += ["SentrySettings"]
-
-if find_spec("nicegui"):
-    from ._gui import BasePageBuilder, GUILocalFilePicker, gui_register_pages, gui_run
-
-    __all__ += ["BasePageBuilder", "GUILocalFilePicker", "gui_register_pages", "gui_run"]
 
 if find_spec("marimo"):
     from ._notebook import create_marimo_app

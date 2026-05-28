@@ -27,7 +27,8 @@ from typing import Any
 from fastmcp import FastMCP
 from loguru import logger
 
-from ._constants import __version__
+from aignostics_sdk.utils._constants import __version__
+
 from ._di import locate_implementations
 
 MCP_SERVER_NAME = "Central Aignostics MCP Server"

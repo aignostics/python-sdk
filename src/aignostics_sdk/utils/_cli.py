@@ -5,8 +5,6 @@ from pathlib import Path
 
 import typer
 
-from ._di import locate_implementations
-
 
 def prepare_cli(cli: typer.Typer, epilog: str) -> None:
     """
@@ -18,6 +16,8 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
     """
     # Collect already-registered sub-typers to avoid duplicate registration
     # (e.g. when entry-point CLIs were added before prepare_cli is called)
+    from aignostics.utils import locate_implementations  # noqa: PLC0415
+
     already_registered = {
         mounted.typer_instance for mounted in cli.registered_groups if mounted.typer_instance is not None
     }

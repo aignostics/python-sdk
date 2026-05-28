@@ -114,7 +114,7 @@ def dump_dot_env_file(
 
 
 if find_spec("nicegui"):
-    from aignostics_sdk.utils import gui_run
+    from aignostics.utils import gui_run
 
     @cli.command()
     def serve(
