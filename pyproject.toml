@@ -196,6 +196,7 @@ markers = [
     "unit: Solitary unit tests - test a layer of a module in isolation with all dependencies mocked, except interaction with shared utils and the systems module. Unit tests must be able to pass offline, i.e. not calls to external services. The timeout should not be bigger than the default 10s, and must be <5 min.",
     "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
     "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
+    "slim: Tests for the aignostics-sdk slim package distribution.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"
