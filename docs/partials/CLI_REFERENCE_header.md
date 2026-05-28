@@ -139,4 +139,3 @@ $ aignostics-sdk sdk item-metadata-schema [OPTIONS]
 ---
 
 ## `aignostics` CLI Reference
-
