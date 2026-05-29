@@ -636,7 +636,7 @@ def test_locate_implementations_no_plugins_detects_main_package(clear_di_caches,
     assert not any(
         p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk."))
         for p in searched
-    )  # noqa: E501
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -900,7 +900,7 @@ def test_locate_subclasses_no_plugins_detects_main_package(clear_di_caches, reco
     assert not any(
         p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk."))
         for p in searched
-    )  # noqa: E501
+    )
 
 
 @pytest.mark.unit
