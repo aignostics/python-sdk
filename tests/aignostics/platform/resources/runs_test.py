@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
+
 from aignostics_sdk._codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignostics_sdk._codegen.models import (
     InputArtifactCreationRequest,
@@ -17,7 +18,6 @@ from aignostics_sdk._codegen.models import (
     RunCreationResponse,
     RunReadResponse,
 )
-
 from aignostics_sdk.platform._api import _AuthenticatedApi
 from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
 from aignostics_sdk.platform.resources.utils import PAGE_SIZE

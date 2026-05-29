@@ -11,11 +11,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
 from aignostics_sdk._codegen.exceptions import NotFoundException
 from aignostics_sdk._codegen.models.application_read_response import ApplicationReadResponse
 from aignostics_sdk._codegen.models.version_document_response import VersionDocumentResponse
 from aignostics_sdk._codegen.models.version_document_visibility import VersionDocumentVisibility
-
 from aignostics_sdk.platform._api import _AuthenticatedApi
 from aignostics_sdk.platform._operation_cache import operation_cache_clear
 from aignostics_sdk.platform.resources.applications import (

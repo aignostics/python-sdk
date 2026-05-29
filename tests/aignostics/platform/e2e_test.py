@@ -12,6 +12,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from loguru import logger
+from sentry_sdk import metrics
+
+from aignostics_sdk import platform
 from aignostics_sdk._codegen.models import (
     ArtifactOutput,
     ArtifactState,
@@ -22,10 +26,6 @@ from aignostics_sdk._codegen.models import (
     SchedulingRequest,
 )
 from aignostics_sdk._codegen.models.run_read_response import RunReadResponse
-from loguru import logger
-from sentry_sdk import metrics
-
-from aignostics_sdk import platform
 from aignostics_sdk.platform import Run, RunSdkMetadata
 from tests.constants_test import (
     HETA_APPLICATION_ID,

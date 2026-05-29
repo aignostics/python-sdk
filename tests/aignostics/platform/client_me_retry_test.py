@@ -6,10 +6,10 @@ from http import HTTPStatus
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 import pytest
-from aignostics_sdk._codegen.exceptions import ServiceException
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
 
+from aignostics_sdk._codegen.exceptions import ServiceException
 from aignostics_sdk.platform._client import Client
 
 

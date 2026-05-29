@@ -49,7 +49,7 @@ from aignostics_sdk.platform import (
     Settings,
     settings,
 )
-from aignostics_sdk.utils import ENV_PREFIX, __project_name__
+from aignostics_sdk.utils import ENV_PREFIX
 
 
 @pytest.fixture

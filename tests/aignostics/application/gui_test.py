@@ -11,12 +11,12 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from aignostics.application import Service
-from aignostics.cli import cli
 from aignostics.application._gui._page_application_run_describe import (
     RESULTS_PAGE_SIZE,
     _resolve_artifact_url_and_invoke,
     _resolve_artifact_url_or_notify,
 )
+from aignostics.cli import cli
 from nicegui.testing import User
 from typer.testing import CliRunner
 
