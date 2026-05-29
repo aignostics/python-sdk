@@ -3,6 +3,7 @@
 import re
 
 import pytest
+
 from aignostics_sdk.utils import __python_version__, __version__
 
 

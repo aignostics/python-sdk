@@ -11,6 +11,7 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from aignostics_sdk.platform._client import Client
 from aignostics_sdk.platform._operation_cache import _operation_cache, cache_key_with_token
 
@@ -291,8 +292,8 @@ class TestCacheWithDifferentTokens:
         # Client with token-1
         mock_api_client.token_provider = lambda: "token-1"
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-1"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-1"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             client1 = Client(cache_token=False)
             client1._api = mock_api_client
@@ -305,8 +306,8 @@ class TestCacheWithDifferentTokens:
         # Client with token-2
         mock_api_client.token_provider = lambda: "token-2"
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-2"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-2"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             client2 = Client(cache_token=False)
             client2._api = mock_api_client
@@ -335,8 +336,8 @@ class TestCacheWithDifferentTokens:
 
         # First call with token-1
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-1"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-1"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             client = Client(cache_token=False)
             client._api = mock_api_client
@@ -365,8 +366,8 @@ class TestCacheWithDifferentTokens:
         mock_api_client.token_provider = lambda: "token-123"
 
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-123"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-123"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             # First client with token-123
             client1 = Client(cache_token=False)
@@ -403,7 +404,7 @@ class TestCacheWithRetries:
         """
         from http import HTTPStatus
 
-        from aignx.codegen.exceptions import ServiceException
+        from aignostics_sdk._codegen.exceptions import ServiceException
 
         # First call fails
         def side_effect(*args, **kwargs):
@@ -430,7 +431,7 @@ class TestCacheWithRetries:
         """
         from http import HTTPStatus
 
-        from aignx.codegen.exceptions import ServiceException
+        from aignostics_sdk._codegen.exceptions import ServiceException
 
         call_count = 0
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
@@ -517,7 +518,7 @@ class TestCacheWithRetries:
         # Configure API to fail on subsequent calls
         from http import HTTPStatus
 
-        from aignx.codegen.exceptions import ServiceException
+        from aignostics_sdk._codegen.exceptions import ServiceException
 
         mock_api_client.get_me_v1_me_get.side_effect = ServiceException(
             status=HTTPStatus.INTERNAL_SERVER_ERROR, reason="Server error"
@@ -543,8 +544,8 @@ class TestCacheConcurrency:
         mock_api_client.token_provider = lambda: "token-123"
 
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-123"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-123"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             # Create first client and call me()
             client1 = Client(cache_token=False)
@@ -574,8 +575,8 @@ class TestCacheConcurrency:
         mock_api_client.token_provider = lambda: "token-123"
 
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-123"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-123"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             client1 = Client(cache_token=False)
             client1._api = mock_api_client
@@ -684,8 +685,8 @@ class TestCacheEdgeCases:
         mock_api_client.token_provider = lambda: long_token
 
         with (
-            patch("aignostics.platform._client.get_token", return_value=long_token),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value=long_token),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             client = Client(cache_token=False)
             client._api = mock_api_client
@@ -713,8 +714,8 @@ class TestCacheIntegrationWithAuthentication:
         mock_api_client.token_provider = lambda: token_holder[0]
 
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-1"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-1"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response
 
@@ -747,8 +748,8 @@ class TestCacheIntegrationWithAuthentication:
         mock_api_client.token_provider = lambda: token_holder[0]
 
         with (
-            patch("aignostics.platform._client.get_token", return_value="token-initial"),
-            patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+            patch("aignostics_sdk.platform._client.get_token", return_value="token-initial"),
+            patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
         ):
             mock_api_client.get_me_v1_me_get.return_value = mock_me_response_1
 

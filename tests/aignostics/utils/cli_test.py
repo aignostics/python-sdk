@@ -4,11 +4,12 @@ from typing import Optional
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from aignostics_sdk.utils._cli import prepare_cli
 from typer.models import CommandInfo, TyperInfo
 
+from aignostics_sdk.utils._cli import prepare_cli
+
 # Constants to avoid duplication
-LOCATE_IMPLEMENTATIONS_PATH = "aignostics.utils._cli.locate_implementations"
+LOCATE_IMPLEMENTATIONS_PATH = "aignostics.utils.locate_implementations"
 TEST_EPILOG = "Test Epilog"
 
 
@@ -127,8 +128,8 @@ def test_prepare_cli_conditional_epilog_recursion(
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     with (
         patch(LOCATE_IMPLEMENTATIONS_PATH, return_value=[]),
-        patch("aignostics.utils._cli.Path") as mock_path,
-        patch("aignostics.utils._cli._add_epilog_recursively") as mock_add_epilog,
+        patch("aignostics_sdk.utils._cli.Path") as mock_path,
+        patch("aignostics_sdk.utils._cli._add_epilog_recursively") as mock_add_epilog,
     ):
         mock_path.return_value.parts = argv_parts
         prepare_cli(mock_typer, TEST_EPILOG)

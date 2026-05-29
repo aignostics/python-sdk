@@ -16,7 +16,7 @@ from importlib.util import find_spec
 
 # advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
-    from aignostics_sdk.system import PageBuilder
+    from aignostics.system._gui import PageBuilder
 
     __all__ += [
         "PageBuilder",

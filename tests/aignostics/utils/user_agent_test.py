@@ -4,6 +4,7 @@ import platform
 from unittest.mock import patch
 
 import pytest
+
 from aignostics_sdk.utils._user_agent import user_agent
 
 
@@ -16,9 +17,9 @@ def test_user_agent_basic_format(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -38,9 +39,9 @@ def test_user_agent_with_pytest_current_test(monkeypatch: pytest.MonkeyPatch) ->
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -58,9 +59,9 @@ def test_user_agent_with_github_run_info(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setenv("GITHUB_REPOSITORY", repository)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -77,9 +78,9 @@ def test_user_agent_with_github_run_id_only(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -96,9 +97,9 @@ def test_user_agent_with_github_repository_only(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("GITHUB_REPOSITORY", "aignostics/python-sdk")
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -119,9 +120,9 @@ def test_user_agent_with_all_optional_variables(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("GITHUB_REPOSITORY", repository)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -147,9 +148,9 @@ def test_user_agent_version_with_build_number(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0+42"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0+42"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -165,9 +166,9 @@ def test_user_agent_special_characters_in_test_name(monkeypatch: pytest.MonkeyPa
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -182,9 +183,9 @@ def test_user_agent_format_consistency(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -204,9 +205,9 @@ def test_user_agent_empty_environment_variables(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("GITHUB_REPOSITORY", "")
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 
@@ -229,9 +230,9 @@ def test_user_agent_different_repository_urls(monkeypatch: pytest.MonkeyPatch) -
     custom_repo_url = "https://gitlab.com/custom-org/custom-project"
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", custom_repo_url),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", custom_repo_url),
     ):
         result = user_agent()
 
@@ -246,9 +247,9 @@ def test_user_agent_platform_info_included(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.delenv("GITHUB_REPOSITORY", raising=False)
 
     with (
-        patch("aignostics.utils._user_agent.__project_name__", "aignostics"),
-        patch("aignostics.utils._user_agent.__version_full__", "1.0.0"),
-        patch("aignostics.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
+        patch("aignostics_sdk.utils._user_agent.__project_name__", "aignostics"),
+        patch("aignostics_sdk.utils._user_agent.__version_full__", "1.0.0"),
+        patch("aignostics_sdk.utils._user_agent.__repository_url__", "https://github.com/aignostics/python-sdk"),
     ):
         result = user_agent()
 

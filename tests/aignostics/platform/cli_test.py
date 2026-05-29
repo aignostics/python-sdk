@@ -4,10 +4,10 @@ from unittest.mock import patch
 
 import pytest
 from aignostics.cli import cli
-from aignostics_sdk.platform import Me
-from aignostics_sdk.platform._service import Organization, TokenInfo, User, UserInfo
 from typer.testing import CliRunner
 
+from aignostics_sdk.platform import Me
+from aignostics_sdk.platform._service import Organization, TokenInfo, User, UserInfo
 from tests.conftest import normalize_output
 
 
@@ -189,7 +189,7 @@ class TestPlatformCLI:
         """Test successful logout command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with (
-            patch("aignostics.platform._service.Service.logout", return_value=True),
+            patch("aignostics_sdk.platform._service.Service.logout", return_value=True),
         ):
             result = runner.invoke(cli, ["user", "login", "--relogin"])
             assert result.exit_code == 0
@@ -213,7 +213,7 @@ class TestPlatformCLI:
     def test_logout_success(record_property, runner: CliRunner) -> None:
         """Test successful logout command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.logout", return_value=True):
+        with patch("aignostics_sdk.platform._service.Service.logout", return_value=True):
             result = runner.invoke(cli, ["user", "logout"])
 
             assert result.exit_code == 0
@@ -224,7 +224,7 @@ class TestPlatformCLI:
     def test_logout_not_logged_in(record_property, runner: CliRunner) -> None:
         """Test logout command when not logged in."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.logout", return_value=False):
+        with patch("aignostics_sdk.platform._service.Service.logout", return_value=False):
             result = runner.invoke(cli, ["user", "logout"])
 
             assert result.exit_code == 2
@@ -235,7 +235,7 @@ class TestPlatformCLI:
     def test_logout_error(record_property, runner: CliRunner) -> None:
         """Test logout command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.logout", side_effect=RuntimeError("Test error")):
+        with patch("aignostics_sdk.platform._service.Service.logout", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "logout"])
 
             assert result.exit_code == 1
@@ -246,7 +246,7 @@ class TestPlatformCLI:
     def test_login_success(record_property, runner: CliRunner) -> None:
         """Test successful login command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.login", return_value=True):
+        with patch("aignostics_sdk.platform._service.Service.login", return_value=True):
             result = runner.invoke(cli, ["user", "login"])
 
             assert result.exit_code == 0
@@ -257,7 +257,7 @@ class TestPlatformCLI:
     def test_login_with_relogin_flag(record_property, runner: CliRunner) -> None:
         """Test login command with relogin flag."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.login", return_value=True) as mock_login:
+        with patch("aignostics_sdk.platform._service.Service.login", return_value=True) as mock_login:
             result = runner.invoke(cli, ["user", "login", "--relogin"])
 
             assert result.exit_code == 0
@@ -269,7 +269,7 @@ class TestPlatformCLI:
     def test_login_failure(record_property, runner: CliRunner) -> None:
         """Test login command when login fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.login", return_value=False):
+        with patch("aignostics_sdk.platform._service.Service.login", return_value=False):
             result = runner.invoke(cli, ["user", "login"])
 
             assert result.exit_code == 1
@@ -280,7 +280,7 @@ class TestPlatformCLI:
     def test_login_error(record_property, runner: CliRunner) -> None:
         """Test login command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.login", side_effect=RuntimeError("Test error")):
+        with patch("aignostics_sdk.platform._service.Service.login", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "login"])
 
             assert result.exit_code == 1
@@ -322,7 +322,7 @@ class TestPlatformCLI:
             organization=mock_organization,
         )
 
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+        with patch("aignostics_sdk.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 0
@@ -369,7 +369,7 @@ class TestPlatformCLI:
         )
 
         with patch(
-            "aignostics.platform._service.Service.get_user_info", return_value=mock_user_info
+            "aignostics_sdk.platform._service.Service.get_user_info", return_value=mock_user_info
         ) as mock_get_user_info:
             result = runner.invoke(cli, ["user", "whoami", "--relogin"])
 
@@ -382,7 +382,7 @@ class TestPlatformCLI:
         """Test whoami command when not logged in."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch(
-            "aignostics.platform._service.Service.get_user_info",
+            "aignostics_sdk.platform._service.Service.get_user_info",
             side_effect=RuntimeError("Could not retrieve user info"),
         ):
             result = runner.invoke(cli, ["user", "whoami"])
@@ -395,7 +395,7 @@ class TestPlatformCLI:
     def test_whoami_error(record_property, runner: CliRunner) -> None:
         """Test whoami command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        with patch("aignostics.platform._service.Service.get_user_info", side_effect=RuntimeError("Test error")):
+        with patch("aignostics_sdk.platform._service.Service.get_user_info", side_effect=RuntimeError("Test error")):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 1
@@ -436,7 +436,7 @@ class TestPlatformCLI:
             user=mock_user,
             organization=mock_organization,
         )
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+        with patch("aignostics_sdk.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 0
@@ -481,7 +481,7 @@ class TestPlatformCLI:
             organization=mock_organization,
         )
 
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+        with patch("aignostics_sdk.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami"])
 
             assert result.exit_code == 0
@@ -528,7 +528,7 @@ class TestPlatformCLI:
             organization=mock_organization,
         )
 
-        with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
+        with patch("aignostics_sdk.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami", "--no-mask-secrets"])
 
             assert result.exit_code == 0

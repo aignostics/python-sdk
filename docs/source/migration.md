@@ -103,6 +103,35 @@ from aignostics.system import Service as SystemService
 health = SystemService().health()
 ```
 
+## Dependencies no longer transitive in aignostics-sdk
+
+The following packages were implicit transitive dependencies of `aignostics` v1.x
+but are **not** included in `aignostics-sdk` v2.x. If your project used them without
+an explicit declaration, add them directly:
+
+| Package | Previously pulled in by |
+|---------|------------------------|
+| `ijson` | `aignostics[qupath]` extra |
+| `shapely` | `aignostics` (geometry utils) |
+| `openslide-bin` / `openslide-python` | `aignostics` (WSI processing) |
+| `boto3` | `aignostics` (bucket operations) |
+| `google-cloud-storage` | `aignostics` (bucket operations) |
+
+## `__project_name__` is no longer a valid env-var prefix
+
+In `aignostics-sdk`, `__project_name__` returns `"aignostics-sdk"` (with a hyphen),
+which is **not** valid in environment variable names. Use the exported constant instead:
+
+```python
+# ❌ wrong in aignostics-sdk v2
+prefix = f"{__project_name__.upper()}_"  # gives "AIGNOSTICS-SDK_"
+
+# ✅ correct
+from aignostics_sdk.utils import ENV_PREFIX
+
+prefix = f"{ENV_PREFIX}_"  # gives "AIGNOSTICS_"
+```
+
 ## Quick migration checklist
 
 1. Update `from aignostics.platform import ...` to `from aignostics_sdk.platform import ...`

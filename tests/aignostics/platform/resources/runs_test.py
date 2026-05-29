@@ -9,11 +9,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 import requests
-from aignostics_sdk.platform._api import _AuthenticatedApi
-from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
-from aignostics_sdk.platform.resources.utils import PAGE_SIZE
-from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
-from aignx.codegen.models import (
+from aignostics_sdk._codegen.exceptions import ApiException, NotFoundException, ServiceException
+from aignostics_sdk._codegen.models import (
     InputArtifactCreationRequest,
     ItemCreationRequest,
     ItemResultReadResponse,
@@ -21,13 +18,17 @@ from aignx.codegen.models import (
     RunReadResponse,
 )
 
+from aignostics_sdk.platform._api import _AuthenticatedApi
+from aignostics_sdk.platform.resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Artifact, Run, Runs
+from aignostics_sdk.platform.resources.utils import PAGE_SIZE
+
 _PLATFORM_HOST = "https://platform-staging.aignostics.com"
 _RUN_ID = "test-run-id"
 _ARTIFACT_ID = "artifact-123"
 _PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc123"
-_PATCH_REQUESTS_GET = "aignostics.platform.resources.runs.requests.get"
-_PATCH_GET_TOKEN = "aignostics.platform.resources.runs.get_token"  # noqa: S105
-_PATCH_SETTINGS = "aignostics.platform.resources.runs.settings"
+_PATCH_REQUESTS_GET = "aignostics_sdk.platform.resources.runs.requests.get"
+_PATCH_GET_TOKEN = "aignostics_sdk.platform.resources.runs.get_token"  # noqa: S105
+_PATCH_SETTINGS = "aignostics_sdk.platform.resources.runs.settings"
 
 
 def _redirect_response(location: str | None, status: int = HTTPStatus.TEMPORARY_REDIRECT) -> MagicMock:
@@ -282,7 +283,7 @@ def test_paginate_with_not_found_exception_on_first_page(runs, mock_api) -> None
         mock_api: Mock ExternalsApi instance.
     """
     # Arrange
-    from aignx.codegen.exceptions import NotFoundException
+    from aignostics_sdk._codegen.exceptions import NotFoundException
 
     # Make the API throw NotFoundException on the first call
     mock_api.list_runs_v1_runs_get.side_effect = NotFoundException()
@@ -313,7 +314,7 @@ def test_paginate_with_not_found_exception_after_full_page(runs, mock_api) -> No
         mock_api: Mock ExternalsApi instance.
     """
     # Arrange
-    from aignx.codegen.exceptions import NotFoundException
+    from aignostics_sdk._codegen.exceptions import NotFoundException
 
     # Return exactly LIST_APPLICATION_RUNS_MAX_PAGE_SIZE items for first page, then throw NotFoundException
     full_page = [Mock(spec=RunReadResponse, run_id=f"run-{i}") for i in range(LIST_APPLICATION_RUNS_MAX_PAGE_SIZE)]
@@ -730,7 +731,7 @@ def test_run_details_retries_on_not_found_then_succeeds(app_run, mock_api) -> No
         app_run: Run instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
-    from aignx.codegen.exceptions import NotFoundException
+    from aignostics_sdk._codegen.exceptions import NotFoundException
 
     run_data = RunReadResponse.model_construct(run_id="test-run-id")
     mock_api.get_run_v1_runs_run_id_get.side_effect = [
@@ -756,7 +757,7 @@ def test_run_details_raises_not_found_after_timeout(app_run, mock_api) -> None:
         app_run: Run instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
-    from aignx.codegen.exceptions import NotFoundException
+    from aignostics_sdk._codegen.exceptions import NotFoundException
 
     mock_api.get_run_v1_runs_run_id_get.side_effect = NotFoundException()
 
@@ -777,7 +778,7 @@ def test_run_details_does_not_retry_other_exceptions(app_run, mock_api) -> None:
         app_run: Run instance with mock API.
         mock_api: Mock ExternalsApi instance.
     """
-    from aignx.codegen.exceptions import ForbiddenException
+    from aignostics_sdk._codegen.exceptions import ForbiddenException
 
     mock_api.get_run_v1_runs_run_id_get.side_effect = ForbiddenException()
 
@@ -1038,9 +1039,9 @@ def test_run_artifact_returns_artifact_handle(app_run) -> None:
 # Run.ensure_artifacts_downloaded — instance method, AVAILABLE gating, fresh URL
 # ---------------------------------------------------------------------------
 
-_PATCH_DOWNLOAD_FILE_RUNS = "aignostics.platform.resources.runs.download_file"
-_PATCH_CALC_CRC32C = "aignostics.platform.resources.runs.calculate_file_crc32c"
-_PATCH_MIME_TYPE_TO_FILE_ENDING = "aignostics.platform.resources.runs.mime_type_to_file_ending"
+_PATCH_DOWNLOAD_FILE_RUNS = "aignostics_sdk.platform.resources.runs.download_file"
+_PATCH_CALC_CRC32C = "aignostics_sdk.platform.resources.runs.calculate_file_crc32c"
+_PATCH_MIME_TYPE_TO_FILE_ENDING = "aignostics_sdk.platform.resources.runs.mime_type_to_file_ending"
 
 
 def _make_artifact_mock(
@@ -1051,7 +1052,7 @@ def _make_artifact_mock(
     metadata: dict | None = None,
 ) -> MagicMock:
     """Build a mock OutputArtifactResultReadResponse for ensure_artifacts_downloaded tests."""
-    from aignx.codegen.models import ArtifactOutput as _ArtifactOutput
+    from aignostics_sdk._codegen.models import ArtifactOutput as _ArtifactOutput
 
     a = MagicMock()
     a.name = name
@@ -1086,7 +1087,7 @@ def test_ensure_artifacts_downloaded_resolves_fresh_url_per_artifact(app_run, tm
 @pytest.mark.unit
 def test_ensure_artifacts_downloaded_skips_non_available_artifacts(app_run, tmp_path) -> None:
     """Non-AVAILABLE artifacts must be skipped."""
-    from aignx.codegen.models import ArtifactOutput as _ArtifactOutput
+    from aignostics_sdk._codegen.models import ArtifactOutput as _ArtifactOutput
 
     none_artifact = _make_artifact_mock(output_artifact_id="art-none", output=_ArtifactOutput.NONE)
     item = _make_item_mock(artifacts=[none_artifact])
@@ -1157,7 +1158,7 @@ def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tm
 @pytest.mark.unit
 def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run, mock_api, tmp_path) -> None:
     """Post-termination loop must filter items by state==TERMINATED and output==FULL."""
-    from aignx.codegen.models import ItemOutput, ItemState, RunState
+    from aignostics_sdk._codegen.models import ItemOutput, ItemState, RunState
 
     terminated_full_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.FULL, external_id="ok")
     terminated_none_item = MagicMock(state=ItemState.TERMINATED, output=ItemOutput.NONE, external_id="empty")
@@ -1190,7 +1191,7 @@ def test_ensure_artifacts_downloaded_is_instance_method_not_static(app_run, tmp_
 @pytest.mark.unit
 def test_results_passes_state_filter(app_run, mock_api) -> None:
     """state= is forwarded to the API call on every page."""
-    from aignx.codegen.models import ItemState
+    from aignostics_sdk._codegen.models import ItemState
 
     mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
 
@@ -1203,7 +1204,7 @@ def test_results_passes_state_filter(app_run, mock_api) -> None:
 @pytest.mark.unit
 def test_results_passes_termination_reason_filter(app_run, mock_api) -> None:
     """termination_reason= is forwarded to the API call on every page."""
-    from aignx.codegen.models import ItemTerminationReason
+    from aignostics_sdk._codegen.models import ItemTerminationReason
 
     mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
 
@@ -1227,7 +1228,7 @@ def test_results_passes_custom_metadata_filter(app_run, mock_api) -> None:
 @pytest.mark.unit
 def test_results_combines_all_filters(app_run, mock_api) -> None:
     """All three new filters are forwarded together when all are provided."""
-    from aignx.codegen.models import ItemState, ItemTerminationReason
+    from aignostics_sdk._codegen.models import ItemState, ItemTerminationReason
 
     mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
 

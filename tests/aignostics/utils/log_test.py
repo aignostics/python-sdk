@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+
 from aignostics_sdk.utils._log import _validate_file_name, logging_initialize
 
 
@@ -107,7 +108,7 @@ def test_logging_initialize_with_defaults(record_property, caplog: pytest.LogCap
     from aignostics_sdk.utils._log import logger
 
     with (
-        mock.patch("aignostics.utils._log.load_settings") as mock_load_settings,
+        mock.patch("aignostics_sdk.utils._log.load_settings") as mock_load_settings,
         mock.patch.object(logger, "remove") as mock_remove,
         mock.patch.object(logger, "configure") as mock_configure,
         mock.patch.object(logger, "add") as mock_add,

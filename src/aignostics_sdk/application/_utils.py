@@ -7,13 +7,15 @@
 5. Mapping format validation.
 """
 
+from __future__ import annotations
+
 import csv
 import mimetypes
 import re
 from datetime import UTC, datetime
 from enum import StrEnum
-from pathlib import Path
-from typing import Any, Protocol
+from pathlib import Path  # noqa: TC003
+from typing import TYPE_CHECKING, Any, Protocol
 
 import humanize
 from loguru import logger
@@ -24,17 +26,19 @@ from aignostics_sdk.constants import (
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from aignostics_sdk.platform import (
-    InputArtifactData,
-    ItemState,
-    OutputArtifactData,
-    OutputArtifactElement,
-    Run,
-    RunData,
-    RunItemStatistics,
-    RunState,
-)
 from aignostics_sdk.utils import console
+
+if TYPE_CHECKING:
+    from aignostics_sdk.platform import (
+        InputArtifactData,
+        ItemState,
+        OutputArtifactData,
+        OutputArtifactElement,
+        Run,
+        RunData,
+        RunItemStatistics,
+        RunState,
+    )
 
 RUN_FAILED_MESSAGE = "Failed to get status for run with ID '%s'"
 
@@ -224,6 +228,8 @@ def is_not_terminated_with_deadline_exceeded(
                      None if run is terminated, no deadline set, or invalid deadline format.
     """
     # If run is already terminated, return None (deadline is no longer relevant)
+    from aignostics_sdk.platform import RunState  # noqa: PLC0415
+
     if run_state == RunState.TERMINATED:
         return None
 
@@ -279,6 +285,8 @@ def _format_status_string(state: RunState | ItemState, termination_reason: str |
     Returns:
         str: Formatted status string
     """
+    from aignostics_sdk.platform import ItemState, RunState  # noqa: PLC0415
+
     if state.value in {RunState.TERMINATED, ItemState.TERMINATED} and termination_reason:
         return f"{state.value} ({termination_reason})"
     return f"{state.value}"
@@ -524,6 +532,8 @@ def application_run_status_to_str(
     Raises:
         RuntimeError: If the status is invalid or unknown
     """
+    from aignostics_sdk.platform import RunState  # noqa: PLC0415
+
     status_mapping = {
         RunState.PENDING: "pending",
         RunState.PROCESSING: "processing",
@@ -547,6 +557,8 @@ def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData 
     Returns:
         str: The MIME type of the artifact.
     """
+    from aignostics_sdk.platform import InputArtifactData, OutputArtifactData  # noqa: PLC0415
+
     if isinstance(artifact, InputArtifactData):
         return str(artifact.mime_type)
     if isinstance(artifact, OutputArtifactData):

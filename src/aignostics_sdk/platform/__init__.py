@@ -10,30 +10,10 @@ for manual login, logout and getting information about the authenticated user.
 Higher level abstractions are provided in the application module.
 """
 
-from aignx.codegen.exceptions import ApiException, ForbiddenException, NotFoundException
-from aignx.codegen.models import ApplicationReadResponse as Application
-from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
-from aignx.codegen.models import (
-    ArtifactOutput,
-    ItemOutput,
-    ItemState,
-    ItemTerminationReason,
-    RunItemStatistics,
-    RunOutput,
-    RunState,
-    RunTerminationReason,
-)
-from aignx.codegen.models import InputArtifact as InputArtifactData
-from aignx.codegen.models import InputArtifactCreationRequest as InputArtifact
-from aignx.codegen.models import ItemCreationRequest as InputItem
-from aignx.codegen.models import ItemResultReadResponse as ItemResult
-from aignx.codegen.models import MeReadResponse as Me
-from aignx.codegen.models import OrganizationReadResponse as Organization
-from aignx.codegen.models import OutputArtifact as OutputArtifactData
-from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
-from aignx.codegen.models import RunReadResponse as RunData
-from aignx.codegen.models import UserReadResponse as User
-from aignx.codegen.models import VersionReadResponse as ApplicationVersion
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING
 
 from ._cli import cli_sdk, cli_user
 from ._client import Client
@@ -87,7 +67,6 @@ from ._sdk_metadata import (
     RunSdkMetadata,
     SchedulingMetadata,
 )
-from ._service import Service, TokenInfo, UserInfo
 from ._settings import Settings, settings
 from ._utils import (
     calculate_file_crc32c,
@@ -96,8 +75,95 @@ from ._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
-from .resources.applications import ApplicationVersionDocument, Documents
-from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Artifact, Run
+
+if TYPE_CHECKING:
+    from aignostics_sdk._codegen.exceptions import ApiException, ForbiddenException, NotFoundException
+    from aignostics_sdk._codegen.models import ApplicationReadResponse as Application
+    from aignostics_sdk._codegen.models import ApplicationReadShortResponse as ApplicationSummary
+    from aignostics_sdk._codegen.models import (
+        ArtifactOutput,
+        ItemOutput,
+        ItemState,
+        ItemTerminationReason,
+        RunItemStatistics,
+        RunOutput,
+        RunState,
+        RunTerminationReason,
+    )
+    from aignostics_sdk._codegen.models import InputArtifact as InputArtifactData
+    from aignostics_sdk._codegen.models import InputArtifactCreationRequest as InputArtifact
+    from aignostics_sdk._codegen.models import ItemCreationRequest as InputItem
+    from aignostics_sdk._codegen.models import ItemResultReadResponse as ItemResult
+    from aignostics_sdk._codegen.models import MeReadResponse as Me
+    from aignostics_sdk._codegen.models import OrganizationReadResponse as Organization
+    from aignostics_sdk._codegen.models import OutputArtifact as OutputArtifactData
+    from aignostics_sdk._codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
+    from aignostics_sdk._codegen.models import RunReadResponse as RunData
+    from aignostics_sdk._codegen.models import UserReadResponse as User
+    from aignostics_sdk._codegen.models import VersionReadResponse as ApplicationVersion
+
+    from ._service import Service, TokenInfo, UserInfo
+    from .resources.applications import ApplicationVersionDocument, Documents
+    from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Artifact, Run
+
+# Lazy export map: public_name -> (module_path, original_name_in_module)
+_LAZY: dict[str, tuple[str, str]] = {
+    # service types (loaded lazily because _service.py imports codegen at module level)
+    "Service": ("aignostics_sdk.platform._service", "Service"),
+    "TokenInfo": ("aignostics_sdk.platform._service", "TokenInfo"),
+    "UserInfo": ("aignostics_sdk.platform._service", "UserInfo"),
+    # exceptions
+    "ApiException": ("aignostics_sdk._codegen.exceptions", "ApiException"),
+    "ForbiddenException": ("aignostics_sdk._codegen.exceptions", "ForbiddenException"),
+    "NotFoundException": ("aignostics_sdk._codegen.exceptions", "NotFoundException"),
+    # codegen models
+    "Application": ("aignostics_sdk._codegen.models", "ApplicationReadResponse"),
+    "ApplicationSummary": ("aignostics_sdk._codegen.models", "ApplicationReadShortResponse"),
+    "ApplicationVersion": ("aignostics_sdk._codegen.models", "VersionReadResponse"),
+    "ArtifactOutput": ("aignostics_sdk._codegen.models", "ArtifactOutput"),
+    "InputArtifact": ("aignostics_sdk._codegen.models", "InputArtifactCreationRequest"),
+    "InputArtifactData": ("aignostics_sdk._codegen.models", "InputArtifact"),
+    "InputItem": ("aignostics_sdk._codegen.models", "ItemCreationRequest"),
+    "ItemOutput": ("aignostics_sdk._codegen.models", "ItemOutput"),
+    "ItemResult": ("aignostics_sdk._codegen.models", "ItemResultReadResponse"),
+    "ItemState": ("aignostics_sdk._codegen.models", "ItemState"),
+    "ItemTerminationReason": ("aignostics_sdk._codegen.models", "ItemTerminationReason"),
+    "Me": ("aignostics_sdk._codegen.models", "MeReadResponse"),
+    "Organization": ("aignostics_sdk._codegen.models", "OrganizationReadResponse"),
+    "OutputArtifactData": ("aignostics_sdk._codegen.models", "OutputArtifact"),
+    "OutputArtifactElement": ("aignostics_sdk._codegen.models", "OutputArtifactResultReadResponse"),
+    "RunData": ("aignostics_sdk._codegen.models", "RunReadResponse"),
+    "RunItemStatistics": ("aignostics_sdk._codegen.models", "RunItemStatistics"),
+    "RunOutput": ("aignostics_sdk._codegen.models", "RunOutput"),
+    "RunState": ("aignostics_sdk._codegen.models", "RunState"),
+    "RunTerminationReason": ("aignostics_sdk._codegen.models", "RunTerminationReason"),
+    "User": ("aignostics_sdk._codegen.models", "UserReadResponse"),
+    # resource types
+    "Artifact": ("aignostics_sdk.platform.resources.runs", "Artifact"),
+    "Run": ("aignostics_sdk.platform.resources.runs", "Run"),
+    "LIST_APPLICATION_RUNS_MAX_PAGE_SIZE": (
+        "aignostics_sdk.platform.resources.runs",
+        "LIST_APPLICATION_RUNS_MAX_PAGE_SIZE",
+    ),
+    "LIST_APPLICATION_RUNS_MIN_PAGE_SIZE": (
+        "aignostics_sdk.platform.resources.runs",
+        "LIST_APPLICATION_RUNS_MIN_PAGE_SIZE",
+    ),
+    "ApplicationVersionDocument": ("aignostics_sdk.platform.resources.applications", "ApplicationVersionDocument"),
+    "Documents": ("aignostics_sdk.platform.resources.applications", "Documents"),
+}
+
+
+def __getattr__(name: str) -> object:
+    if name in _LAZY:
+        module_path, attr_name = _LAZY[name]
+        mod = importlib.import_module(module_path)
+        obj = getattr(mod, attr_name)
+        globals()[name] = obj  # cache so __getattr__ is not called again
+        return obj
+    msg = f"module {__name__!r} has no attribute {name!r}"
+    raise AttributeError(msg)
+
 
 __all__ = [
     "API_ROOT_DEV",

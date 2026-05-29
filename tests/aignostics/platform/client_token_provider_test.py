@@ -4,6 +4,7 @@ from collections.abc import Callable
 from unittest.mock import Mock, patch
 
 import pytest
+
 from aignostics_sdk.platform._api import _AuthenticatedApi, _AuthenticatedResource, _OAuth2TokenProviderConfiguration
 from aignostics_sdk.platform._client import Client
 
@@ -15,8 +16,8 @@ from aignostics_sdk.platform._client import Client
 # a false positive for a patch-target string. The bare `# noqa: S105` form keeps
 # the suppression syntactically valid for SonarQube python:S7632.
 _DUMMY_HOST = "https://dummy"
-_GET_TOKEN_PATCH = "aignostics.platform._client.get_token"  # noqa: S105
-_APICLIENT_PATCH = "aignostics.platform._client.ApiClient"
+_GET_TOKEN_PATCH = "aignostics_sdk.platform._client.get_token"  # noqa: S105
+_APICLIENT_PATCH = "aignostics_sdk._codegen.api_client.ApiClient"
 
 
 @pytest.fixture(autouse=True)
@@ -196,7 +197,7 @@ def test_falsy_token_provider_logs_warning() -> None:
     empty_provider = _make_provider("")
     config = _OAuth2TokenProviderConfiguration(host=_DUMMY_HOST, token_provider=empty_provider)
 
-    with patch("aignostics.platform._api.logger") as mock_logger:
+    with patch("aignostics_sdk.platform._api.logger") as mock_logger:
         result = config.auth_settings()
 
     assert result == {}
@@ -210,7 +211,7 @@ def test_none_token_provider_no_warning() -> None:
     """Test that no warning is logged when token_provider is not set (None)."""
     config = _OAuth2TokenProviderConfiguration(host=_DUMMY_HOST)
 
-    with patch("aignostics.platform._api.logger") as mock_logger:
+    with patch("aignostics_sdk.platform._api.logger") as mock_logger:
         result = config.auth_settings()
 
     assert result == {}
@@ -225,7 +226,7 @@ def test_external_provider_cache_bounded() -> None:
     with (
         patch(_APICLIENT_PATCH),
         patch.object(_AuthenticatedApi, "__init__", lambda self, *a, **kw: None),
-        patch("aignostics.platform._client.logger") as mock_logger,
+        patch("aignostics_sdk.platform._client.logger") as mock_logger,
     ):
         # Create more clients than the limit, each with a distinct provider
         for i in range(_MAX_EXTERNAL_CLIENTS + 5):

@@ -13,6 +13,9 @@ from unittest.mock import MagicMock, Mock, patch
 import jwt
 import pytest
 import requests
+from pydantic import SecretStr
+from requests_oauthlib import OAuth2Session
+
 from aignostics_sdk.platform._authentication import (
     _access_token_from_refresh_token,
     _authenticate,
@@ -30,8 +33,6 @@ from aignostics_sdk.platform._messages import (
     AUTHENTICATION_FAILED_TOKEN_VERIFICATION,
     INVALID_REDIRECT_URI,
 )
-from pydantic import SecretStr
-from requests_oauthlib import OAuth2Session
 
 
 @pytest.fixture
@@ -41,7 +42,7 @@ def mock_settings() -> MagicMock:
     Yields:
         MagicMock: A mock of the authentication settings.
     """
-    with patch("aignostics.platform._authentication.settings") as mock_settings:
+    with patch("aignostics_sdk.platform._authentication.settings") as mock_settings:
         settings = MagicMock()
         # Using tmp_path in a controlled test environment is acceptable for testing
         settings.token_file = Path("mock_token_path")  # Avoid hardcoded /tmp path
@@ -108,7 +109,7 @@ def mock_can_open_browser() -> None:
     Yields:
         None: This fixture doesn't yield a value.
     """
-    with patch("aignostics.platform._authentication._can_open_browser", return_value=False):
+    with patch("aignostics_sdk.platform._authentication._can_open_browser", return_value=False):
         yield
 
 
@@ -155,9 +156,9 @@ class TestGetToken:
         with (
             patch.object(Path, "exists", return_value=True),
             patch.object(Path, "read_text", return_value=cached_token_missing_expiry),
-            patch("aignostics.platform._authentication._authenticate", return_value="new.token"),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="new.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value={"exp": int(time.time()) + 3600},
             ),
             patch.object(Path, "write_text", mock_write_text),
@@ -178,9 +179,9 @@ class TestGetToken:
         with (
             patch.object(Path, "exists", return_value=True),
             patch.object(Path, "read_text", return_value=expired_token),
-            patch("aignostics.platform._authentication._authenticate", return_value="new.token"),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="new.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value={"exp": int(time.time()) + 3600},
             ),
             patch.object(Path, "write_text", mock_write_text),
@@ -199,9 +200,9 @@ class TestGetToken:
         mock_write_text = MagicMock()
 
         with (
-            patch("aignostics.platform._authentication._authenticate", return_value="new.token"),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="new.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value={"exp": int(time.time()) + 3600},
             ),
             patch.object(Path, "write_text", mock_write_text),
@@ -220,7 +221,7 @@ class TestGetToken:
         mock_settings.return_value.refresh_token = SecretStr("test-refresh-token")
 
         with patch(
-            "aignostics.platform._authentication._access_token_from_refresh_token", return_value="refreshed.token"
+            "aignostics_sdk.platform._authentication._access_token_from_refresh_token", return_value="refreshed.token"
         ) as mock_refresh:
             token = _authenticate(use_device_flow=False)
             assert token == "refreshed.token"  # noqa: S105 - Test credential
@@ -234,9 +235,9 @@ class TestGetToken:
         mock_settings.return_value.refresh_token = None
 
         with (
-            patch("aignostics.platform._authentication._can_open_browser", return_value=True),
+            patch("aignostics_sdk.platform._authentication._can_open_browser", return_value=True),
             patch(
-                "aignostics.platform._authentication._perform_authorization_code_with_pkce_flow",
+                "aignostics_sdk.platform._authentication._perform_authorization_code_with_pkce_flow",
                 return_value="browser.token",
             ) as mock_browser,
         ):
@@ -252,9 +253,9 @@ class TestGetToken:
         mock_settings.return_value.refresh_token = None
 
         with (
-            patch("aignostics.platform._authentication._can_open_browser", return_value=False),
+            patch("aignostics_sdk.platform._authentication._can_open_browser", return_value=False),
             patch(
-                "aignostics.platform._authentication._perform_device_flow", return_value="device.token"
+                "aignostics_sdk.platform._authentication._perform_device_flow", return_value="device.token"
             ) as mock_device,
         ):
             token = _authenticate(use_device_flow=True)
@@ -269,8 +270,8 @@ class TestGetToken:
         mock_settings.return_value.refresh_token = None
 
         with (
-            patch("aignostics.platform._authentication._can_open_browser", return_value=False),
-            patch("aignostics.platform._authentication._perform_device_flow", return_value=None),
+            patch("aignostics_sdk.platform._authentication._can_open_browser", return_value=False),
+            patch("aignostics_sdk.platform._authentication._perform_device_flow", return_value=None),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED),
         ):
             _authenticate(use_device_flow=True)
@@ -323,7 +324,7 @@ class TestBrowserCapabilityCheck:
         # We need to override the autouse fixture here
         with (
             patch("webbrowser.get", return_value=MagicMock()),
-            patch("aignostics.platform._authentication._can_open_browser", wraps=_can_open_browser),
+            patch("aignostics_sdk.platform._authentication._can_open_browser", wraps=_can_open_browser),
         ):
             assert _can_open_browser() is True
 
@@ -370,10 +371,10 @@ class TestAuthorizationCodeFlow:
         mock_auth_result.error = None
 
         with (
-            patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session),
-            patch("aignostics.platform._authentication.HTTPServer", MockHTTPServer),
+            patch("aignostics_sdk.platform._authentication.OAuth2Session", return_value=mock_session),
+            patch("aignostics_sdk.platform._authentication.HTTPServer", MockHTTPServer),
             patch("urllib.parse.urlparse", return_value=mock_redirect_parsed),
-            patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
+            patch("aignostics_sdk.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
         ):
             mock_server.handle_request.side_effect = lambda: None
             token = _perform_authorization_code_with_pkce_flow()
@@ -398,7 +399,7 @@ class TestAuthorizationCodeFlow:
         mock_session = MagicMock(spec=OAuth2Session)
         mock_session.authorization_url.return_value = ("https://test.auth/authorize?code_challenge=abc", None)
 
-        with patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session):
+        with patch("aignostics_sdk.platform._authentication.OAuth2Session", return_value=mock_session):
             # Create a mock redirect URI with invalid hostname/port
             mock_redirect_parsed = MagicMock()
             mock_redirect_parsed.hostname = None  # Invalid hostname
@@ -444,10 +445,10 @@ class TestAuthorizationCodeFlow:
         mock_auth_result.error = "Authentication failed"
 
         with (
-            patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session),
-            patch("aignostics.platform._authentication.HTTPServer", MockHTTPServer),
+            patch("aignostics_sdk.platform._authentication.OAuth2Session", return_value=mock_session),
+            patch("aignostics_sdk.platform._authentication.HTTPServer", MockHTTPServer),
             patch("urllib.parse.urlparse", return_value=mock_redirect_parsed),
-            patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
+            patch("aignostics_sdk.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
         ):
             # Simulate a failed server response
             def handle_request_side_effect():
@@ -587,10 +588,10 @@ class TestPortAvailability:
 
         # Mock the HTTPServer context manager
         with (
-            patch("aignostics.platform._authentication.HTTPServer") as mock_http_server,
+            patch("aignostics_sdk.platform._authentication.HTTPServer") as mock_http_server,
             patch("urllib.parse.urlparse") as mock_urlparse,
-            patch("aignostics.platform._authentication.OAuth2Session") as mock_oauth,
-            patch("aignostics.platform._authentication.webbrowser"),
+            patch("aignostics_sdk.platform._authentication.OAuth2Session") as mock_oauth,
+            patch("aignostics_sdk.platform._authentication.webbrowser"),
         ):
             # Setup mocks
             mock_urlparse.return_value.hostname = "localhost"
@@ -638,11 +639,11 @@ class TestPortAvailability:
         mock_auth_result.error = None
 
         with (
-            patch("aignostics.platform._authentication.OAuth2Session", return_value=mock_session),
-            patch("aignostics.platform._authentication.HTTPServer", side_effect=http_server_side_effect),
+            patch("aignostics_sdk.platform._authentication.OAuth2Session", return_value=mock_session),
+            patch("aignostics_sdk.platform._authentication.HTTPServer", side_effect=http_server_side_effect),
             patch("urllib.parse.urlparse") as mock_urlparse,
             patch("time.sleep") as mock_sleep,
-            patch("aignostics.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
+            patch("aignostics_sdk.platform._authentication.AuthenticationResult", return_value=mock_auth_result),
         ):
             mock_urlparse.return_value.hostname = "localhost"
             mock_urlparse.return_value.port = 8000
@@ -717,10 +718,10 @@ class TestSentryIntegration:
         mock_sentry_sdk = MagicMock()
 
         with (
-            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
-            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch("aignostics_sdk.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="test.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value=mock_claims,
             ),
             patch.object(Path, "exists", return_value=False),  # Force authentication
@@ -749,10 +750,10 @@ class TestSentryIntegration:
         }
 
         with (
-            patch("aignostics.platform._authentication.sentry_sdk", None),  # Simulate sentry_sdk not available
-            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch("aignostics_sdk.platform._authentication.sentry_sdk", None),  # Simulate sentry_sdk not available
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="test.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value=mock_claims,
             ),
             patch.object(Path, "exists", return_value=False),  # Force authentication
@@ -780,10 +781,10 @@ class TestSentryIntegration:
         mock_sentry_sdk = MagicMock()
 
         with (
-            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
-            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch("aignostics_sdk.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="test.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 return_value=mock_claims,
             ),
             patch.object(Path, "exists", return_value=False),  # Force authentication
@@ -806,10 +807,10 @@ class TestSentryIntegration:
         mock_sentry_sdk = MagicMock()
 
         with (
-            patch("aignostics.platform._authentication.sentry_sdk", mock_sentry_sdk),
-            patch("aignostics.platform._authentication._authenticate", return_value="test.token"),
+            patch("aignostics_sdk.platform._authentication.sentry_sdk", mock_sentry_sdk),
+            patch("aignostics_sdk.platform._authentication._authenticate", return_value="test.token"),
             patch(
-                "aignostics.platform._authentication.verify_and_decode_token",
+                "aignostics_sdk.platform._authentication.verify_and_decode_token",
                 side_effect=RuntimeError("Token verification failed"),
             ),
             patch.object(Path, "exists", return_value=False),  # Force authentication
@@ -877,7 +878,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._access_token_from_refresh_token" in record.getMessage()
         ]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
@@ -915,7 +916,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
@@ -949,7 +950,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for connection errors"
 
@@ -1161,7 +1162,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client) as mock_get_jwk,
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client) as mock_get_jwk,
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
         ):
             result = verify_and_decode_token("valid.token")
@@ -1195,7 +1196,7 @@ class TestTokenVerificationRetryLogic:
         start_time = time.time()
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", side_effect=decode_side_effect),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
@@ -1214,7 +1215,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) == 0, "Should not log retry attempts for JWT decode errors"
 
@@ -1238,7 +1239,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
         ):
@@ -1251,7 +1252,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for JWK connection errors"
 
@@ -1280,7 +1281,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
             caplog.at_level(logging.DEBUG),
         ):
@@ -1296,7 +1297,7 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) == 1, "Should log exactly one retry attempt"
 
@@ -1320,7 +1321,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.side_effect = get_signing_key_side_effect
 
         with (
-            patch("aignostics.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client),
             pytest.raises(RuntimeError, match=AUTHENTICATION_FAILED_TOKEN_VERIFICATION),
             caplog.at_level(logging.DEBUG),
         ):
@@ -1336,6 +1337,6 @@ class TestTokenVerificationRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics.platform._authentication._do_verify_and_decode_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_verify_and_decode_token" in record.getMessage()
         ]
         assert len(retry_logs) == 0, "Should not log retry attempts for non-connection JWK errors"

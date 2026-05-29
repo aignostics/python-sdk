@@ -4,6 +4,7 @@ import inspect
 from typing import Any
 
 import pytest
+
 from aignostics_sdk.utils._health import Health
 from aignostics_sdk.utils._service import BaseService
 

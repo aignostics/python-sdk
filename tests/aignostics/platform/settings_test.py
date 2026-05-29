@@ -5,6 +5,9 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from pydantic import SecretStr
+from pydantic import ValidationError as PydanticValidationError
+
 from aignostics_sdk.platform import (
     API_ROOT_DEV,
     API_ROOT_PRODUCTION,
@@ -46,9 +49,7 @@ from aignostics_sdk.platform import (
     Settings,
     settings,
 )
-from aignostics_sdk.utils import __project_name__
-from pydantic import SecretStr
-from pydantic import ValidationError as PydanticValidationError
+from aignostics_sdk.utils import ENV_PREFIX, __project_name__
 
 
 @pytest.fixture
@@ -57,7 +58,7 @@ def mock_env_vars():  # noqa: ANN201
     with mock.patch.dict(
         os.environ,
         {
-            f"{__project_name__.upper()}_CLIENT_ID_DEVICE": "test-client-id-device",
+            f"{ENV_PREFIX}_CLIENT_ID_DEVICE": "test-client-id-device",
         },
     ):
         yield
@@ -250,7 +251,7 @@ def test_custom_env_file_location(reset_cached_settings, record_property) -> Non
 
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
 
-    settings_module = "aignostics.platform._settings"
+    settings_module = "aignostics_sdk.platform._settings"
 
     @contextmanager
     def temp_env_file(content: str):  # type: ignore[misc]
@@ -275,10 +276,10 @@ def test_custom_env_file_location(reset_cached_settings, record_property) -> Non
         # Set the custom env file location BEFORE importing Settings
         # This requires reimporting the module to pick up the new env var
         # Clear ALL AIGNOSTICS_ environment variables to ensure clean state
-        env_patch = {k: v for k, v in os.environ.items() if not k.startswith(f"{__project_name__.upper()}_")}
+        env_patch = {k: v for k, v in os.environ.items() if not k.startswith(f"{ENV_PREFIX}_")}
 
         # Now set only the variables we want for this test
-        env_patch[f"{__project_name__.upper()}_ENV_FILE"] = custom_env_file
+        env_patch[f"{ENV_PREFIX}_ENV_FILE"] = custom_env_file
 
         try:
             with mock.patch.dict(os.environ, env_patch, clear=True):
@@ -543,7 +544,7 @@ def test_status_page_url_env_override_takes_precedence(record_property, monkeypa
     """User-supplied AIGNOSTICS_STATUS_PAGE_URL overrides the per-environment default."""
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
     custom_url = "https://custom-status.example.com"
-    monkeypatch.setenv(f"{__project_name__.upper()}_STATUS_PAGE_URL", custom_url)
+    monkeypatch.setenv(f"{ENV_PREFIX}_STATUS_PAGE_URL", custom_url)
 
     settings = Settings(api_root=API_ROOT_PRODUCTION)
 
@@ -572,7 +573,7 @@ def test_status_page_url_empty_string_coerced_to_none(record_property, monkeypat
     dev/test default behaviour (no badge, no menu link).
     """
     record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-    monkeypatch.setenv(f"{__project_name__.upper()}_STATUS_PAGE_URL", "")
+    monkeypatch.setenv(f"{ENV_PREFIX}_STATUS_PAGE_URL", "")
 
     settings = Settings(api_root=API_ROOT_PRODUCTION)
 

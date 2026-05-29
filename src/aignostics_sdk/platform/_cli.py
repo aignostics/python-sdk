@@ -1,8 +1,10 @@
 """CLI of platform module."""
 
+from __future__ import annotations
+
 import json
 import sys
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from loguru import logger
@@ -10,7 +12,9 @@ from loguru import logger
 from aignostics_sdk.utils import console
 
 from ._sdk_metadata import get_item_sdk_metadata_json_schema, get_run_sdk_metadata_json_schema
-from ._service import Service
+
+if TYPE_CHECKING:
+    from ._service import Service
 
 cli_user = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
 
@@ -23,6 +27,8 @@ def _get_service() -> Service:
     Returns:
         Service: The service instance.
     """
+    from ._service import Service  # noqa: PLC0415
+
     global service  # noqa: PLW0603
     if service is None:
         service = Service()

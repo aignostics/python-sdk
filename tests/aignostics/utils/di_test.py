@@ -6,16 +6,10 @@ from contextlib import contextmanager
 from types import ModuleType
 from unittest.mock import MagicMock, Mock, patch
 
-import aignostics_sdk.utils._di as di_module
+import aignostics.utils._di as di_module
 import pytest
 import typer
-from aignostics_sdk.utils._cli import (
-    _add_epilog_recursively,
-    _no_args_is_help_recursively,
-    prepare_cli,
-)
-from aignostics_sdk.utils._constants import __project_name__
-from aignostics_sdk.utils._di import (
+from aignostics.utils._di import (
     PLUGIN_ENTRY_POINT_GROUP,
     _implementation_cache,
     _subclass_cache,
@@ -24,15 +18,24 @@ from aignostics_sdk.utils._di import (
     locate_subclasses,
 )
 
+from aignostics_sdk.utils._cli import (
+    _add_epilog_recursively,
+    _no_args_is_help_recursively,
+    prepare_cli,
+)
+
+
 # Constants to avoid duplication
 TEST_EPILOG = "Test epilog"
 SCRIPT_FILENAME = "script.py"
 PLUGIN = "plugin"
 MYMODULE = "mymodule"
+# _di.py scans "aignostics" and "aignostics_sdk" (importable names, not hyphenated distribution name)
+MAIN_PACKAGE = "aignostics"
 
 
 @pytest.mark.unit
-@patch("aignostics.utils._cli.locate_implementations")
+@patch("aignostics.utils.locate_implementations")
 def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock, record_property) -> None:
     """Test that prepare_cli registers all located implementations."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -50,7 +53,7 @@ def test_prepare_cli_registers_subcommands(mock_locate_implementations: Mock, re
 
 
 @pytest.mark.unit
-@patch("aignostics.utils._cli.locate_implementations")
+@patch("aignostics.utils.locate_implementations")
 def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: Mock, record_property) -> None:
     """Test that prepare_cli sets epilog and no_args_is_help on the cli instance."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
@@ -68,8 +71,8 @@ def test_prepare_cli_sets_epilog_and_no_args_help(mock_locate_implementations: M
 
 
 @pytest.mark.unit
-@patch("aignostics.utils._cli.Path")
-@patch("aignostics.utils._cli.locate_implementations")
+@patch("aignostics_sdk.utils._cli.Path")
+@patch("aignostics.utils.locate_implementations")
 def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
     mock_locate_implementations: Mock, mock_path: Mock, record_property
 ) -> None:
@@ -91,9 +94,9 @@ def test_prepare_cli_adds_epilog_to_commands_when_not_running_from_typer(
 
 
 @pytest.mark.unit
-@patch("aignostics.utils._cli._add_epilog_recursively")
-@patch("aignostics.utils._cli.Path")
-@patch("aignostics.utils._cli.locate_implementations")
+@patch("aignostics_sdk.utils._cli._add_epilog_recursively")
+@patch("aignostics_sdk.utils._cli.Path")
+@patch("aignostics.utils.locate_implementations")
 def test_prepare_cli_calls_add_epilog_recursively_when_not_running_from_typer(
     mock_locate_implementations: Mock, mock_path: Mock, mock_add_epilog_recursively: Mock, record_property
 ) -> None:
@@ -113,8 +116,8 @@ def test_prepare_cli_calls_add_epilog_recursively_when_not_running_from_typer(
 
 
 @pytest.mark.unit
-@patch("aignostics.utils._cli._no_args_is_help_recursively")
-@patch("aignostics.utils._cli.locate_implementations")
+@patch("aignostics_sdk.utils._cli._no_args_is_help_recursively")
+@patch("aignostics.utils.locate_implementations")
 def test_prepare_cli_calls_no_args_is_help_recursively(
     mock_locate_implementations: Mock, mock_no_args_is_help_recursively: Mock, record_property
 ) -> None:
@@ -287,8 +290,8 @@ def _broken_plugin_package_patches(
             "import_module",
             side_effect=_make_import_side_effect({
                 PLUGIN: ImportError("broken"),
-                __project_name__: main_pkg,
-                f"{__project_name__}.{MYMODULE}": main_mod,
+                MAIN_PACKAGE: main_pkg,
+                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
             }),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
@@ -320,8 +323,8 @@ def _no_match_plugin_patches(
             "import_module",
             side_effect=_make_import_side_effect({
                 PLUGIN: plugin_pkg,
-                __project_name__: main_pkg,
-                f"{__project_name__}.{MYMODULE}": main_mod,
+                MAIN_PACKAGE: main_pkg,
+                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
             }),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
@@ -349,8 +352,8 @@ def _no_plugins_patches(
     """
     searched: list[str] = []
     base_side_effect = _make_import_side_effect({
-        __project_name__: main_pkg,
-        f"{__project_name__}.{MYMODULE}": main_mod,
+        MAIN_PACKAGE: main_pkg,
+        f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
     })
 
     def tracking_import(name: str) -> ModuleType:
@@ -466,7 +469,7 @@ def test_locate_implementations_searches_plugins(clear_di_caches, record_propert
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     """Test that locate_implementations searches plugin packages."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     plugin_instance = AnotherDummyBase()
     mock_plugin_package = ModuleType("test_plugin")
@@ -533,7 +536,7 @@ def test_locate_implementations_handles_broken_plugin_package(clear_di_caches, r
 
     main_instance = _Base()
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.main_instance = main_instance  # type: ignore[attr-defined]
 
     with _broken_plugin_package_patches(main_pkg, main_mod):
@@ -555,7 +558,7 @@ def test_locate_implementations_handles_plugin_with_no_matching_top_level_member
     main_instance = _Base()
     plugin_pkg = _mock_package()
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.main_instance = main_instance  # type: ignore[attr-defined]
 
     with _no_match_plugin_patches(plugin_pkg, main_pkg, main_mod):
@@ -574,7 +577,7 @@ def test_locate_implementations_deep_scans_main_package(clear_di_caches, record_
 
     main_instance = _Base()
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.main_instance = main_instance  # type: ignore[attr-defined]
 
     with (
@@ -583,8 +586,8 @@ def test_locate_implementations_deep_scans_main_package(clear_di_caches, record_
             di_module.importlib,
             "import_module",
             side_effect=_make_import_side_effect({
-                __project_name__: main_pkg,
-                f"{__project_name__}.{MYMODULE}": main_mod,
+                MAIN_PACKAGE: main_pkg,
+                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
             }),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
@@ -598,7 +601,7 @@ def test_locate_implementations_deep_scans_main_package(clear_di_caches, record_
 def test_locate_implementations_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_implementations caches results."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -624,14 +627,14 @@ def test_locate_implementations_no_plugins_detects_main_package(clear_di_caches,
 
     instance = _Base()
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.instance = instance  # type: ignore[attr-defined]
 
     with _no_plugins_patches(main_pkg, main_mod) as searched:
         result = locate_implementations(_Base)
 
     assert instance in result
-    assert not any(p != __project_name__ and not p.startswith(f"{__project_name__}.") for p in searched)
+    assert not any(p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk.")) for p in searched)  # noqa: E501
 
 
 # ---------------------------------------------------------------------------
@@ -645,7 +648,7 @@ def test_locate_subclasses_searches_plugins(clear_di_caches, record_property) ->
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
     """Test that locate_subclasses searches plugin packages."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     class PluginSubClass(AnotherDummyBase):
         pass
@@ -719,7 +722,7 @@ def test_locate_subclasses_handles_broken_plugin_package(clear_di_caches, record
         pass
 
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.MainSub = MainSub  # type: ignore[attr-defined]
 
     with _broken_plugin_package_patches(main_pkg, main_mod):
@@ -741,7 +744,7 @@ def test_locate_subclasses_handles_plugin_with_no_matching_top_level_members(cle
 
     plugin_pkg = _mock_package()
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.MainSub = MainSub  # type: ignore[attr-defined]
 
     with _no_match_plugin_patches(plugin_pkg, main_pkg, main_mod):
@@ -762,7 +765,7 @@ def test_locate_subclasses_deep_scans_main_package(clear_di_caches, record_prope
         pass
 
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.MainSub = MainSub  # type: ignore[attr-defined]
 
     with (
@@ -771,8 +774,8 @@ def test_locate_subclasses_deep_scans_main_package(clear_di_caches, record_prope
             di_module.importlib,
             "import_module",
             side_effect=_make_import_side_effect({
-                __project_name__: main_pkg,
-                f"{__project_name__}.{MYMODULE}": main_mod,
+                MAIN_PACKAGE: main_pkg,
+                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
             }),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
@@ -786,15 +789,20 @@ def test_locate_subclasses_deep_scans_main_package(clear_di_caches, record_prope
 def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses excludes the base class itself."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     mock_package = _mock_package()
     mock_module = ModuleType("aignostics.testmodule")
     mock_module.AnotherDummyBase = AnotherDummyBase  # type: ignore[attr-defined]
 
+    def import_side_effect(name: str) -> ModuleType:
+        if name == "aignostics.testmodule":
+            return mock_module
+        return mock_package
+
     with (
         patch.object(di_module, "discover_plugin_packages", return_value=()),
-        patch.object(di_module.importlib, "import_module", side_effect=[mock_package, mock_module]),
+        patch.object(di_module.importlib, "import_module", side_effect=import_side_effect),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", "testmodule", False)]),
     ):
         result = locate_subclasses(AnotherDummyBase)
@@ -805,7 +813,7 @@ def test_locate_subclasses_excludes_base_class(clear_di_caches, record_property)
 def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses caches results."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -825,7 +833,7 @@ def test_locate_subclasses_caches_results(clear_di_caches, record_property) -> N
 def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for plugin packages gracefully."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     mock_package = MagicMock()
     mock_package.__path__ = []
@@ -847,7 +855,7 @@ def test_locate_subclasses_handles_plugin_import_error(clear_di_caches, record_p
 def test_locate_subclasses_handles_module_import_error(clear_di_caches, record_property) -> None:
     """Test that locate_subclasses handles ImportError for individual modules gracefully."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     mock_package = _mock_package()
     call_count = 0
@@ -880,14 +888,14 @@ def test_locate_subclasses_no_plugins_detects_main_package(clear_di_caches, reco
         pass
 
     main_pkg = _mock_package()
-    main_mod = ModuleType(f"{__project_name__}.{MYMODULE}")
+    main_mod = ModuleType(f"{MAIN_PACKAGE}.{MYMODULE}")
     main_mod.LocalSub = LocalSub  # type: ignore[attr-defined]
 
     with _no_plugins_patches(main_pkg, main_mod) as searched:
         result = locate_subclasses(_Base)
 
     assert LocalSub in result
-    assert not any(p != __project_name__ and not p.startswith(f"{__project_name__}.") for p in searched)
+    assert not any(p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk.")) for p in searched)  # noqa: E501
 
 
 @pytest.mark.unit
@@ -897,7 +905,7 @@ def test_locate_implementations_and_subclasses_search_both_plugins_and_main_pack
 ) -> None:
     """Test that both functions search plugins first, then main package."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    import aignostics_sdk.utils._di as di_module
+    import aignostics.utils._di as di_module
 
     import_order: list[str] = []
 
@@ -913,10 +921,10 @@ def test_locate_implementations_and_subclasses_search_both_plugins_and_main_pack
         patch.object(di_module.pkgutil, "iter_modules", return_value=[]),
     ):
         locate_implementations(AnotherDummyBase)
-        assert import_order == ["plugin_a", "plugin_b", __project_name__]
+        assert import_order == ["plugin_a", "plugin_b", "aignostics_sdk", "aignostics"]
 
         _implementation_cache.clear()
         import_order.clear()
 
         locate_subclasses(AnotherDummySub)
-        assert import_order == ["plugin_a", "plugin_b", __project_name__]
+        assert import_order == ["plugin_a", "plugin_b", "aignostics_sdk", "aignostics"]

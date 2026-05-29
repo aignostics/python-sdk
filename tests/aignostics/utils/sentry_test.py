@@ -9,6 +9,8 @@ if find_spec("sentry_sdk"):
     from unittest import mock
 
     import pytest
+    from pydantic import SecretStr
+
     from aignostics_sdk.utils._sentry import (
         _ERR_MSG_INVALID_DOMAIN,
         _ERR_MSG_MISSING_NETLOC,
@@ -21,7 +23,6 @@ if find_spec("sentry_sdk"):
         _validate_url_scheme,
         sentry_initialize,
     )
-    from pydantic import SecretStr
 
     VALID_DSN = "https://abcdef1234567890@o12345.ingest.us.sentry.io/1234567890"
 
@@ -144,7 +145,7 @@ if find_spec("sentry_sdk"):
     def test_sentry_initialize_with_no_dsn(record_property, mock_environment: None) -> None:
         """Test sentry_initialize with no DSN."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-        with mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings:
+        with mock.patch("aignostics_sdk.utils._sentry.load_settings") as mock_load_settings:
             mock_settings = mock.MagicMock()
             mock_settings.dsn = None
             mock_load_settings.return_value = mock_settings
@@ -157,7 +158,7 @@ if find_spec("sentry_sdk"):
         """Test sentry_initialize with a valid DSN."""
         record_property("tested-item-id", "SPEC-UTILS-SERVICE")
         with (
-            mock.patch("aignostics.utils._sentry.load_settings") as mock_load_settings,
+            mock.patch("aignostics_sdk.utils._sentry.load_settings") as mock_load_settings,
             mock.patch("sentry_sdk.init") as mock_sentry_init,
         ):
             mock_settings = mock.MagicMock()

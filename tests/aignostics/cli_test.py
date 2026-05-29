@@ -10,13 +10,13 @@ from unittest.mock import patch
 import pytest
 from aignostics.cli import cli
 from aignostics.constants import WINDOW_TITLE
+from fastmcp import FastMCP
+from typer.testing import CliRunner
+
 from aignostics_sdk.utils import (
     __python_version__,
     __version__,
 )
-from fastmcp import FastMCP
-from typer.testing import CliRunner
-
 from tests.conftest import normalize_output
 
 BUILT_WITH_LOVE = "built with love in Berlin"
@@ -134,7 +134,7 @@ if find_spec("nicegui"):
     # Import module explicitly to ensure it's loaded before monkeypatching with string paths.
     # Without this, monkeypatch.setattr("aignostics.utils._gui...") fails in CI because
     # pytest-xdist workers may not have aignostics.utils loaded as an attribute yet.
-    import aignostics_sdk.utils._gui as _utils_gui
+    import aignostics.utils._gui as _utils_gui
 
     @pytest.mark.integration
     def test_cli_gui_help(runner: CliRunner) -> None:

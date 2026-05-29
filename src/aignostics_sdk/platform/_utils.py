@@ -8,23 +8,30 @@ These utilities primarily handle file operations, data integrity, and cloud stor
 interactions to support the main client functionality.
 """
 
+from __future__ import annotations
+
 import base64
 import contextlib
 import datetime
 import re
 import tempfile
 import typing as t
-from collections.abc import Generator
-from pathlib import Path
-from typing import IO, Any
+from typing import TYPE_CHECKING, Any
 
 import crc32c
 import requests
-from aignx.codegen.models import InputArtifact as InputArtifactData
-from aignx.codegen.models import OutputArtifact as OutputArtifactData
-from aignx.codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
 from loguru import logger
 from tqdm.auto import tqdm
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
+    from typing import IO
+
+    from aignostics_sdk._codegen.models import InputArtifact as InputArtifactData
+    from aignostics_sdk._codegen.models import OutputArtifact as OutputArtifactData
+    from aignostics_sdk._codegen.models import OutputArtifactResultReadResponse as OutputArtifactElement
+
 
 EIGHT_MB = 8_388_608
 SIGNED_DOWNLOAD_URL_EXPIRES_SECONDS_DEFAULT = 6 * 60 * 60  # 6 hours
@@ -85,7 +92,7 @@ def mime_type_to_file_ending(mime_type: str) -> str:
     raise ValueError(msg)
 
 
-def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData | OutputArtifactElement) -> str:
+def get_mime_type_for_artifact(artifact: InputArtifactData | OutputArtifactData | OutputArtifactElement) -> str:
     """Get the MIME type for a given artifact.
 
     Args:
@@ -94,9 +101,12 @@ def get_mime_type_for_artifact(artifact: OutputArtifactData | InputArtifactData 
     Returns:
         str: The MIME type of the artifact.
     """
-    if isinstance(artifact, InputArtifactData):
+    from aignostics_sdk._codegen.models import InputArtifact as _InputArtifactData  # noqa: PLC0415
+    from aignostics_sdk._codegen.models import OutputArtifact as _OutputArtifactData  # noqa: PLC0415
+
+    if isinstance(artifact, _InputArtifactData):
         return str(artifact.mime_type)
-    if isinstance(artifact, OutputArtifactData):
+    if isinstance(artifact, _OutputArtifactData):
         return str(artifact.mime_type)
     metadata = artifact.metadata or {}
     return str(metadata.get("media_type", metadata.get("mime_type", "application/octet-stream")))

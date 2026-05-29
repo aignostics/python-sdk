@@ -1055,7 +1055,7 @@ class Service(BaseService):  # noqa: PLR0904
             # Build scheduling payload for the top-level request field (not custom_metadata)
             scheduling = None
             if due_date or deadline:
-                from aignx.codegen.models import SchedulingRequest  # noqa: PLC0415
+                from aignostics_sdk._codegen.models import SchedulingRequest  # noqa: PLC0415
 
                 def _parse_iso(value: str | None) -> datetime | None:
                     if value is None:

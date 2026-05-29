@@ -1,12 +1,14 @@
 """CLI of application module."""
 
+from __future__ import annotations
+
 import asyncio
 import json
 import sys
 import time
 import zipfile
 from pathlib import Path
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from loguru import logger
@@ -21,14 +23,14 @@ from aignostics_sdk.platform import (
     Client,
     ForbiddenException,
     NotFoundException,
-    RunState,
 )
-from aignostics_sdk.platform import Service as PlatformService
 from aignostics_sdk.system import Service as SystemService
 from aignostics_sdk.utils import console, get_user_data_directory, sanitize_path
 
-from ._models import DownloadProgress, DownloadProgressState
-from ._service import Service
+if TYPE_CHECKING:
+    from ._models import DownloadProgress
+    from ._service import Service
+
 from ._utils import (
     application_run_status_to_str,
     get_mime_type_for_artifact,
@@ -42,6 +44,17 @@ from ._utils import (
 
 MESSAGE_NOT_YET_IMPLEMENTED = "NOT YET IMPLEMENTED"
 PROGRESS_TASK_DESCRIPTION = "[progress.description]{task.description}"
+
+
+def _Service() -> Service:  # noqa: N802
+    """Lazily import and instantiate the application Service.
+
+    Returns:
+        Service: A new Service instance.
+    """
+    from ._service import Service as ApplicationService  # noqa: PLC0415
+
+    return ApplicationService()
 
 
 ApplicationVersionOption = Annotated[
@@ -161,7 +174,7 @@ def application_list(  # noqa: C901
 ) -> None:
     """List available applications."""
     try:
-        apps = Service().applications()
+        apps = _Service().applications()
     except Exception as e:
         logger.exception("Could not load applications")
         if format == "json":
@@ -189,7 +202,7 @@ def application_list(  # noqa: C901
             console.print(f"[bold]Regulatory Classes:[/bold] {', '.join(app.regulatory_classes)}")
 
             try:
-                details = Service().application(app.application_id)
+                details = _Service().application(app.application_id)
             except Exception as e:
                 logger.exception(f"Failed to get application details for application '{app.application_id}'")
                 console.print(
@@ -201,7 +214,7 @@ def application_list(  # noqa: C901
             for version in details.versions:
                 console.print(f"  - {version.number} ({version.released_at})")
 
-                app_version = Service().application_version(app.application_id, version.number)
+                app_version = _Service().application_version(app.application_id, version.number)
                 console.print(f"    Changelog: {app_version.changelog}")
 
                 num_inputs = len(app_version.input_artifacts)
@@ -260,8 +273,8 @@ def application_dump_schemata(  # noqa: C901
 ) -> None:
     """Output the input schema of the application in JSON format."""
     try:
-        app = Service().application(application_id)
-        app_version = Service().application_version(application_id, application_version)
+        app = _Service().application(application_id)
+        app_version = _Service().application_version(application_id, application_version)
     except (NotFoundException, ValueError) as e:
         message = f"Failed to load application version with ID '{id}', check your input: : {e!s}."
         logger.warning(message)
@@ -345,7 +358,7 @@ def application_describe(  # noqa: C901, PLR0912
 ) -> None:
     """Describe application."""
     try:
-        app = Service().application(application_id)
+        app = _Service().application(application_id)
     except NotFoundException:
         logger.warning(f"Application with ID '{application_id}' not found.")
         if format == "json":
@@ -384,7 +397,7 @@ def application_describe(  # noqa: C901, PLR0912
             if not verbose:
                 continue
             try:
-                app_version = Service().application_version(app.application_id, version.number)
+                app_version = _Service().application_version(app.application_id, version.number)
             except Exception as e:
                 logger.exception(f"Failed to get application version for '{application_id}', '{version.number}'")
                 console.print(
@@ -613,7 +626,7 @@ def run_prepare(
 
     write_metadata_dict_to_csv(
         metadata_csv=metadata_csv,
-        metadata_dict=Service().generate_metadata_from_source_directory(
+        metadata_dict=_Service().generate_metadata_from_source_directory(
             source_directory=source_directory,
             application_id=application_id,
             application_version=application_version,
@@ -725,7 +738,7 @@ def run_upload(  # noqa: PLR0913, PLR0917
                 metadata_dict=metadata_dict,
             )
 
-        Service().application_run_upload(
+        _Service().application_run_upload(
             application_id=application_id,
             application_version=application_version,
             metadata=metadata_dict,
@@ -784,7 +797,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         _abort_if_system_unhealthy()
 
     try:
-        app_version = Service().application_version(
+        app_version = _Service().application_version(
             application_id=application_id, application_version=application_version
         )
     except ValueError as e:
@@ -826,7 +839,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         )
 
         # Submit run with pipeline configuration
-        application_run = Service().application_run_submit_from_metadata(
+        application_run = _Service().application_run_submit_from_metadata(
             application_id=application_id,
             metadata=metadata_dict,
             application_version=application_version,
@@ -901,7 +914,7 @@ def run_list(  # noqa: PLR0913, PLR0917
 ) -> None:
     """List runs."""
     try:
-        runs = Service().application_runs(
+        runs = _Service().application_runs(
             limit=limit,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
             note_regex=note_regex,
@@ -963,10 +976,11 @@ def run_describe(
 ) -> None:
     """Describe run."""
     logger.trace("Describing run with ID '{}'", run_id)
+    from aignostics_sdk.platform import Service as PlatformService  # noqa: PLC0415
 
     try:
         user_info = PlatformService.get_user_info()
-        run = Service().application_run(run_id)
+        run = _Service().application_run(run_id)
         if format == "json":
             # Get run details and items, output as JSON
             run_details = run.details(hide_platform_queue_position=not user_info.is_internal_user)
@@ -1003,7 +1017,7 @@ def run_dump_metadata(
     logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
 
     try:
-        run = Service().application_run(run_id).details()
+        run = _Service().application_run(run_id).details()
         custom_metadata = run.custom_metadata if hasattr(run, "custom_metadata") else {}
 
         # Output JSON to stdout
@@ -1033,7 +1047,7 @@ def run_dump_item_metadata(
     logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
     try:
-        run = Service().application_run(run_id)
+        run = _Service().application_run(run_id)
 
         # Find the item with the matching external_id in the results
         item = None
@@ -1080,7 +1094,7 @@ def run_cancel(
     logger.trace("Canceling run with ID '{}'", run_id)
 
     try:
-        Service().application_run_cancel(run_id)
+        _Service().application_run_cancel(run_id)
         logger.debug("Canceled run with ID '{}'.", run_id)
         console.print(f"Run with ID '{run_id}' has been canceled.")
     except NotFoundException:
@@ -1142,7 +1156,7 @@ def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
 
     try:
         # Get runs matching the tag filter first
-        runs = Service().application_runs(
+        runs = _Service().application_runs(
             limit=limit,
             tags={tag.strip() for tag in tags.split(",") if tag.strip()} if tags else None,
         )
@@ -1182,7 +1196,7 @@ def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
         failed_count = 0
         for run in filtered_runs:
             try:
-                Service().application_run_cancel(run.run_id)
+                _Service().application_run_cancel(run.run_id)
                 canceled_count += 1
                 logger.debug(f"Canceled run with ID '{run.run_id}'.")
             except NotFoundException:
@@ -1230,7 +1244,7 @@ def run_update_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+        _Service().application_run_update_custom_metadata(run_id, custom_metadata)
         logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
     except NotFoundException:
@@ -1271,7 +1285,7 @@ def run_update_item_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
+        _Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
         logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
     except NotFoundException:
@@ -1350,6 +1364,10 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     ] = False,
 ) -> None:
     """Download results of a run."""
+    from aignostics_sdk.platform import RunState  # noqa: PLC0415
+
+    from ._models import DownloadProgressState  # noqa: PLC0415
+
     logger.trace(
         "Downloading results for run with ID '{}' to '{}' with options: "
         "create_subdirectory_for_run={}, create_subdirectory_per_item={}, wait_for_completion={}, qupath_project={}",
@@ -1487,7 +1505,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
                         total=float(progress.total_artifact_count) if progress.total_artifact_count else 0.0,
                     )
 
-            destination_directory = Service().application_run_download(
+            destination_directory = _Service().application_run_download(
                 run_id=run_id,
                 destination_directory=destination_directory,
                 create_subdirectory_for_run=create_subdirectory_for_run,
@@ -1526,7 +1544,7 @@ def result_delete(
     logger.trace("Deleting results for run with ID '{}'", run_id)
 
     try:
-        Service().application_run_delete(run_id)
+        _Service().application_run_delete(run_id)
         logger.debug("Deleted run with ID '{}'.", run_id)
         console.print(f"Results for run with ID '{run_id}' have been deleted.")
     except NotFoundException:

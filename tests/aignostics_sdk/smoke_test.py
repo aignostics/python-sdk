@@ -44,7 +44,7 @@ def test_utils_importable() -> None:
 @pytest.mark.slim
 def test_aignx_codegen_importable() -> None:
     """Bundled codegen is accessible."""
-    from aignx.codegen.exceptions import ApiException
+    from aignostics_sdk._codegen.exceptions import ApiException
 
     assert ApiException is not None
 
@@ -70,10 +70,11 @@ def test_slim_cli_entry_point() -> None:
 @pytest.mark.unit
 @pytest.mark.slim
 def test_project_name_preserved() -> None:
-    """__project_name__ is 'aignostics' for backward compat (env vars, token cache)."""
-    from aignostics_sdk.utils._constants import __project_name__
+    """__project_name__ is the slim distribution name; ENV_PREFIX preserves backward compat for env vars."""
+    from aignostics_sdk.utils._constants import ENV_PREFIX, __project_name__
 
-    assert __project_name__ == "aignostics"
+    assert __project_name__ == "aignostics-sdk"
+    assert ENV_PREFIX == "AIGNOSTICS"
 
 
 @pytest.mark.unit

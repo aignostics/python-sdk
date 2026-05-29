@@ -4,6 +4,7 @@ import typing as t
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from aignostics_sdk.platform._api import _AuthenticatedApi
 from aignostics_sdk.platform._client import Client
 from aignostics_sdk.platform._operation_cache import _operation_cache
@@ -17,7 +18,7 @@ def mock_settings() -> MagicMock:
     Yields:
         MagicMock: A mock of the settings.
     """
-    with patch("aignostics.platform._client.settings") as mock_settings:
+    with patch("aignostics_sdk.platform._client.settings") as mock_settings:
         settings = MagicMock()
         settings.me_retry_attempts = 3
         settings.me_retry_wait_min = 0.1
@@ -92,9 +93,9 @@ def client_with_mock_api(mock_api_client: MagicMock) -> t.Generator[Client, None
     }
     mock_api_client.token_provider = lambda: "test-token-123"
     with (
-        patch("aignostics.platform._client.get_token", return_value="test-token-123"),
-        patch("aignostics.platform._authentication.verify_and_decode_token", return_value=mock_token_claims),
-        patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api_client),
+        patch("aignostics_sdk.platform._client.get_token", return_value="test-token-123"),
+        patch("aignostics_sdk.platform._authentication.verify_and_decode_token", return_value=mock_token_claims),
+        patch("aignostics_sdk.platform._client.Client.get_api_client", return_value=mock_api_client),
     ):
         client = Client(cache_token=False)
         client._api = mock_api_client

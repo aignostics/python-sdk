@@ -11,6 +11,7 @@ import time
 from unittest.mock import MagicMock
 
 import pytest
+
 from aignostics_sdk.platform._client import Client
 from aignostics_sdk.platform._operation_cache import _operation_cache, cached_operation, operation_cache_clear
 

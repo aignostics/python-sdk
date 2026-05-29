@@ -14,29 +14,6 @@ from time import sleep
 from typing import Any, cast
 
 import requests
-from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
-from aignx.codegen.models import (
-    ArtifactOutput,
-    CustomMetadataUpdateRequest,
-    ItemCreationRequest,
-    ItemOutput,
-    ItemResultReadResponse,
-    ItemState,
-    ItemTerminationReason,
-    RunCreationRequest,
-    RunCreationResponse,
-    RunState,
-    SchedulingRequest,
-)
-from aignx.codegen.models import (
-    ItemResultReadResponse as ItemResultData,
-)
-from aignx.codegen.models import (
-    RunReadResponse as RunData,
-)
-from aignx.codegen.models import (
-    VersionReadResponse as ApplicationVersion,
-)
 from jsonschema.exceptions import ValidationError
 from jsonschema.validators import validate
 from loguru import logger
@@ -49,6 +26,29 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
+from aignostics_sdk._codegen.exceptions import ApiException, NotFoundException, ServiceException
+from aignostics_sdk._codegen.models import (
+    ArtifactOutput,
+    CustomMetadataUpdateRequest,
+    ItemCreationRequest,
+    ItemOutput,
+    ItemResultReadResponse,
+    ItemState,
+    ItemTerminationReason,
+    RunCreationRequest,
+    RunCreationResponse,
+    RunState,
+    SchedulingRequest,
+)
+from aignostics_sdk._codegen.models import (
+    ItemResultReadResponse as ItemResultData,
+)
+from aignostics_sdk._codegen.models import (
+    RunReadResponse as RunData,
+)
+from aignostics_sdk._codegen.models import (
+    VersionReadResponse as ApplicationVersion,
+)
 from aignostics_sdk.platform._api import (
     RETRYABLE_EXCEPTIONS,
     _AuthenticatedApi,

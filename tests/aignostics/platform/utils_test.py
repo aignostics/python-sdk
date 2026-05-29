@@ -3,6 +3,7 @@
 import math
 
 import pytest
+
 from aignostics_sdk.platform import mime_type_to_file_ending
 from aignostics_sdk.platform._utils import convert_to_json_serializable
 

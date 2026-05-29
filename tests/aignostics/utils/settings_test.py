@@ -5,13 +5,14 @@ from typing import Any, ClassVar
 from unittest.mock import patch
 
 import pytest
+from pydantic import SecretStr
+
 from aignostics_sdk.utils._settings import (
     UNHIDE_SENSITIVE_INFO,
     OpaqueSettings,
     load_settings,
     strip_to_none_before_validator,
 )
-from pydantic import SecretStr
 
 
 @pytest.mark.unit

@@ -1,14 +1,11 @@
+from __future__ import annotations
+
 import os
-from collections.abc import Callable
-from typing import ClassVar
+from collections.abc import Callable  # noqa: TC003
+from typing import TYPE_CHECKING, ClassVar
 from urllib.request import getproxies
 
 import semver
-from aignx.codegen.api_client import ApiClient
-from aignx.codegen.exceptions import NotFoundException
-from aignx.codegen.models import ApplicationReadResponse as Application
-from aignx.codegen.models import MeReadResponse as Me
-from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 from loguru import logger
 from tenacity import (
     Retrying,
@@ -17,19 +14,21 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics_sdk.platform._api import (
-    RETRYABLE_EXCEPTIONS,
-    _AuthenticatedApi,
-    _log_retry_attempt,
-    _OAuth2TokenProviderConfiguration,
-)
 from aignostics_sdk.platform._authentication import get_token
 from aignostics_sdk.platform._operation_cache import cached_operation
-from aignostics_sdk.platform.resources.applications import Applications, Versions
-from aignostics_sdk.platform.resources.runs import Run, Runs
 from aignostics_sdk.utils import user_agent
 
 from ._settings import settings
+
+if TYPE_CHECKING:
+    from aignostics_sdk._codegen.models import ApplicationReadResponse as Application
+    from aignostics_sdk._codegen.models import MeReadResponse as Me
+    from aignostics_sdk._codegen.models import VersionReadResponse as ApplicationVersion
+    from aignostics_sdk.platform._api import (
+        _AuthenticatedApi,
+    )
+    from aignostics_sdk.platform.resources.applications import Applications, Versions
+    from aignostics_sdk.platform.resources.runs import Run, Runs
 
 # Safety bound for the external token-provider cache.  In normal usage callers
 # reuse a single provider reference, so this limit should never be reached.
@@ -69,6 +68,9 @@ class Client:
 
         Sets up resource accessors for applications, versions, and runs.
         """
+        from aignostics_sdk.platform.resources.applications import Applications, Versions  # noqa: PLC0415
+        from aignostics_sdk.platform.resources.runs import Runs  # noqa: PLC0415
+
         try:
             logger.trace(
                 "Initializing client with cache_token={}, token_provider={}",
@@ -103,6 +105,7 @@ class Client:
         Raises:
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
+        from aignostics_sdk.platform._api import RETRYABLE_EXCEPTIONS, _log_retry_attempt  # noqa: PLC0415
 
         @cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
         def me_with_retry() -> Me:
@@ -137,6 +140,7 @@ class Client:
             NotFoundException: If the application with the given ID is not found.
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
+        from aignostics_sdk.platform._api import RETRYABLE_EXCEPTIONS, _log_retry_attempt  # noqa: PLC0415
 
         @cached_operation(ttl=settings().application_cache_ttl, token_provider=self._api.token_provider)
         def application_with_retry(application_id: str) -> Application:
@@ -180,6 +184,10 @@ class Client:
             ValueError: If the version is not valid semver.
             aignx.codegen.exceptions.ApiException: If the API call fails.
         """
+        from aignostics_sdk._codegen.exceptions import NotFoundException  # noqa: PLC0415
+        from aignostics_sdk.platform._api import RETRYABLE_EXCEPTIONS, _log_retry_attempt  # noqa: PLC0415
+        from aignostics_sdk.platform.resources.applications import Versions  # noqa: PLC0415
+
         # Handle version resolution and validation first (not retried)
         if version_number is None:
             # Get the latest version - this call already has its own retry logic in Versions
@@ -226,6 +234,8 @@ class Client:
         Returns:
             Run: The run object.
         """
+        from aignostics_sdk.platform.resources.runs import Run  # noqa: PLC0415
+
         return Run(self._api, run_id)
 
     @staticmethod
@@ -248,6 +258,12 @@ class Client:
         Raises:
             RuntimeError: If authentication fails.
         """
+        from aignostics_sdk._codegen.api_client import ApiClient  # noqa: PLC0415
+        from aignostics_sdk.platform._api import (  # noqa: PLC0415
+            _AuthenticatedApi,
+            _OAuth2TokenProviderConfiguration,
+        )
+
         # Check singleton caches first
         if token_provider is not None:
             if token_provider in Client._api_client_external:

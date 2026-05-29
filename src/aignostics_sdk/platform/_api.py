@@ -11,14 +11,15 @@ here so every platform sub-module can import from a single source of truth.
 
 from collections.abc import Callable
 
-from aignx.codegen.api.public_api import PublicApi
-from aignx.codegen.api_client import ApiClient
-from aignx.codegen.configuration import AuthSettings, Configuration
-from aignx.codegen.exceptions import ServiceException
 from loguru import logger
 from tenacity import RetryCallState
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
+
+from aignostics_sdk._codegen.api.public_api import PublicApi
+from aignostics_sdk._codegen.api_client import ApiClient
+from aignostics_sdk._codegen.configuration import AuthSettings, Configuration
+from aignostics_sdk._codegen.exceptions import ServiceException
 
 RETRYABLE_EXCEPTIONS = (
     ServiceException,

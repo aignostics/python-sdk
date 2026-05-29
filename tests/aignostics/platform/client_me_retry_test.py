@@ -6,10 +6,11 @@ from http import HTTPStatus
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 import pytest
-from aignostics_sdk.platform._client import Client
-from aignx.codegen.exceptions import ServiceException
+from aignostics_sdk._codegen.exceptions import ServiceException
 from urllib3.exceptions import IncompleteRead, PoolError, ProtocolError, ProxyError
 from urllib3.exceptions import TimeoutError as Urllib3TimeoutError
+
+from aignostics_sdk.platform._client import Client
 
 
 class TestMeSuccess:
@@ -497,7 +498,7 @@ class TestMeWithSettings:
         mock_me_response = {"user_id": "test-user", "org_id": "test-org"}
         client_with_mock_api._api.get_me_v1_me_get.return_value = mock_me_response
 
-        with patch("aignostics.platform._client.settings") as mock_settings:
+        with patch("aignostics_sdk.platform._client.settings") as mock_settings:
             settings_obj = MagicMock()
             settings_obj.me_retry_attempts = 3
             settings_obj.me_retry_wait_min = 0.1
@@ -534,7 +535,7 @@ class TestMeWithSettings:
 
         client_with_mock_api._api.get_me_v1_me_get.side_effect = side_effect
 
-        with patch("aignostics.platform._client.settings") as mock_settings:
+        with patch("aignostics_sdk.platform._client.settings") as mock_settings:
             # First call with max_attempts = 1 (will fail)
             settings_obj_1 = MagicMock()
             settings_obj_1.me_retry_attempts = 1

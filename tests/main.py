@@ -1,6 +1,7 @@
 """Start script for pytest."""
 
 from aignostics.constants import WINDOW_TITLE
+
 from aignostics_sdk.utils import (
     gui_run,
 )

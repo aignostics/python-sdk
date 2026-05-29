@@ -14,7 +14,7 @@ from importlib.util import find_spec
 
 # advertise PageBuilder to enable auto-discovery
 if find_spec("nicegui"):
-    from aignostics_sdk.application import PageBuilder
+    from aignostics.application._gui._page_builder import PageBuilder  # noqa: PLC0415,PLC2701
 
     __all__ += [
         "PageBuilder",

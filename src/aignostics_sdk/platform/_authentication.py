@@ -23,7 +23,6 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
-from aignostics_sdk.platform._api import _log_retry_attempt
 from aignostics_sdk.platform._messages import (
     AUTHENTICATION_FAILED,
     AUTHENTICATION_FAILED_ACCESS_TOKEN_FROM_REFRESH_TOKEN,
@@ -194,6 +193,8 @@ def verify_and_decode_token(token: str) -> dict[str, str]:
     Raises:
         RuntimeError: If token verification or decoding fails.
     """
+    from aignostics_sdk.platform._api import _log_retry_attempt  # noqa: PLC0415
+
     return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(  # Have to unpack wrapped exception
             lambda e: isinstance(e, RuntimeError) and isinstance(e.__cause__, jwt.PyJWKClientConnectionError)
@@ -526,6 +527,8 @@ def _access_token_from_refresh_token(refresh_token: SecretStr) -> str:
     Raises:
         RuntimeError: If token exchange fails. Message indicates if "Client Error".
     """
+    from aignostics_sdk.platform._api import _log_retry_attempt  # noqa: PLC0415
+
     return Retrying(  # We are not using Tenacity annotations as settings can change at runtime
         retry=retry_if_exception(_is_not_client_or_key_error),
         stop=stop_after_attempt(settings().auth_retry_attempts),

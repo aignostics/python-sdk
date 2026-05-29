@@ -1,6 +1,7 @@
 """Tests for API client connection pooling."""
 
 import pytest
+
 from aignostics_sdk.platform._client import Client
 
 

@@ -12,7 +12,7 @@ from aignostics.constants import (
     WSI_SUPPORTED_FILE_EXTENSIONS,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
-from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
+from aignostics_sdk._codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
 
 from aignostics_sdk.application._utils import (
     application_run_status_to_str,

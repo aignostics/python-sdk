@@ -16,12 +16,6 @@ from urllib.parse import quote
 
 import requests
 import semver
-from aignx.codegen.exceptions import NotFoundException, ServiceException
-from aignx.codegen.models import ApplicationReadResponse as Application
-from aignx.codegen.models import ApplicationReadShortResponse as ApplicationSummary
-from aignx.codegen.models import ApplicationVersion as VersionTuple
-from aignx.codegen.models import VersionDocumentResponse as VersionDocumentData
-from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 from pydantic import BaseModel, ConfigDict
 from tenacity import (
     Retrying,
@@ -30,6 +24,12 @@ from tenacity import (
     wait_exponential_jitter,
 )
 
+from aignostics_sdk._codegen.exceptions import NotFoundException, ServiceException
+from aignostics_sdk._codegen.models import ApplicationReadResponse as Application
+from aignostics_sdk._codegen.models import ApplicationReadShortResponse as ApplicationSummary
+from aignostics_sdk._codegen.models import ApplicationVersion as VersionTuple
+from aignostics_sdk._codegen.models import VersionDocumentResponse as VersionDocumentData
+from aignostics_sdk._codegen.models import VersionReadResponse as ApplicationVersion
 from aignostics_sdk.platform._api import (
     RETRYABLE_EXCEPTIONS,
     _AuthenticatedApi,

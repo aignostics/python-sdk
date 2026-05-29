@@ -82,6 +82,7 @@ extend-exclude = [
     "examples/*.py",
     "examples/*.ipynb",
     "codegen",
+    "**/_codegen/**",
 ]
 
 [tool.ruff.lint]
@@ -172,6 +173,11 @@ warn_unreachable = true
 
 [[tool.mypy.overrides]]
 module = "aignx.*"
+ignore_errors = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = "aignostics_sdk._codegen.*"
 ignore_errors = true
 follow_imports = "skip"
 

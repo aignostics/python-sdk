@@ -12,15 +12,15 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from aignostics.application import Service
 from aignostics.cli import cli
-from nicegui.testing import User
-from typer.testing import CliRunner
-
-from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
-from aignostics_sdk.application._gui._page_application_run_describe import (
+from aignostics.application._gui._page_application_run_describe import (
     RESULTS_PAGE_SIZE,
     _resolve_artifact_url_and_invoke,
     _resolve_artifact_url_or_notify,
 )
+from nicegui.testing import User
+from typer.testing import CliRunner
+
+from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -195,7 +195,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
         tmp_path = Path(tmpdir)
 
         with patch(
-            "aignostics_sdk.application._gui._page_application_describe.Path.home",
+            "aignostics.application._gui._page_application_describe.Path.home",
             return_value=tmp_path,
         ):
             # Download example wsi
@@ -360,7 +360,7 @@ async def test_gui_run_download(  # noqa: PLR0915
     """Test that the user can download a run result via the GUI."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
     with patch(
-        "aignostics_sdk.application._gui._page_application_run_describe.get_user_data_directory",
+        "aignostics.application._gui._page_application_run_describe.get_user_data_directory",
         return_value=tmp_path,
     ):
         # Find run
@@ -580,8 +580,8 @@ async def test_gui_run_results_pagination_show_more(user: User, silent_logging: 
 # _resolve_artifact_url_or_notify — module-level GUI helper
 # ---------------------------------------------------------------------------
 
-_PATCH_NICEGUI_RUN_IO_BOUND = "aignostics_sdk.application._gui._page_application_run_describe.nicegui_run.io_bound"
-_PATCH_UI_NOTIFY = "aignostics_sdk.application._gui._page_application_run_describe.ui.notify"
+_PATCH_NICEGUI_RUN_IO_BOUND = "aignostics.application._gui._page_application_run_describe.nicegui_run.io_bound"
+_PATCH_UI_NOTIFY = "aignostics.application._gui._page_application_run_describe.ui.notify"
 
 
 @pytest.mark.unit

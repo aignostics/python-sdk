@@ -11,6 +11,11 @@ from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from aignostics_sdk._codegen.exceptions import NotFoundException
+from aignostics_sdk._codegen.models.application_read_response import ApplicationReadResponse
+from aignostics_sdk._codegen.models.version_document_response import VersionDocumentResponse
+from aignostics_sdk._codegen.models.version_document_visibility import VersionDocumentVisibility
+
 from aignostics_sdk.platform._api import _AuthenticatedApi
 from aignostics_sdk.platform._operation_cache import operation_cache_clear
 from aignostics_sdk.platform.resources.applications import (
@@ -20,10 +25,6 @@ from aignostics_sdk.platform.resources.applications import (
     Versions,
 )
 from aignostics_sdk.platform.resources.utils import PAGE_SIZE
-from aignx.codegen.exceptions import NotFoundException
-from aignx.codegen.models.application_read_response import ApplicationReadResponse
-from aignx.codegen.models.version_document_response import VersionDocumentResponse
-from aignx.codegen.models.version_document_visibility import VersionDocumentVisibility
 
 API_ERROR = "API error"
 API_REASON_NOT_FOUND = "Not Found"
@@ -31,7 +32,7 @@ API_REASON_NOT_FOUND = "Not Found"
 DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
 DOCUMENT_MISSING_PDF = "missing.pdf"
 DOC_FILENAME_A = "a.pdf"
-REQUESTS_GET_PATCH_TARGET = "aignostics.platform.resources.applications.requests.get"
+REQUESTS_GET_PATCH_TARGET = "aignostics_sdk.platform.resources.applications.requests.get"
 
 
 @pytest.fixture

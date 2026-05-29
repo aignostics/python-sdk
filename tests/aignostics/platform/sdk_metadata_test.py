@@ -5,6 +5,8 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+from pydantic import ValidationError
+
 from aignostics_sdk.platform._sdk_metadata import (
     ITEM_SDK_METADATA_SCHEMA_VERSION,
     SDK_METADATA_SCHEMA_VERSION,
@@ -19,7 +21,6 @@ from aignostics_sdk.platform._sdk_metadata import (
     validate_run_sdk_metadata,
     validate_run_sdk_metadata_silent,
 )
-from pydantic import ValidationError
 
 # Test constants
 TEST_USER_AGENT = "aignostics-sdk/1.0.0"
@@ -50,7 +51,7 @@ class TestBuildRunSdkMetadata:
     @staticmethod
     def test_basic_metadata_structure(clean_env: None) -> None:
         """Test that basic metadata structure is created correctly."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -65,7 +66,7 @@ class TestBuildRunSdkMetadata:
     def test_submission_metadata_default(clean_env: None) -> None:
         """Test default submission metadata when no special environment is detected."""
         with (
-            patch("aignostics.platform._client.Client") as mock_client,
+            patch("aignostics_sdk.platform._client.Client") as mock_client,
             patch("os.environ.get", return_value=None),
         ):
             mock_client.return_value.me.side_effect = Exception("No client available")
@@ -84,7 +85,7 @@ class TestBuildRunSdkMetadata:
         """Test that bridge initiator is detected when AIGNOSTICS_BRIDGE_VERSION is set."""
         monkeypatch.setenv("AIGNOSTICS_BRIDGE_VERSION", "1.0.0")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -97,7 +98,7 @@ class TestBuildRunSdkMetadata:
         """Test that test initiator is detected when PYTEST_CURRENT_TEST is set."""
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -111,7 +112,7 @@ class TestBuildRunSdkMetadata:
         monkeypatch.setenv("AIGNOSTICS_BRIDGE_VERSION", "1.0.0")
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -126,7 +127,7 @@ class TestBuildRunSdkMetadata:
         try:
             sys.argv = ["/path/to/typer", "command"]
 
-            with patch("aignostics.platform._client.Client") as mock_client:
+            with patch("aignostics_sdk.platform._client.Client") as mock_client:
                 mock_client.return_value.me.side_effect = Exception("No client available")
 
                 metadata = build_run_sdk_metadata()
@@ -143,7 +144,7 @@ class TestBuildRunSdkMetadata:
         try:
             sys.argv = ["/path/to/aignostics", "command"]
 
-            with patch("aignostics.platform._client.Client") as mock_client:
+            with patch("aignostics_sdk.platform._client.Client") as mock_client:
                 mock_client.return_value.me.side_effect = Exception("No client available")
 
                 metadata = build_run_sdk_metadata()
@@ -158,7 +159,7 @@ class TestBuildRunSdkMetadata:
         """Test that launchpad interface is detected when NICEGUI_HOST is set."""
         monkeypatch.setenv("NICEGUI_HOST", "localhost")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -175,7 +176,7 @@ class TestBuildRunSdkMetadata:
         mock_me.user.email = "test@example.com"
         mock_me.user.id = "user-456"
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.return_value = mock_me
 
             metadata = build_run_sdk_metadata()
@@ -190,7 +191,7 @@ class TestBuildRunSdkMetadata:
     @staticmethod
     def test_user_metadata_failure(clean_env: None) -> None:
         """Test that user metadata is omitted when Client().me() fails."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("Auth failed")
 
             metadata = build_run_sdk_metadata()
@@ -217,7 +218,7 @@ class TestBuildRunSdkMetadata:
         monkeypatch.setenv("GITHUB_WORKFLOW", "CI")
         monkeypatch.setenv("GITHUB_WORKFLOW_REF", "owner/repo/.github/workflows/ci.yml@main")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -250,7 +251,7 @@ class TestBuildRunSdkMetadata:
         monkeypatch.setenv("GITHUB_SERVER_URL", "https://github.enterprise.com")
         monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -265,7 +266,7 @@ class TestBuildRunSdkMetadata:
         """Test that pytest metadata is collected correctly."""
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func (call)")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -281,7 +282,7 @@ class TestBuildRunSdkMetadata:
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func (call)")
         monkeypatch.setenv("PYTEST_MARKERS", "slow,integration,unit")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -297,7 +298,7 @@ class TestBuildRunSdkMetadata:
         monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func (call)")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -311,7 +312,7 @@ class TestBuildRunSdkMetadata:
     def test_no_ci_metadata_when_not_in_ci(clean_env: None) -> None:
         """Test that ci field is omitted when not in CI environment."""
         with (
-            patch("aignostics.platform._client.Client") as mock_client,
+            patch("aignostics_sdk.platform._client.Client") as mock_client,
             patch("os.environ.get", return_value=None),
         ):
             mock_client.return_value.me.side_effect = Exception("No client available")
@@ -324,9 +325,9 @@ class TestBuildRunSdkMetadata:
     @staticmethod
     def test_user_agent_included(clean_env: None) -> None:
         """Test that user_agent is included in metadata."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
-            with patch("aignostics.platform._sdk_metadata.user_agent", return_value=TEST_USER_AGENT):
+            with patch("aignostics_sdk.platform._sdk_metadata.user_agent", return_value=TEST_USER_AGENT):
                 metadata = build_run_sdk_metadata()
 
                 assert metadata["user_agent"] == TEST_USER_AGENT
@@ -335,7 +336,7 @@ class TestBuildRunSdkMetadata:
     @staticmethod
     def test_metadata_date_format(clean_env: None) -> None:
         """Test that submission date is in correct ISO format with seconds precision."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -356,7 +357,7 @@ class TestRunSdkMetadataValidation:
     @staticmethod
     def test_validate_basic_metadata(clean_env: None) -> None:
         """Test validation of basic metadata structure."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -366,7 +367,7 @@ class TestRunSdkMetadataValidation:
     @staticmethod
     def test_validate_metadata_with_user(clean_env: None) -> None:
         """Test validation of metadata with user information."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_user = MagicMock()
             mock_user.organization.id = "org-123"
             mock_user.organization.name = "Test Org"
@@ -384,7 +385,7 @@ class TestRunSdkMetadataValidation:
         monkeypatch.setenv("GITHUB_RUN_ID", "123456")
         monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repo")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -397,7 +398,7 @@ class TestRunSdkMetadataValidation:
         monkeypatch.setenv("PYTEST_CURRENT_TEST", "tests/test_example.py::test_func")
         monkeypatch.setenv("PYTEST_MARKERS", "unit,integration")
 
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -407,7 +408,7 @@ class TestRunSdkMetadataValidation:
     @staticmethod
     def test_validate_metadata_with_workflow(clean_env: None) -> None:
         """Test validation of metadata with workflow fields."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()
@@ -656,7 +657,7 @@ class TestRunSdkMetadataValidation:
     @staticmethod
     def test_validate_sdk_metadata_silent_valid(clean_env: None) -> None:
         """Test silent validation with valid metadata."""
-        with patch("aignostics.platform._client.Client") as mock_client:
+        with patch("aignostics_sdk.platform._client.Client") as mock_client:
             mock_client.return_value.me.side_effect = Exception("No client available")
 
             metadata = build_run_sdk_metadata()

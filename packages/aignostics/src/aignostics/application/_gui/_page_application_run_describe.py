@@ -25,13 +25,16 @@ from aignostics_sdk.platform import ArtifactOutput, ItemOutput, ItemResult, Item
 from aignostics_sdk.utils import get_user_data_directory
 
 if TYPE_CHECKING:
-    from aignx.codegen.models import RunReadResponse
-
+    from aignostics_sdk._codegen.models import RunReadResponse
     from aignostics_sdk.platform import UserInfo
 
-from .._models import DownloadProgressState  # noqa: TID252
-from .._service import Service  # noqa: TID252
-from .._utils import get_mime_type_for_artifact, queue_position_string_from_run  # noqa: TID252
+from aignostics_sdk.application._models import DownloadProgressState  # noqa: PLC2701  # noqa: TID252
+from aignostics_sdk.application._service import Service  # noqa: PLC2701  # noqa: TID252
+from aignostics_sdk.application._utils import (  # noqa: PLC2701  # noqa: TID252
+    get_mime_type_for_artifact,
+    queue_position_string_from_run,
+)
+
 from ._frame import _frame
 from ._utils import (
     mime_type_to_icon,

@@ -1,24 +1,28 @@
 """Service of the platform module."""
 
+from __future__ import annotations
+
 import json
 import time
 from functools import cached_property
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
-from aignx.codegen.models import MeReadResponse as Me
-from aignx.codegen.models import OrganizationReadResponse as Organization
-from aignx.codegen.models import UserReadResponse as User
 from loguru import logger
 from pydantic import BaseModel, computed_field
 
+from aignostics_sdk._codegen.models import OrganizationReadResponse as Organization  # noqa: TC001
+from aignostics_sdk._codegen.models import UserReadResponse as User  # noqa: TC001
 from aignostics_sdk.constants import INTERNAL_ORGS
 from aignostics_sdk.utils import BaseService, Health, user_agent
 
 from ._authentication import get_token, remove_cached_token, verify_and_decode_token
 from ._client import Client
 from ._settings import Settings
+
+if TYPE_CHECKING:
+    from aignostics_sdk._codegen.models import MeReadResponse as Me
 
 
 class TokenInfo(BaseModel):
@@ -45,7 +49,7 @@ class TokenInfo(BaseModel):
         return self.expires_at - int(time.time())
 
     @classmethod
-    def from_claims(cls, claims: dict[str, Any]) -> "TokenInfo":
+    def from_claims(cls, claims: dict[str, Any]) -> TokenInfo:
         """Create TokenInfo from JWT claims.
 
         Args:
@@ -77,7 +81,7 @@ class UserInfo(BaseModel):
     organization: Organization
 
     @classmethod
-    def from_claims_and_me(cls, claims: dict[str, Any], me: Me) -> "UserInfo":
+    def from_claims_and_me(cls, claims: dict[str, Any], me: Me) -> UserInfo:
         """Create UserInfo from JWT claims and optional auth0 userinfo.
 
         Args:

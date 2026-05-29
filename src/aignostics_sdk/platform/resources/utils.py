@@ -9,8 +9,6 @@ functions are designed to be used internally by the SDK's resource classes.
 from collections.abc import Callable, Iterator
 from typing import TypeVar
 
-from aignx.codegen.exceptions import NotFoundException
-
 T = TypeVar("T")
 
 PAGE_SIZE = 20
@@ -45,6 +43,8 @@ def paginate(func: Callable[..., list[T]], *args: object, page_size: int = PAGE_
         >>> print(len(items))
         25
     """
+    from aignostics_sdk._codegen.exceptions import NotFoundException  # noqa: PLC0415
+
     if page_size <= 0:
         message = f"page_size must be a positive integer, got {page_size}"
         raise ValueError(message)
