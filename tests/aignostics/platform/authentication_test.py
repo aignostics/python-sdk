@@ -878,7 +878,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics_sdk.platform._authentication._access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._access_token_from_refresh_token" in record.getMessage()  # noqa: E501
         ]
         assert len(retry_logs) == 0, "Should not log retry attempts for 4xx errors"
 
@@ -916,7 +916,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()  # noqa: E501
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for 5xx errors"
 
@@ -950,7 +950,7 @@ class TestTokenRefreshRetryLogic:
         retry_logs = [
             record
             for record in caplog.records
-            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()
+            if "Retrying aignostics_sdk.platform._authentication._do_access_token_from_refresh_token" in record.getMessage()  # noqa: E501
         ]
         assert len(retry_logs) > 0, "Should log retry attempts for connection errors"
 
@@ -1162,7 +1162,7 @@ class TestTokenVerificationRetryLogic:
         mock_jwt_client.get_signing_key_from_jwt.return_value = mock_signing_key
 
         with (
-            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client) as mock_get_jwk,
+            patch("aignostics_sdk.platform._authentication._get_jwk_client", return_value=mock_jwt_client) as mock_get_jwk,  # noqa: E501
             patch("jwt.decode", return_value={"sub": "user-id", "exp": int(time.time()) + 3600}),
         ):
             result = verify_and_decode_token("valid.token")
