@@ -24,7 +24,6 @@ from aignostics_sdk.utils._cli import (
     prepare_cli,
 )
 
-
 # Constants to avoid duplication
 TEST_EPILOG = "Test epilog"
 SCRIPT_FILENAME = "script.py"
@@ -634,7 +633,10 @@ def test_locate_implementations_no_plugins_detects_main_package(clear_di_caches,
         result = locate_implementations(_Base)
 
     assert instance in result
-    assert not any(p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk.")) for p in searched)  # noqa: E501
+    assert not any(
+        p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk."))
+        for p in searched
+    )  # noqa: E501
 
 
 # ---------------------------------------------------------------------------
@@ -895,7 +897,10 @@ def test_locate_subclasses_no_plugins_detects_main_package(clear_di_caches, reco
         result = locate_subclasses(_Base)
 
     assert LocalSub in result
-    assert not any(p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk.")) for p in searched)  # noqa: E501
+    assert not any(
+        p not in {"aignostics", "aignostics_sdk"} and not p.startswith(("aignostics.", "aignostics_sdk."))
+        for p in searched
+    )  # noqa: E501
 
 
 @pytest.mark.unit
