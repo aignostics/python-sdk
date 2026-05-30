@@ -516,7 +516,7 @@ Some modules have conditional loading based on dependencies:
 * 5-minute refresh buffer before expiry
 * OAuth 2.0 device flow
 
-### SDK Metadata System (ENHANCED - Run v0.0.4, Item v0.0.3)
+### SDK Metadata System (ENHANCED - Run v0.0.6, Item v0.0.3)
 
 **Automatic Run & Item Tracking**: Every application run and item submitted through the SDK automatically includes comprehensive metadata about the execution context, with support for tags and timestamps.
 
@@ -526,7 +526,7 @@ Some modules have conditional loading based on dependencies:
 * **Environment Detection**: Automatically detects script/CLI/GUI and user/test/bridge contexts
 * **CI/CD Integration**: Captures GitHub Actions workflow information and pytest test context
 * **User Information**: Includes authenticated user and organization details
-* **Schema Validation**: Pydantic-based validation with JSON Schema (Run: v0.0.4, Item: v0.0.3)
+* **Schema Validation**: Pydantic-based validation with JSON Schema (Run: v0.0.6, Item: v0.0.3)
 * **Versioned Schema**: Published JSON Schema at `docs/source/_static/sdk_{run|item}_custom_metadata_schema_*.json`
 * **Tags Support** (NEW): Associate runs and items with searchable tags
 * **Timestamps** (NEW): Track creation and update times (`created_at`, `updated_at`)
@@ -577,7 +577,7 @@ aignostics application run list --tags experiment-1,batch-A
 * Integration: Automatic in `platform.resources.runs.submit()`
 * User Agent: Enhanced `utils.user_agent()` with CI/CD context
 * Tests: Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`
-* **Schema Files**: `sdk_run_custom_metadata_schema_v0.0.4.json` and `sdk_item_custom_metadata_schema_v0.0.3.json`
+* **Schema Files**: `sdk_run_custom_metadata_schema_v0.0.6.json` and `sdk_item_custom_metadata_schema_v0.0.3.json`
 
 See `platform/CLAUDE.md` for detailed documentation.
 
