@@ -83,18 +83,18 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         # SPOT_0: uv run pytest tests/aignostics/application/gui_test.py::test_gui_run_download -s --no-cov
         # SPOT_1: uv run pytest tests/aignostics/application/cli_test.py::test_cli_run_execute -s --no-cov
         SPOT_0_EXPECTED_RESULT_FILES = [
-            ("tissue_qc_segmentation_map_image.tiff", 470150, 10),
-            ("tissue_qc_geojson_polygons.json", 171251, 10),
-            ("tissue_segmentation_geojson_polygons.json", 185516, 10),
-            ("readout_generation_slide_readouts.csv", 300205, 10),
-            ("readout_generation_cell_readouts.csv", 2417117, 10),
-            ("cell_classification_geojson_polygons.json", 16673412, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 527264, 10),
-            ("tissue_segmentation_csv_class_information.csv", 443, 10),
-            ("tissue_qc_csv_class_information.csv", 286, 10),
-            ("tissue_qc_parquet_polygons.parquet", 34346, 10),
-            ("tissue_segmentation_parquet_polygons.parquet", 39185, 10),
-            ("cell_classification_parquet_polygons.parquet", 5476364, 10),
+            ("tissue_qc_segmentation_map_image.tiff", 1645652, 10),
+            ("tissue_qc_geojson_polygons.json", 101150, 10),
+            ("tissue_segmentation_geojson_polygons.json", 327625, 10),
+            ("readout_generation_slide_readouts.csv", 303585, 10),
+            ("readout_generation_cell_readouts.csv", 1660865, 10),
+            ("cell_classification_geojson_polygons.json", 6117357, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2858496, 10),
+            ("tissue_segmentation_csv_class_information.csv", 452, 10),
+            ("tissue_qc_csv_class_information.csv", 285, 10),
+            ("tissue_qc_parquet_polygons.parquet", 39435, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 117509, 10),
+            ("cell_classification_parquet_polygons.parquet", 1985592, 10),
         ]
         SPOT_0_EXPECTED_CELLS_CLASSIFIED = (39798, 10)
 
@@ -130,18 +130,18 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         # See production block above for instructions on how to update these sizes.
         SPOT_0_EXPECTED_RESULT_FILES = [
-            ("tissue_qc_segmentation_map_image.tiff", 470150, 10),
-            ("tissue_qc_geojson_polygons.json", 171251, 10),
-            ("tissue_segmentation_geojson_polygons.json", 185516, 10),
-            ("readout_generation_slide_readouts.csv", 300205, 10),
-            ("readout_generation_cell_readouts.csv", 2417117, 10),
-            ("cell_classification_geojson_polygons.json", 16673412, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 527264, 10),
-            ("tissue_segmentation_csv_class_information.csv", 443, 10),
-            ("tissue_qc_csv_class_information.csv", 286, 10),
-            ("tissue_qc_parquet_polygons.parquet", 34346, 10),
-            ("tissue_segmentation_parquet_polygons.parquet", 39185, 10),
-            ("cell_classification_parquet_polygons.parquet", 5476364, 10),
+            ("tissue_qc_segmentation_map_image.tiff", 1645652, 10),
+            ("tissue_qc_geojson_polygons.json", 101150, 10),
+            ("tissue_segmentation_geojson_polygons.json", 327625, 10),
+            ("readout_generation_slide_readouts.csv", 303585, 10),
+            ("readout_generation_cell_readouts.csv", 1660865, 10),
+            ("cell_classification_geojson_polygons.json", 6117357, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2858496, 10),
+            ("tissue_segmentation_csv_class_information.csv", 452, 10),
+            ("tissue_qc_csv_class_information.csv", 285, 10),
+            ("tissue_qc_parquet_polygons.parquet", 39435, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 117509, 10),
+            ("cell_classification_parquet_polygons.parquet", 1985592, 10),
         ]
         SPOT_0_EXPECTED_CELLS_CLASSIFIED = (39798, 10)
 
