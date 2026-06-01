@@ -52,7 +52,7 @@ New here? Start with the [Get started with Launchpad](https://aignostics.readthe
 
 Once you've run your first analysis:
 
-- **Understand the platform**: Read the [Aignostics Platform Overview](platform_overview.md) for architecture and core concepts.
+- **Understand the platform**: Read the [Aignostics Platform Overview](https://aignostics.readthedocs.io/en/latest/platform_overview.html) for architecture and core concepts.
 - **Go deeper**: See the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html).
 - **Get support**: Contact [support@aignostics.com](mailto:support@aignostics.com) or browse the [full documentation](https://aignostics.readthedocs.io/en/latest/).
 
