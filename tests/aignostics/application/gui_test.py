@@ -484,12 +484,14 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
     """
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
 
-    # Find a run with fewer items than RESULTS_PAGE_SIZE
+    # Find a run with fewer items than RESULTS_PAGE_SIZE.
+    # Omit has_output so the server-side filter is applied without client-side pagination:
+    # item_count already acts as a proxy (runs with no output show item_count=0 and fail
+    # the 0 < item_count <= RESULTS_PAGE_SIZE check below).
     runs = Service().application_runs(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
-        has_output=True,
-        limit=20,
+        limit=5,
     )
 
     # Find a run with few enough items
