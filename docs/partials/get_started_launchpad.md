@@ -49,7 +49,7 @@ uvx aignostics launchpad
 
 The first time you run this, it takes a minute or two to get ready. Then the **Launchpad window opens** — that means everything installed correctly.
 
-![The Launchpad window when it first opens](/_static/launchpad/01-launchpad-window.png)
+![The Launchpad window when it first opens](_static/launchpad/01-launchpad-window.png)
 
 If you see an error instead of the window, see [Troubleshooting](#troubleshooting).
 
@@ -67,7 +67,7 @@ You need a slide to analyze. Launchpad can download a public example slide for y
 
 1. Click the menu icon (☰) in the top-right corner.
 
-   ![The open menu showing Download Datasets and Run Applications](/_static/launchpad/02-menu-open.png)
+   ![The open menu showing Download Datasets and Run Applications](_static/launchpad/02-menu-open.png)
 
 2. Click **Download Datasets**.
 3. Click **EXAMPLE DATASET**. Launchpad fills in the details of the example slide for you.
@@ -89,7 +89,7 @@ This is the step where most people get stuck, so take it slowly. Atlas H&E-TME n
 
 3. **Double-click the red cell in the Tissue column.** A dropdown list of tissue types appears. Choose **LUNG**. The cell turns **green**, which means the value is accepted.
 
-   ![Slide table with red Tissue and Disease cells and the Tissue dropdown open on LUNG](/_static/launchpad/03-metadata-dropdown.png)
+   ![Slide table with red Tissue and Disease cells and the Tissue dropdown open on LUNG](_static/launchpad/03-metadata-dropdown.png)
 
 4. **Double-click the red cell in the Disease column.** From the dropdown, choose **LUNG_CANCER**. That cell turns green too.
 
@@ -105,7 +105,7 @@ The submission screen shows how many slides will be analyzed and where they are.
 
 The analysis now runs on Aignostics servers, not on your computer, so you can do other things while you wait. How long it takes depends on the size and number of slides — anywhere from a few minutes to several hours. Click your run in the list on the left to see its status. The icon updates on its own as the slide is processed.
 
-![The left sidebar showing a run in progress and a completed run](/_static/launchpad/04-run-status.png)
+![The left sidebar showing a run in progress and a completed run](_static/launchpad/04-run-status.png)
 
 You don't have to keep Launchpad open. Because the analysis runs on our servers, you can quit Launchpad and reopen it later — your run is still in the list on the left, with its latest status.
 
@@ -125,7 +125,7 @@ QuPath is a free, widely used viewer for whole slide images. Launchpad can open 
 
 Your slide appears in QuPath with the analysis annotations layered on top — tissue regions and individual cells, colored by type — ready to explore.
 
-![The slide open in QuPath with tissue and cell annotations](/_static/launchpad/05-qupath-result.png)
+![The slide open in QuPath with tissue and cell annotations](_static/launchpad/05-qupath-result.png)
 
 **Congratulations** — you have signed up, installed Launchpad, run your first analysis, and opened the results in QuPath.
 
