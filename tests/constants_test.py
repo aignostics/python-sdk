@@ -100,17 +100,17 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         SPOT_1_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
-            ("tissue_qc_geojson_polygons.json", 75293, 10),
-            ("tissue_segmentation_geojson_polygons.json", 152317, 10),
-            ("readout_generation_slide_readouts.csv", 299381, 10),
-            ("readout_generation_cell_readouts.csv", 466725, 10),
-            ("cell_classification_geojson_polygons.json", 2812005, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 1783952, 10),
+            ("tissue_qc_geojson_polygons.json", 75281, 10),
+            ("tissue_segmentation_geojson_polygons.json", 152301, 10),
+            ("readout_generation_slide_readouts.csv", 299361, 10),
+            ("readout_generation_cell_readouts.csv", 464838, 10),
+            ("cell_classification_geojson_polygons.json", 1726813, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 1783376, 10),
             ("tissue_segmentation_csv_class_information.csv", 446, 10),
             ("tissue_qc_csv_class_information.csv", 290, 10),
-            ("tissue_qc_parquet_polygons.parquet", 29049, 10),
-            ("tissue_segmentation_parquet_polygons.parquet", 56682, 10),
-            ("cell_classification_parquet_polygons.parquet", 838533, 10),
+            ("tissue_qc_parquet_polygons.parquet", 29087, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 56563, 10),
+            ("cell_classification_parquet_polygons.parquet", 562536, 10),
         ]
 
     case "staging":
@@ -147,17 +147,17 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         SPOT_1_EXPECTED_RESULT_FILES = [
             ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
-            ("tissue_qc_geojson_polygons.json", 75293, 10),
-            ("tissue_segmentation_geojson_polygons.json", 152317, 10),
-            ("readout_generation_slide_readouts.csv", 299381, 10),
-            ("readout_generation_cell_readouts.csv", 466725, 10),
-            ("cell_classification_geojson_polygons.json", 2812005, 10),
-            ("tissue_segmentation_segmentation_map_image.tiff", 1783952, 10),
+            ("tissue_qc_geojson_polygons.json", 75281, 10),
+            ("tissue_segmentation_geojson_polygons.json", 152301, 10),
+            ("readout_generation_slide_readouts.csv", 299361, 10),
+            ("readout_generation_cell_readouts.csv", 464838, 10),
+            ("cell_classification_geojson_polygons.json", 1726813, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 1783376, 10),
             ("tissue_segmentation_csv_class_information.csv", 446, 10),
             ("tissue_qc_csv_class_information.csv", 290, 10),
-            ("tissue_qc_parquet_polygons.parquet", 29049, 10),
-            ("tissue_segmentation_parquet_polygons.parquet", 56682, 10),
-            ("cell_classification_parquet_polygons.parquet", 838533, 10),
+            ("tissue_qc_parquet_polygons.parquet", 29087, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 56563, 10),
+            ("cell_classification_parquet_polygons.parquet", 562536, 10),
         ]
 
     case _:
