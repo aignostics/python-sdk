@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-import ijson
 import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
@@ -22,7 +21,7 @@ from aignostics.application._gui._page_application_run_describe import (
     _resolve_artifact_url_or_notify,
 )
 from aignostics.cli import cli
-from tests.conftest import assert_notified, normalize_output, print_directory_structure
+from tests.conftest import assert_notified, assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -467,24 +466,8 @@ async def test_gui_run_download(  # noqa: PLR0914, PLR0915
                 f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
             )
 
-        # Validate parquet <-> GeoJSON row count parity for the 3 paired outputs
-        parquet_geojson_pairs = [
-            ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
-            ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
-            ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
-        ]
-        import pyarrow.parquet as pq
-
-        for parquet_filename, geojson_filename in parquet_geojson_pairs:
-            parquet_path = results_dir / parquet_filename
-            geojson_path = results_dir / geojson_filename
-            parquet_row_count = pq.read_metadata(parquet_path).num_rows
-            with geojson_path.open("rb") as f:
-                geojson_feature_count = sum(1 for _ in ijson.items(f, "features.item"))
-            assert parquet_row_count == geojson_feature_count, (
-                f"Row count mismatch between {parquet_filename} ({parquet_row_count} rows) "
-                f"and {geojson_filename} ({geojson_feature_count} features)"
-            )
+        # Validate parquet <-> GeoJSON parity: area for segmentation, count for cell classification.
+        assert_parquet_geojson_parity(results_dir)
 
 
 @pytest.mark.integration

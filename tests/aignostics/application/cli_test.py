@@ -11,7 +11,6 @@ from pathlib import Path
 from time import sleep
 from unittest.mock import MagicMock, patch
 
-import ijson
 import pytest
 from aignx.codegen.exceptions import ForbiddenException
 from aignx.codegen.exceptions import NotFoundException as ApiNotFound
@@ -34,7 +33,7 @@ from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
 from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
 from aignostics.utils import Health, sanitize_path
-from tests.conftest import normalize_output, print_directory_structure
+from tests.conftest import assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -1134,24 +1133,8 @@ def test_cli_run_execute(runner: CliRunner, tmp_path: Path, record_property) -> 
             f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
         )
 
-    # Validate parquet <-> GeoJSON row count parity for the 3 paired outputs
-    parquet_geojson_pairs = [
-        ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
-        ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
-        ("cell_classification_parquet_polygons.parquet", "cell_classification_geojson_polygons.json"),
-    ]
-    import pyarrow.parquet as pq
-
-    for parquet_filename, geojson_filename in parquet_geojson_pairs:
-        parquet_path = results_dir / parquet_filename
-        geojson_path = results_dir / geojson_filename
-        parquet_row_count = pq.read_metadata(parquet_path).num_rows
-        with geojson_path.open("rb") as f:
-            geojson_feature_count = sum(1 for _ in ijson.items(f, "features.item"))
-        assert parquet_row_count == geojson_feature_count, (
-            f"Row count mismatch between {parquet_filename} ({parquet_row_count} rows) "
-            f"and {geojson_filename} ({geojson_feature_count} features)"
-        )
+    # Validate parquet <-> GeoJSON parity: area for segmentation, count for cell classification.
+    assert_parquet_geojson_parity(results_dir)
 
     # Validate the execute command exited successfully
     assert result.exit_code == 0
