@@ -60,7 +60,7 @@ When the application run is created, it progresses through three states:
 A terminated run carries a *termination reason* explaining the outcome:
 
 - **all items processed**: every slide was processed (individual slides may still have failed — check the per-slide results)
-- **canceled by the user**: the run was cancelled by the user before it finished
+- **canceled by the user**: the run was canceled by the user before it finished
 - **canceled by the system**: the run was stopped by the platform, for example when the number of failed slides exceeded the allowed threshold
 
 The status and operations of an application run are private to the user who triggered the run.
@@ -68,7 +68,7 @@ The status and operations of an application run are private to the user who trig
 ### Results
 When the processing of whole slide image is successfully completed, the resulting outputs become available for download. To assess specifics of application outputs please consult our application specific documentation, which you can find in the **Console**. Please note that you access to documentation is restricted to those applications your organisation subscribed to.
 
-Application run outputs are automatically deleted 30 days after the application run has completed. However, the owner of the application run (the user who initiated it) can use the API to manually delete outputs earlier, once the run has terminated. The Launchpad and CLI provide enable to delete results with one click resp. command.
+Application run outputs are automatically deleted 30 days after the application run has terminated. However, the owner of the application run (the user who initiated it) can use the API to manually delete outputs earlier, once the run has terminated. The Launchpad and CLI let you delete results with one click or one command, respectively.
 
 ### Quotas
 Every organization has a limit on how many WSIs it can process in a calendar month. The following quotas exist:
