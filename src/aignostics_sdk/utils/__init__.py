@@ -75,7 +75,7 @@ __all__ = [
 
 from importlib.util import find_spec
 
-if find_spec("sentry"):
+if find_spec("sentry_sdk"):
     from ._sentry import SentrySettings
 
     __all__ += ["SentrySettings"]
