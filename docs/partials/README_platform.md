@@ -101,17 +101,17 @@ For integration with programming languages other than Python, you can use the RE
 
 ### Cost
 
-Every WSI processed by the Platform generates a cost. Usage of the "Test Application" is free of charge for any registered user. The cost for other applications is defined in your business agreement with Aignostics. The cost is calculated based on the number of slides processed. When an application run is cancelled, either by the system or by the user, only processed images incur a cost.
+Every WSI processed by the Platform generates a cost. Usage of the "Test Application" is free of charge for any registered user. The cost for other applications is defined in your business agreement with Aignostics. The cost is calculated based on the number of slides processed. When an application run is canceled, either by the system or by the user, only processed images incur a cost.
 
 **[Read the API reference documentation](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)** or use our **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** to dive into details of all operations and parameters.
 
 ### Platform workflow
 
-The Aignostics Platform delivers enterprise-grade computational pathology through a secure, scalable cloud architecture. Organizations subscribe to the platform, and their users interact through three interfaces - all part of the Python SDK - to leverage advanced AI/ML models running on dedicated NVIDIA® GPU infrastructure.
+The Aignostics Platform delivers enterprise-grade computational pathology through a secure, scalable cloud architecture. Organizations subscribe to the platform, and their users interact through multiple interfaces - all part of the Python SDK - to leverage advanced AI/ML models running on dedicated NVIDIA® GPU infrastructure.
 
 **Key architectural components:**
 
-- **Python SDK**: Provides three user interfaces (Launchpad desktop app, CLI, and Client Library) with unified functionality
+- **Python SDK**: Provides multiple interfaces (Launchpad desktop app, CLI, Python Library, and MCP server) with unified functionality
 - **Enterprise authentication**: Powered by Auth0, supporting Single Sign-On (SSO) and existing identity management systems
 - **Organization storage**: Dedicated Google Cloud Storage bucket per organization with automatic 30-day cleanup
 - **Aignostics Platform API**: Orchestrates application discovery, run submission, status monitoring, and results delivery
@@ -122,7 +122,7 @@ The Aignostics Platform delivers enterprise-grade computational pathology throug
 sequenceDiagram
     autonumber
     actor User as User<br/>(Organization Member)
-    participant SDK as Python SDK<br/>(Launchpad/CLI/Client Library)
+    participant SDK as Python SDK<br/>(Launchpad/CLI/Library/MCP)
     participant Auth0 as Auth0<br/>(Enterprise Identity)
     participant Bucket as Organization Bucket<br/>(Google Cloud Storage)
     participant API as Aignostics Platform API
@@ -177,7 +177,7 @@ sequenceDiagram
 
 Organizations subscribe to the Aignostics Platform and receive dedicated infrastructure including a Google Cloud Storage bucket and API access. Users within the organization authenticate through Auth0, which integrates with enterprise identity management systems for seamless Single Sign-On (SSO).
 
-The Python SDK - available as a desktop application (Launchpad), command-line interface (CLI), or programmable library (Client Library) - handles all complexity of authentication, data upload, run orchestration, and results delivery. Users simply select an application, provide whole slide images with metadata, and submit.
+The Python SDK - available as a desktop application (Launchpad), command-line interface (CLI), Python library, and MCP server - handles all complexity of authentication, data upload, run orchestration, and results delivery. Users simply select an application, provide whole slide images with metadata, and submit.
 
 Behind the scenes, the Aignostics Platform API provisions dedicated NVIDIA® GPU clusters for each application run, ensuring data isolation and compliance with healthcare regulations. Processing occurs incrementally (slide-by-slide), allowing users to monitor progress and download results as they become available rather than waiting for entire cohorts.
 
