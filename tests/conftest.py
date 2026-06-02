@@ -333,6 +333,54 @@ def pytest_sessionfinish(session, exitstatus) -> None:
         session.exitstatus = 0
 
 
+def assert_parquet_geojson_parity(results_dir: Path) -> None:
+    """Assert parquet/GeoJSON output parity for the three he-tme polygon artifact pairs.
+
+    - tissue_qc and tissue_segmentation: total polygon area within 1%
+    - cell_classification: polygon count within 1%
+
+    Uses pandas.read_parquet (engine-agnostic: pyarrow on 3.14, fastparquet on 3.11-3.13).
+    """
+    import ijson
+    import pandas as pd
+    import shapely
+    import shapely.geometry
+
+    tolerance = 0.01
+
+    for parquet_name, geojson_name in [
+        ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
+        ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
+    ]:
+        parquet_area = float(
+            shapely.area(
+                shapely.from_wkb(
+                    pd.read_parquet(results_dir / parquet_name, columns=["geometry"])["geometry"].to_numpy()
+                )
+            ).sum()
+        )
+        geojson_area = 0.0
+        with (results_dir / geojson_name).open("rb") as f:
+            for feature in ijson.items(f, "features.item"):
+                geojson_area += float(shapely.area(shapely.geometry.shape(feature["geometry"])))
+        assert geojson_area > 0, f"No area computed from {geojson_name}"
+        diff_pct = abs(parquet_area - geojson_area) / geojson_area
+        assert diff_pct <= tolerance, (
+            f"Total polygon area differs by >{tolerance * 100:.0f}% between "
+            f"{parquet_name} ({parquet_area:.2f}) and {geojson_name} ({geojson_area:.2f})"
+        )
+
+    parquet_count = len(pd.read_parquet(results_dir / "cell_classification_parquet_polygons.parquet", columns=[]))
+    with (results_dir / "cell_classification_geojson_polygons.json").open("rb") as f:
+        geojson_count = sum(1 for _ in ijson.items(f, "features.item"))
+    delta = abs(parquet_count - geojson_count)
+    assert delta <= max(1, round(parquet_count * tolerance)), (
+        f"Polygon count differs by >{tolerance * 100:.0f}% between "
+        f"cell_classification_parquet_polygons.parquet ({parquet_count}) "
+        f"and cell_classification_geojson_polygons.json ({geojson_count})"
+    )
+
+
 def print_directory_structure(path: Path, step: str | None = None) -> None:
     """Print a detailed directory structure for debugging test scenarios.
 
