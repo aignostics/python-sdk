@@ -93,15 +93,25 @@ exclude_patterns = []
 html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
-html_logo = "../../logo.png"
+html_favicon = "_static/favicon.png"
+html_title = "Platform Documentation"
 html_theme_options = {
-    "announcement": (
-        '<a target="_blank" href="https://github.com/aignostics/python-sdk">GitHub</a> - '
-        '<a target="_blank" href="https://pypi.org/project/aignostics">PyPI</a> - '
-        '<a target="_blank" href="https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags">Docker</a> - '
-        '<a target="_blank" href="https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk">SonarQube</a> - '
-        '<a target="_blank" href="https://app.codecov.io/gh/aignostics/python-sdk">Codecov</a>'
-    ),
+    # Theme-adaptive Aignostics wordmark: white on the dark sidebar,
+    # aubergine on the light sidebar (a single white logo would be
+    # invisible in light mode).
+    "light_logo": "aignostics-wordmark-light.svg",
+    "dark_logo": "aignostics-wordmark-dark.svg",
+    # Aignostics brand colors (from the Platform Console UI palette).
+    # Light mode uses the aubergine primary; dark mode uses the lighter
+    # tint so links stay legible on a dark background.
+    "light_css_variables": {
+        "color-brand-primary": "#483569",
+        "color-brand-content": "#483569",
+    },
+    "dark_css_variables": {
+        "color-brand-primary": "#9b95ec",
+        "color-brand-content": "#9b95ec",
+    },
 }
 
 
