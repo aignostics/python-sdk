@@ -719,23 +719,33 @@ class Run(_AuthenticatedResource):
         """Share this run with all users in an organization.
 
         Args:
+            subject_type: The type of subject to grant access to.
+            subject_id: The ID of the subject to grant access to.
 
         Returns:
-            OrganizationGrant: The created grant.
+            AccessGrant: The created grant.
 
         Raises:
-            Exception: If the API request fails.
+            Exception: If the API request fails after all retries.
         """
-        grant = self._api.create_grant_v1_access_grants_post(
-            grant_create_request=GrantCreateRequest(
-                resource_type=ResourceType.RUN,
-                resource_id=self.run_id,
-                subject_type=subject_type,
-                subject_id=subject_id,
-                relation=GrantRelation.VIEWER,
-            ),
-            _request_timeout=settings().run_timeout,
-            _headers={"User-Agent": user_agent()},
+        grant = Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().run_retry_attempts),
+            wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(
+            lambda: self._api.create_grant_v1_access_grants_post(
+                grant_create_request=GrantCreateRequest(
+                    resource_type=ResourceType.RUN,
+                    resource_id=self.run_id,
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    relation=GrantRelation.VIEWER,
+                ),
+                _request_timeout=settings().run_timeout,
+                _headers={"User-Agent": user_agent()},
+            )
         )
         operation_cache_clear()
         return AccessGrant(

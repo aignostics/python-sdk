@@ -238,11 +238,13 @@ class ShareToken(BaseModel):
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        return Client.get_api_client(cache_token=cache_token).get_share_token_v1_access_share_tokens_share_token_id_get(
+        token = Client.get_api_client(cache_token=cache_token).get_share_token_v1_access_share_tokens_share_token_id_get(
             share_token_id=share_token_id,
             _request_timeout=settings().run_timeout,
             _headers={"User-Agent": user_agent()},
         )
+
+        return ShareToken(api=cls._api, **token.__dict__)
 
     def list_share_grants(self, *, page_size: int = 100) -> Iterator[AccessGrant]:
         """List all active grants where this token is the subject.
