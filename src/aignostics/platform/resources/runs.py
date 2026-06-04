@@ -661,7 +661,7 @@ class Run(_AuthenticatedResource):
         operation_cache_clear()  # Clear all caches since we updated a run
 
     def list_share_grants(
-        self, subject_type: SubjectType | None = None, subject_id: str | None = None, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, nocache: bool = False
+        self, subject_type: SubjectType | None = None, subject_id: str | None = None, relation: GrantRelation | None = None, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, nocache: bool = False
     ) -> Iterator[AccessGrant]:
         """List active organization grants for this run.
 
@@ -670,7 +670,7 @@ class Run(_AuthenticatedResource):
             nocache (bool): If True, bypass cache and fetch fresh data. Defaults to False.
 
         Returns:
-            Iterator[OrganizationGrant]: Active grants for organization_user and organization_admin subjects.
+            Iterator[ShareGrant]: Active grants for this run.
 
         Raises:
             ValueError: If page_size is greater than 100.
@@ -692,6 +692,7 @@ class Run(_AuthenticatedResource):
                 lambda: self._api.list_grants_v1_access_grants_get(
                     resource_type=ResourceType.RUN,
                     resource_id=self.run_id,
+                    relation=relation,
                     revoked=False,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
@@ -709,6 +710,7 @@ class Run(_AuthenticatedResource):
                     nocache=nocache,
                     subject_type=subject_type,
                     subject_id=subject_id,
+                    relation=relation,
                     **kw,
                 ),
                 page_size=page_size,
