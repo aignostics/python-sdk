@@ -14,19 +14,26 @@ from time import sleep
 from typing import Any, cast
 
 import requests
+
+from aignostics.platform.resources.access import AccessGrant, ShareSubject
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     ArtifactOutput,
     CustomMetadataUpdateRequest,
+    GrantCreateRequest,
+    GrantReadResponse,
+    GrantRelation,
     ItemCreationRequest,
     ItemOutput,
     ItemResultReadResponse,
     ItemState,
     ItemTerminationReason,
+    ResourceType,
     RunCreationRequest,
     RunCreationResponse,
     RunState,
     SchedulingRequest,
+    SubjectType,
 )
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
@@ -653,6 +660,83 @@ class Run(_AuthenticatedResource):
             _headers={"User-Agent": user_agent()},
         )
         operation_cache_clear()  # Clear all caches since we updated a run
+
+    def list_share_grants(
+        self, subject_type: SubjectType | None = None, subject_id: str | None = None, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, nocache: bool = False
+    ) -> Iterator[AccessGrant]:
+        """List active organization grants for this run.
+
+        Args:
+            page_size (int): Number of grants per page. Defaults to max (100).
+            nocache (bool): If True, bypass cache and fetch fresh data. Defaults to False.
+
+        Returns:
+            Iterator[OrganizationGrant]: Active grants for organization_user and organization_admin subjects.
+
+        Raises:
+            ValueError: If page_size is greater than 100.
+            Exception: If the API request fails.
+        """
+        if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
+            message = f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
+            raise ValueError(message)
+
+        @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
+        def fetch_grant_page(**kwargs: object) -> list[GrantReadResponse]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=_log_retry_attempt,
+                reraise=True,
+            )(
+                lambda: self._api.list_grants_v1_access_grants_get(
+                    resource_type=ResourceType.RUN,
+                    resource_id=self.run_id,
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    revoked=False,
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                    **kwargs,  # pyright: ignore[reportArgumentType]
+                )
+            )
+
+        return (
+            AccessGrant(
+                api=self._api,
+                **g.__dict__,
+            )
+            for g in paginate(lambda **kw: fetch_grant_page(nocache=nocache, **kw), page_size=page_size)
+        )
+
+    def grant_access(self, share_subject: ShareSubject) -> AccessGrant:
+        """Share this run with all users in an organization.
+
+        Args:
+
+        Returns:
+            OrganizationGrant: The created grant.
+
+        Raises:
+            Exception: If the API request fails.
+        """
+        grant = self._api.create_grant_v1_access_grants_post(
+            grant_create_request=GrantCreateRequest(
+                resource_type=ResourceType.RUN,
+                resource_id=self.run_id,
+                subject_type=share_subject.subject_type,
+                subject_id=share_subject.subject_id,
+                relation=GrantRelation.VIEWER,
+            ),
+            _request_timeout=settings().run_timeout,
+            _headers={"User-Agent": user_agent()},
+        )
+        operation_cache_clear()
+        return AccessGrant(
+            api=self._api,
+            **grant.__dict__
+        )
 
     def __str__(self) -> str:
         """Returns a string representation of the application run.

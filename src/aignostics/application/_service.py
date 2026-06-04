@@ -3,7 +3,7 @@
 import base64
 import re
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterator
 from datetime import datetime
 from http import HTTPStatus
 from importlib.util import find_spec
@@ -27,10 +27,12 @@ from aignostics.platform import (
     InputArtifact,
     InputItem,
     NotFoundException,
+    OrganizationGrant,
     Run,
     RunData,
     RunOutput,
     RunState,
+    ShareToken,
 )
 from aignostics.platform import Service as PlatformService
 from aignostics.utils import BaseService, Health, sanitize_path_component
@@ -1320,6 +1322,161 @@ class Service(BaseService):  # noqa: PLR0904
             raise NotFoundException(message) from e
         except Exception as e:
             message = f"Failed to delete application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_organization_grants(
+        self, run_id: str, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+    ) -> Iterator[OrganizationGrant]:
+        """List active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of grants per page. Defaults to max (100).
+
+        Returns:
+            Iterator[OrganizationGrant]: Active organization grants.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).organization_grants(page_size=page_size)
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list organization grants for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_tokens(
+        self, run_id: str, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+    ) -> Iterator[ShareToken]:
+        """List active share tokens for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of tokens per page. Defaults to max (100).
+
+        Returns:
+            Iterator[ShareToken]: Active share tokens.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).share_tokens(page_size=page_size)
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list share tokens for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_with_organization(
+        self, run_id: str, organization_id: str | None = None
+    ) -> OrganizationGrant:
+        """Share a run with all users in an organization.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): The organization ID to share with.
+                If None, the caller's organization ID is resolved via the /me endpoint.
+
+        Returns:
+            OrganizationGrant: The created grant.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).share_with_organization(organization_id=organization_id)
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to share run '{run_id}' with organization: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_unshare_with_organization(self, run_id: str, organization_id: str | None = None) -> None:
+        """Revoke all active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): Only revoke grants for this organization ID.
+                If None, the caller's organization ID is resolved via the /me endpoint.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            run = self.application_run(run_id)
+            org_id = organization_id or self._get_platform_client().me().organization.id
+            for grant in run.organization_grants(nocache=True):
+                if grant.subject_id == org_id:
+                    grant.revoke()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to unshare run '{run_id}' with organization: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_create_share_token(self, run_id: str) -> ShareToken:
+        """Create a share token for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+
+        Returns:
+            ShareToken: The created token, including the one-time ``token`` value.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).create_share_token()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to create share token for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_revoke_share_token(self, run_id: str, share_token_id: str) -> None:
+        """Revoke a share token for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            share_token_id (str): The ID of the share token to revoke.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            self.application_run(run_id).share_token(share_token_id).revoke()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to revoke share token '{share_token_id}' for run '{run_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
