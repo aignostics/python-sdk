@@ -661,16 +661,27 @@ class Run(_AuthenticatedResource):
         operation_cache_clear()  # Clear all caches since we updated a run
 
     def list_share_grants(
-        self, subject_type: SubjectType | None = None, subject_id: str | None = None, relation: list[GrantRelation] | None = None, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, nocache: bool = False
+        self,
+        subject_type: SubjectType | None = None,
+        subject_id: str | None = None,
+        relation: list[GrantRelation] | None = None,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        nocache: bool = False,
     ) -> Iterator[AccessGrant]:
-        """List active organization grants for this run.
+        """List active access grants for this run.
+
+        Supports optional filtering by subject type, subject ID, and relation.
 
         Args:
-            page_size (int): Number of grants per page. Defaults to max (100).
-            nocache (bool): If True, bypass cache and fetch fresh data. Defaults to False.
+            subject_type: Filter by subject type (e.g. ``ORGANIZATION_USER``, ``SHARE_TOKEN``).
+                Defaults to ``None`` (no filter).
+            subject_id: Filter by subject ID. Defaults to ``None``.
+            relation: Filter by relation type(s). Defaults to ``None``.
+            page_size: Number of grants per page. Defaults to max (100).
+            nocache: If ``True``, bypass cache and fetch fresh data. Defaults to ``False``.
 
         Returns:
-            Iterator[ShareGrant]: Active grants for this run.
+            Iterator[AccessGrant]: Active grants for this run.
 
         Raises:
             ValueError: If page_size is greater than 100.
@@ -680,8 +691,10 @@ class Run(_AuthenticatedResource):
             message = f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
             raise ValueError(message)
 
+        run_id = self.run_id  # capture explicitly so it enters the cache key as an arg
+
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def fetch_grant_page(**kwargs: object) -> list[GrantReadResponse]:
+        def fetch_grant_page(cached_run_id: str, **kwargs: object) -> list[GrantReadResponse]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
@@ -691,7 +704,7 @@ class Run(_AuthenticatedResource):
             )(
                 lambda: self._api.list_grants_v1_access_grants_get(
                     resource_type=ResourceType.RUN,
-                    resource_id=self.run_id,
+                    resource_id=cached_run_id,
                     revoked=False,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
@@ -706,6 +719,7 @@ class Run(_AuthenticatedResource):
             )
             for g in paginate(
                 lambda **kw: fetch_grant_page(
+                    run_id,
                     nocache=nocache,
                     subject_type=subject_type,
                     subject_id=subject_id,
@@ -717,10 +731,11 @@ class Run(_AuthenticatedResource):
         )
 
     def grant_access(self, subject_type: SubjectType, subject_id: str) -> AccessGrant:
-        """Share this run with all users in an organization.
+        """Grant a subject VIEWER access to this run.
 
         Args:
-            subject_type: The type of subject to grant access to.
+            subject_type: The type of subject to grant access to (e.g.
+                ``ORGANIZATION_USER``, ``SHARE_TOKEN``).
             subject_id: The ID of the subject to grant access to.
 
         Returns:
@@ -749,10 +764,7 @@ class Run(_AuthenticatedResource):
             )
         )
         operation_cache_clear()
-        return AccessGrant(
-            api=self._api,
-            **grant.__dict__
-        )
+        return AccessGrant(api=self._api, **grant.__dict__)
 
     def __str__(self) -> str:
         """Returns a string representation of the application run.

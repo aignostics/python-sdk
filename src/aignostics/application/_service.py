@@ -34,10 +34,10 @@ from aignostics.platform import (
     RunState,
 )
 from aignostics.platform import Service as PlatformService
+from aignostics.platform.resources.access import AccessGrant, ShareToken
 from aignostics.utils import BaseService, Health, sanitize_path_component
 from aignostics.wsi import Service as WSIService
 
-from ..platform.resources.access import AccessGrant, ShareToken
 from ._download import (
     download_available_items,
     download_url_to_file_with_progress,
@@ -491,7 +491,7 @@ class Service(BaseService):  # noqa: PLR0904
                 signed_upload_url,
             )
             with (
-                Path(source_file_path).open("rb") as f,
+                open(source_file_path, "rb") as f,
             ):
 
                 def read_in_chunks(  # noqa: PLR0913, PLR0917
@@ -923,7 +923,7 @@ class Service(BaseService):  # noqa: PLR0904
                             name=input_artifact_name,
                             download_url=download_url,
                             metadata=item_metadata,
-                        ),
+                        )
                     ],
                     custom_metadata={
                         "sdk": {
@@ -931,10 +931,10 @@ class Service(BaseService):  # noqa: PLR0904
                                 "bucket_name": bucket_name,
                                 "object_key": object_key,
                                 "signed_download_url": download_url,
-                            },
-                        },
+                            }
+                        }
                     },
-                ),
+                )
             )
         logger.trace("Items for application run submission: {}", items)
 
@@ -1326,7 +1326,9 @@ class Service(BaseService):  # noqa: PLR0904
             raise RuntimeError(message) from e
 
     def application_run_organization_grants(
-        self, run_id: str, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> Iterator[AccessGrant]:
         """List active organization grants for a run.
 
@@ -1342,7 +1344,11 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If the request fails unexpectedly.
         """
         try:
-            return self.application_run(run_id).list_share_grants(subject_type=SubjectType.ORGANIZATION_USER, relation=[GrantRelation.VIEWER], page_size=page_size)
+            return self.application_run(run_id).list_share_grants(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                relation=[GrantRelation.VIEWER],
+                page_size=page_size,
+            )
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
@@ -1353,7 +1359,9 @@ class Service(BaseService):  # noqa: PLR0904
             raise RuntimeError(message) from e
 
     def application_run_share_tokens(
-        self, run_id: str, page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> Iterator[ShareToken]:
         """List active share tokens for a run.
 
@@ -1369,7 +1377,7 @@ class Service(BaseService):  # noqa: PLR0904
             RuntimeError: If the request fails unexpectedly.
         """
         try:
-            return self._get_platform_client().share_tokens.list(run_id=run_id)
+            return self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
@@ -1380,12 +1388,16 @@ class Service(BaseService):  # noqa: PLR0904
             raise RuntimeError(message) from e
 
     def application_run_share_with_organization(
-        self, run_id: str, organization_id: str | None = None,
+        self,
+        run_id: str,
+        organization_id: str | None = None,
     ) -> AccessGrant:
         """Share a run with all users in an organization.
 
         Args:
             run_id (str): The ID of the run.
+            organization_id (str | None): The organization to share with. Defaults to
+                the authenticated user's own organization.
 
         Returns:
             AccessGrant: The created grant.
@@ -1396,7 +1408,10 @@ class Service(BaseService):  # noqa: PLR0904
         """
         try:
             organization_id = organization_id or self._get_platform_client().me().organization.id
-            return self.application_run(run_id).grant_access(subject_type=SubjectType.ORGANIZATION_USER, subject_id=organization_id)
+            return self.application_run(run_id).grant_access(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                subject_id=organization_id,
+            )
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
@@ -1444,7 +1459,7 @@ class Service(BaseService):  # noqa: PLR0904
                 Pass ``None`` (default) for a token that never expires.
 
         Returns:
-            ShareToken: The created token, including the one-time ``token`` value.
+            ShareToken: The created token. Access the one-time secret via ``share_token``.
 
         Raises:
             NotFoundException: If the run is not found.
@@ -1452,7 +1467,10 @@ class Service(BaseService):  # noqa: PLR0904
         """
         try:
             share_token = self._get_platform_client().share_tokens.create(expires_at=expires_at)
-            self.application_run(run_id).grant_access(subject_type=SubjectType.SHARE_TOKEN, subject_id=share_token.share_token_id)
+            self.application_run(run_id).grant_access(
+                subject_type=SubjectType.SHARE_TOKEN,
+                subject_id=share_token.share_token_id,
+            )
             return share_token
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
@@ -1463,7 +1481,8 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_revoke_share_token(self, run_id: str, share_token_id: str) -> None:
+    @staticmethod
+    def application_run_revoke_share_token(run_id: str, share_token_id: str) -> None:
         """Revoke a share token for a run.
 
         Args:
@@ -1477,7 +1496,7 @@ class Service(BaseService):  # noqa: PLR0904
         try:
             ShareToken.for_token_id(share_token_id).revoke()
         except NotFoundException as e:
-            message = f"Application run with ID '{run_id}' not found: {e}"
+            message = f"Share token with ID '{share_token_id}' not found: {e}"
             logger.warning(message)
             raise NotFoundException(message) from e
         except Exception as e:
@@ -1633,7 +1652,7 @@ class Service(BaseService):  # noqa: PLR0904
                     item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
                 except Exception as e:
                     logger.warning(
-                        "Failed to download input slide from '{}' to '{}': {}", item.external_id, local_path, e,
+                        "Failed to download input slide from '{}' to '{}': {}", item.external_id, local_path, e
                     )
 
         if qupath_project:
@@ -1652,7 +1671,7 @@ class Service(BaseService):  # noqa: PLR0904
                     continue
                 image_paths.append(local_path.resolve())
             added = QuPathService.add(
-                final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress,
+                final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
             )
             message = f"Added '{added}' input slides to QuPath project."
             logger.debug(message)
@@ -1700,7 +1719,7 @@ class Service(BaseService):  # noqa: PLR0904
                 break
 
             logger.trace(
-                "Run '{}' is in progress with status '{}', waiting for completion ...", run_id, run_details.state,
+                "Run '{}' is in progress with status '{}', waiting for completion ...", run_id, run_details.state
             )
             progress.status = DownloadProgressState.WAITING
             update_progress(progress, download_progress_callable, download_progress_queue)

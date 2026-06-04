@@ -48,6 +48,7 @@ Typical workflow::
         print(t.share_token_id, t.expires_at)
     token.revoke()
 """
+
 import builtins
 from collections.abc import Iterator
 from datetime import datetime
@@ -151,12 +152,15 @@ class AccessGrant(BaseModel):
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        return Client.get_api_client(
-            cache_token=cache_token).get_grant_v1_access_grants_grant_id_get(
+        api = Client.get_api_client(cache_token=cache_token)
+
+        grant = api.get_grant_v1_access_grants_grant_id_get(
             grant_id=grant_id,
             _request_timeout=settings().run_timeout,
             _headers={"User-Agent": user_agent()},
         )
+
+        return cls(api=api, **grant.__dict__)
 
 
 class ShareToken(BaseModel):
@@ -184,8 +188,8 @@ class ShareToken(BaseModel):
 
         # Create a token and note the secret — it won't be retrievable later
         token = client.share_tokens.create()
-        secret = token.share_token          # store or transmit this once
-        token_id = token.share_token_id     # stable ID for revocation
+        secret = token.share_token  # store or transmit this once
+        token_id = token.share_token_id  # stable ID for revocation
 
         # Fetch the token record later (secret is gone)
         fetched = ShareToken.for_token_id(token_id)
@@ -284,13 +288,7 @@ class ShareToken(BaseModel):
                 ),
             )
 
-        return (
-            AccessGrant(
-                api=self._api,
-                **g.__dict__
-            )
-            for g in paginate(fetch_page, page_size=page_size)
-        )
+        return (AccessGrant(api=self._api, **g.__dict__) for g in paginate(fetch_page, page_size=page_size))
 
     def revoke(self) -> None:
         """Revoke this share token, invalidating all grants associated with it.
@@ -428,17 +426,12 @@ class ShareTokens(_AuthenticatedResource):
             token = client.share_tokens.create(
                 expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
             )
-            secret = token.share_token   # transmit to the intended recipient
+            secret = token.share_token  # transmit to the intended recipient
         """
         share_token = self._api.create_share_token_v1_access_share_tokens_post(
-            share_token_create_request=ShareTokenCreateRequest(
-                expires_at=expires_at
-            ),
+            share_token_create_request=ShareTokenCreateRequest(expires_at=expires_at),
             _request_timeout=settings().run_timeout,
             _headers={"User-Agent": user_agent()},
         )
 
-        return ShareToken(
-            api=self._api,
-            **share_token.__dict__
-        )
+        return ShareToken(api=self._api, **share_token.__dict__)
