@@ -139,7 +139,9 @@ class TestShareTokenForTokenId:
     @staticmethod
     def test_calls_api_with_token_id(mock_api: Mock) -> None:
         """for_token_id() calls the get_share_token endpoint with the given ID."""
-        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = Mock()
+        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
+            _make_share_token_read_response()
+        )
 
         with patch("aignostics.platform._client.Client") as mock_client_cls:
             mock_client_cls.get_api_client.return_value = mock_api
@@ -156,7 +158,9 @@ class TestShareTokenForTokenId:
     @staticmethod
     def test_uses_cached_api_client_by_default(mock_api: Mock) -> None:
         """for_token_id() calls get_api_client with cache_token=True by default."""
-        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = Mock()
+        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
+            _make_share_token_read_response()
+        )
 
         with patch("aignostics.platform._client.Client") as mock_client_cls:
             mock_client_cls.get_api_client.return_value = mock_api
@@ -168,7 +172,9 @@ class TestShareTokenForTokenId:
     @staticmethod
     def test_cache_token_false_forwarded(mock_api: Mock) -> None:
         """for_token_id(cache_token=False) passes cache_token=False to get_api_client."""
-        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = Mock()
+        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
+            _make_share_token_read_response()
+        )
 
         with patch("aignostics.platform._client.Client") as mock_client_cls:
             mock_client_cls.get_api_client.return_value = mock_api
@@ -178,16 +184,21 @@ class TestShareTokenForTokenId:
 
     @pytest.mark.unit
     @staticmethod
-    def test_returns_api_response(mock_api: Mock) -> None:
-        """for_token_id() returns the raw value from the API call."""
-        sentinel = object()
-        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = sentinel
+    def test_returns_share_token_with_correct_fields(mock_api: Mock) -> None:
+        """for_token_id() returns a ShareToken constructed from the API response."""
+        mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
+            _make_share_token_read_response()
+        )
 
         with patch("aignostics.platform._client.Client") as mock_client_cls:
             mock_client_cls.get_api_client.return_value = mock_api
             result = ShareToken.for_token_id(_TOKEN_ID)
 
-        assert result is sentinel
+        assert isinstance(result, ShareToken)
+        assert result.share_token_id == _TOKEN_ID
+        assert result.created_at == _CREATED_AT
+        assert result.revoked is False
+        assert result.share_token is None  # Secret absent in read responses
 
 
 class TestShareTokenRevoke:

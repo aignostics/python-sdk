@@ -5,6 +5,7 @@ import json
 import sys
 import time
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -62,7 +63,7 @@ DueDateOption = Annotated[
     typer.Option(
         help="Optional soft due date to include with the run submission, ISO8601 format. "
         "The scheduler will try to complete the run by this date, taking the subscription tier"
-        "and available GPU resources into account."
+        "and available GPU resources into account.",
     ),
 ]
 
@@ -204,7 +205,7 @@ def application_list(  # noqa: C901
                 logger.exception(f"Failed to get application details for application '{app.application_id}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application details for application "
-                    f"'{app.application_id}': {e}"
+                    f"'{app.application_id}': {e}",
                 )
                 continue
             console.print("[bold]Available Versions:[/bold]")
@@ -228,7 +229,7 @@ def application_list(  # noqa: C901
         for app in apps:
             app_count += 1
             console.print(
-                f"- [bold]{app.application_id}[/bold] - latest application version: `{app.latest_version or 'None'}`"
+                f"- [bold]{app.application_id}[/bold] - latest application version: `{app.latest_version or 'None'}`",
             )
 
     if app_count == 0:
@@ -294,8 +295,8 @@ def application_dump_schemata(  # noqa: C901
         if input_artifact.metadata_schema:
             file_path: Path = sanitize_path(
                 Path(
-                    destination / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json"
-                )
+                    destination / f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json",
+                ),
             )  # type: ignore
             file_path.write_text(data=json.dumps(input_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
@@ -305,14 +306,14 @@ def application_dump_schemata(  # noqa: C901
             file_path = sanitize_path(
                 Path(
                     destination
-                    / f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json"
-                )
+                    / f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json",
+                ),
             )  # type: ignore
             file_path.write_text(data=json.dumps(output_artifact.metadata_schema, indent=2), encoding="utf-8")
             created_files.append(file_path)
 
     md_file_path: Path = sanitize_path(
-        Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.md")
+        Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.md"),
     )  # type: ignore
     with md_file_path.open("w", encoding="utf-8") as md_file:
         md_file.write(f"# Schemata for Aignostics Application {app.name}\n")
@@ -322,19 +323,19 @@ def application_dump_schemata(  # noqa: C901
         for input_artifact in app_version.input_artifacts:
             md_file.write(
                 f"- {input_artifact.name}: "
-                f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n"
+                f"{app.application_id}_{app_version.version_number}_input_{input_artifact.name}.json\n",
             )
         md_file.write("\n## Output Artifacts\n")
         for output_artifact in app_version.output_artifacts:
             md_file.write(
                 f"- {output_artifact.name}: "
-                f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n"
+                f"{app.application_id}_{app_version.version_number}_output_{output_artifact.name}.json\n",
             )
     created_files.append(md_file_path)
 
     if zip:
         zip_filename = sanitize_path(
-            Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.zip")
+            Path(destination / f"{app.application_id}_{app_version.version_number}_schemata.zip"),
         )
         with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file_path in created_files:
@@ -399,7 +400,7 @@ def application_describe(  # noqa: C901, PLR0912
                 logger.exception(f"Failed to get application version for '{application_id}', '{version.number}'")
                 console.print(
                     f"[error]Error:[/error] Failed to get application version for "
-                    f"'{application_id}', '{version.number}': {e}"
+                    f"'{application_id}', '{version.number}': {e}",
                 )
                 sys.exit(1)
 
@@ -599,7 +600,7 @@ def run_prepare(
             "Each mapping is of the form '<regexp>:<key>=<value>,<key>=<value>,...'. "
             "The regular expression is matched against the external_id attribute of the entry. "
             "The key/value pairs are applied to the entry if the pattern matches. "
-            "You can use the mapping option multiple times to set values for multiple files. "
+            "You can use the mapping option multiple times to set values for multiple files. ",
         ),
     ] = None,
 ) -> None:
@@ -711,7 +712,7 @@ def run_upload(  # noqa: PLR0913, PLR0917
     with Progress(
         TextColumn(
             f"[progress.description]Uploading from {metadata_csv_file} to "
-            f"{BucketService().get_bucket_protocol()}:/{BucketService().get_bucket_name()}/{upload_prefix}"
+            f"{BucketService().get_bucket_protocol()}:/{BucketService().get_bucket_name()}/{upload_prefix}",
         ),
         BarColumn(),
         TaskProgressColumn(),
@@ -794,24 +795,24 @@ def run_submit(  # noqa: PLR0913, PLR0917
 
     try:
         app_version = Service().application_version(
-            application_id=application_id, application_version=application_version
+            application_id=application_id, application_version=application_version,
         )
     except ValueError as e:
         logger.warning(
-            "Bad input to create run for application '{}' (version: '{}'): {}", application_id, application_version, e
+            "Bad input to create run for application '{}' (version: '{}'): {}", application_id, application_version, e,
         )
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application "
-            f"'{application_id} (version: {application_version})': {e}"
+            f"'{application_id} (version: {application_version})': {e}",
         )
         sys.exit(2)
     except NotFoundException as e:
         logger.warning(
-            "Could not find application version '{}' (version: '{}'): {}", application_id, application_version, e
+            "Could not find application version '{}' (version: '{}'): {}", application_id, application_version, e,
         )
         console.print(
             f"[warning]Warning:[/warning] Could not find application '{application_id} "
-            f"(version: {application_version})': {e}"
+            f"(version: {application_version})': {e}",
         )
         sys.exit(2)
     except Exception as e:
@@ -856,7 +857,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
         )
         console.print(
             f"Submitted run with id '{application_run.run_id}' for "
-            f"'{application_id} (version: {app_version.version_number})'."
+            f"'{application_id} (version: {app_version.version_number})'.",
         )
         return application_run.run_id
     except ValueError as e:
@@ -868,16 +869,16 @@ def run_submit(  # noqa: PLR0913, PLR0917
         )
         console.print(
             f"[warning]Warning:[/warning] Bad input to create run for application "
-            f"'{application_id} (version: {app_version.version_number})': {e}"
+            f"'{application_id} (version: {app_version.version_number})': {e}",
         )
         sys.exit(2)
     except Exception as e:
         logger.exception(
-            "Failed to create run for application '{}' (version: {})", application_id, app_version.version_number
+            "Failed to create run for application '{}' (version: {})", application_id, app_version.version_number,
         )
         console.print(
             f"[error]Error:[/error] Failed to create run for application "
-            f"'{application_id} (version: {app_version.version_number})': {e}"
+            f"'{application_id} (version: {app_version.version_number})': {e}",
         )
         sys.exit(1)
 
@@ -984,7 +985,7 @@ def run_describe(
             print(json.dumps(run_data, indent=2, default=str))
         else:
             retrieve_and_print_run_details(
-                run, hide_platform_queue_position=not user_info.is_internal_user, summarize=summarize
+                run, hide_platform_queue_position=not user_info.is_internal_user, summarize=summarize,
             )
         logger.debug("Described run with ID '{}'", run_id)
     except NotFoundException:
@@ -1220,7 +1221,7 @@ def run_cancel_by_filter(  # noqa: C901, PLR0912, PLR0915
 def run_update_metadata(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to update")],
     metadata_json: Annotated[
-        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
+        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')'),
     ],
 ) -> None:
     """Update custom metadata for a run."""
@@ -1261,7 +1262,7 @@ def run_update_item_metadata(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run containing the item")],
     external_id: Annotated[str, typer.Argument(..., help="External ID of the item to update")],
     metadata_json: Annotated[
-        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
+        str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')'),
     ],
 ) -> None:
     """Update custom metadata for an item in a run."""
@@ -1296,7 +1297,7 @@ def run_update_item_metadata(
         )
         console.print(
             f"[warning]Warning:[/warning] Run ID '{run_id}' or item external ID '{external_id}' "
-            f"invalid or metadata invalid: {e}"
+            f"invalid or metadata invalid: {e}",
         )
         sys.exit(2)
     except Exception as e:
@@ -1307,7 +1308,7 @@ def run_update_item_metadata(
         )
         console.print(
             f"[bold red]Error:[/bold red] Failed to update custom metadata for item '{external_id}' "
-            f"in run with ID '{run_id}': {e}"
+            f"in run with ID '{run_id}': {e}",
         )
         sys.exit(1)
 
@@ -1319,27 +1320,29 @@ def run_share_status(
 ) -> None:
     """Show sharing status: active organization grants and share tokens."""
     try:
-        grants = list(Service().application_run_organization_grants(run_id))
+        org_grants = list(Service().application_run_organization_grants(run_id))
         tokens = list(Service().application_run_share_tokens(run_id))
+
         if format == "json":
             print(
                 json.dumps(
                     {
-                        "organization_grants": [g.model_dump() for g in grants],
+                        "organization_grants": [g.model_dump() for g in org_grants],
                         "share_tokens": [t.model_dump() for t in tokens],
                     },
                     indent=2,
                     default=str,
-                )
+                ),
             )
         else:
-            console.print(f"[bold]Organization grants[/bold] ({len(grants)}):")
-            for g in grants:
+            console.print(f"[bold]Organization grants[/bold] ({len(org_grants)}):")
+            for g in org_grants:
                 console.print(f"  {g.grant_id}  subject={g.subject_id}  relation={g.relation.value}")
+
             console.print(f"[bold]Share tokens[/bold] ({len(tokens)}):")
             for t in tokens:
                 expires = t.expires_at.isoformat() if t.expires_at else "never"
-                created = t.created_at.isoformat() if t.created_at else "unknown"
+                created = t.created_at.isoformat()
                 console.print(f"  {t.share_token_id}  created={created}  expires={expires}")
     except NotFoundException:
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
@@ -1366,7 +1369,7 @@ def run_share_organization_list(
             for g in grants:
                 console.print(
                     f"{g.grant_id}  subject={g.subject_id}"
-                    f"  relation={g.relation.value}  created={g.created_at.isoformat()}"
+                    f"  relation={g.relation.value}  created={g.created_at.isoformat()}",
                 )
     except NotFoundException:
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
@@ -1381,11 +1384,12 @@ def run_share_organization_list(
 def run_share_organization_grant(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to share")],
     organization_id: Annotated[
-        str | None, typer.Option(help="Organization ID to share with (defaults to your own organization)")
+        str | None,
+        typer.Argument(help="Organization ID to share with (defaults to your own organization)"),
     ] = None,
     format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
 ) -> None:
-    """Share a run with all users in your organization."""
+    """Share a run with all users in an organization."""
     try:
         grant = Service().application_run_share_with_organization(run_id, organization_id=organization_id)
         if format == "json":
@@ -1405,10 +1409,11 @@ def run_share_organization_grant(
 def run_share_organization_revoke(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to unshare")],
     organization_id: Annotated[
-        str | None, typer.Option(help="Organization ID to revoke access for (defaults to your own organization)")
+        str | None,
+        typer.Argument(help="Organization ID to revoke access for (defaults to your own organization)"),
     ] = None,
 ) -> None:
-    """Revoke all organization grants for a run."""
+    """Revoke organization grants for a run."""
     try:
         Service().application_run_unshare_with_organization(run_id, organization_id=organization_id)
         console.print(f"Organization access revoked for run '{run_id}'.")
@@ -1429,6 +1434,7 @@ def run_share_token_list(
     """List active share tokens for a run."""
     try:
         tokens = list(Service().application_run_share_tokens(run_id))
+
         if format == "json":
             print(json.dumps([t.model_dump() for t in tokens], indent=2, default=str))
         else:
@@ -1450,18 +1456,36 @@ def run_share_token_list(
 @share_token_app.command("create")
 def run_share_token_create(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to create a share token for")],
+    expires_at: Annotated[
+        str | None,
+        typer.Option(
+            help="Expiry datetime in ISO 8601 format, e.g. '2026-12-31T23:59:59Z'. Omit for a non-expiring token.",
+        ),
+    ] = None,
     format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
 ) -> None:
     """Create a share token for a run. The token value is shown only once."""
+    expires_at_dt: datetime | None = None
+    if expires_at is not None:
+        try:
+            expires_at_dt = datetime.fromisoformat(expires_at)
+            if expires_at_dt.tzinfo is None:
+                expires_at_dt = expires_at_dt.replace(tzinfo=UTC)
+        except ValueError:
+            console.print(
+                f"[error]Error:[/error] Invalid --expires-at value '{expires_at}'. "
+                "Use ISO 8601 format, e.g. '2026-12-31T23:59:59Z'."
+            )
+            sys.exit(1)
     try:
-        token = Service().application_run_create_share_token(run_id)
+        token = Service().application_run_create_share_token(run_id, expires_at=expires_at_dt)
         if format == "json":
             print(json.dumps(token.model_dump(), indent=2, default=str))
         else:
             expires = token.expires_at.isoformat() if token.expires_at else "never"
             console.print(f"Share token created for run '{run_id}'.")
             console.print(f"  Token ID : {token.share_token_id}")
-            console.print(f"  Token    : [bold]{token.token}[/bold]")
+            console.print(f"  Token    : [bold]{token.share_token}[/bold]")
             console.print(f"  Expires  : {expires}")
             console.print("[yellow]Save the token value — it will not be shown again.[/yellow]")
     except NotFoundException:
@@ -1533,7 +1557,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
             "This option requires the QuPath extension for Launchpad: "
             'start the Launchpad with `uvx --with "aignostics[qupath]" aignostics ...` \n'
             "This options requires installation of the QuPath application: "
-            'Run uvx --with "aignostics[qupath]" aignostics qupath install'
+            'Run uvx --with "aignostics[qupath]" aignostics qupath install',
         ),
     ] = False,
 ) -> None:
@@ -1701,7 +1725,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     except Exception as e:
         logger.exception(f"Failed to download results of run with ID '{run_id}'")
         console.print(
-            f"[error]Error:[/error] Failed to download results of run with ID '{run_id}': {type(e).__name__}: {e}"
+            f"[error]Error:[/error] Failed to download results of run with ID '{run_id}': {type(e).__name__}: {e}",
         )
         sys.exit(1)
 
@@ -1819,7 +1843,7 @@ def application_version_document_describe(
             print(json.dumps({"error": "failed", "message": str(e)}), file=sys.stderr)
         else:
             console.print(
-                f"[error]Error:[/error] Failed to describe release document '{document_name}' for '{version_ref}': {e}"
+                f"[error]Error:[/error] Failed to describe release document '{document_name}' for '{version_ref}': {e}",
             )
         sys.exit(1)
 
@@ -1882,7 +1906,7 @@ def application_version_document_download(
     except Exception as e:
         logger.exception(f"Failed to download release document '{document_name}' for '{version_ref}'")
         console.print(
-            f"[error]Error:[/error] Failed to download release document '{document_name}' for '{version_ref}': {e}"
+            f"[error]Error:[/error] Failed to download release document '{document_name}' for '{version_ref}': {e}",
         )
         sys.exit(1)
 

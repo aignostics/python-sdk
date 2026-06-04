@@ -202,6 +202,7 @@ class ShareToken(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _api: _AuthenticatedApi = PrivateAttr()
+
     share_token_id: str
     revoked: bool
     created_at: datetime
@@ -238,13 +239,14 @@ class ShareToken(BaseModel):
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        token = Client.get_api_client(cache_token=cache_token).get_share_token_v1_access_share_tokens_share_token_id_get(
+        api = Client.get_api_client(cache_token=cache_token)
+        token = api.get_share_token_v1_access_share_tokens_share_token_id_get(
             share_token_id=share_token_id,
             _request_timeout=settings().run_timeout,
             _headers={"User-Agent": user_agent()},
         )
 
-        return ShareToken(api=cls._api, **token.__dict__)
+        return ShareToken(api=api, **token.__dict__)
 
     def list_share_grants(self, *, page_size: int = 100) -> Iterator[AccessGrant]:
         """List all active grants where this token is the subject.
@@ -337,13 +339,15 @@ class ShareTokens(_AuthenticatedResource):
     def __init__(self, api: _AuthenticatedApi) -> None:  # noqa: D107
         super().__init__(api)
 
-    def list(self, *, nocache: bool = False, page_size: int = 100) -> Iterator[ShareToken]:
+    def list(self, *, run_id: str | None = None, nocache: bool = False, page_size: int = 100) -> Iterator[ShareToken]:
         """List all share tokens for the authenticated user.
 
         Results are cached for ``run_cache_ttl`` seconds and retried on
         transient network or server errors.
 
         Args:
+            run_id: Optional run ID to filter tokens by the run they are associated with.
+                Defaults to ``None`` (no filter).
             nocache: If ``True``, bypass the local cache and fetch fresh data
                 from the API.  The fetched result is still written to the cache.
                 Defaults to ``False``.
@@ -378,6 +382,8 @@ class ShareTokens(_AuthenticatedResource):
                 lambda: [
                     ShareToken(api=self._api, **t.__dict__)
                     for t in self._api.list_share_tokens_v1_access_share_tokens_get(
+                        run_id=run_id,
+                        revoked=False,
                         _request_timeout=settings().run_timeout,
                         _headers={"User-Agent": user_agent()},
                         **kwargs,  # pyright: ignore[reportArgumentType]
