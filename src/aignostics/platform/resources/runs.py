@@ -14,8 +14,6 @@ from time import sleep
 from typing import Any, cast
 
 import requests
-
-from aignostics.platform.resources.access import AccessGrant, ShareSubject
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
 from aignx.codegen.models import (
     ArtifactOutput,
@@ -78,6 +76,7 @@ from aignostics.platform._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
+from aignostics.platform.resources.access import AccessGrant
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
@@ -710,7 +709,7 @@ class Run(_AuthenticatedResource):
             for g in paginate(lambda **kw: fetch_grant_page(nocache=nocache, **kw), page_size=page_size)
         )
 
-    def grant_access(self, share_subject: ShareSubject) -> AccessGrant:
+    def grant_access(self, subject_type: SubjectType, subject_id: str) -> AccessGrant:
         """Share this run with all users in an organization.
 
         Args:
@@ -725,8 +724,8 @@ class Run(_AuthenticatedResource):
             grant_create_request=GrantCreateRequest(
                 resource_type=ResourceType.RUN,
                 resource_id=self.run_id,
-                subject_type=share_subject.subject_type,
-                subject_id=share_subject.subject_id,
+                subject_type=subject_type,
+                subject_id=subject_id,
                 relation=GrantRelation.VIEWER,
             ),
             _request_timeout=settings().run_timeout,

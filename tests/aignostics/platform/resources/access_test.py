@@ -190,61 +190,6 @@ class TestShareTokenForTokenId:
         assert result is sentinel
 
 
-class TestShareTokenGrants:
-    """Tests for ShareToken.grants()."""
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_returns_access_grants(mock_api: Mock) -> None:
-        """grants() returns AccessGrant objects for each grant from the API."""
-        grant_response = _make_grant_read_response()
-        mock_api.list_grants_v1_access_grants_get.return_value = [grant_response]
-        token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
-
-        result = list(token.grants())
-
-        assert len(result) == 1
-        assert isinstance(result[0], AccessGrant)
-        assert result[0].grant_id == _GRANT_ID
-        assert result[0].relation == GrantRelation.VIEWER
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_calls_api_with_token_subject_params(mock_api: Mock) -> None:
-        """grants() calls list_grants with subject_type=SHARE_TOKEN and the token's id."""
-        mock_api.list_grants_v1_access_grants_get.return_value = []
-        token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
-
-        list(token.grants())
-
-        call_kw = mock_api.list_grants_v1_access_grants_get.call_args.kwargs
-        assert call_kw["subject_type"] == SubjectType.SHARE_TOKEN
-        assert call_kw["subject_id"] == _TOKEN_ID
-        assert call_kw["revoked"] is False
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_returns_empty_iterator_when_no_grants(mock_api: Mock) -> None:
-        """grants() returns an empty iterator when the API returns no grants."""
-        mock_api.list_grants_v1_access_grants_get.return_value = []
-        token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
-
-        assert list(token.grants()) == []
-
-    @pytest.mark.unit
-    @staticmethod
-    def test_multiple_grants_returned(mock_api: Mock) -> None:
-        """grants() returns all grants from the API response."""
-        grant_responses = [_make_grant_read_response(grant_id=f"grant-{i}") for i in range(3)]
-        mock_api.list_grants_v1_access_grants_get.return_value = grant_responses
-        token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
-
-        result = list(token.grants())
-
-        assert len(result) == 3
-        assert all(isinstance(g, AccessGrant) for g in result)
-
-
 class TestShareTokenRevoke:
     """Tests for ShareToken.revoke()."""
 

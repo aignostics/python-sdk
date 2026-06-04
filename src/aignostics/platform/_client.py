@@ -30,7 +30,7 @@ from aignostics.platform.resources.runs import Run, Runs
 from aignostics.utils import user_agent
 
 from ._settings import settings
-from .resources.access import ShareToken, ShareTokens
+from .resources.access import ShareTokens
 
 # Safety bound for the external token-provider cache.  In normal usage callers
 # reuse a single provider reference, so this limit should never be reached.
