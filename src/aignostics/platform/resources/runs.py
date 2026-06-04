@@ -692,8 +692,6 @@ class Run(_AuthenticatedResource):
                 lambda: self._api.list_grants_v1_access_grants_get(
                     resource_type=ResourceType.RUN,
                     resource_id=self.run_id,
-                    subject_type=subject_type,
-                    subject_id=subject_id,
                     revoked=False,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
@@ -706,7 +704,15 @@ class Run(_AuthenticatedResource):
                 api=self._api,
                 **g.__dict__,
             )
-            for g in paginate(lambda **kw: fetch_grant_page(nocache=nocache, **kw), page_size=page_size)
+            for g in paginate(
+                lambda **kw: fetch_grant_page(
+                    nocache=nocache,
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    **kw,
+                ),
+                page_size=page_size,
+            )
         )
 
     def grant_access(self, subject_type: SubjectType, subject_id: str) -> AccessGrant:
