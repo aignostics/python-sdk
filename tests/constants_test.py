@@ -72,36 +72,7 @@ SPOT_4_HEIGHT = 3640
 # the "staging" case below — only the constants that actually differ need to be reassigned.
 # Note: defined here rather than inside each match arm to avoid SonarCloud flagging the
 # nearly-identical blocks as duplicated code (the 3% duplication threshold).
-SPOT_0_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_segmentation_map_image.tiff", 1645652, 10),
-    ("tissue_qc_geojson_polygons.json", 101150, 10),
-    ("tissue_segmentation_geojson_polygons.json", 327625, 10),
-    ("readout_generation_slide_readouts.csv", 303585, 10),
-    ("readout_generation_cell_readouts.csv", 1660865, 10),
-    ("cell_classification_geojson_polygons.json", 6117357, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 2858496, 10),
-    ("tissue_segmentation_csv_class_information.csv", 452, 10),
-    ("tissue_qc_csv_class_information.csv", 285, 10),
-    ("tissue_qc_parquet_polygons.parquet", 39435, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 117509, 10),
-    ("cell_classification_parquet_polygons.parquet", 1985592, 10),
-]
 SPOT_0_EXPECTED_CELLS_CLASSIFIED = (39798, 10)
-
-SPOT_1_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
-    ("tissue_qc_geojson_polygons.json", 75281, 10),
-    ("tissue_segmentation_geojson_polygons.json", 152301, 10),
-    ("readout_generation_slide_readouts.csv", 299361, 10),
-    ("readout_generation_cell_readouts.csv", 464838, 10),
-    ("cell_classification_geojson_polygons.json", 1726813, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 1783376, 10),
-    ("tissue_segmentation_csv_class_information.csv", 446, 10),
-    ("tissue_qc_csv_class_information.csv", 290, 10),
-    ("tissue_qc_parquet_polygons.parquet", 29087, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 56563, 10),
-    ("cell_classification_parquet_polygons.parquet", 562536, 10),
-]
 
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "production":
@@ -119,6 +90,35 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 25
 
+        SPOT_0_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1645652, 10),
+            ("tissue_qc_geojson_polygons.json", 101150, 10),
+            ("tissue_segmentation_geojson_polygons.json", 327625, 10),
+            ("readout_generation_slide_readouts.csv", 303585, 10),
+            ("readout_generation_cell_readouts.csv", 1660865, 10),
+            ("cell_classification_geojson_polygons.json", 6117357, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2858496, 10),
+            ("tissue_segmentation_csv_class_information.csv", 452, 10),
+            ("tissue_qc_csv_class_information.csv", 285, 10),
+            ("tissue_qc_parquet_polygons.parquet", 39435, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 117509, 10),
+            ("cell_classification_parquet_polygons.parquet", 1985592, 10),
+        ]
+        SPOT_1_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
+            ("tissue_qc_geojson_polygons.json", 75281, 10),
+            ("tissue_segmentation_geojson_polygons.json", 152301, 10),
+            ("readout_generation_slide_readouts.csv", 299361, 10),
+            ("readout_generation_cell_readouts.csv", 464838, 10),
+            ("cell_classification_geojson_polygons.json", 1726813, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 1783376, 10),
+            ("tissue_segmentation_csv_class_information.csv", 446, 10),
+            ("tissue_qc_csv_class_information.csv", 290, 10),
+            ("tissue_qc_parquet_polygons.parquet", 29087, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 56563, 10),
+            ("cell_classification_parquet_polygons.parquet", 562536, 10),
+        ]
+
     case "staging":
         TEST_APPLICATION_ID = "test-app"
         TEST_APPLICATION_VERSION = "1.0.0"
@@ -134,10 +134,38 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 25
 
-        # If staging outputs differ from the defaults above, override them here, e.g.:
-        # SPOT_0_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
-        # SPOT_0_EXPECTED_CELLS_CLASSIFIED = (<count>, 10)
-        # SPOT_1_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
+        SPOT_0_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1645652, 10),
+            ("tissue_qc_geojson_polygons.json", 101150, 10),
+            ("tissue_segmentation_geojson_polygons.json", 327625, 10),
+            ("readout_generation_slide_readouts.csv", 303585, 10),
+            ("readout_generation_cell_readouts.csv", 1660865, 10),
+            ("cell_classification_geojson_polygons.json", 6117357, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 2858496, 10),
+            ("tissue_segmentation_csv_class_information.csv", 452, 10),
+            ("tissue_qc_csv_class_information.csv", 285, 10),
+            ("tissue_qc_parquet_polygons.parquet", 39435, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 117509, 10),
+            ("cell_classification_parquet_polygons.parquet", 1985592, 10),
+            ("cell_detection_parquet_polygons.parquet", 1978790, 10),
+            ("cell_detection_parquet_centers.parquet", 657740, 10),
+        ]
+        SPOT_1_EXPECTED_RESULT_FILES = [
+            ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
+            ("tissue_qc_geojson_polygons.json", 75281, 10),
+            ("tissue_segmentation_geojson_polygons.json", 152301, 10),
+            ("readout_generation_slide_readouts.csv", 299361, 10),
+            ("readout_generation_cell_readouts.csv", 464838, 10),
+            ("cell_classification_geojson_polygons.json", 1726813, 10),
+            ("tissue_segmentation_segmentation_map_image.tiff", 1783376, 10),
+            ("tissue_segmentation_csv_class_information.csv", 446, 10),
+            ("tissue_qc_csv_class_information.csv", 290, 10),
+            ("tissue_qc_parquet_polygons.parquet", 29087, 10),
+            ("tissue_segmentation_parquet_polygons.parquet", 56563, 10),
+            ("cell_classification_parquet_polygons.parquet", 562536, 10),
+            ("cell_detection_parquet_polygons.parquet", 1985614, 10),
+            ("cell_detection_parquet_centers.parquet", 657740, 10),
+        ]
 
     case _:
         message = f"Unsupported AIGNOSTICS_PLATFORM_ENVIRONMENT value: {os.getenv('AIGNOSTICS_PLATFORM_ENVIRONMENT')}"
