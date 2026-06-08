@@ -1417,7 +1417,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.warning(message)
             raise NotFoundException(message) from e
         except Exception as e:
-            message = f"Failed to share run '{run_id}' with organization {organization_id} : {e}"
+            message = f"Failed to share run '{run_id}' with organization {organization_id}: {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
 
@@ -1490,7 +1490,7 @@ class Service(BaseService):  # noqa: PLR0904
             share_token_id (str): The ID of the share token to revoke.
 
         Raises:
-            NotFoundException: If the run is not found.
+            NotFoundException: If the share token is not found.
             RuntimeError: If the request fails unexpectedly.
         """
         try:

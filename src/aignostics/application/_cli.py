@@ -1506,8 +1506,8 @@ def run_share_token_revoke(
     try:
         Service().application_run_revoke_share_token(run_id, token_id)
         console.print(f"Share token '{token_id}' revoked for run '{run_id}'.")
-    except NotFoundException:
-        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+    except NotFoundException as e:
+        console.print(f"[warning]Warning:[/warning] {e}")
         sys.exit(2)
     except Exception as e:
         logger.exception("Failed to revoke share token '{}' for run '{}'", token_id, run_id)
