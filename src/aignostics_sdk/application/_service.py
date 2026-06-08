@@ -51,7 +51,7 @@ from ._utils import (
     validate_scheduling_constraints,
 )
 
-has_qupath_extra = find_spec("ijson")
+has_qupath_extra = find_spec("aignostics")
 if has_qupath_extra:
     from aignostics.qupath import AddProgress as QuPathAddProgress
     from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress

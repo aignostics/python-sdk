@@ -33,7 +33,7 @@ The application module provides high-level orchestration for AI/ML applications 
 - `_page_index.py` - Main application listing and run submission
 - `_page_application_describe.py` - Application details and version information
 - `_page_application_run_describe.py` - Run monitoring with real-time progress
-- QuPath integration for WSI visualization (when ijson installed)
+- QuPath integration for WSI visualization (when aignostics package installed)
 
 **Service Layer (`_service.py`):**
 
@@ -44,7 +44,7 @@ Core application operations:
 - File upload with chunking (1MB chunks) and CRC32C verification
 - Result download with progress tracking
 - State machine for run status transitions
-- QuPath project creation (when ijson available)
+- QuPath project creation (when aignostics package available)
 
 ## Architecture & Design Patterns
 
@@ -298,7 +298,7 @@ class DownloadProgress(BaseModel):
 
 ```python
 # At module level
-has_qupath_extra = find_spec("ijson")
+has_qupath_extra = find_spec("aignostics")
 if has_qupath_extra:
     from aignostics.qupath import (
         AddProgress as QuPathAddProgress,
@@ -309,7 +309,7 @@ if has_qupath_extra:
 # In methods
 def process_with_qupath(self, ...):
     if not has_qupath_extra:
-        logger.warning("QuPath integration not available (ijson not installed)")
+        logger.warning("QuPath integration not available (aignostics package not installed)")
         return
     # QuPath processing...
 ```
@@ -710,7 +710,7 @@ def test_application_version_use_latest_fallback():
 ```python
 logger.debug("Starting application run", extra={"application_id": app_id, "file_count": len(files)})
 
-logger.warning("QuPath integration not available (ijson not installed)")
+logger.warning("QuPath integration not available (aignostics package not installed)")
 
 logger.error("Application version validation failed", extra={"version_id": version_id, "error": str(e)})
 ```
@@ -744,9 +744,9 @@ app_version = service.application_version(
 **Solution:**
 
 ```python
-# Check if ijson is installed
+# Check if aignostics package is installed
 if not has_qupath_extra:
-    print("QuPath features require: pip install ijson")
+    print("QuPath features require the aignostics package")
 ```
 
 ### Large File Processing
@@ -804,7 +804,7 @@ The `_download.py` module uses `platform.generate_signed_url()` to convert `gs:/
 - `crc32c` - File integrity checking (CRC32C checksums)
 - `requests` - HTTP operations (streaming downloads)
 - `pydantic` - Data models with validation and computed fields
-- `ijson` - Required for QuPath features (optional)
+- `ijson` - Used internally by QuPath integration (optional, via aignostics package)
 
 ## Performance Notes
 

@@ -8,7 +8,7 @@ from pydantic import BaseModel, computed_field
 
 from aignostics_sdk.platform import ItemResult, OutputArtifactElement, RunData
 
-has_qupath_extra = find_spec("ijson")
+has_qupath_extra = find_spec("aignostics")
 if has_qupath_extra:
     from aignostics.qupath import AddProgress as QuPathAddProgress
     from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
