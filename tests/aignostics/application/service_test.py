@@ -565,3 +565,237 @@ def test_application_run_update_item_custom_metadata_not_found(mock_get_client: 
 
     with pytest.raises(NotFoundException, match="not found"):
         service.application_run_update_item_custom_metadata("run-123", "invalid-item-id", {"key": "value"})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# run sharing service methods
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_organization_grants_success(mock_get_client: MagicMock) -> None:
+    """organization_grants delegates to Run.list_share_grants with org filter."""
+    mock_grant = MagicMock()
+    mock_run = MagicMock()
+    mock_run.list_share_grants.return_value = iter([mock_grant])
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    result = list(ApplicationService().application_run_organization_grants("run-123"))
+
+    assert result == [mock_grant]
+    mock_client.run.assert_called_once_with("run-123")
+    mock_run.list_share_grants.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_organization_grants_not_found(mock_get_client: MagicMock) -> None:
+    """organization_grants re-raises NotFoundException."""
+    mock_run = MagicMock()
+    mock_run.list_share_grants.side_effect = NotFoundException("not found")
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(NotFoundException, match="not found"):
+        list(ApplicationService().application_run_organization_grants("run-123"))
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_organization_grants_error(mock_get_client: MagicMock) -> None:
+    """organization_grants wraps unexpected errors in RuntimeError."""
+    mock_run = MagicMock()
+    mock_run.list_share_grants.side_effect = RuntimeError("boom")
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(RuntimeError, match="boom"):
+        list(ApplicationService().application_run_organization_grants("run-123"))
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_share_tokens_success(mock_get_client: MagicMock) -> None:
+    """share_tokens delegates to ShareTokens.list with run_id filter."""
+    mock_token = MagicMock()
+    mock_client = MagicMock()
+    mock_client.share_tokens.list.return_value = iter([mock_token])
+    mock_get_client.return_value = mock_client
+
+    result = list(ApplicationService().application_run_share_tokens("run-123"))
+
+    assert result == [mock_token]
+    mock_client.share_tokens.list.assert_called_once_with(run_id="run-123", page_size=100)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_share_tokens_not_found(mock_get_client: MagicMock) -> None:
+    """share_tokens re-raises NotFoundException."""
+    mock_client = MagicMock()
+    mock_client.share_tokens.list.side_effect = NotFoundException("not found")
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(NotFoundException, match="not found"):
+        list(ApplicationService().application_run_share_tokens("run-123"))
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_share_with_organization_explicit_org(mock_get_client: MagicMock) -> None:
+    """share_with_organization calls grant_access with the given org_id."""
+    mock_grant = MagicMock()
+    mock_run = MagicMock()
+    mock_run.grant_access.return_value = mock_grant
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    result = ApplicationService().application_run_share_with_organization("run-123", organization_id="org-abc")
+
+    assert result is mock_grant
+    mock_client.me.assert_not_called()
+    mock_run.grant_access.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_share_with_organization_defaults_to_own_org(mock_get_client: MagicMock) -> None:
+    """share_with_organization fetches own org_id when none is provided."""
+    mock_grant = MagicMock()
+    mock_run = MagicMock()
+    mock_run.grant_access.return_value = mock_grant
+    mock_me = MagicMock()
+    mock_me.organization.id = "own-org"
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_client.me.return_value = mock_me
+    mock_get_client.return_value = mock_client
+
+    result = ApplicationService().application_run_share_with_organization("run-123", organization_id=None)
+
+    assert result is mock_grant
+    mock_client.me.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_share_with_organization_not_found(mock_get_client: MagicMock) -> None:
+    """share_with_organization re-raises NotFoundException."""
+    mock_run = MagicMock()
+    mock_run.grant_access.side_effect = NotFoundException("not found")
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(NotFoundException, match="not found"):
+        ApplicationService().application_run_share_with_organization("run-123", organization_id="org-abc")
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_unshare_with_organization_revokes_grants(mock_get_client: MagicMock) -> None:
+    """unshare_with_organization revokes all matching grants."""
+    mock_grant = MagicMock()
+    mock_run = MagicMock()
+    mock_run.list_share_grants.return_value = iter([mock_grant])
+    mock_me = MagicMock()
+    mock_me.organization.id = "own-org"
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_client.me.return_value = mock_me
+    mock_get_client.return_value = mock_client
+
+    ApplicationService().application_run_unshare_with_organization("run-123", organization_id=None)
+
+    mock_grant.revoke.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_unshare_with_organization_not_found(mock_get_client: MagicMock) -> None:
+    """unshare_with_organization re-raises NotFoundException."""
+    mock_run = MagicMock()
+    mock_run.list_share_grants.side_effect = NotFoundException("not found")
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(NotFoundException, match="not found"):
+        ApplicationService().application_run_unshare_with_organization("run-123", organization_id="org-abc")
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_create_share_token_success(mock_get_client: MagicMock) -> None:
+    """create_share_token creates a token and grants it access to the run."""
+    mock_token = MagicMock()
+    mock_token.share_token_id = "tok-001"  # noqa: S105
+    mock_run = MagicMock()
+    mock_client = MagicMock()
+    mock_client.share_tokens.create.return_value = mock_token
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    result = ApplicationService().application_run_create_share_token("run-123")
+
+    assert result is mock_token
+    mock_client.share_tokens.create.assert_called_once_with(expires_at=None)
+    mock_run.grant_access.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_create_share_token_with_expiry(mock_get_client: MagicMock) -> None:
+    """create_share_token passes expiry datetime through to ShareTokens.create."""
+    mock_token = MagicMock()
+    mock_run = MagicMock()
+    mock_client = MagicMock()
+    mock_client.share_tokens.create.return_value = mock_token
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    expiry = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC)
+    ApplicationService().application_run_create_share_token("run-123", expires_at=expiry)
+
+    mock_client.share_tokens.create.assert_called_once_with(expires_at=expiry)
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_create_share_token_not_found(mock_get_client: MagicMock) -> None:
+    """create_share_token re-raises NotFoundException."""
+    mock_client = MagicMock()
+    mock_client.share_tokens.create.side_effect = NotFoundException("not found")
+    mock_get_client.return_value = mock_client
+
+    with pytest.raises(NotFoundException, match="not found"):
+        ApplicationService().application_run_create_share_token("run-123")
+
+
+@pytest.mark.unit
+@patch("aignostics.platform.resources.access.ShareToken.for_token_id")
+def test_application_run_revoke_share_token_success(mock_for_token_id: MagicMock) -> None:
+    """revoke_share_token fetches the token and calls revoke()."""
+    mock_token = MagicMock()
+    mock_for_token_id.return_value = mock_token
+
+    ApplicationService.application_run_revoke_share_token("run-123", "tok-001")
+
+    mock_for_token_id.assert_called_once_with("tok-001")
+    mock_token.revoke.assert_called_once()
+
+
+@pytest.mark.unit
+@patch("aignostics.platform.resources.access.ShareToken.for_token_id")
+def test_application_run_revoke_share_token_not_found(mock_for_token_id: MagicMock) -> None:
+    """revoke_share_token re-raises NotFoundException when token is missing."""
+    mock_for_token_id.side_effect = NotFoundException("not found")
+
+    with pytest.raises(NotFoundException, match="not found"):
+        ApplicationService.application_run_revoke_share_token("run-123", "tok-missing")

@@ -369,7 +369,7 @@ class ShareTokens(_AuthenticatedResource):
         """
 
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def list_data_with_retry(**kwargs: object) -> builtins.list[ShareToken]:
+        def list_data_with_retry(cached_run_id: str | None, **kwargs: object) -> builtins.list[ShareToken]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
@@ -380,7 +380,7 @@ class ShareTokens(_AuthenticatedResource):
                 lambda: [
                     ShareToken(api=self._api, **t.__dict__)
                     for t in self._api.list_share_tokens_v1_access_share_tokens_get(
-                        run_id=run_id,
+                        run_id=cached_run_id,
                         revoked=False,
                         _request_timeout=settings().run_timeout,
                         _headers={"User-Agent": user_agent()},
@@ -391,6 +391,7 @@ class ShareTokens(_AuthenticatedResource):
 
         return paginate(
             lambda **kwargs: list_data_with_retry(
+                run_id,
                 nocache=nocache,
                 **kwargs,
             ),
