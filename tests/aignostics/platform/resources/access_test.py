@@ -95,9 +95,12 @@ class TestAccessGrantRevoke:
         grant = AccessGrant(
             api=mock_api,
             grant_id=_GRANT_ID,
+            resource_type=ResourceType.RUN,
+            resource_id=_RUN_ID,
             subject_id=_SUBJECT_ID,
             subject_type=SubjectType.ORGANIZATION_USER,
             relation=GrantRelation.VIEWER,
+            created_by="user-1",
             created_at=_CREATED_AT,
             revoked=False,
         )
@@ -119,9 +122,12 @@ class TestAccessGrantRevoke:
         grant = AccessGrant(
             api=mock_api,
             grant_id=_GRANT_ID,
+            resource_type=ResourceType.RUN,
+            resource_id=_RUN_ID,
             subject_id=_SUBJECT_ID,
             subject_type=SubjectType.ORGANIZATION_USER,
             relation=GrantRelation.VIEWER,
+            created_by="user-1",
             created_at=_CREATED_AT,
             revoked=False,
         )

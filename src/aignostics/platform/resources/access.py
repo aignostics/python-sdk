@@ -57,6 +57,7 @@ from typing import Any, cast
 from aignx.codegen.models import (
     GrantReadResponse,
     GrantRelation,
+    ResourceType,
     ShareTokenCreateRequest,
     SubjectType,
 )
@@ -82,10 +83,13 @@ class AccessGrant(BaseModel):
 
     Attributes:
         grant_id: Unique identifier for this grant.
+        resource_type: Type of the resource this grant applies to (e.g. ``RUN``).
+        resource_id: Identifier of the resource (e.g. the run ID).
         subject_id: Identifier of the entity that was granted access.
         subject_type: Category of the subject (``ORGANIZATION_ADMIN``,
             ``ORGANIZATION_USER``, or ``SHARE_TOKEN``).
         relation: Level of access granted (currently always ``VIEWER``).
+        created_by: ID of the user who created this grant.
         created_at: UTC timestamp when the grant was created.
         revoked: ``True`` if the grant has already been revoked.
 
@@ -102,9 +106,12 @@ class AccessGrant(BaseModel):
 
     _api: _AuthenticatedApi = PrivateAttr()
     grant_id: str
+    resource_type: ResourceType
+    resource_id: str
     subject_id: str
     subject_type: SubjectType
     relation: GrantRelation
+    created_by: str
     created_at: datetime
     revoked: bool
 
@@ -434,5 +441,6 @@ class ShareTokens(_AuthenticatedResource):
             _request_timeout=settings().run_timeout,
             _headers={"User-Agent": user_agent()},
         )
+        operation_cache_clear()
 
         return ShareToken(api=self._api, **share_token.__dict__)
