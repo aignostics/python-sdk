@@ -1466,6 +1466,7 @@ def run_share_token_create(
 ) -> None:
     """Create a share token for a run. The token value is shown only once."""
     expires_at_dt: datetime | None = None
+    if expires_at is not None:
         try:
             expires_at_normalized = expires_at.replace("Z", "+00:00") if expires_at.endswith("Z") else expires_at
             expires_at_dt = datetime.fromisoformat(expires_at_normalized)
