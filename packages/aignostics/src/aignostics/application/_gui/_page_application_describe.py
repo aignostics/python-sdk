@@ -7,12 +7,12 @@ from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from aignostics.utils import GUILocalFilePicker
 from loguru import logger
 from nicegui import app, binding, ui
 from nicegui import run as nicegui_run
 from nicegui.events import ValueChangeEventArguments
 
+from aignostics.utils import GUILocalFilePicker
 from aignostics_sdk.constants import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics_sdk.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,

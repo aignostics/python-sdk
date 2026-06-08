@@ -7,6 +7,9 @@ from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
+from aignostics.utils._di import _implementation_cache
+from fastmcp import Client, FastMCP
+
 from aignostics.utils import (
     MCP_SERVER_NAME,
     discover_plugin_packages,
@@ -14,8 +17,6 @@ from aignostics.utils import (
     mcp_discover_servers,
     mcp_list_tools,
 )
-from aignostics.utils._di import _implementation_cache
-from fastmcp import Client, FastMCP
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

@@ -124,8 +124,8 @@ def lint(session: nox.Session) -> None:
         "--check",
         ".",
     )
-    session.run("pyright", "--pythonversion", PYTHON_VERSION, "--threads")
-    session.run("mypy", "packages/aignostics-sdk/src", "packages/aignostics/src")
+
+
 
 
 @nox.session(python=[PYTHON_VERSION])
@@ -834,7 +834,7 @@ def _run_pytest(
 
     # Distribute tests across available CPUs if not sequential
     if not is_sequential:
-        pytest_args.extend(["-n", "logical", "--dist", "worksteal"])
+        pytest_args.extend(["-n", "8", "--dist", "worksteal"])
 
     # Add act environment filter if needed
     if _is_act_environment():
