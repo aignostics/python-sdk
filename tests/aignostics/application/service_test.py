@@ -779,23 +779,31 @@ def test_application_run_create_share_token_not_found(mock_get_client: MagicMock
 
 
 @pytest.mark.unit
-@patch("aignostics.platform.resources.access.ShareToken.for_token_id")
-def test_application_run_revoke_share_token_success(mock_for_token_id: MagicMock) -> None:
-    """revoke_share_token fetches the token and calls revoke()."""
-    mock_token = MagicMock()
-    mock_for_token_id.return_value = mock_token
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_revoke_share_token_success(mock_get_client: MagicMock) -> None:
+    """revoke_share_token finds the grant on the run and revokes it."""
+    mock_grant = MagicMock()
+    mock_run = MagicMock()
+    mock_run.list_share_grants.return_value = iter([mock_grant])
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
 
-    ApplicationService.application_run_revoke_share_token("run-123", "tok-001")
+    ApplicationService().application_run_revoke_share_token("run-123", "tok-001")
 
-    mock_for_token_id.assert_called_once_with("tok-001")
-    mock_token.revoke.assert_called_once()
+    mock_run.list_share_grants.assert_called_once()
+    mock_grant.revoke.assert_called_once()
 
 
 @pytest.mark.unit
-@patch("aignostics.platform.resources.access.ShareToken.for_token_id")
-def test_application_run_revoke_share_token_not_found(mock_for_token_id: MagicMock) -> None:
-    """revoke_share_token re-raises NotFoundException when token is missing."""
-    mock_for_token_id.side_effect = NotFoundException("not found")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_revoke_share_token_not_found(mock_get_client: MagicMock) -> None:
+    """revoke_share_token raises NotFoundException when no grant exists for the token."""
+    mock_run = MagicMock()
+    mock_run.list_share_grants.return_value = iter([])
+    mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
 
-    with pytest.raises(NotFoundException, match="not found"):
-        ApplicationService.application_run_revoke_share_token("run-123", "tok-missing")
+    with pytest.raises(NotFoundException, match="No grant found"):
+        ApplicationService().application_run_revoke_share_token("run-123", "tok-missing")

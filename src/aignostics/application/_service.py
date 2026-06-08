@@ -1481,28 +1481,40 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    @staticmethod
-    def application_run_revoke_share_token(run_id: str, share_token_id: str) -> None:
-        """Revoke a share token for a run.
+    def application_run_revoke_share_token(self, run_id: str, share_token_id: str) -> None:
+        """Revoke the grant giving a share token access to a run.
+
+        Removes the token's access to this specific run without invalidating
+        the token itself; the token may still be valid for other runs.
 
         Args:
             run_id (str): The ID of the run.
-            share_token_id (str): The ID of the share token to revoke.
+            share_token_id (str): The ID of the share token whose grant to revoke.
 
         Raises:
-            NotFoundException: If the share token is not found.
+            NotFoundException: If the run is not found or no grant exists for
+                the token on this run.
             RuntimeError: If the request fails unexpectedly.
         """
         try:
-            ShareToken.for_token_id(share_token_id).revoke()
-        except NotFoundException as e:
-            message = f"Share token with ID '{share_token_id}' not found: {e}"
-            logger.warning(message)
-            raise NotFoundException(message) from e
+            grants = list(
+                self.application_run(run_id).list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    subject_id=share_token_id,
+                )
+            )
+            for grant in grants:
+                grant.revoke()
+        except NotFoundException:
+            raise
         except Exception as e:
             message = f"Failed to revoke share token '{share_token_id}' for run '{run_id}': {e}"
             logger.exception(message)
             raise RuntimeError(message) from e
+        if not grants:
+            message = f"No grant found for share token '{share_token_id}' on run '{run_id}'"
+            logger.warning(message)
+            raise NotFoundException(message)
 
     @staticmethod
     def application_run_download_static(  # noqa: PLR0913, PLR0917
