@@ -1393,7 +1393,7 @@ def run_share_organization_grant(
     try:
         grant = Service().application_run_share_with_organization(run_id, organization_id=organization_id)
         if format == "json":
-            print(json.dumps(grant.model_dump(), indent=2, default=str))
+            print(json.dumps(grant.model_dump(mode="json"), indent=2, default=str))
         else:
             console.print(f"Run '{run_id}' is now shared with organization (grant {grant.grant_id}).")
     except NotFoundException:
