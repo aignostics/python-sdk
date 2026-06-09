@@ -816,7 +816,9 @@ def test_application_run_revoke_share_token_success(mock_get_client: MagicMock, 
 
     ApplicationService().application_run_revoke_share_token("run-123", "tok-001")
 
-    mock_run.list_share_grants.assert_called_once()
+    call_kw = mock_run.list_share_grants.call_args.kwargs
+    assert call_kw["subject_type"].value == "share_token"
+    assert call_kw["subject_id"] == "tok-001"
     mock_grant.revoke.assert_called_once()
 
 

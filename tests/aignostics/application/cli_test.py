@@ -2608,9 +2608,10 @@ def test_cli_run_share_token_create_with_expiry(runner: CliRunner, record_proper
             ],
         )
     assert result.exit_code == 0
-    call_kwargs = mock_svc_cls.return_value.application_run_create_share_token.call_args
-    assert call_kwargs is not None
-    assert call_kwargs[1]["expires_at"] is not None or call_kwargs[0][1] is not None
+    expected_expiry = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC)
+    mock_svc_cls.return_value.application_run_create_share_token.assert_called_once_with(
+        "run-001", expires_at=expected_expiry
+    )
 
 
 @pytest.mark.integration
