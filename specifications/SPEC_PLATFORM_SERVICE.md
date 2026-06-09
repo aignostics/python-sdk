@@ -566,7 +566,22 @@ class ApplicationRun(_AuthenticatedResource):
         self,
         subject_type: SubjectType | None = None,
         subject_id: str | None = None,
+        relation: list[GrantRelation] | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
     ) -> Iterator["AccessGrant"]:
+        """Lists all active access grants on this run.
+
+        Args:
+            subject_type: Optional filter by subject type.
+            subject_id: Optional filter by subject identifier.
+            relation: Optional filter by relation type(s).
+            page_size: Number of grants per page (max 100).
+            nocache: If True, bypass cache and fetch fresh data.
+
+        Returns:
+            Iterator of AccessGrant objects for this run.
+        """
         """Lists all active access grants on this run.
 
         Args:
