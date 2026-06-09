@@ -589,7 +589,10 @@ def test_application_run_organization_grants_success(mock_get_client: MagicMock,
     assert result == [mock_grant]
     mock_client.run.assert_called_once_with("run-123")
     mock_run.list_share_grants.assert_called_once()
-
+    call_kwargs = mock_run.list_share_grants.call_args.kwargs
+    assert call_kwargs.get("subject_type") is not None
+    assert call_kwargs.get("relation") is not None
+    assert call_kwargs.get("page_size") == 100
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
