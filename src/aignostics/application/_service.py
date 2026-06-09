@@ -1501,6 +1501,7 @@ class Service(BaseService):  # noqa: PLR0904
                 self.application_run(run_id).list_share_grants(
                     subject_type=SubjectType.SHARE_TOKEN,
                     subject_id=share_token_id,
+                    nocache=True,
                 )
             )
             for grant in grants:
