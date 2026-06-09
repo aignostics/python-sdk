@@ -273,6 +273,7 @@ class ShareToken(BaseModel):
             Iterator of ``AccessGrant`` objects for this token.
 
         Raises:
+            ValueError: If ``page_size`` is greater than 100.
             Exception: If the API request fails.
 
         Example::
@@ -281,9 +282,10 @@ class ShareToken(BaseModel):
             for grant in token.list_share_grants():
                 print(grant.grant_id, grant.relation)
         """
-
-        if page_size > 100:
-            raise ValueError(f"page_size must be <= 100, but got {page_size}")
+        max_page_size = 100
+        if page_size > max_page_size:
+            msg = f"page_size must be <= {max_page_size}, but got {page_size}"
+            raise ValueError(msg)
 
         def fetch_page(**kwargs: object) -> list[GrantReadResponse]:
             return cast(
