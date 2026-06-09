@@ -25,6 +25,7 @@ from aignostics.platform import (
     ApplicationVersion,
     Client,
     ForbiddenException,
+    ForbiddenException,
     InputArtifact,
     InputItem,
     NotFoundException,
@@ -33,6 +34,7 @@ from aignostics.platform import (
     RunOutput,
     RunState,
 )
+from aignostics.platform.resources.access import AccessGrant, ShareToken
 from aignostics.platform import Service as PlatformService
 from aignostics.platform.resources.access import AccessGrant, ShareToken
 from aignostics.utils import BaseService, Health, sanitize_path_component
@@ -1384,18 +1386,18 @@ class Service(BaseService):  # noqa: PLR0904
         try:
             client = self._get_platform_client()
             run = client.run(run_id)
-            seen: set[str] = set()
-            for grant in run.list_share_grants(
+
+            tokens = self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
+            token_grants = set(g.subject_id for g in run.list_share_grants(
                 subject_type=SubjectType.SHARE_TOKEN,
                 page_size=page_size,
                 nocache=True,
-            ):
-                token_id = grant.subject_id
-                if token_id not in seen:
-                    seen.add(token_id)
-                    share_token = ShareToken.for_token_id(token_id)
-                    if not share_token.revoked:
-                        yield share_token
+            ))
+
+            for token in tokens:
+                if token.share_token_id in token_grants:
+                    yield token
+
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)

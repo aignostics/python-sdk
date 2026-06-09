@@ -721,6 +721,7 @@ class Run(_AuthenticatedResource):
                 lambda **kw: fetch_grant_page(
                     run_id,
                     nocache=nocache,
+                    _cache_run_id=self.run_id,
                     subject_type=subject_type,
                     subject_id=subject_id,
                     relation=relation,

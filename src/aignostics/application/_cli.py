@@ -1436,7 +1436,7 @@ def run_share_token_list(
         tokens = list(Service().application_run_share_tokens(run_id))
 
         if format == "json":
-            print(json.dumps([t.model_dump() for t in tokens], indent=2, default=str))
+            print(json.dumps([t.model_dump(mode="json") for t in tokens], indent=2))
         else:
             if not tokens:
                 console.print("No active share tokens.")
@@ -1481,7 +1481,7 @@ def run_share_token_create(
     try:
         token = Service().application_run_create_share_token(run_id, expires_at=expires_at_dt)
         if format == "json":
-            print(json.dumps(token.model_dump(), indent=2, default=str))
+            print(json.dumps(token.model_dump(mode="json"), indent=2))
         else:
             expires = token.expires_at.isoformat() if token.expires_at else "never"
             console.print(f"Share token created for run '{run_id}'.")

@@ -559,9 +559,6 @@ class ApplicationRun(_AuthenticatedResource):
         Returns:
             The created AccessGrant.
         """
-        Returns:
-            The created AccessGrant.
-        """
 
     def list_share_grants(
         self,
@@ -579,15 +576,6 @@ class ApplicationRun(_AuthenticatedResource):
             relation: Optional filter by relation type(s).
             page_size: Number of grants per page (max 100).
             nocache: If True, bypass cache and fetch fresh data.
-
-        Returns:
-            Iterator of AccessGrant objects for this run.
-        """
-        """Lists all active access grants on this run.
-
-        Args:
-            subject_type: Optional filter by subject type.
-            subject_id: Optional filter by subject identifier.
 
         Returns:
             Iterator of AccessGrant objects for this run.
