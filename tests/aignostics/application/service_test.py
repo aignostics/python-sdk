@@ -574,8 +574,9 @@ def test_application_run_update_item_custom_metadata_not_found(mock_get_client: 
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_organization_grants_success(mock_get_client: MagicMock) -> None:
+def test_application_run_organization_grants_success(mock_get_client: MagicMock, record_property: object) -> None:
     """organization_grants delegates to Run.list_share_grants with org filter."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     mock_grant = MagicMock()
     mock_run = MagicMock()
     mock_run.list_share_grants.return_value = iter([mock_grant])
@@ -592,8 +593,9 @@ def test_application_run_organization_grants_success(mock_get_client: MagicMock)
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_organization_grants_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_organization_grants_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """organization_grants re-raises NotFoundException."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     mock_run = MagicMock()
     mock_run.list_share_grants.side_effect = NotFoundException("not found")
     mock_client = MagicMock()
@@ -606,8 +608,9 @@ def test_application_run_organization_grants_not_found(mock_get_client: MagicMoc
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_organization_grants_error(mock_get_client: MagicMock) -> None:
+def test_application_run_organization_grants_error(mock_get_client: MagicMock, record_property: object) -> None:
     """organization_grants wraps unexpected errors in RuntimeError."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     mock_run = MagicMock()
     mock_run.list_share_grants.side_effect = RuntimeError("boom")
     mock_client = MagicMock()
@@ -620,8 +623,9 @@ def test_application_run_organization_grants_error(mock_get_client: MagicMock) -
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_tokens_success(mock_get_client: MagicMock) -> None:
+def test_application_run_share_tokens_success(mock_get_client: MagicMock, record_property: object) -> None:
     """share_tokens delegates to ShareTokens.list with run_id filter."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     mock_token = MagicMock()
     mock_client = MagicMock()
     mock_client.share_tokens.list.return_value = iter([mock_token])
@@ -635,8 +639,9 @@ def test_application_run_share_tokens_success(mock_get_client: MagicMock) -> Non
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_tokens_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_share_tokens_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """share_tokens re-raises NotFoundException."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     mock_client = MagicMock()
     mock_client.share_tokens.list.side_effect = NotFoundException("not found")
     mock_get_client.return_value = mock_client
@@ -647,8 +652,9 @@ def test_application_run_share_tokens_not_found(mock_get_client: MagicMock) -> N
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_with_organization_explicit_org(mock_get_client: MagicMock) -> None:
+def test_application_run_share_with_organization_explicit_org(mock_get_client: MagicMock, record_property: object) -> None:
     """share_with_organization calls grant_access with the given org_id."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     mock_grant = MagicMock()
     mock_run = MagicMock()
     mock_run.grant_access.return_value = mock_grant
@@ -665,8 +671,9 @@ def test_application_run_share_with_organization_explicit_org(mock_get_client: M
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_with_organization_defaults_to_own_org(mock_get_client: MagicMock) -> None:
+def test_application_run_share_with_organization_defaults_to_own_org(mock_get_client: MagicMock, record_property: object) -> None:
     """share_with_organization fetches own org_id when none is provided."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     mock_grant = MagicMock()
     mock_run = MagicMock()
     mock_run.grant_access.return_value = mock_grant
@@ -685,8 +692,9 @@ def test_application_run_share_with_organization_defaults_to_own_org(mock_get_cl
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_with_organization_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_share_with_organization_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """share_with_organization re-raises NotFoundException."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     mock_run = MagicMock()
     mock_run.grant_access.side_effect = NotFoundException("not found")
     mock_client = MagicMock()
@@ -699,8 +707,9 @@ def test_application_run_share_with_organization_not_found(mock_get_client: Magi
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_unshare_with_organization_revokes_grants(mock_get_client: MagicMock) -> None:
+def test_application_run_unshare_with_organization_revokes_grants(mock_get_client: MagicMock, record_property: object) -> None:
     """unshare_with_organization revokes all matching grants."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     mock_grant = MagicMock()
     mock_run = MagicMock()
     mock_run.list_share_grants.return_value = iter([mock_grant])
@@ -718,8 +727,9 @@ def test_application_run_unshare_with_organization_revokes_grants(mock_get_clien
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_unshare_with_organization_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_unshare_with_organization_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """unshare_with_organization re-raises NotFoundException."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     mock_run = MagicMock()
     mock_run.list_share_grants.side_effect = NotFoundException("not found")
     mock_client = MagicMock()
@@ -732,8 +742,9 @@ def test_application_run_unshare_with_organization_not_found(mock_get_client: Ma
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_create_share_token_success(mock_get_client: MagicMock) -> None:
+def test_application_run_create_share_token_success(mock_get_client: MagicMock, record_property: object) -> None:
     """create_share_token creates a token and grants it access to the run."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     mock_token = MagicMock()
     mock_token.share_token_id = "tok-001"  # noqa: S105
     mock_run = MagicMock()
@@ -751,8 +762,9 @@ def test_application_run_create_share_token_success(mock_get_client: MagicMock) 
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_create_share_token_with_expiry(mock_get_client: MagicMock) -> None:
+def test_application_run_create_share_token_with_expiry(mock_get_client: MagicMock, record_property: object) -> None:
     """create_share_token passes expiry datetime through to ShareTokens.create."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     mock_token = MagicMock()
     mock_run = MagicMock()
     mock_client = MagicMock()
@@ -768,8 +780,9 @@ def test_application_run_create_share_token_with_expiry(mock_get_client: MagicMo
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_create_share_token_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_create_share_token_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """create_share_token re-raises NotFoundException."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     mock_client = MagicMock()
     mock_client.share_tokens.create.side_effect = NotFoundException("not found")
     mock_get_client.return_value = mock_client
@@ -780,8 +793,9 @@ def test_application_run_create_share_token_not_found(mock_get_client: MagicMock
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_revoke_share_token_success(mock_get_client: MagicMock) -> None:
+def test_application_run_revoke_share_token_success(mock_get_client: MagicMock, record_property: object) -> None:
     """revoke_share_token finds the grant on the run and revokes it."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-06")
     mock_grant = MagicMock()
     mock_run = MagicMock()
     mock_run.list_share_grants.return_value = iter([mock_grant])
@@ -797,8 +811,9 @@ def test_application_run_revoke_share_token_success(mock_get_client: MagicMock) 
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_revoke_share_token_not_found(mock_get_client: MagicMock) -> None:
+def test_application_run_revoke_share_token_not_found(mock_get_client: MagicMock, record_property: object) -> None:
     """revoke_share_token raises NotFoundException when no grant exists for the token."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-06")
     mock_run = MagicMock()
     mock_run.list_share_grants.return_value = iter([])
     mock_client = MagicMock()

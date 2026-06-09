@@ -60,7 +60,6 @@ Feature: Run Sharing and Access Management
   @tests:SWR-APPLICATION-4-2
   @tests:SHR-APPLICATION-4
   @id:TC-APPLICATION-CLI-06-07
-  @e2e
   Scenario: System supports end-to-end run sharing workflow using share tokens
     Given the data scientist has a completed application run on the staging platform
     When the data scientist creates a share token with an expiry date

@@ -2223,8 +2223,9 @@ def _make_mock_token(
 
 
 @pytest.mark.integration
-def test_cli_run_share_status_empty_text(runner: CliRunner) -> None:
+def test_cli_run_share_status_empty_text(runner: CliRunner, record_property: object) -> None:
     """Share status prints section headers even when there are no grants or tokens."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.return_value = iter([])
         mock_svc_cls.return_value.application_run_share_tokens.return_value = iter([])
@@ -2236,8 +2237,9 @@ def test_cli_run_share_status_empty_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_status_with_data_text(runner: CliRunner) -> None:
+def test_cli_run_share_status_with_data_text(runner: CliRunner, record_property: object) -> None:
     """Share status renders grant and token IDs in text mode."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     grant = _make_mock_grant()
     token = _make_mock_token()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -2251,8 +2253,9 @@ def test_cli_run_share_status_with_data_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_status_json(runner: CliRunner) -> None:
+def test_cli_run_share_status_json(runner: CliRunner, record_property: object) -> None:
     """Share status --format json returns parseable JSON with both sections."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     grant = _make_mock_grant()
     token = _make_mock_token()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -2268,8 +2271,9 @@ def test_cli_run_share_status_json(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_status_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_status_not_found(runner: CliRunner, record_property: object) -> None:
     """Share status exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2280,8 +2284,9 @@ def test_cli_run_share_status_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_status_error(runner: CliRunner) -> None:
+def test_cli_run_share_status_error(runner: CliRunner, record_property: object) -> None:
     """Share status exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.side_effect = RuntimeError("boom")
         result = runner.invoke(cli, ["application", "run", "share", "status", "run-001"])
@@ -2295,8 +2300,9 @@ def test_cli_run_share_status_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_list_empty_text(runner: CliRunner) -> None:
+def test_cli_run_share_organization_list_empty_text(runner: CliRunner, record_property: object) -> None:
     """Organization list prints 'No active organization grants' when empty."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.return_value = iter([])
         result = runner.invoke(cli, ["application", "run", "share", "organization", "list", "run-001"])
@@ -2305,8 +2311,9 @@ def test_cli_run_share_organization_list_empty_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_list_with_data_text(runner: CliRunner) -> None:
+def test_cli_run_share_organization_list_with_data_text(runner: CliRunner, record_property: object) -> None:
     """Organization list renders grant details in text mode."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     grant = _make_mock_grant(grant_id="grant-xyz", subject_id="org-123")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.return_value = iter([grant])
@@ -2318,8 +2325,9 @@ def test_cli_run_share_organization_list_with_data_text(runner: CliRunner) -> No
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_list_json(runner: CliRunner) -> None:
+def test_cli_run_share_organization_list_json(runner: CliRunner, record_property: object) -> None:
     """Organization list --format json returns a JSON array."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     grant = _make_mock_grant()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.return_value = iter([grant])
@@ -2333,8 +2341,9 @@ def test_cli_run_share_organization_list_json(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_list_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_organization_list_not_found(runner: CliRunner, record_property: object) -> None:
     """Organization list exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2345,8 +2354,9 @@ def test_cli_run_share_organization_list_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_list_error(runner: CliRunner) -> None:
+def test_cli_run_share_organization_list_error(runner: CliRunner, record_property: object) -> None:
     """Organization list exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-02")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_organization_grants.side_effect = RuntimeError("kaboom")
         result = runner.invoke(cli, ["application", "run", "share", "organization", "list", "run-001"])
@@ -2360,8 +2370,9 @@ def test_cli_run_share_organization_list_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_grant_text(runner: CliRunner) -> None:
+def test_cli_run_share_organization_grant_text(runner: CliRunner, record_property: object) -> None:
     """Organization grant prints confirmation in text mode."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     grant = _make_mock_grant(grant_id="grant-new")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_with_organization.return_value = grant
@@ -2373,8 +2384,9 @@ def test_cli_run_share_organization_grant_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_grant_text_no_org(runner: CliRunner) -> None:
+def test_cli_run_share_organization_grant_text_no_org(runner: CliRunner, record_property: object) -> None:
     """Organization grant without explicit org_id delegates to default organization."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     grant = _make_mock_grant(grant_id="grant-default")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_with_organization.return_value = grant
@@ -2386,8 +2398,9 @@ def test_cli_run_share_organization_grant_text_no_org(runner: CliRunner) -> None
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_grant_json(runner: CliRunner) -> None:
+def test_cli_run_share_organization_grant_json(runner: CliRunner, record_property: object) -> None:
     """Organization grant --format json returns parseable JSON."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     grant = _make_mock_grant()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_with_organization.return_value = grant
@@ -2401,8 +2414,9 @@ def test_cli_run_share_organization_grant_json(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_grant_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_organization_grant_not_found(runner: CliRunner, record_property: object) -> None:
     """Organization grant exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_with_organization.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2413,8 +2427,9 @@ def test_cli_run_share_organization_grant_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_grant_error(runner: CliRunner) -> None:
+def test_cli_run_share_organization_grant_error(runner: CliRunner, record_property: object) -> None:
     """Organization grant exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_with_organization.side_effect = RuntimeError("fail")
         result = runner.invoke(cli, ["application", "run", "share", "organization", "grant", "run-001", "org-abc"])
@@ -2428,8 +2443,9 @@ def test_cli_run_share_organization_grant_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_revoke_success(runner: CliRunner) -> None:
+def test_cli_run_share_organization_revoke_success(runner: CliRunner, record_property: object) -> None:
     """Organization revoke prints confirmation."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_unshare_with_organization.return_value = None
         result = runner.invoke(cli, ["application", "run", "share", "organization", "revoke", "run-001"])
@@ -2438,8 +2454,9 @@ def test_cli_run_share_organization_revoke_success(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_revoke_with_org_id(runner: CliRunner) -> None:
+def test_cli_run_share_organization_revoke_with_org_id(runner: CliRunner, record_property: object) -> None:
     """Organization revoke passes explicit org_id to the service."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_unshare_with_organization.return_value = None
         result = runner.invoke(cli, ["application", "run", "share", "organization", "revoke", "run-001", "org-xyz"])
@@ -2450,8 +2467,9 @@ def test_cli_run_share_organization_revoke_with_org_id(runner: CliRunner) -> Non
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_revoke_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_organization_revoke_not_found(runner: CliRunner, record_property: object) -> None:
     """Organization revoke exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_unshare_with_organization.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2462,8 +2480,9 @@ def test_cli_run_share_organization_revoke_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_organization_revoke_error(runner: CliRunner) -> None:
+def test_cli_run_share_organization_revoke_error(runner: CliRunner, record_property: object) -> None:
     """Organization revoke exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_unshare_with_organization.side_effect = RuntimeError("fail")
         result = runner.invoke(cli, ["application", "run", "share", "organization", "revoke", "run-001"])
@@ -2477,8 +2496,9 @@ def test_cli_run_share_organization_revoke_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_empty_text(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_empty_text(runner: CliRunner, record_property: object) -> None:
     """Token list prints 'No active share tokens' when empty."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_tokens.return_value = iter([])
         result = runner.invoke(cli, ["application", "run", "share", "token", "list", "run-001"])
@@ -2487,8 +2507,9 @@ def test_cli_run_share_token_list_empty_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_with_data_text(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_with_data_text(runner: CliRunner, record_property: object) -> None:
     """Token list renders token IDs in text mode."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     token = _make_mock_token(share_token_id="tok-xyz")  # noqa: S106
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_tokens.return_value = iter([token])
@@ -2498,8 +2519,9 @@ def test_cli_run_share_token_list_with_data_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_with_expiry(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_with_expiry(runner: CliRunner, record_property: object) -> None:
     """Token list renders expiry date when set."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     expires = datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC)
     token = _make_mock_token(expires_at=expires)
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -2510,8 +2532,9 @@ def test_cli_run_share_token_list_with_expiry(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_json(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_json(runner: CliRunner, record_property: object) -> None:
     """Token list --format json returns a JSON array."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     token = _make_mock_token()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_tokens.return_value = iter([token])
@@ -2523,8 +2546,9 @@ def test_cli_run_share_token_list_json(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_not_found(runner: CliRunner, record_property: object) -> None:
     """Token list exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_tokens.side_effect = ApiNotFound(status=404, reason="Not Found")
         result = runner.invoke(cli, ["application", "run", "share", "token", "list", "bad-run"])
@@ -2533,8 +2557,9 @@ def test_cli_run_share_token_list_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_list_error(runner: CliRunner) -> None:
+def test_cli_run_share_token_list_error(runner: CliRunner, record_property: object) -> None:
     """Token list exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_share_tokens.side_effect = RuntimeError("fail")
         result = runner.invoke(cli, ["application", "run", "share", "token", "list", "run-001"])
@@ -2548,8 +2573,9 @@ def test_cli_run_share_token_list_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_text(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_text(runner: CliRunner, record_property: object) -> None:
     """Token create prints token ID and secret once in text mode."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     token = _make_mock_token(share_token_id="tok-new", share_token="s3cr3t")  # noqa: S106
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_create_share_token.return_value = token
@@ -2562,8 +2588,9 @@ def test_cli_run_share_token_create_text(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_with_expiry(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_with_expiry(runner: CliRunner, record_property: object) -> None:
     """Token create passes parsed expiry datetime to the service."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     token = _make_mock_token(expires_at=datetime(2026, 12, 31, 23, 59, 59, tzinfo=UTC))
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_create_share_token.return_value = token
@@ -2587,8 +2614,9 @@ def test_cli_run_share_token_create_with_expiry(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_json(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_json(runner: CliRunner, record_property: object) -> None:
     """Token create --format json returns parseable JSON."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     token = _make_mock_token()
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_create_share_token.return_value = token
@@ -2599,8 +2627,9 @@ def test_cli_run_share_token_create_json(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_invalid_expiry(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_invalid_expiry(runner: CliRunner, record_property: object) -> None:
     """Token create exits 1 when --expires-at is not valid ISO 8601."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     result = runner.invoke(
         cli,
         ["application", "run", "share", "token", "create", "run-001", "--expires-at", "not-a-date"],
@@ -2610,8 +2639,9 @@ def test_cli_run_share_token_create_invalid_expiry(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_not_found(runner: CliRunner, record_property: object) -> None:
     """Token create exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_create_share_token.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2622,8 +2652,9 @@ def test_cli_run_share_token_create_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_create_error(runner: CliRunner) -> None:
+def test_cli_run_share_token_create_error(runner: CliRunner, record_property: object) -> None:
     """Token create exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-04")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_create_share_token.side_effect = RuntimeError("fail")
         result = runner.invoke(cli, ["application", "run", "share", "token", "create", "run-001"])
@@ -2637,8 +2668,9 @@ def test_cli_run_share_token_create_error(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_revoke_success(runner: CliRunner) -> None:
+def test_cli_run_share_token_revoke_success(runner: CliRunner, record_property: object) -> None:
     """Token revoke prints confirmation."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-06")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_revoke_share_token.return_value = None
         result = runner.invoke(cli, ["application", "run", "share", "token", "revoke", "run-001", "tok-001"])
@@ -2649,8 +2681,9 @@ def test_cli_run_share_token_revoke_success(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_revoke_not_found(runner: CliRunner) -> None:
+def test_cli_run_share_token_revoke_not_found(runner: CliRunner, record_property: object) -> None:
     """Token revoke exits 2 when the run does not exist."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-06")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_revoke_share_token.side_effect = ApiNotFound(
             status=404, reason="Not Found"
@@ -2661,8 +2694,9 @@ def test_cli_run_share_token_revoke_not_found(runner: CliRunner) -> None:
 
 
 @pytest.mark.integration
-def test_cli_run_share_token_revoke_error(runner: CliRunner) -> None:
+def test_cli_run_share_token_revoke_error(runner: CliRunner, record_property: object) -> None:
     """Token revoke exits 1 on an unexpected error."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-06-06")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_revoke_share_token.side_effect = RuntimeError("fail")
         result = runner.invoke(cli, ["application", "run", "share", "token", "revoke", "run-001", "tok-001"])

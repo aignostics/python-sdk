@@ -90,8 +90,9 @@ class TestAccessGrantRevoke:
 
     @pytest.mark.unit
     @staticmethod
-    def test_revoke_calls_api_with_grant_id(mock_api: Mock) -> None:
+    def test_revoke_calls_api_with_grant_id(mock_api: Mock, record_property: object) -> None:
         """revoke() calls the revoke endpoint with the correct grant_id."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-03")
         grant = AccessGrant(
             api=mock_api,
             grant_id=_GRANT_ID,
@@ -117,8 +118,9 @@ class TestAccessGrantRevoke:
 
     @pytest.mark.unit
     @staticmethod
-    def test_revoke_clears_operation_cache(mock_api: Mock) -> None:
+    def test_revoke_clears_operation_cache(mock_api: Mock, record_property: object) -> None:
         """revoke() clears the operation cache after the API call."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-03")
         grant = AccessGrant(
             api=mock_api,
             grant_id=_GRANT_ID,
@@ -143,8 +145,9 @@ class TestShareTokenForTokenId:
 
     @pytest.mark.unit
     @staticmethod
-    def test_calls_api_with_token_id(mock_api: Mock) -> None:
+    def test_calls_api_with_token_id(mock_api: Mock, record_property: object) -> None:
         """for_token_id() calls the get_share_token endpoint with the given ID."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
             _make_share_token_read_response()
         )
@@ -162,8 +165,9 @@ class TestShareTokenForTokenId:
 
     @pytest.mark.unit
     @staticmethod
-    def test_uses_cached_api_client_by_default(mock_api: Mock) -> None:
+    def test_uses_cached_api_client_by_default(mock_api: Mock, record_property: object) -> None:
         """for_token_id() calls get_api_client with cache_token=True by default."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
             _make_share_token_read_response()
         )
@@ -176,8 +180,9 @@ class TestShareTokenForTokenId:
 
     @pytest.mark.unit
     @staticmethod
-    def test_cache_token_false_forwarded(mock_api: Mock) -> None:
+    def test_cache_token_false_forwarded(mock_api: Mock, record_property: object) -> None:
         """for_token_id(cache_token=False) passes cache_token=False to get_api_client."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
             _make_share_token_read_response()
         )
@@ -190,8 +195,9 @@ class TestShareTokenForTokenId:
 
     @pytest.mark.unit
     @staticmethod
-    def test_returns_share_token_with_correct_fields(mock_api: Mock) -> None:
+    def test_returns_share_token_with_correct_fields(mock_api: Mock, record_property: object) -> None:
         """for_token_id() returns a ShareToken constructed from the API response."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_api.get_share_token_v1_access_share_tokens_share_token_id_get.return_value = (
             _make_share_token_read_response()
         )
@@ -212,8 +218,9 @@ class TestShareTokenRevoke:
 
     @pytest.mark.unit
     @staticmethod
-    def test_revoke_calls_api_with_token_id(mock_api: Mock) -> None:
+    def test_revoke_calls_api_with_token_id(mock_api: Mock, record_property: object) -> None:
         """revoke() calls the revoke endpoint with the correct share_token_id."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-06")
         token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
 
         with patch("aignostics.platform.resources.access.operation_cache_clear"):
@@ -228,8 +235,9 @@ class TestShareTokenRevoke:
 
     @pytest.mark.unit
     @staticmethod
-    def test_revoke_clears_operation_cache(mock_api: Mock) -> None:
+    def test_revoke_clears_operation_cache(mock_api: Mock, record_property: object) -> None:
         """revoke() clears the operation cache after the API call."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-06")
         token = ShareToken(api=mock_api, share_token_id=_TOKEN_ID, revoked=False, created_at=_CREATED_AT)
 
         with patch("aignostics.platform.resources.access.operation_cache_clear") as mock_clear:
@@ -243,8 +251,9 @@ class TestShareTokensList:
 
     @pytest.mark.unit
     @staticmethod
-    def test_returns_share_tokens(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_returns_share_tokens(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """list() returns ShareToken objects from the API response."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-05")
         mock_api.list_share_tokens_v1_access_share_tokens_get.return_value = [_make_share_token_read_response()]
 
         result = list(share_tokens_resource.list())
@@ -256,16 +265,18 @@ class TestShareTokensList:
 
     @pytest.mark.unit
     @staticmethod
-    def test_returns_empty_list_when_none(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_returns_empty_list_when_none(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """list() returns an empty iterator when the API returns no tokens."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-05")
         mock_api.list_share_tokens_v1_access_share_tokens_get.return_value = []
 
         assert list(share_tokens_resource.list()) == []
 
     @pytest.mark.unit
     @staticmethod
-    def test_multiple_tokens_returned(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_multiple_tokens_returned(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """list() returns all tokens from the API response."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-05")
         responses = [_make_share_token_read_response(f"token-{i}") for i in range(3)]
         mock_api.list_share_tokens_v1_access_share_tokens_get.return_value = responses
 
@@ -277,8 +288,9 @@ class TestShareTokensList:
 
     @pytest.mark.unit
     @staticmethod
-    def test_nocache_bypasses_cache_and_fetches_fresh_data(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_nocache_bypasses_cache_and_fetches_fresh_data(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """list(nocache=True) bypasses the cache and calls the API again."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-05")
         first = _make_share_token_read_response("token-first")
         second = _make_share_token_read_response("token-second")
         mock_api.list_share_tokens_v1_access_share_tokens_get.side_effect = [[first], [second]]
@@ -292,8 +304,9 @@ class TestShareTokensList:
 
     @pytest.mark.unit
     @staticmethod
-    def test_default_list_uses_cache_on_second_call(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_default_list_uses_cache_on_second_call(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """list() without nocache returns cached result on the second call."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-05")
         mock_api.list_share_tokens_v1_access_share_tokens_get.return_value = [_make_share_token_read_response()]
 
         list(share_tokens_resource.list())
@@ -307,8 +320,9 @@ class TestShareTokensCreate:
 
     @pytest.mark.unit
     @staticmethod
-    def test_create_returns_share_token_with_secret(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_create_returns_share_token_with_secret(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """create() returns a ShareToken that includes the one-time token secret."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-04")
         mock_api.create_share_token_v1_access_share_tokens_post.return_value = _make_share_token_create_response()
 
         result = share_tokens_resource.create()
@@ -319,8 +333,9 @@ class TestShareTokensCreate:
 
     @pytest.mark.unit
     @staticmethod
-    def test_create_without_expires_at_passes_none(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_create_without_expires_at_passes_none(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """create() passes expires_at=None to the API when not specified."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-04")
         mock_api.create_share_token_v1_access_share_tokens_post.return_value = _make_share_token_create_response()
 
         share_tokens_resource.create()
@@ -331,8 +346,9 @@ class TestShareTokensCreate:
 
     @pytest.mark.unit
     @staticmethod
-    def test_create_with_expires_at_forwards_value(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_create_with_expires_at_forwards_value(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """create(expires_at=...) forwards the expiry to the API and returns it on the token."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-04")
         expires = datetime(2025, 12, 31, tzinfo=UTC)
         mock_api.create_share_token_v1_access_share_tokens_post.return_value = _make_share_token_create_response(
             expires_at=expires
@@ -347,8 +363,9 @@ class TestShareTokensCreate:
 
     @pytest.mark.unit
     @staticmethod
-    def test_create_returns_token_with_correct_metadata(share_tokens_resource: ShareTokens, mock_api: Mock) -> None:
+    def test_create_returns_token_with_correct_metadata(share_tokens_resource: ShareTokens, mock_api: Mock, record_property: object) -> None:
         """create() maps all fields from the API response onto the returned ShareToken."""
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE, TC-APPLICATION-CLI-06-04")
         mock_api.create_share_token_v1_access_share_tokens_post.return_value = _make_share_token_create_response()
 
         result = share_tokens_resource.create()
