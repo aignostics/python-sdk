@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
+from aignx.codegen.models import SubjectType
 from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
@@ -628,17 +629,30 @@ def test_application_run_organization_grants_error(mock_get_client: MagicMock, r
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_share_tokens_success(mock_get_client: MagicMock, record_property: object) -> None:
-    """share_tokens delegates to ShareTokens.list with run_id filter."""
+    """share_tokens returns only tokens whose grant is still active for the run."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-06-05")
     mock_token = MagicMock()
+    mock_token.share_token_id = "token-1"  # noqa: S105
+
+    mock_grant = MagicMock()
+    mock_grant.subject_id = "token-1"
+
+    mock_run = MagicMock()
+    mock_run.list_share_grants.return_value = iter([mock_grant])
+
     mock_client = MagicMock()
+    mock_client.run.return_value = mock_run
     mock_client.share_tokens.list.return_value = iter([mock_token])
     mock_get_client.return_value = mock_client
 
     result = list(ApplicationService().application_run_share_tokens("run-123"))
 
     assert result == [mock_token]
+    mock_client.run.assert_called_once_with("run-123")
     mock_client.share_tokens.list.assert_called_once_with(run_id="run-123", page_size=100)
+    mock_run.list_share_grants.assert_called_once_with(
+        subject_type=SubjectType.SHARE_TOKEN, page_size=100, nocache=True
+    )
 
 
 @pytest.mark.unit
