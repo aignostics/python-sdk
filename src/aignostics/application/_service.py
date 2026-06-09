@@ -1363,21 +1363,39 @@ class Service(BaseService):  # noqa: PLR0904
         run_id: str,
         page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
     ) -> Iterator[ShareToken]:
-        """List active share tokens for a run.
+        """List share tokens that have an active grant for a run.
+
+        Derives the list from active grants rather than from the token's own
+        revoked flag.  This ensures that a token whose *grant* was revoked (via
+        ``application_run_revoke_share_token``) is no longer returned, even
+        though the token itself has not been revoked.
 
         Args:
             run_id (str): The ID of the run.
-            page_size (int): Number of tokens per page. Defaults to max (100).
+            page_size (int): Number of grants per page. Defaults to max (100).
 
-        Returns:
-            Iterator[ShareToken]: Active share tokens.
+        Yields:
+            ShareToken: Each token with an active grant on this run.
 
         Raises:
             NotFoundException: If the run is not found.
             RuntimeError: If the request fails unexpectedly.
         """
         try:
-            return self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
+            client = self._get_platform_client()
+            run = client.run(run_id)
+            seen: set[str] = set()
+            for grant in run.list_share_grants(
+                subject_type=SubjectType.SHARE_TOKEN,
+                page_size=page_size,
+                nocache=True,
+            ):
+                token_id = grant.subject_id
+                if token_id not in seen:
+                    seen.add(token_id)
+                    share_token = ShareToken.for_token_id(token_id)
+                    if not share_token.revoked:
+                        yield share_token
         except NotFoundException as e:
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)

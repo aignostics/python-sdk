@@ -594,6 +594,7 @@ def test_application_run_organization_grants_success(mock_get_client: MagicMock,
     assert call_kwargs.get("relation") is not None
     assert call_kwargs.get("page_size") == 100
 
+
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_organization_grants_not_found(mock_get_client: MagicMock, record_property: object) -> None:
