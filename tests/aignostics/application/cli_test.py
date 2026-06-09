@@ -2702,3 +2702,55 @@ def test_cli_run_share_token_revoke_error(runner: CliRunner, record_property: ob
         result = runner.invoke(cli, ["application", "run", "share", "token", "revoke", "run-001", "tok-001"])
     assert result.exit_code == 1
     assert "Failed to revoke share token" in normalize_output(result.output)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-APPLICATION-CLI-06-07: end-to-end share token workflow
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.e2e
+@pytest.mark.scheduled
+@pytest.mark.timeout(timeout=120)
+def test_cli_run_share_token_e2e_workflow(runner: CliRunner, tmp_path: Path, record_property: object) -> None:
+    """End-to-end: create token with expiry → grant → confirm → revoke → confirm gone."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-06-07, SHR-APPLICATION-4, SWR-APPLICATION-4-1, SWR-APPLICATION-4-2",
+    )
+    expires_at_str = (datetime.now(tz=UTC) + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    with submitted_run(runner, tmp_path, CSV_CONTENT_SPOT0, extra_args=["--force"]) as run_id:
+        # Step 1: create a share token with expiry and grant it access to the run
+        create_result = runner.invoke(
+            cli,
+            ["application", "run", "share", "token", "create", run_id, "--expires-at", expires_at_str],
+        )
+        assert create_result.exit_code == 0, f"Token create failed:\n{create_result.output}"
+        create_output = normalize_output(create_result.output)
+        assert "Save the token value" in create_output
+
+        token_id_match = re.search(r"Token ID\s*:\s*(\S+)", create_output)
+        assert token_id_match, f"Could not extract token ID from output:\n{create_output}"
+        token_id = token_id_match.group(1)
+
+        # Step 2: confirm the token appears in share status
+        status_result = runner.invoke(cli, ["application", "run", "share", "status", run_id, "--format", "json"])
+        assert status_result.exit_code == 0, f"Share status failed:\n{status_result.output}"
+        status_data = json.loads(status_result.stdout)
+        token_ids = [t["share_token_id"] for t in status_data["share_tokens"]]
+        assert token_id in token_ids, f"Token '{token_id}' not found in share status: {token_ids}"
+
+        # Step 3: revoke the token's grant for this run
+        revoke_result = runner.invoke(cli, ["application", "run", "share", "token", "revoke", run_id, token_id])
+        assert revoke_result.exit_code == 0, f"Token revoke failed:\n{revoke_result.output}"
+        assert token_id in normalize_output(revoke_result.output)
+
+        # Step 4: confirm no active grants exist for the token on this run
+        status_after_result = runner.invoke(cli, ["application", "run", "share", "status", run_id, "--format", "json"])
+        assert status_after_result.exit_code == 0, f"Share status after revoke failed:\n{status_after_result.output}"
+        status_after_data = json.loads(status_after_result.stdout)
+        token_ids_after = [t["share_token_id"] for t in status_after_data["share_tokens"]]
+        assert token_id not in token_ids_after, (
+            f"Token '{token_id}' still present in share status after revoke: {token_ids_after}"
+        )
