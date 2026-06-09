@@ -2747,11 +2747,12 @@ def test_cli_run_share_token_e2e_workflow(runner: CliRunner, tmp_path: Path, rec
         assert revoke_result.exit_code == 0, f"Token revoke failed:\n{revoke_result.output}"
         assert token_id in normalize_output(revoke_result.output)
 
-        # Step 4: confirm no active grants exist for the token on this run
-        status_after_result = runner.invoke(cli, ["application", "run", "share", "status", run_id, "--format", "json"])
-        assert status_after_result.exit_code == 0, f"Share status after revoke failed:\n{status_after_result.output}"
-        status_after_data = json.loads(status_after_result.stdout)
-        token_ids_after = [t["share_token_id"] for t in status_after_data["share_tokens"]]
-        assert token_id not in token_ids_after, (
-            f"Token '{token_id}' still present in share status after revoke: {token_ids_after}"
+        # Step 4: verify grant is gone — second revoke should find no grant (NotFoundException → exit 2).
+        # Note: share status lists tokens by the token's own revoked flag, not the grant's, so the
+        # token would still appear there even after its grant is revoked. The second-revoke approach
+        # is the authoritative check that no active grant remains.
+        second_revoke = runner.invoke(cli, ["application", "run", "share", "token", "revoke", run_id, token_id])
+        assert second_revoke.exit_code == 2, (
+            f"Expected exit 2 (no grant found) on second revoke attempt, "
+            f"got {second_revoke.exit_code}:\n{second_revoke.output}"
         )
