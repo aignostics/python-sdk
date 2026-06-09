@@ -1327,8 +1327,8 @@ def run_share_status(
             print(
                 json.dumps(
                     {
-                        "organization_grants": [g.model_dump() for g in org_grants],
-                        "share_tokens": [t.model_dump() for t in tokens],
+                        "organization_grants": [g.model_dump(mode="json") for g in org_grants],
+                        "share_tokens": [t.model_dump(mode="json") for t in tokens],
                     },
                     indent=2,
                     default=str,
@@ -1499,11 +1499,12 @@ def run_share_token_create(
 
 
 @share_token_app.command("revoke")
+@share_token_app.command("revoke")
 def run_share_token_revoke(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
     token_id: Annotated[str, typer.Argument(..., help="Id of the share token to revoke")],
 ) -> None:
-    """Revoke a share token."""
+    """Revoke a share token's access grant for a specific run."""
     try:
         Service().application_run_revoke_share_token(run_id, token_id)
         console.print(f"Share token '{token_id}' revoked for run '{run_id}'.")

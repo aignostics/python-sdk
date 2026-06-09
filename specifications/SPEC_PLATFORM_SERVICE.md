@@ -548,7 +548,6 @@ class ApplicationRun(_AuthenticatedResource):
         self,
         subject_type: SubjectType,
         subject_id: str,
-        organization_id: str | None = None,
     ) -> "AccessGrant":
         """Grants read access to this run to the given subject (organization user or share token).
 
@@ -556,8 +555,10 @@ class ApplicationRun(_AuthenticatedResource):
             subject_type: Category of the subject (ORGANIZATION_ADMIN, ORGANIZATION_USER,
                 or SHARE_TOKEN).
             subject_id: Identifier of the entity to grant access to.
-            organization_id: Optional organization ID for organization-scoped grants.
 
+        Returns:
+            The created AccessGrant.
+        """
         Returns:
             The created AccessGrant.
         """
