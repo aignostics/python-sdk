@@ -1386,11 +1386,14 @@ class Service(BaseService):  # noqa: PLR0904
             run = client.run(run_id)
 
             tokens = self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
-            token_grants = set(g.subject_id for g in run.list_share_grants(
-                subject_type=SubjectType.SHARE_TOKEN,
-                page_size=page_size,
-                nocache=True,
-            ))
+            token_grants = {
+                g.subject_id
+                for g in run.list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    page_size=page_size,
+                    nocache=True,
+                )
+            }
 
             for token in tokens:
                 if token.share_token_id in token_grants:

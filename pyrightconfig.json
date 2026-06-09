@@ -17,7 +17,6 @@
         "template/**",
         "tests/**",
         "codegen/**",
-        "run_dont_commit.py",
         "src/aignostics/wsi/_pydicom_handler.py",
         "src/aignostics/notebook/_notebook.py",
     ],
