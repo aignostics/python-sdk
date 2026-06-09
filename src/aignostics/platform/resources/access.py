@@ -282,6 +282,9 @@ class ShareToken(BaseModel):
                 print(grant.grant_id, grant.relation)
         """
 
+        if page_size > 100:
+            raise ValueError(f"page_size must be <= 100, but got {page_size}")
+
         def fetch_page(**kwargs: object) -> list[GrantReadResponse]:
             return cast(
                 "list[GrantReadResponse]",
