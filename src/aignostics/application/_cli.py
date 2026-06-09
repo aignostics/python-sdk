@@ -1499,7 +1499,6 @@ def run_share_token_create(
 
 
 @share_token_app.command("revoke")
-@share_token_app.command("revoke")
 def run_share_token_revoke(
     run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
     token_id: Annotated[str, typer.Argument(..., help="Id of the share token to revoke")],
