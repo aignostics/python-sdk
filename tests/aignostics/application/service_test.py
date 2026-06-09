@@ -652,7 +652,9 @@ def test_application_run_share_tokens_not_found(mock_get_client: MagicMock, reco
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_with_organization_explicit_org(mock_get_client: MagicMock, record_property: object) -> None:
+def test_application_run_share_with_organization_explicit_org(
+    mock_get_client: MagicMock, record_property: object
+) -> None:
     """share_with_organization calls grant_access with the given org_id."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     mock_grant = MagicMock()
@@ -671,7 +673,9 @@ def test_application_run_share_with_organization_explicit_org(mock_get_client: M
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_share_with_organization_defaults_to_own_org(mock_get_client: MagicMock, record_property: object) -> None:
+def test_application_run_share_with_organization_defaults_to_own_org(
+    mock_get_client: MagicMock, record_property: object
+) -> None:
     """share_with_organization fetches own org_id when none is provided."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-06-01")
     mock_grant = MagicMock()
@@ -707,7 +711,9 @@ def test_application_run_share_with_organization_not_found(mock_get_client: Magi
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_unshare_with_organization_revokes_grants(mock_get_client: MagicMock, record_property: object) -> None:
+def test_application_run_unshare_with_organization_revokes_grants(
+    mock_get_client: MagicMock, record_property: object
+) -> None:
     """unshare_with_organization revokes all matching grants."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     mock_grant = MagicMock()
@@ -727,7 +733,9 @@ def test_application_run_unshare_with_organization_revokes_grants(mock_get_clien
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_unshare_with_organization_not_found(mock_get_client: MagicMock, record_property: object) -> None:
+def test_application_run_unshare_with_organization_not_found(
+    mock_get_client: MagicMock, record_property: object
+) -> None:
     """unshare_with_organization re-raises NotFoundException."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-06-03")
     mock_run = MagicMock()
