@@ -1362,7 +1362,7 @@ def run_share_organization_list(
     try:
         grants = list(Service().application_run_organization_grants(run_id))
         if format == "json":
-            print(json.dumps([g.model_dump() for g in grants], indent=2, default=str))
+            print(json.dumps([g.model_dump(mode="json") for g in grants], indent=2, default=str))
         else:
             if not grants:
                 console.print("No active organization grants.")
