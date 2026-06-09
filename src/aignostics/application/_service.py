@@ -1514,6 +1514,7 @@ class Service(BaseService):  # noqa: PLR0904
                 the token on this run.
             RuntimeError: If the request fails unexpectedly.
         """
+        grants: list[AccessGrant] = []
         try:
             grants = list(
                 self.application_run(run_id).list_share_grants(
