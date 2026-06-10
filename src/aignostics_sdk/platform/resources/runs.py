@@ -710,13 +710,14 @@ class Runs(_AuthenticatedResource):
         """
         return Run(self._api, run_id)
 
-    def submit(
+    def submit(  # noqa: PLR0913, PLR0917
         self,
         application_id: str,
         items: list[ItemCreationRequest],
         application_version: str | None = None,
         custom_metadata: dict[str, Any] | None = None,
         scheduling: SchedulingRequest | None = None,
+        callback_context: dict[str, Any] | None = None,
     ) -> Run:
         """Submit a new application run.
 
@@ -729,6 +730,9 @@ class Runs(_AuthenticatedResource):
             scheduling (SchedulingRequest | None): Optional scheduling constraints for the run.
                 Supports 'due_date' (requested completion time, ISO 8601) and
                 'deadline' (hard deadline, ISO 8601).
+            callback_context (dict[str, Any] | None): Optional opaque correlation
+                payload (max 1 KB serialized) forwarded verbatim to the platform
+                and echoed in state-change events. Not validated client-side.
 
         Returns:
             Run: The submitted application run.
@@ -750,6 +754,7 @@ class Runs(_AuthenticatedResource):
             custom_metadata=cast("dict[str, Any]", convert_to_json_serializable(custom_metadata)),
             items=items,
             scheduling=scheduling,
+            callback_context=callback_context,
         )
         current_settings = settings()
         self._validate_input_items(payload)

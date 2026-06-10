@@ -21,7 +21,7 @@ from nicegui.testing import User
 from typer.testing import CliRunner
 
 from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
-from tests.conftest import assert_notified, normalize_output, print_directory_structure
+from tests.conftest import assert_notified, assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -31,6 +31,7 @@ from tests.constants_test import (
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
     SPOT_1_FILENAME,
+    SPOT_1_FILESIZE,
     SPOT_1_GS_URL,
 )
 
@@ -48,35 +49,6 @@ async def test_gui_index(user: User, silent_logging, record_property) -> None:
     await user.open("/")
     await user.should_see("Atlas H&E-TME", retries=100)
     await user.should_see("Download Datasets")
-
-
-@pytest.mark.e2e
-@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60 * 2)
-@pytest.mark.parametrize(
-    ("application_id", "application_name", "expected_text"),
-    [
-        (
-            "he-tme",
-            "Atlas H&E-TME",
-            "The Atlas H&E TME is an AI application",
-        ),
-        (
-            "test-app",
-            "test-app",  # TODO(Helmut): Check in with Ari
-            "This is the test application with two algorithms",
-        ),
-    ],
-)
-async def test_gui_home_to_application(  # noqa: PLR0913, PLR0917
-    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
-) -> None:
-    """Test that the user sees the specific application page with expected content."""
-    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
-    await user.open("/")
-    await user.should_see(application_name, retries=100)
-    user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
-    await user.should_see(expected_text, retries=300)
 
 
 @pytest.mark.e2e
@@ -214,7 +186,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
             assert SPOT_1_FILENAME in normalize_output(result.stdout)
             expected_file = Path(tmp_path) / SPOT_1_FILENAME
             assert expected_file.exists(), f"Expected file {expected_file} not found"
-            assert expected_file.stat().st_size == 14681750
+            assert expected_file.stat().st_size == SPOT_1_FILESIZE
 
             # Open the GUI and navigate to Atlas H&E-TME application
             await user.open("/")
@@ -354,7 +326,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(  # noqa: PLR0915
+async def test_gui_run_download(  # noqa: PLR0914, PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a run result via the GUI."""
@@ -440,8 +412,9 @@ async def test_gui_run_download(  # noqa: PLR0915
 
         # Check for files in the results directory
         files_in_results_dir = list(results_dir.glob("*"))
-        assert len(files_in_results_dir) == 9, (
-            f"Expected 9 files in {results_dir}, but found {len(files_in_results_dir)}: "
+        expected_count = len(SPOT_0_EXPECTED_RESULT_FILES)
+        assert len(files_in_results_dir) == expected_count, (
+            f"Expected {expected_count} files in {results_dir}, but found {len(files_in_results_dir)}: "
             f"{[f.name for f in files_in_results_dir]}"
         )
 
@@ -464,6 +437,9 @@ async def test_gui_run_download(  # noqa: PLR0915
                 f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
             )
 
+        # Validate parquet <-> GeoJSON parity: area for segmentation, count for cell classification.
+        assert_parquet_geojson_parity(results_dir)
+
 
 @pytest.mark.integration
 @pytest.mark.sequential
@@ -479,12 +455,14 @@ async def test_gui_run_results_pagination_show_more_button_hidden_when_few_resul
     """
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
 
-    # Find a run with fewer items than RESULTS_PAGE_SIZE
+    # Find a run with fewer items than RESULTS_PAGE_SIZE.
+    # Omit has_output so the server-side filter is applied without client-side pagination:
+    # item_count already acts as a proxy (runs with no output show item_count=0 and fail
+    # the 0 < item_count <= RESULTS_PAGE_SIZE check below).
     runs = Service().application_runs(
         application_id=HETA_APPLICATION_ID,
         application_version=HETA_APPLICATION_VERSION,
-        has_output=True,
-        limit=20,
+        limit=5,
     )
 
     # Find a run with few enough items

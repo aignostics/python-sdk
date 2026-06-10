@@ -257,8 +257,9 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
 
         # Check for files in the results directory
         files_in_results_dir = list(results_dir.glob("*"))
-        assert len(files_in_results_dir) == 9, (
-            f"Expected 9 files in {results_dir}, but found {len(files_in_results_dir)}: "
+        expected_count = len(SPOT_0_EXPECTED_RESULT_FILES)
+        assert len(files_in_results_dir) == expected_count, (
+            f"Expected {expected_count} files in {results_dir}, but found {len(files_in_results_dir)}: "
             f"{[f.name for f in files_in_results_dir]}"
         )
 

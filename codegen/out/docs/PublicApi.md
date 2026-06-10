@@ -6,22 +6,30 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**application_version_details_v1_applications_application_id_versions_version_get**](PublicApi.md#application_version_details_v1_applications_application_id_versions_version_get) | **GET** /v1/applications/{application_id}/versions/{version} | Application Version Details
 [**cancel_run_v1_runs_run_id_cancel_post**](PublicApi.md#cancel_run_v1_runs_run_id_cancel_post) | **POST** /v1/runs/{run_id}/cancel | Cancel Run
+[**create_grant_v1_access_grants_post**](PublicApi.md#create_grant_v1_access_grants_post) | **POST** /v1/access/grants | Create Grant
 [**create_run_v1_runs_post**](PublicApi.md#create_run_v1_runs_post) | **POST** /v1/runs | Initiate Run
+[**create_share_token_v1_access_share_tokens_post**](PublicApi.md#create_share_token_v1_access_share_tokens_post) | **POST** /v1/access/share-tokens | Create Share Token
 [**delete_run_items_v1_runs_run_id_artifacts_delete**](PublicApi.md#delete_run_items_v1_runs_run_id_artifacts_delete) | **DELETE** /v1/runs/{run_id}/artifacts | Delete Run Items
 [**get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get**](PublicApi.md#get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get) | **GET** /v1/runs/{run_id}/artifacts/{artifact_id}/file | Get Artifact Url
+[**get_grant_v1_access_grants_grant_id_get**](PublicApi.md#get_grant_v1_access_grants_grant_id_get) | **GET** /v1/access/grants/{grant_id} | Get Grant
 [**get_item_by_run_v1_runs_run_id_items_external_id_get**](PublicApi.md#get_item_by_run_v1_runs_run_id_items_external_id_get) | **GET** /v1/runs/{run_id}/items/{external_id} | Get Item By Run
 [**get_me_v1_me_get**](PublicApi.md#get_me_v1_me_get) | **GET** /v1/me | Get current user
 [**get_run_v1_runs_run_id_get**](PublicApi.md#get_run_v1_runs_run_id_get) | **GET** /v1/runs/{run_id} | Get run details
+[**get_share_token_v1_access_share_tokens_share_token_id_get**](PublicApi.md#get_share_token_v1_access_share_tokens_share_token_id_get) | **GET** /v1/access/share-tokens/{share_token_id} | Get Share Token
 [**get_version_document**](PublicApi.md#get_version_document) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name} | Get version document metadata
 [**get_version_document_content**](PublicApi.md#get_version_document_content) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name}/content | Stream version document content (programmatic)
 [**get_version_document_file**](PublicApi.md#get_version_document_file) | **GET** /v1/applications/{application_id}/versions/{version}/documents/{name}/file | Download version document (browser)
 [**list_applications_v1_applications_get**](PublicApi.md#list_applications_v1_applications_get) | **GET** /v1/applications | List available applications
+[**list_grants_v1_access_grants_get**](PublicApi.md#list_grants_v1_access_grants_get) | **GET** /v1/access/grants | List Grants
 [**list_run_items_v1_runs_run_id_items_get**](PublicApi.md#list_run_items_v1_runs_run_id_items_get) | **GET** /v1/runs/{run_id}/items | List Run Items
 [**list_runs_v1_runs_get**](PublicApi.md#list_runs_v1_runs_get) | **GET** /v1/runs | List Runs
+[**list_share_tokens_v1_access_share_tokens_get**](PublicApi.md#list_share_tokens_v1_access_share_tokens_get) | **GET** /v1/access/share-tokens | List Share Tokens
 [**list_version_documents**](PublicApi.md#list_version_documents) | **GET** /v1/applications/{application_id}/versions/{version}/documents | List version documents
 [**put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put**](PublicApi.md#put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/items/{external_id}/custom-metadata | Put Item Custom Metadata By Run
 [**put_run_custom_metadata_v1_runs_run_id_custom_metadata_put**](PublicApi.md#put_run_custom_metadata_v1_runs_run_id_custom_metadata_put) | **PUT** /v1/runs/{run_id}/custom-metadata | Put Run Custom Metadata
 [**read_application_by_id_v1_applications_application_id_get**](PublicApi.md#read_application_by_id_v1_applications_application_id_get) | **GET** /v1/applications/{application_id} | Read Application By Id
+[**revoke_grant_v1_access_grants_grant_id_delete**](PublicApi.md#revoke_grant_v1_access_grants_grant_id_delete) | **DELETE** /v1/access/grants/{grant_id} | Revoke Grant
+[**revoke_share_token_v1_access_share_tokens_share_token_id_delete**](PublicApi.md#revoke_share_token_v1_access_share_tokens_share_token_id_delete) | **DELETE** /v1/access/share-tokens/{share_token_id} | Revoke Share Token
 
 
 # **application_version_details_v1_applications_application_id_versions_version_get**
@@ -182,6 +190,85 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **create_grant_v1_access_grants_post**
+> GrantReadResponse create_grant_v1_access_grants_post(grant_create_request)
+
+Create Grant
+
+Create a grant to share access to a resource with a subject (user or organization).
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.grant_create_request import GrantCreateRequest
+from aignx.codegen.models.grant_read_response import GrantReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    grant_create_request = aignx.codegen.GrantCreateRequest() # GrantCreateRequest | 
+
+    try:
+        # Create Grant
+        api_response = api_instance.create_grant_v1_access_grants_post(grant_create_request)
+        print("The response of PublicApi->create_grant_v1_access_grants_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->create_grant_v1_access_grants_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **grant_create_request** | [**GrantCreateRequest**](GrantCreateRequest.md)|  | 
+
+### Return type
+
+[**GrantReadResponse**](GrantReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**201** | Successful Response |  -  |
+**403** | Forbidden - You don&#39;t have permission to grant access to this resource |  -  |
+**404** | Resource not found |  -  |
+**422** | Unprocessable Entity - Only viewer grants can be created |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **create_run_v1_runs_post**
 > RunCreationResponse create_run_v1_runs_post(run_creation_request)
 
@@ -258,6 +345,83 @@ Name | Type | Description  | Notes
 **404** | Application version not found |  -  |
 **403** | Forbidden - You don&#39;t have permission to create this run |  -  |
 **400** | Bad Request - Input validation failed |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **create_share_token_v1_access_share_tokens_post**
+> ShareTokenCreateResponse create_share_token_v1_access_share_tokens_post(share_token_create_request)
+
+Create Share Token
+
+Create a share token. The returned share_token value is shown only once and is never stored. Use POST /access/grants with subject_type=share_token to grant access to a resource.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.share_token_create_request import ShareTokenCreateRequest
+from aignx.codegen.models.share_token_create_response import ShareTokenCreateResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    share_token_create_request = aignx.codegen.ShareTokenCreateRequest() # ShareTokenCreateRequest | 
+
+    try:
+        # Create Share Token
+        api_response = api_instance.create_share_token_v1_access_share_tokens_post(share_token_create_request)
+        print("The response of PublicApi->create_share_token_v1_access_share_tokens_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->create_share_token_v1_access_share_tokens_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **share_token_create_request** | [**ShareTokenCreateRequest**](ShareTokenCreateRequest.md)|  | 
+
+### Return type
+
+[**ShareTokenCreateResponse**](ShareTokenCreateResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**201** | Successful Response |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -339,7 +503,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get**
-> object get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id)
+> object get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id, share_token=share_token)
 
 Get Artifact Url
 
@@ -373,10 +537,11 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     api_instance = aignx.codegen.PublicApi(api_client)
     run_id = 'run_id_example' # str | Run id, returned by `POST /runs/` endpoint
     artifact_id = 'artifact_id_example' # str | The artifact id to download
+    share_token = 'share_token_example' # str | Share token for accessing shared runs (optional)
 
     try:
         # Get Artifact Url
-        api_response = api_instance.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id)
+        api_response = api_instance.get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get(run_id, artifact_id, share_token=share_token)
         print("The response of PublicApi->get_artifact_url_v1_runs_run_id_artifacts_artifact_id_file_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -392,6 +557,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **run_id** | **str**| Run id, returned by &#x60;POST /runs/&#x60; endpoint | 
  **artifact_id** | **str**| The artifact id to download | 
+ **share_token** | **str**| Share token for accessing shared runs | [optional] 
 
 ### Return type
 
@@ -419,8 +585,86 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_grant_v1_access_grants_grant_id_get**
+> GrantReadResponse get_grant_v1_access_grants_grant_id_get(grant_id)
+
+Get Grant
+
+Get a grant by its ID.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.grant_read_response import GrantReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    grant_id = 'grant_id_example' # str | Grant ID
+
+    try:
+        # Get Grant
+        api_response = api_instance.get_grant_v1_access_grants_grant_id_get(grant_id)
+        print("The response of PublicApi->get_grant_v1_access_grants_grant_id_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_grant_v1_access_grants_grant_id_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **grant_id** | **str**| Grant ID | 
+
+### Return type
+
+[**GrantReadResponse**](GrantReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**403** | Forbidden - You don&#39;t have permission to view this grant |  -  |
+**404** | Grant not found |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_item_by_run_v1_runs_run_id_items_external_id_get**
-> ItemResultReadResponse get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id)
+> ItemResultReadResponse get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id, share_token=share_token)
 
 Get Item By Run
 
@@ -455,10 +699,11 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     api_instance = aignx.codegen.PublicApi(api_client)
     run_id = 'run_id_example' # str | The run id, returned by `POST /runs/` endpoint
     external_id = 'external_id_example' # str | The `external_id` that was defined for the item by the customer that triggered the run.
+    share_token = 'share_token_example' # str | Share token for accessing shared runs (optional)
 
     try:
         # Get Item By Run
-        api_response = api_instance.get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id)
+        api_response = api_instance.get_item_by_run_v1_runs_run_id_items_external_id_get(run_id, external_id, share_token=share_token)
         print("The response of PublicApi->get_item_by_run_v1_runs_run_id_items_external_id_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -474,6 +719,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **run_id** | **str**| The run id, returned by &#x60;POST /runs/&#x60; endpoint | 
  **external_id** | **str**| The &#x60;external_id&#x60; that was defined for the item by the customer that triggered the run. | 
+ **share_token** | **str**| Share token for accessing shared runs | [optional] 
 
 ### Return type
 
@@ -571,11 +817,11 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_run_v1_runs_run_id_get**
-> RunReadResponse get_run_v1_runs_run_id_get(run_id)
+> RunReadResponse get_run_v1_runs_run_id_get(run_id, share_token=share_token)
 
 Get run details
 
-This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.  A run becomes available immediately after it is created through the `POST /v1/runs/` endpoint.   To download the output results, use `GET /v1/runs/{run_id}/` items to get outputs for all slides. Access to a run is restricted to the user who created it.
+This endpoint allows the caller to retrieve the current status of a run along with other relevant run details.  A run becomes available immediately after it is created through the `POST /v1/runs/` endpoint.   To download the output results, use `GET /v1/runs/{run_id}/` items to get outputs for all slides. Access to a run is restricted to the user who created it, or users with an active grant or valid share token.
 
 ### Example
 
@@ -605,10 +851,11 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.PublicApi(api_client)
     run_id = 'run_id_example' # str | Run id, returned by `POST /v1/runs/` endpoint
+    share_token = 'share_token_example' # str | Share token for accessing shared runs (optional)
 
     try:
         # Get run details
-        api_response = api_instance.get_run_v1_runs_run_id_get(run_id)
+        api_response = api_instance.get_run_v1_runs_run_id_get(run_id, share_token=share_token)
         print("The response of PublicApi->get_run_v1_runs_run_id_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -623,6 +870,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **run_id** | **str**| Run id, returned by &#x60;POST /v1/runs/&#x60; endpoint | 
+ **share_token** | **str**| Share token for accessing shared runs | [optional] 
 
 ### Return type
 
@@ -644,6 +892,84 @@ Name | Type | Description  | Notes
 **200** | Successful Response |  -  |
 **404** | Run not found because it was deleted. |  -  |
 **403** | Forbidden - You don&#39;t have permission to see this run |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_share_token_v1_access_share_tokens_share_token_id_get**
+> ShareTokenReadResponse get_share_token_v1_access_share_tokens_share_token_id_get(share_token_id)
+
+Get Share Token
+
+Get a share token by its ID.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.share_token_read_response import ShareTokenReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    share_token_id = 'share_token_id_example' # str | Share token ID
+
+    try:
+        # Get Share Token
+        api_response = api_instance.get_share_token_v1_access_share_tokens_share_token_id_get(share_token_id)
+        print("The response of PublicApi->get_share_token_v1_access_share_tokens_share_token_id_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->get_share_token_v1_access_share_tokens_share_token_id_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **share_token_id** | **str**| Share token ID | 
+
+### Return type
+
+[**ShareTokenReadResponse**](ShareTokenReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**403** | Forbidden - You don&#39;t have permission to view this share token |  -  |
+**404** | Share token not found |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -966,8 +1292,100 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **list_grants_v1_access_grants_get**
+> List[GrantReadResponse] list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, revoked=revoked, page=page, page_size=page_size, sort=sort)
+
+List Grants
+
+List grants.  Org admins see all grants for all resources in their organization. Regular users see grants for all resources they submitted.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.grant_read_response import GrantReadResponse
+from aignx.codegen.models.resource_type import ResourceType
+from aignx.codegen.models.subject_type import SubjectType
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    resource_type = aignx.codegen.ResourceType() # ResourceType |  (optional)
+    resource_id = 'resource_id_example' # str |  (optional)
+    subject_type = aignx.codegen.SubjectType() # SubjectType |  (optional)
+    subject_id = 'subject_id_example' # str |  (optional)
+    revoked = True # bool |  (optional)
+    page = 1 # int |  (optional) (default to 1)
+    page_size = 50 # int |  (optional) (default to 50)
+    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order. (optional)
+
+    try:
+        # List Grants
+        api_response = api_instance.list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, revoked=revoked, page=page, page_size=page_size, sort=sort)
+        print("The response of PublicApi->list_grants_v1_access_grants_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->list_grants_v1_access_grants_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **resource_type** | [**ResourceType**](.md)|  | [optional] 
+ **resource_id** | **str**|  | [optional] 
+ **subject_type** | [**SubjectType**](.md)|  | [optional] 
+ **subject_id** | **str**|  | [optional] 
+ **revoked** | **bool**|  | [optional] 
+ **page** | **int**|  | [optional] [default to 1]
+ **page_size** | **int**|  | [optional] [default to 50]
+ **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order. | [optional] 
+
+### Return type
+
+[**List[GrantReadResponse]**](GrantReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **list_run_items_v1_runs_run_id_items_get**
-> List[ItemResultReadResponse] list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+> List[ItemResultReadResponse] list_run_items_v1_runs_run_id_items_get(run_id, share_token=share_token, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
 
 List Run Items
 
@@ -1003,6 +1421,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = aignx.codegen.PublicApi(api_client)
     run_id = 'run_id_example' # str | Run id, returned by `POST /v1/runs/` endpoint
+    share_token = 'share_token_example' # str | Share token for accessing shared runs (optional)
     item_id__in = ['item_id__in_example'] # List[str] | Filter for item ids (optional)
     external_id__in = ['external_id__in_example'] # List[str] | Filter for items by their external_id from the input payload (optional)
     state = aignx.codegen.ItemState() # ItemState | Filter items by their state (optional)
@@ -1014,7 +1433,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
     try:
         # List Run Items
-        api_response = api_instance.list_run_items_v1_runs_run_id_items_get(run_id, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
+        api_response = api_instance.list_run_items_v1_runs_run_id_items_get(run_id, share_token=share_token, item_id__in=item_id__in, external_id__in=external_id__in, state=state, termination_reason=termination_reason, custom_metadata=custom_metadata, page=page, page_size=page_size, sort=sort)
         print("The response of PublicApi->list_run_items_v1_runs_run_id_items_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -1029,6 +1448,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **run_id** | **str**| Run id, returned by &#x60;POST /v1/runs/&#x60; endpoint | 
+ **share_token** | **str**| Share token for accessing shared runs | [optional] 
  **item_id__in** | [**List[str]**](str.md)| Filter for item ids | [optional] 
  **external_id__in** | [**List[str]**](str.md)| Filter for items by their external_id from the input payload | [optional] 
  **state** | [**ItemState**](.md)| Filter items by their state | [optional] 
@@ -1148,6 +1568,92 @@ Name | Type | Description  | Notes
 |-------------|-------------|------------------|
 **200** | Successful Response |  -  |
 **404** | Run not found |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **list_share_tokens_v1_access_share_tokens_get**
+> List[ShareTokenReadResponse] list_share_tokens_v1_access_share_tokens_get(run_id=run_id, created_by=created_by, revoked=revoked, page=page, page_size=page_size, sort=sort)
+
+List Share Tokens
+
+List share tokens. Service and Superadmin see all tokens; other users see only their own.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.share_token_read_response import ShareTokenReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    run_id = 'run_id_example' # str | Filter by run ID (optional)
+    created_by = 'created_by_example' # str | Filter by share token creator (optional)
+    revoked = True # bool |  (optional)
+    page = 1 # int |  (optional) (default to 1)
+    page_size = 50 # int |  (optional) (default to 50)
+    sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order. (optional)
+
+    try:
+        # List Share Tokens
+        api_response = api_instance.list_share_tokens_v1_access_share_tokens_get(run_id=run_id, created_by=created_by, revoked=revoked, page=page, page_size=page_size, sort=sort)
+        print("The response of PublicApi->list_share_tokens_v1_access_share_tokens_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->list_share_tokens_v1_access_share_tokens_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **run_id** | **str**| Filter by run ID | [optional] 
+ **created_by** | **str**| Filter by share token creator | [optional] 
+ **revoked** | **bool**|  | [optional] 
+ **page** | **int**|  | [optional] [default to 1]
+ **page_size** | **int**|  | [optional] [default to 50]
+ **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order. | [optional] 
+
+### Return type
+
+[**List[ShareTokenReadResponse]**](ShareTokenReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -1471,6 +1977,164 @@ Name | Type | Description  | Notes
 **200** | Successful Response |  -  |
 **403** | Forbidden - You don&#39;t have permission to see this application |  -  |
 **404** | Not Found - Application with the given ID does not exist |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **revoke_grant_v1_access_grants_grant_id_delete**
+> GrantReadResponse revoke_grant_v1_access_grants_grant_id_delete(grant_id)
+
+Revoke Grant
+
+Revoke a grant by its ID. Sets the revoked_at timestamp on the grant.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.grant_read_response import GrantReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    grant_id = 'grant_id_example' # str | Grant ID
+
+    try:
+        # Revoke Grant
+        api_response = api_instance.revoke_grant_v1_access_grants_grant_id_delete(grant_id)
+        print("The response of PublicApi->revoke_grant_v1_access_grants_grant_id_delete:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->revoke_grant_v1_access_grants_grant_id_delete: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **grant_id** | **str**| Grant ID | 
+
+### Return type
+
+[**GrantReadResponse**](GrantReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**403** | Forbidden - You don&#39;t have permission to revoke this grant |  -  |
+**404** | Grant not found |  -  |
+**409** | Conflict - Grant is already revoked |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **revoke_share_token_v1_access_share_tokens_share_token_id_delete**
+> ShareTokenReadResponse revoke_share_token_v1_access_share_tokens_share_token_id_delete(share_token_id)
+
+Revoke Share Token
+
+Revoke a share token by its ID. Invalidates the credential regardless of any active grants.
+
+### Example
+
+* OAuth Authentication (OAuth2AuthorizationCodeBearer):
+
+```python
+import aignx.codegen
+from aignx.codegen.models.share_token_read_response import ShareTokenReadResponse
+from aignx.codegen.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /api
+# See configuration.py for a list of all supported configuration parameters.
+configuration = aignx.codegen.Configuration(
+    host = "/api"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+configuration.access_token = os.environ["ACCESS_TOKEN"]
+
+# Enter a context with an instance of the API client
+with aignx.codegen.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = aignx.codegen.PublicApi(api_client)
+    share_token_id = 'share_token_id_example' # str | Share token ID
+
+    try:
+        # Revoke Share Token
+        api_response = api_instance.revoke_share_token_v1_access_share_tokens_share_token_id_delete(share_token_id)
+        print("The response of PublicApi->revoke_share_token_v1_access_share_tokens_share_token_id_delete:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PublicApi->revoke_share_token_v1_access_share_tokens_share_token_id_delete: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **share_token_id** | **str**| Share token ID | 
+
+### Return type
+
+[**ShareTokenReadResponse**](ShareTokenReadResponse.md)
+
+### Authorization
+
+[OAuth2AuthorizationCodeBearer](../README.md#OAuth2AuthorizationCodeBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**403** | Forbidden - You don&#39;t have permission to revoke this share token |  -  |
+**404** | Share token not found |  -  |
+**409** | Conflict - Share token is already revoked |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

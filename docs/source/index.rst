@@ -1,6 +1,7 @@
 .. only:: html
 
-   .. include:: main.rst
+   .. include:: ../partials/README_main.md
+      :parser: myst_parser.sphinx_
 
 .. toctree::
    :hidden:
@@ -10,9 +11,18 @@
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :caption: Get started
 
-   main
-   migration
+   get_started_launchpad
+   get_started_cli
+   get_started_library
+   get_started_mcp
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Reference
+
    platform_overview
    cli_reference
    lib_reference

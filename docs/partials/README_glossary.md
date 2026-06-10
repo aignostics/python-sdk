@@ -30,7 +30,7 @@ Software Development Kit providing multiple pathways to interact with the Aignos
 Fully automated advanced machine learning workflow composed of specific tasks (e.g., Tissue Quality Control, Tissue Segmentation, Cell Detection, Cell Classification) designed for particular analysis purposes.
 
 **Application Run**  
-The execution instance of an application on submitted whole slide images, which can be in various states: received, scheduled, running, completed, rejected, cancelled by system, or cancelled by user.
+The execution instance of an application on submitted whole slide images. A run moves through three states — pending, processing, and terminated — and a terminated run records a termination reason (all items processed, canceled by user, or canceled by system).
 
 **Application Version**  
 Specific version of an application with defined input requirements, processing tasks, and output formats. Each application can have multiple versions.
@@ -153,8 +153,8 @@ Limit on the number of whole slide images an organization or user can process pe
 
 ### R
 
-**Reference**  
-Unique identifier string for each input item in an application run, used to match results with original inputs.
+**Reference** (`external_id`)  
+Unique identifier string you assign to each input item in an application run (the `external_id` field), used to match results with original inputs.
 
 **Results**  
 Output data from application processing, including measurements, statistics, heatmaps, and annotations, automatically deleted after 30 days.

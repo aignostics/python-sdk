@@ -1,3 +1,26 @@
+/* Left-align the sidebar brand (Aignostics wordmark + "Documentation") */
+.sidebar-brand {
+    align-items: flex-start;
+}
+.sidebar-logo {
+    margin: 0;
+}
+.sidebar-brand-text {
+    text-align: left;
+    /* Subordinate the "Platform Documentation" descriptor to the wordmark above it.
+       Title case (not all-caps) so the two-word phrase reads naturally and wraps cleanly. */
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-foreground-secondary);
+    margin-top: 0.3rem;
+    line-height: 1.3;
+}
+
+/* Version stamp inline with the footer's copyright / attribution line */
+.version-stamp {
+    color: var(--color-foreground-muted);
+}
+
 /* Make mermaid diagrams use full page width */
 .mermaid {
     max-width: 100% !important;

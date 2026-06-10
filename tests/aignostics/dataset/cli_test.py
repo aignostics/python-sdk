@@ -11,7 +11,7 @@ from aignostics.cli import cli
 from typer.testing import CliRunner
 
 from tests.conftest import normalize_output
-from tests.constants_test import SPOT_1_FILENAME, SPOT_1_GS_URL
+from tests.constants_test import SPOT_1_FILENAME, SPOT_1_FILESIZE, SPOT_1_GS_URL
 
 SERIES_UID = "1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0"
 THUMBNAIL_UID = "1.3.6.1.4.1.5962.99.1.1038911754.1238045814.1637421484298.15.0"
@@ -149,7 +149,7 @@ def test_cli_aignostics_download_sample(runner: CliRunner, tmp_path: Path, recor
 
     expected_file = tmp_path / SPOT_1_FILENAME
     assert expected_file.exists(), f"Expected file {expected_file} not found"
-    assert expected_file.stat().st_size == 14681750
+    assert expected_file.stat().st_size == SPOT_1_FILESIZE
 
 
 @pytest.mark.integration

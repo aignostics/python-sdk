@@ -395,8 +395,21 @@ class Runs(_AuthenticatedResource):
     # Constructor inherited from _AuthenticatedResource
     # def __init__(self, api: _AuthenticatedApi) -> None:
 
-    def create(self, application_version: str, items: list[ItemCreationRequest]) -> ApplicationRun:
-        """Creates a new application run."""
+    def submit(
+        self,
+        application_version: str,
+        items: list[ItemCreationRequest],
+        callback_context: dict[str, Any] | None = None,
+    ) -> ApplicationRun:
+        """Submit run with automatic SDK metadata attachment."""
+
+        Args:
+            application_version: Version of the application to run.
+            items: Items (slides) to process.
+            callback_context: Optional opaque correlation payload (max 1 KB
+                serialized) forwarded verbatim to the platform and echoed in
+                state-change events. Not validated client-side.
+        """
 
     def list(
         self,
