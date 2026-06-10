@@ -126,8 +126,6 @@ def lint(session: nox.Session) -> None:
     )
 
 
-
-
 @nox.session(python=[PYTHON_VERSION])
 def lint_fix(session: nox.Session) -> None:
     """Apply code formatting checks and linting."""
