@@ -7,8 +7,4 @@ Requirement type: FUNCTIONAL
 Layer: System (backend logic)
 ---
 
-System shall enable run submitters and organization admins to create revocable share tokens with an optional expiry date
-and to grant read access to a specific application run via such a token, allowing secure sharing with other platform 
-users. The system shall list all active share tokens for the authenticated user. The system shall list all grants 
-associated with a given share token. The system shall revoke a share token's grant on a specific run on demand. The 
-token secret shall be returned only at creation time and shall not be retrievable subsequently.
+System shall enable run owners and organization admins to manage share tokens for a given application run through the CLI.
