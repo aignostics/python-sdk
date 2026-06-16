@@ -1316,6 +1316,82 @@ def test_cli_run_update_item_metadata_concurrency_conflict(runner: CliRunner) ->
     assert "modified by another process" in result.output
 
 
+@pytest.mark.unit
+def test_cli_run_dump_metadata_default_output(runner: CliRunner) -> None:
+    """dump-metadata default output is bare custom_metadata dict (backward compat)."""
+    mock_run_handle = MagicMock()
+    mock_run_data = MagicMock()
+    mock_run_data.custom_metadata = {"key": "value"}
+    mock_run_data.custom_metadata_checksum = "abc123"
+    mock_run_handle.details.return_value = mock_run_data
+
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(cli, ["application", "run", "dump-metadata", "run-123"])
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {"key": "value"}
+
+
+@pytest.mark.unit
+def test_cli_run_dump_metadata_show_checksum(runner: CliRunner) -> None:
+    """dump-metadata --show-checksum emits wrapped object with custom_metadata_checksum."""
+    mock_run_handle = MagicMock()
+    mock_run_data = MagicMock()
+    mock_run_data.custom_metadata = {"key": "value"}
+    mock_run_data.custom_metadata_checksum = "abc123"
+    mock_run_handle.details.return_value = mock_run_data
+
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(cli, ["application", "run", "dump-metadata", "run-123", "--show-checksum"])
+
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    assert parsed == {"custom_metadata": {"key": "value"}, "custom_metadata_checksum": "abc123"}
+
+
+@pytest.mark.unit
+def test_cli_run_dump_item_metadata_default_output(runner: CliRunner) -> None:
+    """dump-item-metadata default output is bare custom_metadata dict (backward compat)."""
+    mock_item = MagicMock()
+    mock_item.external_id = "item-ext-id"
+    mock_item.custom_metadata = {"item_key": "item_value"}
+    mock_item.custom_metadata_checksum = "def456"
+
+    mock_run_handle = MagicMock()
+    mock_run_handle.results.return_value = iter([mock_item])
+
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(cli, ["application", "run", "dump-item-metadata", "run-123", "item-ext-id"])
+
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {"item_key": "item_value"}
+
+
+@pytest.mark.unit
+def test_cli_run_dump_item_metadata_show_checksum(runner: CliRunner) -> None:
+    """dump-item-metadata --show-checksum emits wrapped object with custom_metadata_checksum."""
+    mock_item = MagicMock()
+    mock_item.external_id = "item-ext-id"
+    mock_item.custom_metadata = {"item_key": "item_value"}
+    mock_item.custom_metadata_checksum = "def456"
+
+    mock_run_handle = MagicMock()
+    mock_run_handle.results.return_value = iter([mock_item])
+
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(
+            cli, ["application", "run", "dump-item-metadata", "run-123", "item-ext-id", "--show-checksum"]
+        )
+
+    assert result.exit_code == 0
+    parsed = json.loads(result.output)
+    assert parsed == {"custom_metadata": {"item_key": "item_value"}, "custom_metadata_checksum": "def456"}
+
+
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
 @pytest.mark.sequential

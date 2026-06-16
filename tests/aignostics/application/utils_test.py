@@ -1187,3 +1187,50 @@ def test_validate_scheduling_constraints_due_date_equal_deadline() -> None:
     same_time = (datetime.now(tz=UTC) + timedelta(hours=2)).isoformat()
     with pytest.raises(ValueError, match=r"due_date must be before deadline"):
         validate_scheduling_constraints(same_time, same_time)
+
+
+# Tests for assert_parquet_geojson_parity (conftest helper)
+
+
+@pytest.mark.unit
+def test_assert_parquet_geojson_parity_row_count_engine_agnostic(tmp_path: Path) -> None:
+    """Verify assert_parquet_geojson_parity counts rows correctly regardless of pyarrow version.
+
+    Guards the columns=['geometry'] fix: columns=[] returns 0 rows under pyarrow 23+
+    (the engine used on Python 3.14), which caused false-passing count assertions.
+    """
+    import json
+
+    import pandas as pd
+    import shapely.geometry
+    import shapely.wkb
+
+    from tests.conftest import assert_parquet_geojson_parity
+
+    n_rows = 3
+    # Build synthetic WKB geometries (simple boxes) for the parquet file
+    polygons = [shapely.geometry.box(i, i, i + 1, i + 1) for i in range(n_rows)]
+    wkb_bytes = [shapely.wkb.dumps(p) for p in polygons]
+
+    # Write the cell_classification parquet with a real geometry column
+    parquet_path = tmp_path / "cell_classification_parquet_polygons.parquet"
+    pd.DataFrame({"geometry": wkb_bytes}).to_parquet(parquet_path)
+
+    # Write matching GeoJSON (same polygons → count parity, area parity)
+    geojson_path = tmp_path / "cell_classification_geojson_polygons.json"
+    features = [{"type": "Feature", "geometry": shapely.geometry.mapping(p), "properties": {}} for p in polygons]
+    geojson_path.write_text(json.dumps({"type": "FeatureCollection", "features": features}))
+
+    # Stub out tissue_qc and tissue_segmentation pairs so the area loop is skipped
+    for stub_parquet, stub_json in [
+        ("tissue_qc_parquet_polygons.parquet", "tissue_qc_geojson_polygons.json"),
+        ("tissue_segmentation_parquet_polygons.parquet", "tissue_segmentation_geojson_polygons.json"),
+    ]:
+        stub_wkb = [shapely.wkb.dumps(shapely.geometry.box(0, 0, 1, 1))]
+        pd.DataFrame({"geometry": stub_wkb}).to_parquet(tmp_path / stub_parquet)
+        stub_geom = shapely.geometry.mapping(shapely.geometry.box(0, 0, 1, 1))
+        stub_features = [{"type": "Feature", "geometry": stub_geom, "properties": {}}]
+        (tmp_path / stub_json).write_text(json.dumps({"type": "FeatureCollection", "features": stub_features}))
+
+    # Must not raise — if columns=[] bug regresses, parquet_count would be 0 != 3
+    assert_parquet_geojson_parity(tmp_path)

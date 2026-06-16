@@ -52,15 +52,6 @@ SPOT_3_RESOLUTION_MPP = 0.46499982
 SPOT_3_WIDTH = 4016
 SPOT_3_HEIGHT = 3952
 
-SPOT_4_GS_URL = (
-    "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-)
-SPOT_4_FILENAME = "9375e3ed-28d2-4cf3-9fb9-8df9d11a6627.tiff"
-SPOT_4_CRC32C = "9l3NNQ=="
-SPOT_4_FILESIZE = 14681750
-SPOT_4_RESOLUTION_MPP = 0.46499982
-SPOT_4_WIDTH = 3728
-SPOT_4_HEIGHT = 3640
 
 # To update file sizes: the tests print every file's actual size before asserting. Run with
 # -s to see them, then paste the printed byte values as the second element of each tuple.

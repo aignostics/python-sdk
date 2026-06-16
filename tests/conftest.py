@@ -370,7 +370,8 @@ def assert_parquet_geojson_parity(results_dir: Path) -> None:
             f"{parquet_name} ({parquet_area:.2f}) and {geojson_name} ({geojson_area:.2f})"
         )
 
-    parquet_count = len(pd.read_parquet(results_dir / "cell_classification_parquet_polygons.parquet", columns=[]))
+    cell_parquet = results_dir / "cell_classification_parquet_polygons.parquet"
+    parquet_count = len(pd.read_parquet(cell_parquet, columns=["geometry"]))
     with (results_dir / "cell_classification_geojson_polygons.json").open("rb") as f:
         geojson_count = sum(1 for _ in ijson.items(f, "features.item"))
     delta = abs(parquet_count - geojson_count)

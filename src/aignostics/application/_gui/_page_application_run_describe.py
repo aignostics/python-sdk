@@ -752,6 +752,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                     Service.application_run_update_custom_metadata_static,
                                     run_id=run_id,
                                     custom_metadata=new_metadata,
+                                    custom_metadata_checksum=run_data.custom_metadata_checksum,
                                 )
                                 ui.notify("Custom metadata updated successfully!", type="positive")
                                 ui.navigate.reload()

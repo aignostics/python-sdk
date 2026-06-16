@@ -998,6 +998,9 @@ def run_describe(
 def run_dump_metadata(
     run_id: Annotated[str, typer.Argument(help="Id of the run to dump custom metadata for")],
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+    show_checksum: Annotated[
+        bool, typer.Option("--show-checksum", help="Include custom_metadata_checksum in output for use with --checksum")
+    ] = False,
 ) -> None:
     """Dump custom metadata of a run as JSON to stdout."""
     logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
@@ -1006,11 +1009,19 @@ def run_dump_metadata(
         run = Service().application_run(run_id).details()
         custom_metadata = run.custom_metadata if hasattr(run, "custom_metadata") else {}
 
+        if show_checksum:
+            output: object = {
+                "custom_metadata": custom_metadata,
+                "custom_metadata_checksum": run.custom_metadata_checksum,
+            }
+        else:
+            output = custom_metadata
+
         # Output JSON to stdout
         if pretty:
-            print(json.dumps(custom_metadata, indent=2))
+            print(json.dumps(output, indent=2))
         else:
-            print(json.dumps(custom_metadata))
+            print(json.dumps(output))
 
         logger.debug("Dumped custom metadata for run with ID '{}'", run_id)
     except NotFoundException:
@@ -1028,6 +1039,9 @@ def run_dump_item_metadata(
     run_id: Annotated[str, typer.Argument(help="Id of the run containing the item")],
     external_id: Annotated[str, typer.Argument(help="External ID of the item to dump custom metadata for")],
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+    show_checksum: Annotated[
+        bool, typer.Option("--show-checksum", help="Include custom_metadata_checksum in output for use with --checksum")
+    ] = False,
 ) -> None:
     """Dump custom metadata of an item as JSON to stdout."""
     logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
@@ -1052,11 +1066,19 @@ def run_dump_item_metadata(
 
         custom_metadata = item.custom_metadata if hasattr(item, "custom_metadata") else {}
 
+        if show_checksum:
+            item_output: object = {
+                "custom_metadata": custom_metadata,
+                "custom_metadata_checksum": item.custom_metadata_checksum,
+            }
+        else:
+            item_output = custom_metadata
+
         # Output JSON to stdout
         if pretty:
-            print(json.dumps(custom_metadata, indent=2))
+            print(json.dumps(item_output, indent=2))
         else:
-            print(json.dumps(custom_metadata))
+            print(json.dumps(item_output))
 
         logger.debug("Dumped custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
     except NotFoundException:
