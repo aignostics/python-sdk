@@ -18,20 +18,22 @@ from enum import Enum
 from typing_extensions import Self
 
 
-class OutputArtifactScope(str, Enum):
+class ResourceType(str, Enum):
     """
-    OutputArtifactScope
+    ResourceType
     """
 
     """
     allowed enum values
     """
-    ITEM = 'ITEM'
-    GLOBAL = 'GLOBAL'
+    RUN = 'run'
+    ITEM = 'item'
+    OUTPUT_ARTIFACT = 'output_artifact'
+    SHARE_TOKEN = 'share_token'
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of OutputArtifactScope from a JSON string"""
+        """Create an instance of ResourceType from a JSON string"""
         return cls(json.loads(json_str))
 
 

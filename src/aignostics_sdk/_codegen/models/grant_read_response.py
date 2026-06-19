@@ -18,26 +18,28 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List
-from typing_extensions import Annotated
+from aignx.codegen.models.grant_relation import GrantRelation
+from aignx.codegen.models.resource_type import ResourceType
+from aignx.codegen.models.subject_type import SubjectType
 from typing import Optional, Set
 from typing_extensions import Self
 
-class ApplicationVersion(BaseModel):
+class GrantReadResponse(BaseModel):
     """
-    ApplicationVersion
+    GrantReadResponse
     """ # noqa: E501
-    number: Annotated[str, Field(strict=True)] = Field(description="The number of the latest version")
-    released_at: datetime = Field(description="The timestamp for when the application version was made available in the Platform")
-    __properties: ClassVar[List[str]] = ["number", "released_at"]
-
-    @field_validator('number')
-    def number_validate_regular_expression(cls, value):
-        """Validates the regular expression"""
-        if not re.match(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$", value):
-            raise ValueError(r"must validate the regular expression /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/")
-        return value
+    grant_id: StrictStr
+    resource_type: ResourceType
+    resource_id: StrictStr
+    subject_type: SubjectType
+    subject_id: StrictStr
+    relation: GrantRelation
+    created_by: StrictStr
+    created_at: datetime
+    revoked: StrictBool
+    __properties: ClassVar[List[str]] = ["grant_id", "resource_type", "resource_id", "subject_type", "subject_id", "relation", "created_by", "created_at", "revoked"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -57,7 +59,7 @@ class ApplicationVersion(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApplicationVersion from a JSON string"""
+        """Create an instance of GrantReadResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -82,7 +84,7 @@ class ApplicationVersion(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApplicationVersion from a dict"""
+        """Create an instance of GrantReadResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,8 +92,15 @@ class ApplicationVersion(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "number": obj.get("number"),
-            "released_at": obj.get("released_at")
+            "grant_id": obj.get("grant_id"),
+            "resource_type": obj.get("resource_type"),
+            "resource_id": obj.get("resource_id"),
+            "subject_type": obj.get("subject_type"),
+            "subject_id": obj.get("subject_id"),
+            "relation": obj.get("relation"),
+            "created_by": obj.get("created_by"),
+            "created_at": obj.get("created_at"),
+            "revoked": obj.get("revoked")
         })
         return _obj
 
