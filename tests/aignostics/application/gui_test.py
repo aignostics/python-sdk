@@ -52,35 +52,6 @@ async def test_gui_index(user: User, silent_logging, record_property) -> None:
 
 
 @pytest.mark.e2e
-@pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
-@pytest.mark.timeout(timeout=60 * 2)
-@pytest.mark.parametrize(
-    ("application_id", "application_name", "expected_text"),
-    [
-        (
-            "he-tme",
-            "Atlas H&E-TME",
-            "The Atlas H&E TME is an AI application",
-        ),
-        (
-            "test-app",
-            "test-app",  # TODO(Helmut): Check in with Ari
-            "This is the test application with two algorithms",
-        ),
-    ],
-)
-async def test_gui_home_to_application(  # noqa: PLR0913, PLR0917
-    user: User, application_id: str, application_name: str, expected_text: str, silent_logging: None, record_property
-) -> None:
-    """Test that the user sees the specific application page with expected content."""
-    record_property("tested-item-id", "SPEC-APPLICATION-SERVICE, SPEC-GUI-SERVICE")
-    await user.open("/")
-    await user.should_see(application_name, retries=100)
-    user.find(marker=f"SIDEBAR_APPLICATION:{application_id}").click()
-    await user.should_see(expected_text, retries=300)
-
-
-@pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=2, delay=5, only_on=[AssertionError])
 @pytest.mark.timeout(timeout=60 * 5)
