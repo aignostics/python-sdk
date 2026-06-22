@@ -160,8 +160,9 @@ jobs:
       security-events: write
 
   sonarcloud:
-    needs: [get-commit-message]
+    needs: [get-commit-message, test]
     if: |
+      !cancelled() &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
       (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
@@ -176,6 +177,12 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Download test coverage
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: test-results-ubuntu-latest
+          path: .
 
       - name: SonarQube Scan
         if: ${{ env.GITHUB_WORKFLOW_RUNTIME != 'ACT' }}
