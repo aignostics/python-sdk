@@ -107,17 +107,20 @@ class Artifact(_AuthenticatedResource):
     ``GET /api/v1/runs/{run_id}/artifacts/{artifact_id}/file`` endpoint.
     """
 
-    def __init__(self, api: _AuthenticatedApi, run_id: str, artifact_id: str) -> None:
+    def __init__(self, api: _AuthenticatedApi, run_id: str, artifact_id: str, share_token: str | None = None) -> None:
         """Initializes an Artifact instance.
 
         Args:
             api (_AuthenticatedApi): The configured API client.
             run_id (str): The ID of the parent run.
             artifact_id (str): The ID of the output artifact.
+            share_token (str | None): Optional share token secret forwarded as the
+                ``share_token`` query parameter on the /file endpoint request.
         """
         super().__init__(api)
         self.run_id = run_id
         self.artifact_id = artifact_id
+        self._share_token = share_token
 
     def get_download_url(self) -> str:
         """Resolve a fresh presigned download URL for this artifact.
@@ -145,6 +148,8 @@ class Artifact(_AuthenticatedResource):
         configuration = self._api.api_client.configuration
         host = configuration.host.rstrip("/")
         endpoint_url = f"{host}/api/v1/runs/{self.run_id}/artifacts/{self.artifact_id}/file"
+        if self._share_token:
+            endpoint_url += f"?share_token={self._share_token}"
         proxy = getattr(configuration, "proxy", None)
         ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
         verify_ssl = getattr(configuration, "verify_ssl", True)
@@ -250,30 +255,52 @@ class Run(_AuthenticatedResource):
     Provides operations to check status, retrieve results, and download artifacts.
     """
 
-    def __init__(self, api: _AuthenticatedApi, run_id: str) -> None:
+    def __init__(self, api: _AuthenticatedApi, run_id: str, share_token: str | None = None) -> None:
         """Initializes a Run instance.
 
         Args:
             api (_AuthenticatedApi): The configured API client.
             run_id (str): The ID of the application run.
+            share_token (str | None): Optional share token secret.  When supplied the
+                token is forwarded as the ``share_token`` query parameter on every API
+                request, granting access without an OAuth Bearer token.
         """
         super().__init__(api)
         self.run_id = run_id
+        self._share_token = share_token
 
     @classmethod
-    def for_run_id(cls, run_id: str, cache_token: bool = True) -> "Run":
-        """Creates an Run instance for an existing run.
+    def for_run_id(cls, run_id: str, cache_token: bool = True, share_token: str | None = None) -> "Run":
+        """Creates a Run instance for an existing run.
+
+        When *share_token* is provided the run is accessed via the ``share_token``
+        query parameter on every API request without an OAuth Bearer token.
 
         Args:
             run_id (str): The ID of the application run.
-            cache_token (bool): Whether to cache the API token.
+            cache_token (bool): Whether to use the cached OAuth token.  Ignored
+                when *share_token* is supplied.
+            share_token (str | None): Optional share token secret.  When provided
+                no OAuth login is required.
 
         Returns:
             Run: The initialized Run instance.
+
+        Example::
+
+            # Authenticated access
+            run = Run.for_run_id("run-abc123")
+
+            # Share-token access (no OAuth required)
+            run = Run.for_run_id("run-abc123", share_token="shr_xxxx")
+            details = run.details()
+            for item in run.results():
+                print(item.external_id)
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
-        return cls(Client.get_api_client(cache_token=cache_token), run_id)
+        api = Client.get_api_client(cache_token=cache_token)
+        return cls(api, run_id, share_token=share_token)
 
     def details(self, nocache: bool = False, hide_platform_queue_position: bool = False) -> RunData:
         """Retrieves the current status of the application run.
@@ -294,9 +321,10 @@ class Run(_AuthenticatedResource):
             NotFoundException: If the run is not found after retries.
             Exception: If the API request fails.
         """
+        share_token = self._share_token
 
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def details_with_retry(run_id: str) -> RunData:
+        def details_with_retry(run_id: str, _share_token: str | None = None) -> RunData:
             def _fetch() -> RunData:
                 return Retrying(
                     retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -309,6 +337,7 @@ class Run(_AuthenticatedResource):
                 )(
                     lambda: self._api.get_run_v1_runs_run_id_get(
                         run_id,
+                        share_token=_share_token,
                         _request_timeout=settings().run_timeout,
                         _headers={"User-Agent": user_agent()},
                     )
@@ -323,7 +352,7 @@ class Run(_AuthenticatedResource):
                 reraise=True,
             )(_fetch)
 
-        run_data: RunData = details_with_retry(self.run_id, nocache=nocache)  # type: ignore[call-arg]
+        run_data: RunData = details_with_retry(self.run_id, _share_token=share_token, nocache=nocache)  # type: ignore[call-arg]
         if hide_platform_queue_position:
             run_data = run_data.model_copy(deep=True)
             run_data.num_preceding_items_platform = None
@@ -388,11 +417,12 @@ class Run(_AuthenticatedResource):
         Raises:
             Exception: If the API request fails.
         """
+        share_token = self._share_token
 
         # Create a wrapper function that applies retry logic and caching to each API call
         # Caching at this level ensures having a fresh iterator on cache hits
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def results_with_retry(run_id: str, **kwargs: object) -> list[ItemResultData]:
+        def results_with_retry(run_id: str, _share_token: str | None = None, **kwargs: object) -> list[ItemResultData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
@@ -402,6 +432,7 @@ class Run(_AuthenticatedResource):
             )(
                 lambda: self._api.list_run_items_v1_runs_run_id_items_get(
                     run_id=run_id,
+                    share_token=_share_token,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
                     **kwargs,  # pyright: ignore[reportArgumentType]
@@ -420,7 +451,11 @@ class Run(_AuthenticatedResource):
         if custom_metadata is not None:
             filter_kwargs["custom_metadata"] = custom_metadata
 
-        return paginate(lambda **kwargs: results_with_retry(self.run_id, nocache=nocache, **filter_kwargs, **kwargs))
+        return paginate(
+            lambda **kwargs: results_with_retry(
+                self.run_id, _share_token=share_token, nocache=nocache, **filter_kwargs, **kwargs
+            )
+        )
 
     def download_to_folder(  # noqa: C901
         self,
@@ -513,7 +548,7 @@ class Run(_AuthenticatedResource):
         Returns:
             Artifact: A handle bound to this run and the given artifact.
         """
-        return Artifact(self._api, self.run_id, artifact_id)
+        return Artifact(self._api, self.run_id, artifact_id, share_token=self._share_token)
 
     def get_artifact_download_url(self, artifact_id: str) -> str:
         """Resolve a fresh presigned download URL for an artifact of this run.
