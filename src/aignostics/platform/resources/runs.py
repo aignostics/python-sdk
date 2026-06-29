@@ -18,15 +18,20 @@ from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceExc
 from aignx.codegen.models import (
     ArtifactOutput,
     CustomMetadataUpdateRequest,
+    GrantCreateRequest,
+    GrantReadResponse,
+    GrantRelation,
     ItemCreationRequest,
     ItemOutput,
     ItemResultReadResponse,
     ItemState,
     ItemTerminationReason,
+    ResourceType,
     RunCreationRequest,
     RunCreationResponse,
     RunState,
     SchedulingRequest,
+    SubjectType,
 )
 from aignx.codegen.models import (
     ItemResultReadResponse as ItemResultData,
@@ -71,6 +76,7 @@ from aignostics.platform._utils import (
     get_mime_type_for_artifact,
     mime_type_to_file_ending,
 )
+from aignostics.platform.resources.access import AccessGrant
 from aignostics.platform.resources.applications import Versions
 from aignostics.platform.resources.utils import paginate
 from aignostics.utils import user_agent
@@ -653,6 +659,112 @@ class Run(_AuthenticatedResource):
             _headers={"User-Agent": user_agent()},
         )
         operation_cache_clear()  # Clear all caches since we updated a run
+
+    def list_share_grants(
+        self,
+        subject_type: SubjectType | None = None,
+        subject_id: str | None = None,
+        relation: list[GrantRelation] | None = None,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+        nocache: bool = False,
+    ) -> Iterator[AccessGrant]:
+        """List active access grants for this run.
+
+        Supports optional filtering by subject type, subject ID, and relation.
+
+        Args:
+            subject_type: Filter by subject type (e.g. ``ORGANIZATION_USER``, ``SHARE_TOKEN``).
+                Defaults to ``None`` (no filter).
+            subject_id: Filter by subject ID. Defaults to ``None``.
+            relation: Filter by relation type(s). Defaults to ``None``.
+            page_size: Number of grants per page. Defaults to max (100).
+            nocache: If ``True``, bypass cache and fetch fresh data. Defaults to ``False``.
+
+        Returns:
+            Iterator[AccessGrant]: Active grants for this run.
+
+        Raises:
+            ValueError: If page_size is greater than 100.
+            Exception: If the API request fails.
+        """
+        if page_size > LIST_APPLICATION_RUNS_MAX_PAGE_SIZE:
+            message = f"page_size must be <= {LIST_APPLICATION_RUNS_MAX_PAGE_SIZE}, but got {page_size}"
+            raise ValueError(message)
+
+        run_id = self.run_id  # capture explicitly so it enters the cache key as an arg
+
+        @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
+        def fetch_grant_page(cached_run_id: str, **kwargs: object) -> list[GrantReadResponse]:
+            return Retrying(
+                retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+                stop=stop_after_attempt(settings().run_retry_attempts),
+                wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+                before_sleep=_log_retry_attempt,
+                reraise=True,
+            )(
+                lambda: self._api.list_grants_v1_access_grants_get(
+                    resource_type=ResourceType.RUN,
+                    resource_id=cached_run_id,
+                    revoked=False,
+                    _request_timeout=settings().run_timeout,
+                    _headers={"User-Agent": user_agent()},
+                    **kwargs,  # pyright: ignore[reportArgumentType]
+                )
+            )
+
+        return (
+            AccessGrant(
+                api=self._api,
+                **g.__dict__,
+            )
+            for g in paginate(
+                lambda **kw: fetch_grant_page(
+                    run_id,
+                    nocache=nocache,
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    relation=relation,
+                    **kw,
+                ),
+                page_size=page_size,
+            )
+        )
+
+    def grant_access(self, subject_type: SubjectType, subject_id: str) -> AccessGrant:
+        """Grant a subject VIEWER access to this run.
+
+        Args:
+            subject_type: The type of subject to grant access to (e.g.
+                ``ORGANIZATION_USER``, ``SHARE_TOKEN``).
+            subject_id: The ID of the subject to grant access to.
+
+        Returns:
+            AccessGrant: The created grant.
+
+        Raises:
+            Exception: If the API request fails after all retries.
+        """
+        grant = Retrying(
+            retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
+            stop=stop_after_attempt(settings().run_retry_attempts),
+            wait=wait_exponential_jitter(initial=settings().run_retry_wait_min, max=settings().run_retry_wait_max),
+            before_sleep=_log_retry_attempt,
+            reraise=True,
+        )(
+            lambda: self._api.create_grant_v1_access_grants_post(
+                grant_create_request=GrantCreateRequest(
+                    resource_type=ResourceType.RUN,
+                    resource_id=self.run_id,
+                    subject_type=subject_type,
+                    subject_id=subject_id,
+                    relation=GrantRelation.VIEWER,
+                ),
+                _request_timeout=settings().run_timeout,
+                _headers={"User-Agent": user_agent()},
+            )
+        )
+        operation_cache_clear()
+        return AccessGrant(api=self._api, **grant.__dict__)
 
     def __str__(self) -> str:
         """Returns a string representation of the application run.

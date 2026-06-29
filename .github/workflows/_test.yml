@@ -27,6 +27,8 @@ on:
         required: false
       CODECOV_TOKEN:
         required: false
+      SONAR_TOKEN:
+        required: false
       SENTRY_DSN:
         required: false
   
@@ -262,6 +264,13 @@ jobs:
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: SonarQube Scan
+        if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') && matrix.runner == 'ubuntu-latest' }}
+        uses: SonarSource/sonarqube-scan-action@a31c9398be7ace6bbfaf30c0bd5d415f843d45e9 # v7.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Assert no test failures
         # Single gate that fails the job if any test suite failed. Kept last so

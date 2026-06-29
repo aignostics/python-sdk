@@ -30,6 +30,7 @@ from aignostics.platform.resources.runs import Run, Runs
 from aignostics.utils import user_agent
 
 from ._settings import settings
+from .resources.access import ShareTokens
 
 # Safety bound for the external token-provider cache.  In normal usage callers
 # reuse a single provider reference, so this limit should never be reached.
@@ -54,6 +55,7 @@ class Client:
     applications: Applications
     versions: Versions
     runs: Runs
+    share_tokens: ShareTokens
 
     def __init__(self, cache_token: bool = True, token_provider: Callable[[], str] | None = None) -> None:
         """Initializes a client instance with authenticated API access.
@@ -78,6 +80,7 @@ class Client:
             self._api = Client.get_api_client(cache_token=cache_token, token_provider=token_provider)
             self.applications: Applications = Applications(self._api)
             self.runs: Runs = Runs(self._api)
+            self.share_tokens: ShareTokens = ShareTokens(self._api)
             self.versions: Versions = Versions(self._api)
             logger.trace("Client initialized successfully.")
         except Exception:

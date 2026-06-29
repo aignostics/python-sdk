@@ -2,11 +2,11 @@
 itemId: SPEC-PLATFORM-SERVICE
 itemTitle: Platform Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3, SWR-APPLICATION-4-1, SWR-APPLICATION-4-2
 Module: Platform
 Layer: Platform Service
-Version: 1.1.0
-Date: 2026-04-29
+Version: 1.2.0
+Date: 2026-06-09
 ---
 
 ## 1. Description
@@ -68,6 +68,7 @@ platform/
 ├── resources/         # Resource-specific implementations
 │   ├── applications.py # Application and version management
 │   ├── runs.py        # Application run lifecycle management
+│   ├── access.py      # Access control: AccessGrant, ShareToken, ShareTokens
 │   └── utils.py       # Shared resource utilities
 └── __init__.py        # Public API exports and module interface
 ```
@@ -82,6 +83,9 @@ platform/
 | `Applications`   | Class  | Application resource management                         | `list()`, `versions` accessor                                                 |
 | `ApplicationRun` | Class  | Run lifecycle and result management                     | `details()`, `cancel()`, `results()`, `download_to_folder()`, `artifact()`, `get_artifact_download_url()`, `ensure_artifacts_downloaded()` |
 | `Artifact`       | Class  | Per-artifact handle for resolving fresh presigned download URLs via the `/api/v1/runs/{run_id}/artifacts/{artifact_id}/file` endpoint | `get_download_url()`                                                          |
+| `AccessGrant`    | Class  | An active access grant linking a platform resource to a subject (organization user, organization, or share token) | `revoke()`, static: `for_grant_id()` |
+| `ShareToken`     | Class  | A revocable share token whose secret is returned only at creation time | `revoke()`, `list_share_grants()`, static: `for_token_id()` |
+| `ShareTokens`    | Class  | Collection resource for creating and listing share tokens; accessible as `client.share_tokens` | `create()`, `list()` |
 | `Versions`       | Class  | Application version management                          | `list()`, `list_sorted()`, `latest()`, `details()`, `documents()`             |
 | `Documents`      | Class  | Application version release document management         | `list()`, `details()`, `download_to_path()`, `read_content()`                 |
 | `Runs`           | Class  | Application run management and creation                 | `create()`, `list()` / `list_data()`, `__call__()`                            |
@@ -252,6 +256,10 @@ class Client:
 
     def run(self, application_run_id: str) -> ApplicationRun:
         """Creates ApplicationRun instance for existing run."""
+
+    @property
+    def share_tokens(self) -> ShareTokens:
+        """Access to share token management."""
 
     @staticmethod
     def get_api_client(
@@ -535,6 +543,125 @@ class ApplicationRun(_AuthenticatedResource):
         print_status: bool = True,
     ) -> None:
         """Ensures all AVAILABLE artifacts for an item are downloaded with checksum verification."""
+
+    def grant_access(
+        self,
+        subject_type: SubjectType,
+        subject_id: str,
+    ) -> "AccessGrant":
+        """Grants read access to this run to the given subject (organization user or share token).
+
+        Args:
+            subject_type: Category of the subject (ORGANIZATION_ADMIN, ORGANIZATION_USER,
+                or SHARE_TOKEN).
+            subject_id: Identifier of the entity to grant access to.
+
+        Returns:
+            The created AccessGrant.
+        """
+
+    def list_share_grants(
+        self,
+        subject_type: SubjectType | None = None,
+        subject_id: str | None = None,
+        relation: list[GrantRelation] | None = None,
+        page_size: int = 100,
+        nocache: bool = False,
+    ) -> Iterator["AccessGrant"]:
+        """Lists all active access grants on this run.
+
+        Args:
+            subject_type: Optional filter by subject type.
+            subject_id: Optional filter by subject identifier.
+            relation: Optional filter by relation type(s).
+            page_size: Number of grants per page (max 100).
+            nocache: If True, bypass cache and fetch fresh data.
+
+        Returns:
+            Iterator of AccessGrant objects for this run.
+        """
+```
+
+```python
+class AccessGrant(BaseModel):
+    """An active access grant linking a platform resource to a subject."""
+
+    grant_id: str
+    resource_type: ResourceType
+    resource_id: str
+    subject_id: str
+    subject_type: SubjectType
+    relation: GrantRelation
+    created_by: str
+    created_at: datetime
+    revoked: bool
+
+    @classmethod
+    def for_grant_id(cls, grant_id: str, cache_token: bool = True) -> "AccessGrant":
+        """Retrieve a single grant by its ID."""
+
+    def revoke(self) -> None:
+        """Revoke this grant, removing the subject's access to the resource.
+
+        Clears the local operation cache after the API call.
+        """
+```
+
+```python
+class ShareToken(BaseModel):
+    """A share token that can be used to grant access to platform resources."""
+
+    share_token_id: str
+    revoked: bool
+    created_at: datetime
+    expires_at: datetime | None
+    share_token: str | None  # One-time secret; None for tokens fetched after creation
+
+    @classmethod
+    def for_token_id(cls, share_token_id: str, cache_token: bool = True) -> "ShareToken":
+        """Retrieve a share token record by its stable ID."""
+
+    def list_share_grants(self, page_size: int = 100) -> Iterator[AccessGrant]:
+        """List all active grants where this token is the subject."""
+
+    def revoke(self) -> None:
+        """Revoke this share token, invalidating all grants associated with it.
+
+        Clears the local operation cache after the API call.
+        """
+```
+
+```python
+class ShareTokens(_AuthenticatedResource):
+    """Collection resource for managing share tokens; accessible as client.share_tokens."""
+
+    def create(self, expires_at: datetime | None = None) -> ShareToken:
+        """Create a new share token.
+
+        The returned ShareToken contains the one-time secret in share_token.
+        This is the only time the secret is returned by the API.
+
+        Args:
+            expires_at: Optional UTC datetime at which the token expires.
+                None (default) creates a token that never expires.
+
+        Returns:
+            A newly created ShareToken with share_token populated.
+        """
+
+    def list(
+        self,
+        run_id: str | None = None,
+        nocache: bool = False,
+        page_size: int = 100,
+    ) -> Iterator[ShareToken]:
+        """List all share tokens for the authenticated user.
+
+        Args:
+            run_id: Optional run ID to filter tokens by the run they are associated with.
+            nocache: If True, bypass cache and fetch fresh data.
+            page_size: Number of tokens to fetch per page (max 100).
+        """
 ```
 
 ```python

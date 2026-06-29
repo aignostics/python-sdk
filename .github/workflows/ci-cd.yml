@@ -142,6 +142,7 @@ jobs:
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       GCP_CREDENTIALS_PRODUCTION: ${{ secrets.GCP_CREDENTIALS_PRODUCTION }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics
 
@@ -160,7 +161,7 @@ jobs:
       security-events: write
 
   sonarcloud:
-    needs: [get-commit-message]
+    needs: [get-commit-message, test]
     if: |
       (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci')) &&
       (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
@@ -176,13 +177,6 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-
-      - name: SonarQube Scan
-        if: ${{ env.GITHUB_WORKFLOW_RUNTIME != 'ACT' }}
-        uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   ketryx_report_and_check:
     needs: [get-commit-message, lint, audit, test, codeql, sonarcloud, docs]

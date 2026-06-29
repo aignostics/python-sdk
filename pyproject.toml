@@ -104,6 +104,7 @@ dependencies = [
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
     "loguru>=0.7.3,<1",
+    "msgpack>=1.2.1", # GHSA-6v7p-g79w-8964
     "openslide-bin>=4.0.0.10,<5",
     "openslide-python>=1.4.3,<2",
     "pandas>=2.3.3,<4",
@@ -153,7 +154,8 @@ jupyter = [
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "jupyter-core>=5.8.1",              # CVE-2025-30167
-    "jupyterlab>=4.4.9",                # CVE-2025-59842
+    "jupyter-server>=2.20.0",           # CVE-2026-44727
+    "jupyterlab>=4.5.9",                # CVE-2025-59842
     "nbconvert>=7.17.1",                # CVE-2025-53000 (>=7.17.0, Dependabot #424); CVE-2026-39377, CVE-2026-39378 (>=7.17.1, Dependabot #553)
 ]
 marimo = [
@@ -167,6 +169,7 @@ qupath = []
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0,<3",
+    "bleach>=6.4.0", # GHSA-8rfp-98v4-mmr6
     "bump-my-version>=1.2.4,<2",
     "cyclonedx-py>=1.0.1,<2",
     "detect-secrets>=1.5.0,<2",
