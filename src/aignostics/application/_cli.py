@@ -973,7 +973,7 @@ def run_describe(  # noqa: PLR0912
     share_token: Annotated[
         str | None,
         typer.Option(
-            help="Share token secret for link-based access. When provided, OAuth login is not required.",
+            help="Share token secret for link-based access.",
         ),
     ] = None,
 ) -> None:
