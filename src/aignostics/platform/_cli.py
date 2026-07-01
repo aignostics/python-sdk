@@ -9,8 +9,10 @@ from loguru import logger
 
 from aignostics.utils import console
 
+from ._authentication import get_token
 from ._sdk_metadata import get_item_sdk_metadata_json_schema, get_run_sdk_metadata_json_schema
 from ._service import Service
+from ._settings import settings
 
 cli_user = typer.Typer(name="user", help="User operations such as login, logout and whoami.")
 
@@ -85,7 +87,6 @@ def whoami(
         logger.exception(message)
         console.print(message, style="error")
         sys.exit(1)
-        sys.exit(1)
 
 
 cli_sdk = typer.Typer(name="sdk", help="Platform operations such as dumping the SDK metadata schema.")
@@ -134,4 +135,49 @@ def item_sdk_metadata_schema(
         message = f"Error getting item SDK metadata schema: {e!s}"
         logger.exception(message)
         console.print(message, style="error")
+        sys.exit(1)
+
+
+cli_auth = typer.Typer(name="auth", help="Authentication token operations for external integrations.")
+
+
+@cli_user.command("token")
+def auth_token() -> None:
+    """Print an Aignostics access token for use as a gcloud external credential helper.
+
+    Outputs a JSON document to stdout in the format expected by gcloud's pluggable
+    authentication executable credential source (Workload Identity Federation).
+
+    Configure as an executable credential source by adding the following to your ADC
+    credentials JSON file, then run ``gcloud auth application-default login`` to activate
+    it. The GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES environment variable must be set
+    to 1 for gcloud to call this helper.
+
+    On success writes: {"version": 1, "success": true, "token_type": "...", "id_token": "...", "expiration_time": ...}
+
+    On failure writes: {"version": 1, "success": false, "code": "1", "message": "..."}
+    """
+    try:
+        token = get_token(use_cache=True)
+        stored = settings().token_file.read_text(encoding="utf-8")
+        expiry = int(stored.rsplit(":", 1)[-1])
+        print(
+            json.dumps({
+                "version": 1,
+                "success": True,
+                "token_type": "urn:ietf:params:oauth:token-type:id_token",
+                "id_token": token,
+                "expiration_time": expiry,
+            })
+        )
+    except Exception as e:
+        logger.debug("Failed to obtain Aignostics token for WIF credential helper: {}", e)
+        print(
+            json.dumps({
+                "version": 1,
+                "success": False,
+                "code": "1",
+                "message": str(e),
+            })
+        )
         sys.exit(1)

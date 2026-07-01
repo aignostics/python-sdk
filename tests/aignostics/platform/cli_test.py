@@ -1,6 +1,7 @@
 """Tests to verify the CLI functionality of the platform module."""
 
-from unittest.mock import patch
+import json
+from unittest.mock import MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -609,7 +610,6 @@ class TestPlatformCLI:
         assert "schema_version" in output
         assert "platform_bucket" in output
         # In non-pretty mode, output should still be valid JSON
-        import json
 
         # Try to parse the output as JSON (should not raise an error)
         try:
@@ -621,3 +621,78 @@ class TestPlatformCLI:
                 pytest.fail("No JSON found in output")
         except json.JSONDecodeError:
             pytest.fail("Output is not valid JSON")
+
+
+class TestAuthTokenCLI:
+    """Test cases for the ``aignostics auth token`` command (gcloud WIF credential helper)."""
+
+    _MOCK_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzQ1Njc4OTB9.sig"  # noqa: S105
+    _MOCK_EXPIRY = 1734567890
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_auth_token_success_exit_code(record_property, runner: CliRunner) -> None:
+        """Exit code is 0 when a cached token is available."""
+        record_property("tested-item-id", "SPEC-PLATFORM-CLI")
+        stored = f"{TestAuthTokenCLI._MOCK_TOKEN}:{TestAuthTokenCLI._MOCK_EXPIRY}"
+        mock_settings = MagicMock()
+        mock_settings.return_value.token_file.read_text.return_value = stored
+
+        with (
+            patch("aignostics.platform._cli.get_token", return_value=TestAuthTokenCLI._MOCK_TOKEN),
+            patch("aignostics.platform._cli.settings", mock_settings),
+        ):
+            result = runner.invoke(cli, ["auth", "token"])
+
+        assert result.exit_code == 0
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_auth_token_success_json_structure(record_property, runner: CliRunner) -> None:
+        """Valid gcloud external-credential-helper JSON is written to stdout on success."""
+        record_property("tested-item-id", "SPEC-PLATFORM-CLI")
+        stored = f"{TestAuthTokenCLI._MOCK_TOKEN}:{TestAuthTokenCLI._MOCK_EXPIRY}"
+        mock_settings = MagicMock()
+        mock_settings.return_value.token_file.read_text.return_value = stored
+
+        with (
+            patch("aignostics.platform._cli.get_token", return_value=TestAuthTokenCLI._MOCK_TOKEN),
+            patch("aignostics.platform._cli.settings", mock_settings),
+        ):
+            result = runner.invoke(cli, ["auth", "token"])
+
+        json_start = result.output.find("{")
+        response = json.loads(result.output[json_start:])
+
+        assert response["version"] == 1
+        assert response["success"] is True
+        assert response["token_type"] == "urn:ietf:params:oauth:token-type:id_token"  # noqa: S105
+        assert response["id_token"] == TestAuthTokenCLI._MOCK_TOKEN
+        assert response["expiration_time"] == TestAuthTokenCLI._MOCK_EXPIRY
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_auth_token_failure_exit_code(record_property, runner: CliRunner) -> None:
+        """Exit code is 1 when token retrieval fails."""
+        record_property("tested-item-id", "SPEC-PLATFORM-CLI")
+        with patch("aignostics.platform._cli.get_token", side_effect=RuntimeError("no credentials")):
+            result = runner.invoke(cli, ["auth", "token"])
+
+        assert result.exit_code == 1
+
+    @pytest.mark.integration
+    @staticmethod
+    def test_auth_token_failure_json_structure(record_property, runner: CliRunner) -> None:
+        """Gcloud-compatible error JSON is written to stdout when token retrieval fails."""
+        record_property("tested-item-id", "SPEC-PLATFORM-CLI")
+        with patch("aignostics.platform._cli.get_token", side_effect=RuntimeError("no credentials")):
+            result = runner.invoke(cli, ["auth", "token"])
+
+        json_start = result.output.find("{")
+        response = json.loads(result.output[json_start:])
+
+        assert response["version"] == 1
+        assert response["success"] is False
+        assert "code" in response
+        assert "message" in response
+        assert "no credentials" in response["message"]

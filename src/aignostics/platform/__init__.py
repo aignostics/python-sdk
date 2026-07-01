@@ -35,7 +35,7 @@ from aignx.codegen.models import RunReadResponse as RunData
 from aignx.codegen.models import UserReadResponse as User
 from aignx.codegen.models import VersionReadResponse as ApplicationVersion
 
-from ._cli import cli_sdk, cli_user
+from ._cli import cli_auth, cli_sdk, cli_user
 from ._client import Client
 from ._constants import (
     API_ROOT_DEV,
@@ -184,6 +184,7 @@ __all__ = [
     "User",
     "UserInfo",
     "calculate_file_crc32c",
+    "cli_auth",
     "cli_sdk",
     "cli_user",
     "download_file",
