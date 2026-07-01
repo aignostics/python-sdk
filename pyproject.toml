@@ -101,6 +101,7 @@ dependencies = [
     "httpx>=0.28.1,<1",
     "idc-index-data==24.0.3",
     "ijson>=3.4.0.post0,<4",
+    "joserfc>=1.6.7",
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
     "loguru>=0.7.3,<1",
@@ -114,6 +115,8 @@ dependencies = [
     "pyarrow>=23.0.1,<24; python_version >= '3.14'",
     "pyjwt[crypto]>=2.13.0,<3", # CVE-2026-32597 requires >=2.12.0 (Renovate #475)
     "python-dateutil>=2.9.0.post0,<3",
+    "python-engineio>=4.13.3",
+    "python-socketio>=5.16.3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
     "requests>=2.33.0,<3", # CVE-2026-25645 requires >= 2.33.0
     "requests-oauthlib>=2.0.0,<3",
