@@ -1,6 +1,7 @@
 """Tests to verify the CLI functionality of the platform module."""
 
 import json
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -627,39 +628,49 @@ class TestAuthTokenCLI:
     """Test cases for the ``aignostics auth token`` command (gcloud WIF credential helper)."""
 
     _MOCK_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzQ1Njc4OTB9.sig"  # noqa: S105
-    _MOCK_EXPIRY = 1734567890
+
+    @staticmethod
+    def _settings_with_token_file(token_file):
+        """Return a mock settings object pointing at the given token file path."""
+        mock = MagicMock()
+        mock.token_file = token_file
+        return mock
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_success_exit_code(record_property, runner: CliRunner) -> None:
+    def test_auth_token_success_exit_code(record_property, runner: CliRunner, tmp_path) -> None:
         """Exit code is 0 when a cached token is available."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
-        stored = f"{TestAuthTokenCLI._MOCK_TOKEN}:{TestAuthTokenCLI._MOCK_EXPIRY}"
-        mock_settings = MagicMock()
-        mock_settings.return_value.token_file.read_text.return_value = stored
+        future_expiry = int((datetime.now(tz=UTC) + timedelta(hours=1)).timestamp())
+        token_file = tmp_path / "token"
+        token_file.write_text(f"{TestAuthTokenCLI._MOCK_TOKEN}:{future_expiry}", encoding="utf-8")
+        mock_settings = TestAuthTokenCLI._settings_with_token_file(token_file)
 
         with (
-            patch("aignostics.platform._cli.get_token", return_value=TestAuthTokenCLI._MOCK_TOKEN),
-            patch("aignostics.platform._cli.settings", mock_settings),
+            patch("aignostics.platform._authentication.settings", return_value=mock_settings),
+            patch("aignostics.platform._cli.settings", return_value=mock_settings),
+            patch("aignostics.platform._authentication._inform_sentry_about_user"),
         ):
-            result = runner.invoke(cli, ["auth", "token"])
+            result = runner.invoke(cli, ["user", "token"])
 
         assert result.exit_code == 0
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_success_json_structure(record_property, runner: CliRunner) -> None:
+    def test_auth_token_success_json_structure(record_property, runner: CliRunner, tmp_path) -> None:
         """Valid gcloud external-credential-helper JSON is written to stdout on success."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
-        stored = f"{TestAuthTokenCLI._MOCK_TOKEN}:{TestAuthTokenCLI._MOCK_EXPIRY}"
-        mock_settings = MagicMock()
-        mock_settings.return_value.token_file.read_text.return_value = stored
+        future_expiry = int((datetime.now(tz=UTC) + timedelta(hours=1)).timestamp())
+        token_file = tmp_path / "token"
+        token_file.write_text(f"{TestAuthTokenCLI._MOCK_TOKEN}:{future_expiry}", encoding="utf-8")
+        mock_settings = TestAuthTokenCLI._settings_with_token_file(token_file)
 
         with (
-            patch("aignostics.platform._cli.get_token", return_value=TestAuthTokenCLI._MOCK_TOKEN),
-            patch("aignostics.platform._cli.settings", mock_settings),
+            patch("aignostics.platform._authentication.settings", return_value=mock_settings),
+            patch("aignostics.platform._cli.settings", return_value=mock_settings),
+            patch("aignostics.platform._authentication._inform_sentry_about_user"),
         ):
-            result = runner.invoke(cli, ["auth", "token"])
+            result = runner.invoke(cli, ["user", "token"])
 
         json_start = result.output.find("{")
         response = json.loads(result.output[json_start:])
@@ -668,25 +679,37 @@ class TestAuthTokenCLI:
         assert response["success"] is True
         assert response["token_type"] == "urn:ietf:params:oauth:token-type:id_token"  # noqa: S105
         assert response["id_token"] == TestAuthTokenCLI._MOCK_TOKEN
-        assert response["expiration_time"] == TestAuthTokenCLI._MOCK_EXPIRY
+        assert response["expiration_time"] == future_expiry
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_failure_exit_code(record_property, runner: CliRunner) -> None:
+    def test_auth_token_failure_exit_code(record_property, runner: CliRunner, tmp_path) -> None:
         """Exit code is 1 when token retrieval fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
-        with patch("aignostics.platform._cli.get_token", side_effect=RuntimeError("no credentials")):
-            result = runner.invoke(cli, ["auth", "token"])
+        mock_settings = TestAuthTokenCLI._settings_with_token_file(tmp_path / "no_token")
+
+        with (
+            patch("aignostics.platform._authentication.settings", return_value=mock_settings),
+            patch("aignostics.platform._cli.settings", return_value=mock_settings),
+            patch("aignostics.platform._authentication._authenticate", side_effect=RuntimeError("no credentials")),
+        ):
+            result = runner.invoke(cli, ["user", "token"])
 
         assert result.exit_code == 1
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_failure_json_structure(record_property, runner: CliRunner) -> None:
+    def test_auth_token_failure_json_structure(record_property, runner: CliRunner, tmp_path) -> None:
         """Gcloud-compatible error JSON is written to stdout when token retrieval fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
-        with patch("aignostics.platform._cli.get_token", side_effect=RuntimeError("no credentials")):
-            result = runner.invoke(cli, ["auth", "token"])
+        mock_settings = TestAuthTokenCLI._settings_with_token_file(tmp_path / "no_token")
+
+        with (
+            patch("aignostics.platform._authentication.settings", return_value=mock_settings),
+            patch("aignostics.platform._cli.settings", return_value=mock_settings),
+            patch("aignostics.platform._authentication._authenticate", side_effect=RuntimeError("no credentials")),
+        ):
+            result = runner.invoke(cli, ["user", "token"])
 
         json_start = result.output.find("{")
         response = json.loads(result.output[json_start:])
