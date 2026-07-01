@@ -630,7 +630,7 @@ class TestAuthTokenCLI:
     _MOCK_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzQ1Njc4OTB9.sig"  # noqa: S105
 
     @staticmethod
-    def _settings_with_token_file(token_file):
+    def _settings_with_token_file(token_file) -> MagicMock:
         """Return a mock settings object pointing at the given token file path."""
         mock = MagicMock()
         mock.token_file = token_file
