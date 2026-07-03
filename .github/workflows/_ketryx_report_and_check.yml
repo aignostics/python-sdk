@@ -55,7 +55,7 @@ jobs:
           name: audit-results
           path: audit-results
 
-      - name: Report build to Ketryx and check for approval
+      - name: Report test results to Ketryx
         if: |
           !contains(inputs.commit_message, 'skip:ketryx') &&
           !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
@@ -65,8 +65,23 @@ jobs:
           api-key: ${{ secrets.KETRYX_API_KEY }}
           commit-sha: ${{ inputs.version == '' && inputs.commit-sha || '' }}
           version: ${{ inputs.version }}
-          build-name: "ci-cd"
+          build-name: "ci-cd-tests"
           test-junit-path: test-results/junit_*.xml
+          artifact-path: |
+            test-results/coverage.xml
+            test-results/coverage.md
+
+      - name: Report audit results to Ketryx
+        if: |
+          !contains(inputs.commit_message, 'skip:ketryx') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
+        uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
+        with:
+          project: ${{ secrets.KETRYX_PROJECT }}
+          api-key: ${{ secrets.KETRYX_API_KEY }}
+          commit-sha: ${{ inputs.version == '' && inputs.commit-sha || '' }}
+          version: ${{ inputs.version }}
+          build-name: "ci-cd-audit"
           cyclonedx-json-path: |
             audit-results/sbom.json
           artifact-path: |
@@ -75,5 +90,3 @@ jobs:
             audit-results/licenses.json
             audit-results/licenses_grouped.json
             audit-results/vulnerabilities.json
-            test-results/coverage.xml
-            test-results/coverage.md
