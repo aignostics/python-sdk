@@ -1,7 +1,10 @@
 """Tests to verify the CLI functionality of the platform module."""
 
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import TypeAlias
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,13 +16,15 @@ from aignostics.platform import Me
 from aignostics.platform._service import Organization, TokenInfo, User, UserInfo
 from tests.conftest import normalize_output
 
+RecordProperty: TypeAlias = Callable[[str, object], None]
+
 
 class TestTokenInfo:
     """Test cases for TokenInfo model."""
 
     @pytest.mark.unit
     @staticmethod
-    def test_token_info_from_claims(record_property) -> None:
+    def test_token_info_from_claims(record_property: RecordProperty) -> None:
         """Test TokenInfo creation from JWT claims."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         claims = {
@@ -46,7 +51,7 @@ class TestTokenInfo:
 
     @pytest.mark.unit
     @staticmethod
-    def test_token_info_from_claims_with_audience_list(record_property) -> None:
+    def test_token_info_from_claims_with_audience_list(record_property: RecordProperty) -> None:
         """Test TokenInfo creation from JWT claims with audience as list."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         claims = {
@@ -67,7 +72,7 @@ class TestTokenInfo:
 
     @pytest.mark.unit
     @staticmethod
-    def test_token_info_from_claims_without_role(record_property) -> None:
+    def test_token_info_from_claims_without_role(record_property: RecordProperty) -> None:
         """Test TokenInfo creation from JWT claims with role missing."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         claims = {
@@ -91,7 +96,7 @@ class TestUserInfo:
 
     @pytest.mark.unit
     @staticmethod
-    def test_user_info_from_claims_and_userinfo_with_profile(record_property) -> None:
+    def test_user_info_from_claims_and_userinfo_with_profile(record_property: RecordProperty) -> None:
         """Test UserInfo creation with both claims and userinfo."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         claims = {
@@ -138,7 +143,7 @@ class TestUserInfo:
 
     @pytest.mark.unit
     @staticmethod
-    def test_user_info_from_claims_and_userinfo_no_org_name(record_property) -> None:
+    def test_user_info_from_claims_and_userinfo_no_org_name(record_property: RecordProperty) -> None:
         """Test UserInfo creation when org_name is not provided in claims."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         claims = {
@@ -227,7 +232,7 @@ class TestPlatformCLI:
 
     @pytest.mark.e2e
     @staticmethod
-    def test_login_out_info_e2e(record_property, runner: CliRunner) -> None:
+    def test_login_out_info_e2e(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test successful logout command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with (
@@ -252,7 +257,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_logout_success(record_property, runner: CliRunner) -> None:
+    def test_logout_success(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test successful logout command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.logout", return_value=True):
@@ -263,7 +268,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_logout_not_logged_in(record_property, runner: CliRunner) -> None:
+    def test_logout_not_logged_in(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test logout command when not logged in."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.logout", return_value=False):
@@ -274,7 +279,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_logout_error(record_property, runner: CliRunner) -> None:
+    def test_logout_error(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test logout command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.logout", side_effect=RuntimeError("Test error")):
@@ -285,7 +290,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_login_success(record_property, runner: CliRunner) -> None:
+    def test_login_success(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test successful login command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.login", return_value=True):
@@ -296,7 +301,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_login_with_relogin_flag(record_property, runner: CliRunner) -> None:
+    def test_login_with_relogin_flag(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test login command with relogin flag."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.login", return_value=True) as mock_login:
@@ -308,7 +313,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_login_failure(record_property, runner: CliRunner) -> None:
+    def test_login_failure(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test login command when login fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.login", return_value=False):
@@ -319,7 +324,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_login_error(record_property, runner: CliRunner) -> None:
+    def test_login_error(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test login command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.login", side_effect=RuntimeError("Test error")):
@@ -330,7 +335,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_success(record_property, runner: CliRunner, mock_user_info: UserInfo) -> None:
+    def test_whoami_success(record_property: RecordProperty, runner: CliRunner, mock_user_info: UserInfo) -> None:
         """Test successful whoami command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
@@ -345,7 +350,9 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_with_relogin_flag(record_property, runner: CliRunner, mock_user_info: UserInfo) -> None:
+    def test_whoami_with_relogin_flag(
+        record_property: RecordProperty, runner: CliRunner, mock_user_info: UserInfo
+    ) -> None:
         """Test whoami command with relogin flag."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch(
@@ -358,7 +365,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_not_logged_in(record_property, runner: CliRunner) -> None:
+    def test_whoami_not_logged_in(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test whoami command when not logged in."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch(
@@ -372,7 +379,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_error(record_property, runner: CliRunner) -> None:
+    def test_whoami_error(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test whoami command when an error occurs."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         with patch("aignostics.platform._service.Service.get_user_info", side_effect=RuntimeError("Test error")):
@@ -383,7 +390,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_success_with_no_org_name(record_property, runner: CliRunner) -> None:
+    def test_whoami_success_with_no_org_name(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test successful whoami command when org_name is None."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         # Create mock token info
@@ -430,7 +437,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_masks_secrets_by_default(record_property, runner: CliRunner) -> None:
+    def test_whoami_masks_secrets_by_default(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test that whoami masks secrets by default."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_token_info = TokenInfo(
@@ -477,7 +484,7 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_shows_secrets_with_no_mask_flag(record_property, runner: CliRunner) -> None:
+    def test_whoami_shows_secrets_with_no_mask_flag(record_property: RecordProperty, runner: CliRunner) -> None:
         """Test that whoami shows secrets when --no-mask-secrets flag is used."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
         mock_token_info = TokenInfo(
@@ -579,7 +586,7 @@ class TestAuthTokenCLI:
     _MOCK_TOKEN = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MzQ1Njc4OTB9.sig"  # noqa: S105
 
     @staticmethod
-    def _invoke_success(runner: CliRunner, tmp_path) -> tuple[InvokeResult, int]:
+    def _invoke_success(runner: CliRunner, tmp_path: Path) -> tuple[InvokeResult, int]:
         """Invoke ``user token`` with a valid cached token file; returns (result, expiry)."""
         future_expiry = int((datetime.now(tz=UTC) + timedelta(hours=1)).timestamp())
         token_file = tmp_path / "token"
@@ -594,7 +601,7 @@ class TestAuthTokenCLI:
             return runner.invoke(cli, ["user", "token"]), future_expiry
 
     @staticmethod
-    def _invoke_failure(runner: CliRunner, tmp_path) -> InvokeResult:
+    def _invoke_failure(runner: CliRunner, tmp_path: Path) -> InvokeResult:
         """Invoke ``user token`` with no valid token file; returns result."""
         mock_settings = MagicMock()
         mock_settings.token_file = tmp_path / "no_token"
@@ -607,7 +614,7 @@ class TestAuthTokenCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_success_exit_code(record_property, runner: CliRunner, tmp_path) -> None:
+    def test_auth_token_success_exit_code(record_property: RecordProperty, runner: CliRunner, tmp_path: Path) -> None:
         """Exit code is 0 when a cached token is available."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         result, _ = TestAuthTokenCLI._invoke_success(runner, tmp_path)
@@ -615,7 +622,9 @@ class TestAuthTokenCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_success_json_structure(record_property, runner: CliRunner, tmp_path) -> None:
+    def test_auth_token_success_json_structure(
+        record_property: RecordProperty, runner: CliRunner, tmp_path: Path
+    ) -> None:
         """Valid gcloud external-credential-helper JSON is written to stdout on success."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         result, future_expiry = TestAuthTokenCLI._invoke_success(runner, tmp_path)
@@ -628,14 +637,16 @@ class TestAuthTokenCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_failure_exit_code(record_property, runner: CliRunner, tmp_path) -> None:
+    def test_auth_token_failure_exit_code(record_property: RecordProperty, runner: CliRunner, tmp_path: Path) -> None:
         """Exit code is 1 when token retrieval fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         assert TestAuthTokenCLI._invoke_failure(runner, tmp_path).exit_code == 1
 
     @pytest.mark.integration
     @staticmethod
-    def test_auth_token_failure_json_structure(record_property, runner: CliRunner, tmp_path) -> None:
+    def test_auth_token_failure_json_structure(
+        record_property: RecordProperty, runner: CliRunner, tmp_path: Path
+    ) -> None:
         """Gcloud-compatible error JSON is written to stdout when token retrieval fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         result = TestAuthTokenCLI._invoke_failure(runner, tmp_path)
