@@ -287,11 +287,13 @@ def _broken_plugin_package_patches(
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                PLUGIN: ImportError("broken"),
-                MAIN_PACKAGE: main_pkg,
-                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    PLUGIN: ImportError("broken"),
+                    MAIN_PACKAGE: main_pkg,
+                    f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
     ):
@@ -320,11 +322,13 @@ def _no_match_plugin_patches(
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                PLUGIN: plugin_pkg,
-                MAIN_PACKAGE: main_pkg,
-                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    PLUGIN: plugin_pkg,
+                    MAIN_PACKAGE: main_pkg,
+                    f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
     ):
@@ -350,10 +354,12 @@ def _no_plugins_patches(
         A list of module names that were imported during the patched scope.
     """
     searched: list[str] = []
-    base_side_effect = _make_import_side_effect({
-        MAIN_PACKAGE: main_pkg,
-        f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
-    })
+    base_side_effect = _make_import_side_effect(
+        {
+            MAIN_PACKAGE: main_pkg,
+            f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
+        }
+    )
 
     def tracking_import(name: str) -> ModuleType:
         searched.append(name)
@@ -586,10 +592,12 @@ def test_locate_implementations_deep_scans_main_package(clear_di_caches, record_
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                MAIN_PACKAGE: main_pkg,
-                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    MAIN_PACKAGE: main_pkg,
+                    f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
     ):
@@ -779,10 +787,12 @@ def test_locate_subclasses_deep_scans_main_package(clear_di_caches, record_prope
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                MAIN_PACKAGE: main_pkg,
-                f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    MAIN_PACKAGE: main_pkg,
+                    f"{MAIN_PACKAGE}.{MYMODULE}": main_mod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[("", MYMODULE, False)]),
     ):
