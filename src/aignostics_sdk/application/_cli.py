@@ -28,9 +28,10 @@ from aignostics_sdk.platform import (
 from aignostics_sdk.system import Service as SystemService
 from aignostics_sdk.utils import console, get_user_data_directory, sanitize_path
 
+from ._service import Service
+
 if TYPE_CHECKING:
     from ._models import DownloadProgress
-    from ._service import Service
 
 from ._utils import (
     application_run_status_to_str,
