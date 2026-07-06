@@ -186,6 +186,45 @@ class TestUserInfo:
 class TestPlatformCLI:
     """Test cases for platform CLI commands."""
 
+    @pytest.fixture
+    def mock_user_info(self) -> UserInfo:  # noqa: PLR6301
+        """Standard mock UserInfo used across whoami tests."""
+        return UserInfo(
+            role="admin",
+            token=TokenInfo(
+                issuer="https://test.auth0.com/",
+                issued_at=1609459200,
+                expires_at=1609462800,
+                scope=["openid", "profile"],
+                audience=["https://test-audience"],
+                authorized_party="test-client-id",
+                org_id="org456",
+                role="admin",
+            ),
+            user=User(id="user123"),
+            organization=Organization(
+                id="org456",
+                name="Test Organization",
+                aignostics_bucket_hmac_access_key_id="secret_access_key_id",
+                aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
+                aignostics_bucket_name="test-bucket",
+                aignostics_bucket_protocol="gs",
+                aignostics_logfire_token="logfire_token",  # noqa: S106
+                aignostics_sentry_dsn="sentry_dsn",
+            ),
+        )
+
+    @staticmethod
+    def _assert_valid_json_output(output: str) -> None:
+        """Assert that output contains at least one valid JSON object."""
+        json_start = output.find("{")
+        if json_start < 0:
+            pytest.fail("No JSON found in output")
+        try:
+            json.loads(output[json_start:])
+        except json.JSONDecodeError:
+            pytest.fail("Output is not valid JSON")
+
     @pytest.mark.e2e
     @staticmethod
     def test_login_out_info_e2e(record_property, runner: CliRunner) -> None:
@@ -291,93 +330,31 @@ class TestPlatformCLI:
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_success(record_property, runner: CliRunner) -> None:
+    def test_whoami_success(record_property, runner: CliRunner, mock_user_info: UserInfo) -> None:
         """Test successful whoami command."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        # Create mock user info
-        mock_token_info = TokenInfo(
-            issuer="https://test.auth0.com/",
-            issued_at=1609459200,
-            expires_at=1609462800,
-            scope=["openid", "profile"],
-            audience=["https://test-audience"],
-            authorized_party="test-client-id",
-            org_id="org456",
-            role="admin",
-        )
-        mock_user = User(
-            id="user123",
-        )
-        mock_organization = Organization(
-            id="org456",
-            name="Test Organization",
-            aignostics_bucket_hmac_access_key_id="secret_access_key_id",
-            aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
-            aignostics_bucket_name="test-bucket",
-            aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
-            aignostics_sentry_dsn="sentry_dsn",
-        )
-        mock_user_info = UserInfo(
-            role="admin",
-            token=mock_token_info,
-            user=mock_user,
-            organization=mock_organization,
-        )
-
         with patch("aignostics.platform._service.Service.get_user_info", return_value=mock_user_info):
             result = runner.invoke(cli, ["user", "whoami"])
 
-            assert result.exit_code == 0
-            # Check that JSON output contains expected fields
-            output = normalize_output(result.output)
-            assert "user123" in output
-            assert "org456" in output
-            assert "Test Organization" in output
-            assert "admin" in output
+        assert result.exit_code == 0
+        output = normalize_output(result.output)
+        assert "user123" in output
+        assert "org456" in output
+        assert "Test Organization" in output
+        assert "admin" in output
 
     @pytest.mark.integration
     @staticmethod
-    def test_whoami_with_relogin_flag(record_property, runner: CliRunner) -> None:
+    def test_whoami_with_relogin_flag(record_property, runner: CliRunner, mock_user_info: UserInfo) -> None:
         """Test whoami command with relogin flag."""
         record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
-        mock_token_info = TokenInfo(
-            issuer="https://test.auth0.com/",
-            issued_at=1609459200,
-            expires_at=1609462800,
-            scope=["openid", "profile"],
-            audience=["test-audience"],
-            authorized_party="test-client-id",
-            org_id="org456",
-            role="admin",
-        )
-        mock_user = User(
-            id="user123",
-        )
-        mock_organization = Organization(
-            id="org456",
-            name="Test Organization",
-            aignostics_bucket_hmac_access_key_id="secret_access_key_id",
-            aignostics_bucket_hmac_secret_access_key="secret_access_key",  # noqa: S106
-            aignostics_bucket_name="test-bucket",
-            aignostics_bucket_protocol="gs",
-            aignostics_logfire_token="logfire_token",  # noqa: S106
-            aignostics_sentry_dsn="sentry_dsn",
-        )
-        mock_user_info = UserInfo(
-            role="admin",
-            token=mock_token_info,
-            user=mock_user,
-            organization=mock_organization,
-        )
-
         with patch(
             "aignostics.platform._service.Service.get_user_info", return_value=mock_user_info
         ) as mock_get_user_info:
             result = runner.invoke(cli, ["user", "whoami", "--relogin"])
 
-            assert result.exit_code == 0
-            mock_get_user_info.assert_called_once_with(relogin=True)
+        assert result.exit_code == 0
+        mock_get_user_info.assert_called_once_with(relogin=True)
 
     @pytest.mark.integration
     @staticmethod
@@ -565,25 +542,10 @@ class TestPlatformCLI:
         result = runner.invoke(cli, ["sdk", "run-metadata-schema", "--no-pretty"])
 
         assert result.exit_code == 0
-        # Don't normalize output for JSON parsing
-        output = result.output
-        # Check that schema contains expected top-level properties
-        assert "schema_version" in output
-        assert "submission" in output
-        assert "user_agent" in output
-        # In non-pretty mode, output should still be valid JSON
-        import json
-
-        # Try to parse the output as JSON (should not raise an error)
-        try:
-            # Find JSON in output (skip boot messages)
-            json_start = output.find("{")
-            if json_start >= 0:
-                json.loads(output[json_start:])
-            else:
-                pytest.fail("No JSON found in output")
-        except json.JSONDecodeError:
-            pytest.fail("Output is not valid JSON")
+        assert "schema_version" in result.output
+        assert "submission" in result.output
+        assert "user_agent" in result.output
+        TestPlatformCLI._assert_valid_json_output(result.output)
 
     @pytest.mark.integration
     @staticmethod
@@ -606,23 +568,9 @@ class TestPlatformCLI:
         result = runner.invoke(cli, ["sdk", "item-metadata-schema", "--no-pretty"])
 
         assert result.exit_code == 0
-        # Don't normalize output for JSON parsing
-        output = result.output
-        # Check that schema contains expected top-level properties
-        assert "schema_version" in output
-        assert "platform_bucket" in output
-        # In non-pretty mode, output should still be valid JSON
-
-        # Try to parse the output as JSON (should not raise an error)
-        try:
-            # Find JSON in output (skip boot messages)
-            json_start = output.find("{")
-            if json_start >= 0:
-                json.loads(output[json_start:])
-            else:
-                pytest.fail("No JSON found in output")
-        except json.JSONDecodeError:
-            pytest.fail("Output is not valid JSON")
+        assert "schema_version" in result.output
+        assert "platform_bucket" in result.output
+        TestPlatformCLI._assert_valid_json_output(result.output)
 
 
 class TestAuthTokenCLI:
