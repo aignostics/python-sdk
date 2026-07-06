@@ -192,7 +192,7 @@ provides-extras = ["pyinstaller", "jupyter", "marimo", "qupath"]
 
 [[package]]
 name = "aignostics-sdk"
-version = "1.4.7"
+version = "1.4.8a1"
 source = { editable = "packages/aignostics-sdk" }
 dependencies = [
     { name = "certifi" },
