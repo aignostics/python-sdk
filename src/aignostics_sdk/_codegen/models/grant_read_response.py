@@ -103,5 +103,3 @@ class GrantReadResponse(BaseModel):
             "revoked": obj.get("revoked")
         })
         return _obj
-
-

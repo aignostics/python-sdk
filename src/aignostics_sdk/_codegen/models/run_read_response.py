@@ -179,5 +179,3 @@ class RunReadResponse(BaseModel):
             "scheduling": SchedulingResponse.from_dict(obj["scheduling"]) if obj.get("scheduling") is not None else None
         })
         return _obj
-
-

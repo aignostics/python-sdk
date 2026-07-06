@@ -89,5 +89,3 @@ class ShareTokenCreateRequest(BaseModel):
             "expires_at": obj.get("expires_at")
         })
         return _obj
-
-

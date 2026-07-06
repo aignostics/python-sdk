@@ -95,5 +95,3 @@ class ShareTokenReadResponse(BaseModel):
             "revoked": obj.get("revoked")
         })
         return _obj
-
-

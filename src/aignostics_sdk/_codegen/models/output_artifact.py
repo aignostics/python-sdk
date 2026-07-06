@@ -101,5 +101,3 @@ class OutputArtifact(BaseModel):
             "visibility": obj.get("visibility")
         })
         return _obj
-
-

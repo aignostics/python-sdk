@@ -106,5 +106,3 @@ class GrantCreateRequest(BaseModel):
             "relation": obj.get("relation")
         })
         return _obj
-
-

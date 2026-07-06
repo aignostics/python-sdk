@@ -88,5 +88,3 @@ class CustomMetadataUpdateResponse(BaseModel):
             "custom_metadata_checksum": obj.get("custom_metadata_checksum")
         })
         return _obj
-
-

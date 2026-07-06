@@ -96,5 +96,3 @@ class SchedulingResponse(BaseModel):
             "deadline": obj.get("deadline")
         })
         return _obj
-
-
