@@ -12,20 +12,20 @@ from aignostics.utils._service import BaseService
 class _ConcreteService(BaseService):
     """Minimal concrete service for testing BaseService behaviour."""
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         return Health(status=Health.Code.UP)
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         return {}
 
 
 class _AnotherConcreteService(BaseService):
     """A second concrete service to test per-class caching."""
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         return Health(status=Health.Code.UP)
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:
         return {}
 
 
@@ -90,10 +90,10 @@ def test_settings_accessor_returns_settings(record_property) -> None:
         def __init__(self) -> None:
             super().__init__(_MinimalSettings)
 
-        async def health(self) -> Health:  # noqa: PLR6301
+        async def health(self) -> Health:
             return Health(status=Health.Code.UP)
 
-        async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: PLR6301
+        async def info(self, mask_secrets: bool = True) -> dict[str, Any]:
             return {}
 
     svc = _ServiceWithSettings()

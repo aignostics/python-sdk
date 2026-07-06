@@ -82,8 +82,7 @@ async def _page_index(client: Client, query: str | None = None) -> None:
                     ui.label('On completed runs click "Marimo" to directly open the notebook.').classes("text")
 
             with (
-                ui
-                .carousel(animated=True, arrows=True, navigation=True)
+                ui.carousel(animated=True, arrows=True, navigation=True)
                 .classes("flex-1 h-full m-0 p-0 self-end bg-[#423D6B] ")
                 .props("infinite autoplay=1000 control-color=transparent")
             ):

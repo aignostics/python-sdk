@@ -104,7 +104,7 @@ async def _resolve_artifact_url_and_invoke(
         on_success(url)
 
 
-async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0914, PLR0915
+async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PLR0912, PLR0915
     """Describe Application.
 
     Args:
@@ -177,7 +177,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         )
 
     if run is None:
-        ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")  # type: ignore[unreachable]
+        ui.label(f"Failed to get run '{run_id}'").mark("LABEL_ERROR")
         return
 
     # Forward declaration of UI buttons that will be defined later
@@ -500,8 +500,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 icon = "cloud_download"
 
             download_button = (
-                ui
-                .button(
+                ui.button(
                     label,
                     icon=icon,
                     on_click=start_download,
@@ -551,14 +550,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.label(title).classes("text-h5")
         if metadata:
             try:
-                ui.json_editor({
-                    "content": {"json": metadata},
-                    "mode": "tree",
-                    "readOnly": True,
-                    "mainMenuBar": False,
-                    "navigationBar": True,
-                    "statusBar": False,
-                }).classes("full-width")
+                ui.json_editor(
+                    {
+                        "content": {"json": metadata},
+                        "mode": "tree",
+                        "readOnly": True,
+                        "mainMenuBar": False,
+                        "navigationBar": True,
+                        "statusBar": False,
+                    }
+                ).classes("full-width")
             except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
@@ -605,14 +606,16 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             ui.label(title).classes("text-h5")
         if custom_metadata:
             try:
-                ui.json_editor({
-                    "content": {"json": custom_metadata},
-                    "mode": "tree",
-                    "readOnly": True,
-                    "mainMenuBar": False,
-                    "navigationBar": True,
-                    "statusBar": False,
-                }).classes("full-width")
+                ui.json_editor(
+                    {
+                        "content": {"json": custom_metadata},
+                        "mode": "tree",
+                        "readOnly": True,
+                        "mainMenuBar": False,
+                        "navigationBar": True,
+                        "statusBar": False,
+                    }
+                ).classes("full-width")
             except Exception as e:
                 ui.notify(f"Failed to render metadata: {e!s}", type="negative")
 
@@ -659,7 +662,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
         ui.navigate.to(f"/notebook/{run.run_id}?results_folder={quote(results_folder.as_posix())}")
         ui.navigate.reload()  # TODO(Helmut): Find out why this workaround works. Was just a hunch ...
 
-    if run_data:  # noqa: PLR1702
+    if run_data:
         with ui.row().classes("w-full justify-center"):
             expansion = ui.expansion(text=f"Run {run.run_id}", icon="info")
             expansion.on_value_change(
@@ -758,16 +761,14 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 if run_data.state.value == RunState.TERMINATED and run_data.statistics.item_succeeded_count > 0:
                     with ui.button_group().props("push"):
                         with (
-                            ui
-                            .button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
+                            ui.button("Download", icon="cloud_download", on_click=lambda _: download_run_dialog_open())
                             .mark("BUTTON_DOWNLOAD_RUN")
                             .props("push")
                         ):
                             ui.tooltip("Download all results of this run")
                         if find_spec("ijson") and QuPathService.is_qupath_installed():
                             with (
-                                ui
-                                .button(
+                                ui.button(
                                     "QuPath",
                                     icon="zoom_in",
                                     on_click=lambda _: download_run_dialog_open(qupath_project=True),
@@ -778,8 +779,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                 ui.tooltip("Open results in QuPath Microscopy Viewer")
                         if find_spec("marimo"):
                             with (
-                                ui
-                                .button(
+                                ui.button(
                                     "Marimo",
                                     icon="analytics",
                                     on_click=lambda _: download_run_dialog_open(qupath_project=False, marimo=True),
@@ -940,8 +940,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 elif item.state is ItemState.TERMINATED:
                     if item.error_message:
                         with (
-                            ui
-                            .row()
+                            ui.row()
                             .classes("w-1/2 justify-start items-start content-start ml-4")
                             .style("max-width: 50%;")
                         ):
@@ -992,8 +991,8 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             return batch
 
         # Load initial batch
-        initial_batch = await nicegui_run.io_bound(fetch_next_batch)
-        displayed_results.extend(initial_batch)
+        if initial_batch := await nicegui_run.io_bound(fetch_next_batch):
+            displayed_results.extend(initial_batch)
 
         # Check if there are no results at all
         if not displayed_results:
@@ -1038,7 +1037,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                 show_more_button.props(add="loading")
 
                 # Fetch next batch
-                next_batch = await nicegui_run.io_bound(fetch_next_batch)
+                next_batch = await nicegui_run.io_bound(fetch_next_batch) or []
                 displayed_results.extend(next_batch)
 
                 # Render new items
@@ -1060,8 +1059,7 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
             # Add "Show more" button
             with show_more_container:
                 show_more_button = (
-                    ui
-                    .button(
+                    ui.button(
                         f"Show more ({remaining_initial} remaining)",
                         icon="expand_more",
                         on_click=load_more,

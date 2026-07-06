@@ -91,7 +91,7 @@ async def test_gui_bucket_flow(user: User, runner: CliRunner, tmp_path: Path, si
     delete_button_item.enable()
     assert delete_button_item.enabled
 
-    async def mocked_get_selected_rows():  # noqa: RUF029
+    async def mocked_get_selected_rows():
         # Need to keep it as async since it's mocking an async method
         # Return all rows that match the test prefix
         return [item for item in row_data if test_prefix in item.get("key", "")]

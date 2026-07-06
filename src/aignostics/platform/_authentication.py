@@ -374,7 +374,7 @@ def _perform_authorization_code_with_pkce_flow() -> str:  # noqa: C901
                 authentication_result.error = str(e)
 
         # Silence server logs
-        def log_message(self, _format: str, *_args) -> None:  # type: ignore[no-untyped-def] # noqa: PLR6301
+        def log_message(self, _format: str, *_args) -> None:  # type: ignore[no-untyped-def]
             return
 
     # Create and start the server

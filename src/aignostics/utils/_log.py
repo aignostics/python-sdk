@@ -65,7 +65,7 @@ def _validate_file_name(file_name: str | None) -> str | None:
 
 
 class InterceptHandler(logging.Handler):
-    def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
+    def emit(self, record: logging.LogRecord) -> None:
         # Ignore Sentry-related log messages
         if "sentry.io" in record.getMessage():
             return

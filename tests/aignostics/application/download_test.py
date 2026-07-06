@@ -65,14 +65,16 @@ def test_download_url_to_file_with_progress_gs_url_success(tmp_path: Path) -> No
     progress_updates = []
 
     def progress_callback(p: DownloadProgress) -> None:
-        progress_updates.append({
-            "status": p.status,
-            "input_slide_path": p.input_slide_path,
-            "input_slide_url": p.input_slide_url,
-            "input_slide_size": p.input_slide_size,
-            "input_slide_downloaded_size": p.input_slide_downloaded_size,
-            "input_slide_downloaded_chunk_size": p.input_slide_downloaded_chunk_size,
-        })
+        progress_updates.append(
+            {
+                "status": p.status,
+                "input_slide_path": p.input_slide_path,
+                "input_slide_url": p.input_slide_url,
+                "input_slide_size": p.input_slide_size,
+                "input_slide_downloaded_size": p.input_slide_downloaded_size,
+                "input_slide_downloaded_chunk_size": p.input_slide_downloaded_chunk_size,
+            }
+        )
 
     with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
@@ -227,12 +229,14 @@ def test_download_url_to_file_with_progress_normalized_values(tmp_path: Path) ->
 
     def progress_callback(p: DownloadProgress) -> None:
         # Capture all updates
-        normalized_values.append({
-            "has_size": p.input_slide_size is not None,
-            "downloaded": p.input_slide_downloaded_size,
-            "item_progress": p.item_progress_normalized,
-            "artifact_progress": p.artifact_progress_normalized,
-        })
+        normalized_values.append(
+            {
+                "has_size": p.input_slide_size is not None,
+                "downloaded": p.input_slide_downloaded_size,
+                "item_progress": p.item_progress_normalized,
+                "artifact_progress": p.artifact_progress_normalized,
+            }
+        )
 
     with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
@@ -293,11 +297,13 @@ def test_download_url_to_file_with_progress_https_url_success(tmp_path: Path) ->
     progress_updates = []
 
     def progress_callback(p: DownloadProgress) -> None:
-        progress_updates.append({
-            "status": p.status,
-            "input_slide_url": p.input_slide_url,
-            "input_slide_downloaded_size": p.input_slide_downloaded_size,
-        })
+        progress_updates.append(
+            {
+                "status": p.status,
+                "input_slide_url": p.input_slide_url,
+                "input_slide_downloaded_size": p.input_slide_downloaded_size,
+            }
+        )
 
     with patch("aignostics.application._download.requests.get") as mock_get:
         mock_response = Mock()

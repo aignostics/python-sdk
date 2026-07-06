@@ -1452,7 +1452,7 @@ def list_runs_by_tag(tag: str, runner: CliRunner, expected_count: int = 1) -> li
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
-def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915, PLR0914
+def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915
     runner: CliRunner, tmp_path: Path, silent_logging, record_property
 ) -> None:
     """Test JSON output format for application/run commands and cancel-by-filter with dry-run mode.
