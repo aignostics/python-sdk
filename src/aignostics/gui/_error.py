@@ -34,7 +34,7 @@ class PageBuilder(BasePageBuilder):
                     )
 
         @ui.page("/force-error")
-        async def page_error_force() -> None:  # noqa: RUF029
+        async def page_error_force() -> None:
             """Forced exception for testing.
 
             Raises:

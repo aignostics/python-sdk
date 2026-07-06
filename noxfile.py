@@ -171,11 +171,13 @@ def audit(session: nox.Session) -> None:
         "--with-description",
     ]
 
-    pip_licenses_base_args.extend([
-        "--ignore-packages",
-        "aignostics",
-        "pyinstaller",  # https://pyinstaller.org/en/stable/license.html
-    ])
+    pip_licenses_base_args.extend(
+        [
+            "--ignore-packages",
+            "aignostics",
+            "pyinstaller",  # https://pyinstaller.org/en/stable/license.html
+        ]
+    )
 
     # Filter by .license-types-allowed file if it exists
     allowed_licenses = []
@@ -657,7 +659,7 @@ def docs(session: nox.Session) -> None:
 
 @nox.session(python=[PYTHON_VERSION], default=False)
 def docs_pdf(session: nox.Session) -> None:
-    """Setup dev environment post project creation."""  # noqa: DOC501
+    """Setup dev environment post project creation."""
     _setup_venv(session, True)
     try:
         out = session.run("latexmk", "--version", external=True, silent=True)

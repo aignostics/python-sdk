@@ -15,14 +15,16 @@ def _get_console() -> Console:
         Console: The themed rich console.
     """
     return Console(
-        theme=Theme({
-            "logging.level.info": "purple4",
-            "debug": "light_cyan3",
-            "success": "green",
-            "info": "purple4",
-            "warning": "yellow1",
-            "error": "red1",
-        }),
+        theme=Theme(
+            {
+                "logging.level.info": "purple4",
+                "debug": "light_cyan3",
+                "success": "green",
+                "info": "purple4",
+                "warning": "yellow1",
+                "error": "red1",
+            }
+        ),
         width=int(os.environ.get("AIGNOSTICS_CONSOLE_WIDTH", "0")) or None,
         legacy_windows=False,  # Modern Windows (10+) doesn't need width adjustment
     )

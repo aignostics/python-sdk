@@ -57,7 +57,7 @@ elif len(sys.argv) > 1 and sys.argv[1] == MODULE_FLAG:
         sys.argv = [module_name, *module_args]
         try:
             if module_name == "marimo":
-                from marimo._cli.cli import main  # noqa: PLC2701
+                from marimo._cli.cli import main
 
                 main(prog_name="marimo")
             else:

@@ -30,7 +30,7 @@ def gui_register_pages() -> None:
         page_builder.register_pages()
 
 
-def gui_run(  # noqa: PLR0913, PLR0917
+def gui_run(  # noqa: PLR0913
     native: bool = True,
     show: bool = False,
     host: str | None = None,
@@ -159,8 +159,7 @@ class GUILocalFilePicker:
                 with self, ui.card():
                     self.add_drives_toggle()
                     self.grid = (
-                        ui
-                        .aggrid(
+                        ui.aggrid(
                             {
                                 "columnDefs": [{"field": "name", "headerName": "File"}],
                                 "rowSelection": "multiple" if multiple else "single",

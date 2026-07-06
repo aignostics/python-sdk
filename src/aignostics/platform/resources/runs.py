@@ -89,13 +89,15 @@ class DownloadTimeoutError(RuntimeError):
     """Exception raised when the download operation exceeds its timeout."""
 
 
-_REDIRECT_STATUSES = frozenset({
-    HTTPStatus.MOVED_PERMANENTLY,
-    HTTPStatus.FOUND,
-    HTTPStatus.SEE_OTHER,
-    HTTPStatus.TEMPORARY_REDIRECT,
-    HTTPStatus.PERMANENT_REDIRECT,
-})
+_REDIRECT_STATUSES = frozenset(
+    {
+        HTTPStatus.MOVED_PERMANENTLY,
+        HTTPStatus.FOUND,
+        HTTPStatus.SEE_OTHER,
+        HTTPStatus.TEMPORARY_REDIRECT,
+        HTTPStatus.PERMANENT_REDIRECT,
+    }
+)
 
 
 class Artifact(_AuthenticatedResource):
@@ -822,7 +824,7 @@ class Runs(_AuthenticatedResource):
         """
         return Run(self._api, run_id)
 
-    def submit(  # noqa: PLR0913, PLR0917
+    def submit(  # noqa: PLR0913
         self,
         application_id: str,
         items: list[ItemCreationRequest],
@@ -896,7 +898,7 @@ class Runs(_AuthenticatedResource):
         operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))
 
-    def list(  # noqa: PLR0913, PLR0917
+    def list(  # noqa: PLR0913
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -944,7 +946,7 @@ class Runs(_AuthenticatedResource):
             )
         )
 
-    def list_data(  # noqa: PLR0913, PLR0917
+    def list_data(  # noqa: PLR0913
         self,
         application_id: str | None = None,
         application_version: str | None = None,

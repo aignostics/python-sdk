@@ -68,7 +68,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-class Service(BaseService):  # noqa: PLR0904
+class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
@@ -79,7 +79,7 @@ class Service(BaseService):  # noqa: PLR0904
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -90,7 +90,7 @@ class Service(BaseService):  # noqa: PLR0904
         """
         return {}
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:
@@ -315,7 +315,7 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
+    def generate_metadata_from_source_directory(  # noqa: PLR0913
         source_directory: Path,
         application_id: str,
         application_version: str | None = None,
@@ -427,7 +427,7 @@ class Service(BaseService):  # noqa: PLR0904
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(  # noqa: PLR0913, PLR0917
+    def application_run_upload(  # noqa: PLR0913
         application_id: str,
         metadata: list[dict[str, Any]],
         application_version: str | None = None,
@@ -478,10 +478,12 @@ class Service(BaseService):  # noqa: PLR0904
             signed_upload_url = BucketService().create_signed_upload_url(object_key)
             logger.trace("Generated signed upload URL '{}' for object '{}'", signed_upload_url, platform_bucket_url)
             if upload_progress_queue:
-                upload_progress_queue.put_nowait({
-                    "external_id": external_id,
-                    "platform_bucket_url": platform_bucket_url,
-                })
+                upload_progress_queue.put_nowait(
+                    {
+                        "external_id": external_id,
+                        "platform_bucket_url": platform_bucket_url,
+                    }
+                )
             file_size = source_file_path.stat().st_size
             logger.trace(
                 "Uploading file '{}' with size {} bytes to '{}' via '{}'",
@@ -494,7 +496,7 @@ class Service(BaseService):  # noqa: PLR0904
                 open(source_file_path, "rb") as f,
             ):
 
-                def read_in_chunks(  # noqa: PLR0913, PLR0917
+                def read_in_chunks(  # noqa: PLR0913
                     external_id: str,
                     file_size: int,
                     upload_progress_queue: Any | None = None,  # noqa: ANN401
@@ -507,10 +509,12 @@ class Service(BaseService):  # noqa: PLR0904
                         if not chunk:
                             break
                         if upload_progress_queue:
-                            upload_progress_queue.put_nowait({
-                                "external_id": external_id,
-                                "file_upload_progress": min(100.0, f.tell() / file_size),
-                            })
+                            upload_progress_queue.put_nowait(
+                                {
+                                    "external_id": external_id,
+                                    "file_upload_progress": min(100.0, f.tell() / file_size),
+                                }
+                            )
                         if upload_progress_callable:
                             upload_progress_callable(len(chunk), file_path, platform_bucket_url)
                         yield chunk
@@ -526,7 +530,7 @@ class Service(BaseService):  # noqa: PLR0904
         return True
 
     @staticmethod
-    def application_runs_static(  # noqa: PLR0913, PLR0917
+    def application_runs_static(  # noqa: PLR0913
         application_id: str | None = None,
         application_version: str | None = None,
         external_id: str | None = None,
@@ -597,7 +601,7 @@ class Service(BaseService):  # noqa: PLR0904
             )
         ]
 
-    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0915
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -810,7 +814,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit_from_metadata(  # noqa: PLR0913, PLR0917
+    def application_run_submit_from_metadata(  # noqa: PLR0913
         self,
         application_id: str,
         metadata: list[dict[str, Any]],
@@ -978,7 +982,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901, PLR0915
+    def application_run_submit(  # noqa: PLR0913, PLR0912, C901, PLR0915
         self,
         application_id: str,
         items: list[InputItem],
@@ -1540,7 +1544,7 @@ class Service(BaseService):  # noqa: PLR0904
             raise NotFoundException(message)
 
     @staticmethod
-    def application_run_download_static(  # noqa: PLR0913, PLR0917
+    def application_run_download_static(  # noqa: PLR0913
         run_id: str,
         destination_directory: Path,
         create_subdirectory_for_run: bool = True,
@@ -1585,7 +1589,7 @@ class Service(BaseService):  # noqa: PLR0904
             download_progress_queue,
         )
 
-    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915
         self,
         run_id: str,
         destination_directory: Path,

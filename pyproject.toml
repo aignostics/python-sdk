@@ -259,7 +259,7 @@ allow-direct-references = true
 
 [tool.ruff]
 target-version = "py311"
-preview = true
+preview = false
 fix = true
 line-length = 120
 extend-exclude = [
@@ -298,7 +298,8 @@ ignore = [
     "T201",     # Remove `print`
     "INP001",   # Checks for packages that are missing an __init__.py file.
     "BLE001",   # Accept for now TODO(Helmut): Add proper exception handling later
-    "ASYNC240"  # Aiopath broken in Python 3.11 which we want to support
+    "ASYNC240", # Aiopath broken in Python 3.11 which we want to support
+    "PLW0717"   # Allow try-clauses with more than 5 statements
 ]
 
 [tool.ruff.lint.per-file-ignores]

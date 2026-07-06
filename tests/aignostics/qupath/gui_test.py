@@ -84,7 +84,7 @@ async def test_gui_qupath_install_only(
 )
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential
-async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
+async def test_gui_qupath_install_and_launch(  # noqa: PLR0913
     user: User, runner: CliRunner, silent_logging: None, qupath_teardown, qupath_save_restore: None, record_property
 ) -> None:
     """Test that the user can install and launch QuPath via the GUI."""
@@ -143,7 +143,7 @@ async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0915
     user: User,
     runner: CliRunner,
     tmp_path: Path,

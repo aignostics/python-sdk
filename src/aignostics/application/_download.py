@@ -146,7 +146,7 @@ def update_progress(
         download_progress_queue.put_nowait(progress)
 
 
-def download_available_items(  # noqa: PLR0913, PLR0917
+def download_available_items(  # noqa: PLR0913
     progress: DownloadProgress,
     application_run: Run,
     destination_directory: Path,
@@ -223,7 +223,7 @@ def download_available_items(  # noqa: PLR0913, PLR0917
             downloaded_items.add(item.external_id)
 
 
-def download_item_artifact(  # noqa: PLR0913, PLR0917
+def download_item_artifact(  # noqa: PLR0913
     progress: DownloadProgress,
     run: Run,
     artifact: Any,  # noqa: ANN401
@@ -285,7 +285,7 @@ def download_item_artifact(  # noqa: PLR0913, PLR0917
     )
 
 
-def download_file_with_progress(  # noqa: PLR0913, PLR0917
+def download_file_with_progress(  # noqa: PLR0913
     progress: DownloadProgress,
     signed_url: str,
     artifact_path: Path,
