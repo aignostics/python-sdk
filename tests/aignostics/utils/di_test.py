@@ -512,10 +512,12 @@ def test_locate_implementations_only_finds_plugin_top_level_exports(clear_di_cac
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                PLUGIN: plugin_pkg,
-                f"{PLUGIN}.submod": plugin_submod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    PLUGIN: plugin_pkg,
+                    f"{PLUGIN}.submod": plugin_submod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[]),
     ):
@@ -699,10 +701,12 @@ def test_locate_subclasses_only_finds_plugin_top_level_exports(clear_di_caches, 
         patch.object(
             di_module.importlib,
             "import_module",
-            side_effect=_make_import_side_effect({
-                PLUGIN: plugin_pkg,
-                f"{PLUGIN}.submod": plugin_submod,
-            }),
+            side_effect=_make_import_side_effect(
+                {
+                    PLUGIN: plugin_pkg,
+                    f"{PLUGIN}.submod": plugin_submod,
+                }
+            ),
         ),
         patch.object(di_module.pkgutil, "iter_modules", return_value=[]),
     ):

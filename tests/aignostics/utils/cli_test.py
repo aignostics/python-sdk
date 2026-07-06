@@ -28,7 +28,7 @@ class MockTyper:
     def add_typer(self, cli: "MockTyper") -> None:
         """Mock method to add a typer instance."""
 
-    def callback(self, *, invoke_without_command: bool = False) -> "callable":  # noqa: PLR6301
+    def callback(self, *, invoke_without_command: bool = False) -> "callable":
         """Mock callback method that returns a decorator function."""
 
         def decorator(func: "callable") -> "callable":

@@ -1,6 +1,5 @@
 """Tests to verify the CLI functionality of the system module."""
 
-import logging
 import os
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -87,29 +86,29 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
     """
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
     # Disable all logging to prevent secrets from appearing in logs
-    with runner.isolated_filesystem(), caplog.at_level(logging.CRITICAL + 1):
-        # Set environment variable for the test
-        env = os.environ.copy()
-        env["AIGNOSTICS_SYSTEM_TOKEN"] = THE_VALUE
 
-        # custom
-        env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
-        env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
-        # end custon
+    # Set environment variable for the test
+    env = os.environ.copy()
+    env["AIGNOSTICS_SYSTEM_TOKEN"] = THE_VALUE
 
-        # Run the CLI with the runner - secrets should be masked by default
-        result = runner.invoke(cli, ["system", "info"], env=env)
-        assert result.exit_code == 0
-        # Verify secrets are properly masked (safe assertion - no secret exposure)
-        secret_is_masked = THE_VALUE not in result.output
-        assert secret_is_masked, "Secret value found in masked output - this is a security issue"
+    # custom
+    env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
+    env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
+    # end custon
 
-        # Run the CLI with --no-mask-secrets flag - secrets should be visible
-        result = runner.invoke(cli, ["system", "info", "--no-mask-secrets"], env=env)
-        assert result.exit_code == 0
-        # Check for secrets presence without exposing them in assertion failures
-        secret_found = THE_VALUE in result.output
-        assert secret_found, "Expected secret value to be present in unmasked output, but it was not found"
+    # Run the CLI with the runner - secrets should be masked by default
+    result = runner.invoke(cli, ["system", "info"], env=env)
+    assert result.exit_code == 0
+    # Verify secrets are properly masked (safe assertion - no secret exposure)
+    secret_is_masked = THE_VALUE not in result.output
+    assert secret_is_masked, "Secret value found in masked output - this is a security issue"
+
+    # Run the CLI with --no-mask-secrets flag - secrets should be visible
+    result = runner.invoke(cli, ["system", "info", "--no-mask-secrets"], env=env)
+    assert result.exit_code == 0
+    # Check for secrets presence without exposing them in assertion failures
+    secret_found = THE_VALUE in result.output
+    assert secret_found, "Expected secret value to be present in unmasked output, but it was not found"
 
 
 @pytest.mark.unit

@@ -95,39 +95,37 @@ def test_cli_fails_on_invalid_setting_with_env_arg() -> None:
 @pytest.mark.sequential
 def test_cli_fails_on_invalid_setting_with_environ(runner) -> None:
     """Check system fails on boot with invalid setting using CliRunner and environment variables."""
-    # Set the environment variable directly
-    with runner.isolated_filesystem():
-        # Set environment variable for the test
-        env = os.environ.copy()
-        env["AIGNOSTICS_LOG_LEVEL"] = "DEBUG"
+    # Set environment variable for the test
+    env = os.environ.copy()
+    env["AIGNOSTICS_LOG_LEVEL"] = "DEBUG"
 
-        # custom
-        env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
-        env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
-        # end custon
+    # custom
+    env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
+    env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
+    # end custon
 
-        # Run the CLI with the runner
-        result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
+    # Run the CLI with the runner
+    result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
 
-        # Check the exit code (0 indicates all good)
-        assert result.exit_code == 0
+    # Check the exit code (0 indicates all good)
+    assert result.exit_code == 0
 
-        # Set environment variable for the test
-        env = os.environ.copy()
-        env["AIGNOSTICS_LOG_LEVEL"] = "FAIL"
+    # Set environment variable for the test
+    env = os.environ.copy()
+    env["AIGNOSTICS_LOG_LEVEL"] = "FAIL"
 
-        # custom
-        env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
-        env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
-        # end custon
+    # custom
+    env["AIGNOSTICS_CLIENT_ID_DEVICE"] = THE_VALUE
+    env["AIGNOSTICS_CLIENT_ID_INTERACTIVE"] = THE_VALUE
+    # end custon
 
-        # Run the CLI with the runner
-        result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
+    # Run the CLI with the runner
+    result = runner.invoke(cli, ["system", "dump-dot-env-file"], env=env)
 
-        # Check that the error message is in the output
-        assert "Input should be 'CRITICAL'" in result.output
-        # Check the exit code (78 indicates validation failed)
-        assert result.exit_code == 78
+    # Check that the error message is in the output
+    assert "Input should be 'CRITICAL'" in result.output
+    # Check the exit code (78 indicates validation failed)
+    assert result.exit_code == 78
 
 
 if find_spec("nicegui"):
@@ -151,7 +149,7 @@ if find_spec("nicegui"):
         mock_register_pages_called = False
         mock_app_mount_called = False
 
-        def mock_ui_run(  # noqa: PLR0913, PLR0917
+        def mock_ui_run(  # noqa: PLR0913
             title="",
             favicon="",
             native=False,

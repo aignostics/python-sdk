@@ -301,7 +301,7 @@ class Settings(OpaqueSettings):
         return Path(self.cache_dir) / ".token"
 
     @field_serializer("token_file")
-    def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:  # noqa: PLR6301
+    def serialize_token_file(self, token_file: Path, _info: FieldSerializationInfo) -> str:
         return str(token_file.resolve())
 
     health_timeout: Annotated[

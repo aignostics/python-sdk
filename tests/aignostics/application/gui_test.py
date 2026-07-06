@@ -326,7 +326,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(  # noqa: PLR0914, PLR0915
+async def test_gui_run_download(  # noqa: PLR0915
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a run result via the GUI."""

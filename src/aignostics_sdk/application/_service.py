@@ -3,7 +3,7 @@
 import base64
 import re
 import time
-from collections.abc import Callable, Generator
+from collections.abc import Callable, Generator, Iterator
 from datetime import datetime
 from http import HTTPStatus
 from importlib.util import find_spec
@@ -12,6 +12,7 @@ from typing import Any
 
 import crc32c
 import requests
+from aignx.codegen.models import GrantRelation, SubjectType
 from loguru import logger
 
 from aignostics_sdk.constants import TEST_APP_APPLICATION_ID
@@ -32,6 +33,7 @@ from aignostics_sdk.platform import (
     RunState,
 )
 from aignostics_sdk.platform import Service as PlatformService
+from aignostics_sdk.platform.resources.access import AccessGrant, ShareToken
 from aignostics_sdk.utils import BaseService, Health, sanitize_path_component
 
 from ._download import (
@@ -64,7 +66,7 @@ APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 
 
-class Service(BaseService):  # noqa: PLR0904
+class Service(BaseService):
     """Service of the application module."""
 
     _settings: Settings
@@ -75,7 +77,7 @@ class Service(BaseService):  # noqa: PLR0904
         """Initialize service."""
         super().__init__(Settings)  # automatically loads and validates the settings
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -86,7 +88,7 @@ class Service(BaseService):  # noqa: PLR0904
         """
         return {}
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:
@@ -311,7 +313,7 @@ class Service(BaseService):  # noqa: PLR0904
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
+    def generate_metadata_from_source_directory(  # noqa: PLR0913
         source_directory: Path,
         application_id: str,
         application_version: str | None = None,
@@ -425,7 +427,7 @@ class Service(BaseService):  # noqa: PLR0904
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(  # noqa: PLR0913, PLR0917
+    def application_run_upload(  # noqa: PLR0913
         application_id: str,
         metadata: list[dict[str, Any]],
         application_version: str | None = None,
@@ -477,10 +479,12 @@ class Service(BaseService):  # noqa: PLR0904
             signed_upload_url = BucketService().create_signed_upload_url(object_key)
             logger.trace("Generated signed upload URL '{}' for object '{}'", signed_upload_url, platform_bucket_url)
             if upload_progress_queue:
-                upload_progress_queue.put_nowait({
-                    "external_id": external_id,
-                    "platform_bucket_url": platform_bucket_url,
-                })
+                upload_progress_queue.put_nowait(
+                    {
+                        "external_id": external_id,
+                        "platform_bucket_url": platform_bucket_url,
+                    }
+                )
             file_size = source_file_path.stat().st_size
             logger.trace(
                 "Uploading file '{}' with size {} bytes to '{}' via '{}'",
@@ -493,7 +497,7 @@ class Service(BaseService):  # noqa: PLR0904
                 open(source_file_path, "rb") as f,
             ):
 
-                def read_in_chunks(  # noqa: PLR0913, PLR0917
+                def read_in_chunks(  # noqa: PLR0913
                     external_id: str,
                     file_size: int,
                     upload_progress_queue: Any | None = None,  # noqa: ANN401
@@ -506,10 +510,12 @@ class Service(BaseService):  # noqa: PLR0904
                         if not chunk:
                             break
                         if upload_progress_queue:
-                            upload_progress_queue.put_nowait({
-                                "external_id": external_id,
-                                "file_upload_progress": min(100.0, f.tell() / file_size),
-                            })
+                            upload_progress_queue.put_nowait(
+                                {
+                                    "external_id": external_id,
+                                    "file_upload_progress": min(100.0, f.tell() / file_size),
+                                }
+                            )
                         if upload_progress_callable:
                             upload_progress_callable(len(chunk), file_path, platform_bucket_url)
                         yield chunk
@@ -525,7 +531,7 @@ class Service(BaseService):  # noqa: PLR0904
         return True
 
     @staticmethod
-    def application_runs_static(  # noqa: PLR0913, PLR0917
+    def application_runs_static(  # noqa: PLR0913
         application_id: str | None = None,
         application_version: str | None = None,
         external_id: str | None = None,
@@ -596,7 +602,7 @@ class Service(BaseService):  # noqa: PLR0904
             )
         ]
 
-    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0915
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -809,7 +815,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit_from_metadata(  # noqa: PLR0913, PLR0917
+    def application_run_submit_from_metadata(  # noqa: PLR0913
         self,
         application_id: str,
         metadata: list[dict[str, Any]],
@@ -979,7 +985,7 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0917, PLR0912, C901, PLR0915
+    def application_run_submit(  # noqa: PLR0913, PLR0912, C901, PLR0915
         self,
         application_id: str,
         items: list[InputItem],
@@ -1326,8 +1332,222 @@ class Service(BaseService):  # noqa: PLR0904
             logger.exception(message)
             raise RuntimeError(message) from e
 
+    def application_run_organization_grants(
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ) -> Iterator[AccessGrant]:
+        """List active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of grants per page. Defaults to max (100).
+
+        Returns:
+            Iterator[AccessGrant]: Active grants for this run.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).list_share_grants(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                relation=[GrantRelation.VIEWER],
+                page_size=page_size,
+            )
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list organization grants for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_tokens(
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ) -> Iterator[ShareToken]:
+        """List share tokens that have an active grant for a run.
+
+        Derives the list from active grants rather than from the token's own
+        revoked flag.  This ensures that a token whose *grant* was revoked (via
+        ``application_run_revoke_share_token``) is no longer returned, even
+        though the token itself has not been revoked.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of grants per page. Defaults to max (100).
+
+        Yields:
+            ShareToken: Each token with an active grant on this run.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            client = self._get_platform_client()
+            run = client.run(run_id)
+
+            tokens = self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
+            token_grants = {
+                g.subject_id
+                for g in run.list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    page_size=page_size,
+                    nocache=True,
+                )
+            }
+
+            for token in tokens:
+                if token.share_token_id in token_grants:
+                    yield token
+
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list share tokens for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_with_organization(
+        self,
+        run_id: str,
+        organization_id: str | None = None,
+    ) -> AccessGrant:
+        """Share a run with all users in an organization.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): The organization to share with. Defaults to
+                the authenticated user's own organization.
+
+        Returns:
+            AccessGrant: The created grant.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            organization_id = organization_id or self._get_platform_client().me().organization.id
+            return self.application_run(run_id).grant_access(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                subject_id=organization_id,
+            )
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to share run '{run_id}' with organization {organization_id}: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_unshare_with_organization(self, run_id: str, organization_id: str | None = None) -> None:
+        """Revoke active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): Organization whose grants to revoke.
+                Defaults to the authenticated user's own organization.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            organization_id = organization_id or self._get_platform_client().me().organization.id
+            for grant in self.application_run(run_id).list_share_grants(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                subject_id=organization_id,
+                relation=[GrantRelation.VIEWER],
+            ):
+                grant.revoke()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to unshare run '{run_id}' with organization: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_create_share_token(self, run_id: str, expires_at: datetime | None = None) -> ShareToken:
+        """Create a share token for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            expires_at (datetime | None): Optional UTC datetime at which the token expires.
+                Pass ``None`` (default) for a token that never expires.
+
+        Returns:
+            ShareToken: The created token. Access the one-time secret via ``share_token``.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            share_token = self._get_platform_client().share_tokens.create(expires_at=expires_at)
+            self.application_run(run_id).grant_access(
+                subject_type=SubjectType.SHARE_TOKEN,
+                subject_id=share_token.share_token_id,
+            )
+            return share_token
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to create share token for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_revoke_share_token(self, run_id: str, share_token_id: str) -> None:
+        """Revoke the grant giving a share token access to a run.
+
+        Removes the token's access to this specific run without invalidating
+        the token itself; the token may still be valid for other runs.
+
+        Args:
+            run_id (str): The ID of the run.
+            share_token_id (str): The ID of the share token whose grant to revoke.
+
+        Raises:
+            NotFoundException: If the run is not found or no grant exists for
+                the token on this run.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        grants: list[AccessGrant] = []
+        try:
+            grants = list(
+                self.application_run(run_id).list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    subject_id=share_token_id,
+                    nocache=True,
+                )
+            )
+            for grant in grants:
+                grant.revoke()
+        except NotFoundException:
+            raise
+        except Exception as e:
+            message = f"Failed to revoke share token '{share_token_id}' for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        if not grants:
+            message = f"No grant found for share token '{share_token_id}' on run '{run_id}'"
+            logger.warning(message)
+            raise NotFoundException(message)
+
     @staticmethod
-    def application_run_download_static(  # noqa: PLR0913, PLR0917
+    def application_run_download_static(  # noqa: PLR0913
         run_id: str,
         destination_directory: Path,
         create_subdirectory_for_run: bool = True,
@@ -1372,7 +1592,7 @@ class Service(BaseService):  # noqa: PLR0904
             download_progress_queue,
         )
 
-    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0914, PLR0915, PLR0917
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915
         self,
         run_id: str,
         destination_directory: Path,

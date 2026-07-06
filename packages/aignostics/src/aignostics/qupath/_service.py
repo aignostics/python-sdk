@@ -209,7 +209,7 @@ class Service(BaseService):
         """Initialize service."""
         super().__init__(Settings)
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -228,7 +228,7 @@ class Service(BaseService):
             }
         }
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:
@@ -428,7 +428,7 @@ class Service(BaseService):
         return Path(platformdirs.user_data_dir(__project_name__)).resolve()
 
     @staticmethod
-    def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+    def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915
         version: str,
         path: Path,
         platform_system: str | None = None,
@@ -494,7 +494,7 @@ class Service(BaseService):
         filename = Path(urlsplit(url).path).name
         filepath = path / filename
 
-        try:  # noqa: PLR1702
+        try:
             with requests.get(url, stream=True, timeout=60) as stream:
                 stream.raise_for_status()
                 download_size = int(stream.headers.get("content-length", 0))
@@ -759,7 +759,7 @@ class Service(BaseService):
         raise RuntimeError(message)
 
     @staticmethod
-    def install_qupath(  # noqa: PLR0913, PLR0917
+    def install_qupath(  # noqa: PLR0913
         version: str = QUPATH_VERSION,
         path: Path | None = None,
         reinstall: bool = True,

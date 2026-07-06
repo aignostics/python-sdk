@@ -102,7 +102,7 @@ class GPUConfig(BaseModel):
             if self.flex_start_max_run_duration_minutes is None:
                 # Default to 12 hours (720 minutes) if not specified
                 # Using object.__setattr__ to bypass Pydantic's frozen model protection
-                object.__setattr__(  # noqa: PLC2801
+                object.__setattr__(
                     self,
                     "flex_start_max_run_duration_minutes",
                     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -280,7 +280,7 @@ class ItemSdkMetadata(BaseModel):
     model_config = {"extra": "forbid"}  # Reject unknown fields
 
 
-def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:  # noqa: PLR0914
+def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     """Build SDK metadata to attach to runs.
 
     Includes user agent, user information, GitHub CI/CD context when running in GitHub Actions,

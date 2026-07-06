@@ -154,17 +154,19 @@ class PydicomHandler:
     @staticmethod
     def _add_wsi_metadata(file_info: dict[str, Any], ds: pydicom.Dataset) -> None:
         """Add WSI-specific metadata."""
-        file_info.update({
-            "modality": getattr(ds, "Modality", ""),
-            "is_pyramidal": True,
-            "num_frames": int(getattr(ds, "NumberOfFrames", 1)),
-            "optical_paths": len(getattr(ds, "OpticalPathSequence", [])),
-            "focal_planes": len(getattr(ds, "DimensionIndexSequence", [])),
-            "total_pixel_matrix": (
-                int(getattr(ds, "TotalPixelMatrixColumns", 0)),
-                int(getattr(ds, "TotalPixelMatrixRows", 0)),
-            ),
-        })
+        file_info.update(
+            {
+                "modality": getattr(ds, "Modality", ""),
+                "is_pyramidal": True,
+                "num_frames": int(getattr(ds, "NumberOfFrames", 1)),
+                "optical_paths": len(getattr(ds, "OpticalPathSequence", [])),
+                "focal_planes": len(getattr(ds, "DimensionIndexSequence", [])),
+                "total_pixel_matrix": (
+                    int(getattr(ds, "TotalPixelMatrixColumns", 0)),
+                    int(getattr(ds, "TotalPixelMatrixRows", 0)),
+                ),
+            }
+        )
 
     @staticmethod
     def _add_annotation_metadata(file_info: dict[str, Any], ds: pydicom.Dataset, verbose: bool) -> None:
@@ -173,11 +175,13 @@ class PydicomHandler:
         groups = ann.get_annotation_groups()
         group_infos = [PydicomHandler._process_annotation_group(group, ann, verbose) for group in groups]
 
-        file_info.update({
-            "modality": "ANN",
-            "coordinate_type": ann.annotation_coordinate_type,
-            "annotation_groups": group_infos,
-        })
+        file_info.update(
+            {
+                "modality": "ANN",
+                "coordinate_type": ann.annotation_coordinate_type,
+                "annotation_groups": group_infos,
+            }
+        )
 
     @staticmethod
     def _process_annotation_group(
@@ -337,37 +341,45 @@ class PydicomHandler:
 
             # Update study info if not already set
             if not studies[study_uid]["study_info"]["study_id"]:
-                studies[study_uid]["study_info"].update({
-                    "study_uid": study_uid,
-                    "study_id": str(getattr(ds, "StudyID", "")),
-                    "study_date": str(getattr(ds, "StudyDate", "")),
-                    "study_time": str(getattr(ds, "StudyTime", "")),
-                    "accession_number": str(getattr(ds, "AccessionNumber", "")),
-                })
+                studies[study_uid]["study_info"].update(
+                    {
+                        "study_uid": study_uid,
+                        "study_id": str(getattr(ds, "StudyID", "")),
+                        "study_date": str(getattr(ds, "StudyDate", "")),
+                        "study_time": str(getattr(ds, "StudyTime", "")),
+                        "accession_number": str(getattr(ds, "AccessionNumber", "")),
+                    }
+                )
 
                 # Update patient info
-                studies[study_uid]["patient_info"].update({
-                    "id": str(getattr(ds, "PatientID", "")),
-                    "name": str(getattr(ds, "PatientName", "")),
-                    "gender": str(getattr(ds, "PatientSex", "")),
-                    "birth_date": str(getattr(ds, "PatientBirthDate", "")),
-                })
+                studies[study_uid]["patient_info"].update(
+                    {
+                        "id": str(getattr(ds, "PatientID", "")),
+                        "name": str(getattr(ds, "PatientName", "")),
+                        "gender": str(getattr(ds, "PatientSex", "")),
+                        "birth_date": str(getattr(ds, "PatientBirthDate", "")),
+                    }
+                )
 
                 # Update clinical trial info
-                studies[study_uid]["clinical_trial"].update({
-                    "sponsor_name": str(getattr(ds, "ClinicalTrialSponsorName", "")),
-                    "protocol_id": str(getattr(ds, "ClinicalTrialProtocolID", "")),
-                    "protocol_name": str(getattr(ds, "ClinicalTrialProtocolName", "")),
-                    "site_name": str(getattr(ds, "ClinicalTrialSiteName", "")),
-                })
+                studies[study_uid]["clinical_trial"].update(
+                    {
+                        "sponsor_name": str(getattr(ds, "ClinicalTrialSponsorName", "")),
+                        "protocol_id": str(getattr(ds, "ClinicalTrialProtocolID", "")),
+                        "protocol_name": str(getattr(ds, "ClinicalTrialProtocolName", "")),
+                        "site_name": str(getattr(ds, "ClinicalTrialSiteName", "")),
+                    }
+                )
 
             # Update series info if not already set
             series = studies[study_uid]["slides"][container_id]["series"][series_uid]
             if not series["description"]:
-                series.update({
-                    "description": str(getattr(ds, "SeriesDescription", "")),
-                    "modality": str(getattr(ds, "Modality", "")),
-                })
+                series.update(
+                    {
+                        "description": str(getattr(ds, "SeriesDescription", "")),
+                        "modality": str(getattr(ds, "Modality", "")),
+                    }
+                )
 
             # Add file-specific info only
             file_specific = {
@@ -390,13 +402,15 @@ class PydicomHandler:
 
             # Copy pyramidal information if present
             if file_info.get("is_pyramidal"):
-                file_specific.update({
-                    "is_pyramidal": True,
-                    "num_frames": file_info["num_frames"],
-                    "optical_paths": file_info["optical_paths"],
-                    "focal_planes": file_info["focal_planes"],
-                    "total_pixel_matrix": file_info["total_pixel_matrix"],
-                })
+                file_specific.update(
+                    {
+                        "is_pyramidal": True,
+                        "num_frames": file_info["num_frames"],
+                        "optical_paths": file_info["optical_paths"],
+                        "focal_planes": file_info["focal_planes"],
+                        "total_pixel_matrix": file_info["total_pixel_matrix"],
+                    }
+                )
                 if file_info.get("pyramid_info"):
                     file_specific["pyramid_info"] = file_info["pyramid_info"]
             else:
@@ -406,45 +420,49 @@ class PydicomHandler:
 
             # Update the specimen and equipment info when processing files
             if not studies[study_uid]["slides"][container_id]["specimen_info"]["description"]:
-                studies[study_uid]["slides"][container_id]["specimen_info"].update({
-                    "description": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenShortDescription", "")
-                        if getattr(ds, "SpecimenDescriptionSequence", [])
-                        else ""
-                    ),
-                    "anatomical_structure": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0]
-                        .get("PrimaryAnatomicStructureSequence", [{}])[0]
-                        .get("CodeMeaning", "")
-                        if getattr(ds, "SpecimenDescriptionSequence", [])
-                        else ""
-                    ),
-                    "collection_method": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get(
-                            "SpecimenCollectionProcedureDescription", ""
-                        )
-                        if getattr(ds, "SpecimenDescriptionSequence", [])
-                        else ""
-                    ),
-                    "parent_specimens": [
-                        str(x.get("SpecimenIdentifier", ""))
-                        for x in getattr(ds, "SpecimenDescriptionSequence", [])
-                        if x.get("SpecimenIdentifier")
-                    ],
-                    "embedding_medium": str(
-                        getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenEmbeddingMethod", "")
-                        if getattr(ds, "SpecimenDescriptionSequence", [])
-                        else ""
-                    ),
-                })
+                studies[study_uid]["slides"][container_id]["specimen_info"].update(
+                    {
+                        "description": str(
+                            getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenShortDescription", "")
+                            if getattr(ds, "SpecimenDescriptionSequence", [])
+                            else ""
+                        ),
+                        "anatomical_structure": str(
+                            getattr(ds, "SpecimenDescriptionSequence", [""])[0]
+                            .get("PrimaryAnatomicStructureSequence", [{}])[0]
+                            .get("CodeMeaning", "")
+                            if getattr(ds, "SpecimenDescriptionSequence", [])
+                            else ""
+                        ),
+                        "collection_method": str(
+                            getattr(ds, "SpecimenDescriptionSequence", [""])[0].get(
+                                "SpecimenCollectionProcedureDescription", ""
+                            )
+                            if getattr(ds, "SpecimenDescriptionSequence", [])
+                            else ""
+                        ),
+                        "parent_specimens": [
+                            str(x.get("SpecimenIdentifier", ""))
+                            for x in getattr(ds, "SpecimenDescriptionSequence", [])
+                            if x.get("SpecimenIdentifier")
+                        ],
+                        "embedding_medium": str(
+                            getattr(ds, "SpecimenDescriptionSequence", [""])[0].get("SpecimenEmbeddingMethod", "")
+                            if getattr(ds, "SpecimenDescriptionSequence", [])
+                            else ""
+                        ),
+                    }
+                )
 
-                studies[study_uid]["slides"][container_id]["equipment_info"].update({
-                    "manufacturer": str(getattr(ds, "Manufacturer", "")),
-                    "model_name": str(getattr(ds, "ManufacturerModelName", "")),
-                    "device_serial_number": str(getattr(ds, "DeviceSerialNumber", "")),
-                    "software_version": str(getattr(ds, "SoftwareVersions", "")),
-                    "institution_name": str(getattr(ds, "InstitutionName", "")),
-                })
+                studies[study_uid]["slides"][container_id]["equipment_info"].update(
+                    {
+                        "manufacturer": str(getattr(ds, "Manufacturer", "")),
+                        "model_name": str(getattr(ds, "ManufacturerModelName", "")),
+                        "device_serial_number": str(getattr(ds, "DeviceSerialNumber", "")),
+                        "software_version": str(getattr(ds, "SoftwareVersions", "")),
+                        "institution_name": str(getattr(ds, "InstitutionName", "")),
+                    }
+                )
 
         return {"type": "root", "studies": studies}
 
@@ -455,7 +473,7 @@ class PydicomHandler:
         return
 
     @staticmethod
-    def geojson_import(dicom_path: Path, geojson_path: Path) -> bool:  # noqa: C901, PLR0912, PLR0914, PLR0915
+    def geojson_import(dicom_path: Path, geojson_path: Path) -> bool:  # noqa: C901, PLR0912, PLR0915
         """Convert GeoJSON to DICOM ANN instance.
 
         Args:
@@ -529,12 +547,14 @@ class PydicomHandler:
                             continue
 
                         # Check if coordinates are within bounds
-                        in_bounds = Polygon([
-                            (0, 0),
-                            (columns, 0),
-                            (columns, rows),
-                            (0, rows),
-                        ]).contains(polygon)
+                        in_bounds = Polygon(
+                            [
+                                (0, 0),
+                                (columns, 0),
+                                (columns, rows),
+                                (0, rows),
+                            ]
+                        ).contains(polygon)
                         if not in_bounds:
                             continue
 

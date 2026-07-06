@@ -73,9 +73,12 @@ class PageBuilder(BasePageBuilder):
                     bucket_form.delete_button.set_visibility(False)
                 if bucket_form.download_button is not None:
                     bucket_form.download_button.set_visibility(False)
-                objs = await run.io_bound(
-                    Service.find_static,
-                    detail=True,
+                objs = (
+                    await run.io_bound(
+                        Service.find_static,
+                        detail=True,
+                    )
+                    or []
                 )
                 if bucket_form.spinner is not None:
                     bucket_form.spinner.set_visibility(False)
@@ -163,9 +166,9 @@ class PageBuilder(BasePageBuilder):
                         what_is_key=True,
                         progress_callback=progress_callback,
                     )
-                    if result.downloaded:
+                    if result and result.downloaded:
                         ui.notify(f"Downloaded {len(result.downloaded)} objects.", type="positive")
-                    if result.failed:
+                    if result and result.failed:
                         ui.notify(f"Failed to download {len(result.failed)} objects.", type="warning")
                 except Exception as e:
                     ui.notify(f"Error downloading objects: {e}", color="red", type="warning")
@@ -250,34 +253,35 @@ class PageBuilder(BasePageBuilder):
             bucket_form.spinner.set_visibility(False)
 
             bucket_form.grid = (
-                ui
-                .aggrid({
-                    "columnDefs": [
-                        {
-                            "object": "Key",
-                            "field": "key",
-                            "checkboxSelection": True,
-                            "filter": "agTextColumnFilter",
+                ui.aggrid(
+                    {
+                        "columnDefs": [
+                            {
+                                "object": "Key",
+                                "field": "key",
+                                "checkboxSelection": True,
+                                "filter": "agTextColumnFilter",
+                            },
+                            {
+                                "headerName": "Last modified",
+                                "field": "last_modified",
+                                "filter": "agTextColumnFilter",
+                            },
+                            {
+                                "headerName": "Size",
+                                "field": "size",
+                            },
+                        ],
+                        "rowData": await _get_rows(),
+                        "rowSelection": "multiple",
+                        "enableCellTextSelection": "true",
+                        "autoSizeStrategy": {
+                            "type": "fitCellContents",
+                            "defaultMinWidth": 10,
                         },
-                        {
-                            "headerName": "Last modified",
-                            "field": "last_modified",
-                            "filter": "agTextColumnFilter",
-                        },
-                        {
-                            "headerName": "Size",
-                            "field": "size",
-                        },
-                    ],
-                    "rowData": await _get_rows(),
-                    "rowSelection": "multiple",
-                    "enableCellTextSelection": "true",
-                    "autoSizeStrategy": {
-                        "type": "fitCellContents",
-                        "defaultMinWidth": 10,
-                    },
-                    "domLayout": "normal",
-                })
+                        "domLayout": "normal",
+                    }
+                )
                 .classes("ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham")
                 .classes("full-width")
                 .style("height: 310px")
@@ -337,8 +341,7 @@ class PageBuilder(BasePageBuilder):
                 with ui.column().classes("w-1/2"):
                     with ui.row().classes("w-full"):
                         bucket_form.download_button = (
-                            ui
-                            .button(
+                            ui.button(
                                 "Download",
                                 icon="download",
                                 on_click=_download_selected,
@@ -374,8 +377,7 @@ class PageBuilder(BasePageBuilder):
                 ui.space()
 
                 bucket_form.delete_button = (
-                    ui
-                    .button(
+                    ui.button(
                         "Delete",
                         icon="delete",
                         on_click=_delete_selected,

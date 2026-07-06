@@ -1,6 +1,7 @@
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0,<3",
+    "bleach>=6.4.0", # GHSA-8rfp-98v4-mmr6
     "bump-my-version>=1.2.4,<2",
     "cyclonedx-py>=1.0.1,<2",
     "detect-secrets>=1.5.0,<2",
@@ -70,7 +71,7 @@ members = ["packages/*"]
 
 [tool.ruff]
 target-version = "py311"
-preview = true
+preview = false
 fix = true
 line-length = 120
 extend-exclude = [

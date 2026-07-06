@@ -19,6 +19,7 @@ from aignostics_sdk.platform._operation_cache import cached_operation
 from aignostics_sdk.utils import user_agent
 
 from ._settings import settings
+from .resources.access import ShareTokens
 
 if TYPE_CHECKING:
     from aignostics_sdk._codegen.models import ApplicationReadResponse as Application
@@ -53,6 +54,7 @@ class Client:
     applications: Applications
     versions: Versions
     runs: Runs
+    share_tokens: ShareTokens
 
     def __init__(self, cache_token: bool = True, token_provider: Callable[[], str] | None = None) -> None:
         """Initializes a client instance with authenticated API access.
@@ -80,6 +82,7 @@ class Client:
             self._api = Client.get_api_client(cache_token=cache_token, token_provider=token_provider)
             self.applications: Applications = Applications(self._api)
             self.runs: Runs = Runs(self._api)
+            self.share_tokens: ShareTokens = ShareTokens(self._api)
             self.versions: Versions = Versions(self._api)
             logger.trace("Client initialized successfully.")
         except Exception:

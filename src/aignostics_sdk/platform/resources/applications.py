@@ -515,7 +515,7 @@ class Documents:
         return endpoint_url, token_provider, ssl_verify, proxy
 
     # Private helper; splitting params would require a thin DTO.
-    def _stream_document(  # noqa: PLR0913, PLR0917
+    def _stream_document(  # noqa: PLR0913
         self,
         url: str,
         write_chunk: t.Callable[[bytes], object],

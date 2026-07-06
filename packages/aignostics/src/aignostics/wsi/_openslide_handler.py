@@ -93,7 +93,7 @@ class OpenSlideHandler:
 
         return self.slide.get_thumbnail((256, 256))
 
-    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: C901, PLR6301
+    def _parse_xml_image_description(self, xml_string: str) -> dict[str, Any]:  # noqa: C901
         """Parse the XML image description.
 
         Args:
@@ -225,17 +225,19 @@ class OpenSlideHandler:
                 "height": int(props.get("openslide.level[0].tile-height", 256)),
             },
             "levels": {"count": self.slide.level_count, "data": self._get_level_info()},
-            "extra": ", ".join([
-                props.get("dicom.ImageType[0]", "0"),
-                props.get("dicom.ImageType[1]", "1"),
-                props.get("dicom.ImageType[2]", "2"),
-                props.get("dicom.ImageType[3]", "3"),
-                props.get("dicom.ImageType[4]", "4"),
-                props.get("dicom.SOPInstanceUID", "S"),
-                props.get("dicom.SeriesInstanceUID", "S"),
-                props.get("dicom.PyramidUID", "P"),
-                props.get("openslide.level-count", "L"),
-            ]),
+            "extra": ", ".join(
+                [
+                    props.get("dicom.ImageType[0]", "0"),
+                    props.get("dicom.ImageType[1]", "1"),
+                    props.get("dicom.ImageType[2]", "2"),
+                    props.get("dicom.ImageType[3]", "3"),
+                    props.get("dicom.ImageType[4]", "4"),
+                    props.get("dicom.SOPInstanceUID", "S"),
+                    props.get("dicom.SeriesInstanceUID", "S"),
+                    props.get("dicom.PyramidUID", "P"),
+                    props.get("openslide.level-count", "L"),
+                ]
+            ),
             "properties": dict(self.slide.properties),
         }
 

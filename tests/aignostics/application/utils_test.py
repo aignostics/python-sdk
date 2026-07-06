@@ -713,11 +713,13 @@ def test_validate_mappings_accepts_multiple_mappings() -> None:
 @pytest.mark.unit
 def test_validate_mappings_accepts_complex_regex_patterns() -> None:
     """Test valid complex regex patterns."""
-    validate_mappings([
-        "^slide[0-9]+\\.tiff$:staining_method=H&E",
-        ".*/(sample|test)_.*\\.svs:tissue=LUNG",
-        "[a-zA-Z]+_[0-9]{4}:disease=CANCER",
-    ])
+    validate_mappings(
+        [
+            "^slide[0-9]+\\.tiff$:staining_method=H&E",
+            ".*/(sample|test)_.*\\.svs:tissue=LUNG",
+            "[a-zA-Z]+_[0-9]{4}:disease=CANCER",
+        ]
+    )
 
 
 @pytest.mark.unit
@@ -780,20 +782,24 @@ def test_validate_mappings_raises_for_glob_pattern_with_helpful_message() -> Non
 def test_validate_mappings_raises_with_correct_index_for_first_invalid() -> None:
     """Test validation fails on first invalid mapping."""
     with pytest.raises(ValueError):
-        validate_mappings([
-            "*.tiff:staining_method=H&E",  # Invalid (index 0)
-            ".*\\.svs:tissue=LUNG",  # Valid
-        ])
+        validate_mappings(
+            [
+                "*.tiff:staining_method=H&E",  # Invalid (index 0)
+                ".*\\.svs:tissue=LUNG",  # Valid
+            ]
+        )
 
 
 @pytest.mark.unit
 def test_validate_mappings_raises_with_correct_index_for_second_invalid() -> None:
     """Test validation fails on second invalid mapping."""
     with pytest.raises(ValueError):
-        validate_mappings([
-            TEST_MAPPING_TIFF_HE,  # Valid
-            "*.svs:tissue=LUNG",  # Invalid (index 1)
-        ])
+        validate_mappings(
+            [
+                TEST_MAPPING_TIFF_HE,  # Valid
+                "*.svs:tissue=LUNG",  # Invalid (index 1)
+            ]
+        )
 
 
 # Tests for queue_position_string_from_run

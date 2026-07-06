@@ -7,6 +7,7 @@ import json
 import sys
 import time
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -141,6 +142,15 @@ cli.add_typer(run_app, name="run", help="List, submit and manage application run
 
 result_app = typer.Typer()
 run_app.add_typer(result_app, name="result", help="Download or delete run results.")
+
+share_app = typer.Typer()
+run_app.add_typer(share_app, name="share", help="Manage run sharing and access.")
+
+share_organization_app = typer.Typer()
+share_app.add_typer(share_organization_app, name="organization", help="Manage organization access grants.")
+
+share_token_app = typer.Typer()
+share_app.add_typer(share_token_app, name="token", help="Manage share tokens for link-based access.")
 
 version_app = typer.Typer()
 cli.add_typer(version_app, name="version", help="Inspect application versions and their release documents.")
@@ -424,7 +434,7 @@ def application_describe(  # noqa: C901, PLR0912
 
 
 @run_app.command(name="execute")
-def run_execute(  # noqa: PLR0913, PLR0917
+def run_execute(  # noqa: PLR0913
     application_id: Annotated[
         str,
         typer.Argument(help="Id of application version to execute."),
@@ -638,7 +648,7 @@ def run_prepare(
 
 
 @run_app.command(name="upload")
-def run_upload(  # noqa: PLR0913, PLR0917
+def run_upload(  # noqa: PLR0913
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to upload data for. "),
@@ -752,7 +762,7 @@ def run_upload(  # noqa: PLR0913, PLR0917
 
 
 @run_app.command("submit")
-def run_submit(  # noqa: PLR0913, PLR0917
+def run_submit(  # noqa: PLR0913
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to submit run for."),
@@ -887,7 +897,7 @@ def run_submit(  # noqa: PLR0913, PLR0917
 
 
 @run_app.command("list")
-def run_list(  # noqa: PLR0913, PLR0917
+def run_list(  # noqa: PLR0913
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
     limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
     tags: Annotated[
@@ -1317,8 +1327,211 @@ def run_update_item_metadata(
         sys.exit(1)
 
 
+@share_app.command("status")
+def run_share_status(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
+    format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
+) -> None:
+    """Show sharing status: active organization grants and share tokens."""
+    try:
+        org_grants = list(Service().application_run_organization_grants(run_id))
+        tokens = list(Service().application_run_share_tokens(run_id))
+
+        if format == "json":
+            print(
+                json.dumps(
+                    {
+                        "organization_grants": [g.model_dump(mode="json") for g in org_grants],
+                        "share_tokens": [t.model_dump(mode="json") for t in tokens],
+                    },
+                    indent=2,
+                    default=str,
+                ),
+            )
+        else:
+            console.print(f"[bold]Organization grants[/bold] ({len(org_grants)}):")
+            for g in org_grants:
+                console.print(f"  {g.grant_id}  subject={g.subject_id}  relation={g.relation.value}")
+
+            console.print(f"[bold]Share tokens[/bold] ({len(tokens)}):")
+            for t in tokens:
+                expires = t.expires_at.isoformat() if t.expires_at else "never"
+                created = t.created_at.isoformat()
+                console.print(f"  {t.share_token_id}  created={created}  expires={expires}")
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to retrieve share status for run '{}'", run_id)
+        console.print(f"[error]Error:[/error] Failed to retrieve share status for run '{run_id}': {e}")
+        sys.exit(1)
+
+
+@share_organization_app.command("list")
+def run_share_organization_list(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
+    format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
+) -> None:
+    """List active organization grants for a run."""
+    try:
+        grants = list(Service().application_run_organization_grants(run_id))
+        if format == "json":
+            print(json.dumps([g.model_dump(mode="json") for g in grants], indent=2, default=str))
+        else:
+            if not grants:
+                console.print("No active organization grants.")
+            for g in grants:
+                console.print(
+                    f"{g.grant_id}  subject={g.subject_id}"
+                    f"  relation={g.relation.value}  created={g.created_at.isoformat()}",
+                )
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to list organization grants for run '{}'", run_id)
+        console.print(f"[error]Error:[/error] Failed to list organization grants for run '{run_id}': {e}")
+        sys.exit(1)
+
+
+@share_organization_app.command("grant")
+def run_share_organization_grant(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to share")],
+    organization_id: Annotated[
+        str | None,
+        typer.Argument(help="Organization ID to share with (defaults to your own organization)"),
+    ] = None,
+    format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
+) -> None:
+    """Share a run with all users in an organization."""
+    try:
+        grant = Service().application_run_share_with_organization(run_id, organization_id=organization_id)
+        if format == "json":
+            print(json.dumps(grant.model_dump(mode="json"), indent=2, default=str))
+        else:
+            console.print(f"Run '{run_id}' is now shared with organization (grant {grant.grant_id}).")
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to share run '{}' with organization", run_id)
+        console.print(f"[error]Error:[/error] Failed to share run '{run_id}' with organization: {e}")
+        sys.exit(1)
+
+
+@share_organization_app.command("revoke")
+def run_share_organization_revoke(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to unshare")],
+    organization_id: Annotated[
+        str | None,
+        typer.Argument(help="Organization ID to revoke access for (defaults to your own organization)"),
+    ] = None,
+) -> None:
+    """Revoke organization grants for a run."""
+    try:
+        Service().application_run_unshare_with_organization(run_id, organization_id=organization_id)
+        console.print(f"Organization access revoked for run '{run_id}'.")
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to revoke organization access for run '{}'", run_id)
+        console.print(f"[error]Error:[/error] Failed to revoke organization access for run '{run_id}': {e}")
+        sys.exit(1)
+
+
+@share_token_app.command("list")
+def run_share_token_list(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
+    format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
+) -> None:
+    """List active share tokens for a run."""
+    try:
+        tokens = list(Service().application_run_share_tokens(run_id))
+
+        if format == "json":
+            print(json.dumps([t.model_dump(mode="json") for t in tokens], indent=2))
+        else:
+            if not tokens:
+                console.print("No active share tokens.")
+            for t in tokens:
+                expires = t.expires_at.isoformat() if t.expires_at else "never"
+                created = t.created_at.isoformat() if t.created_at else "unknown"
+                console.print(f"{t.share_token_id}  created={created}  expires={expires}")
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to list share tokens for run '{}'", run_id)
+        console.print(f"[error]Error:[/error] Failed to list share tokens for run '{run_id}': {e}")
+        sys.exit(1)
+
+
+@share_token_app.command("create")
+def run_share_token_create(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run to create a share token for")],
+    expires_at: Annotated[
+        str | None,
+        typer.Option(
+            help="Expiry datetime in ISO 8601 format, e.g. '2026-12-31T23:59:59Z'. Omit for a non-expiring token.",
+        ),
+    ] = None,
+    format: Annotated[str, typer.Option(help="Output format: 'text' (default) or 'json'")] = "text",  # noqa: A002
+) -> None:
+    """Create a share token for a run. The token value is shown only once."""
+    expires_at_dt: datetime | None = None
+    if expires_at is not None:
+        try:
+            expires_at_normalized = expires_at.replace("Z", "+00:00") if expires_at.endswith("Z") else expires_at
+            expires_at_dt = datetime.fromisoformat(expires_at_normalized)
+            if expires_at_dt.tzinfo is None:
+                expires_at_dt = expires_at_dt.replace(tzinfo=UTC)
+        except ValueError:
+            console.print(
+                f"[error]Error:[/error] Invalid --expires-at value '{expires_at}'. "
+                "Use ISO 8601 format, e.g. '2026-12-31T23:59:59Z'."
+            )
+            sys.exit(1)
+    try:
+        token = Service().application_run_create_share_token(run_id, expires_at=expires_at_dt)
+        if format == "json":
+            print(json.dumps(token.model_dump(mode="json"), indent=2))
+        else:
+            expires = token.expires_at.isoformat() if token.expires_at else "never"
+            console.print(f"Share token created for run '{run_id}'.")
+            console.print(f"  Token ID : {token.share_token_id}")
+            console.print(f"  Token    : [bold]{token.share_token}[/bold]")
+            console.print(f"  Expires  : {expires}")
+            console.print("[yellow]Save the token value — it will not be shown again.[/yellow]")
+    except NotFoundException:
+        console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to create share token for run '{}'", run_id)
+        console.print(f"[error]Error:[/error] Failed to create share token for run '{run_id}': {e}")
+        sys.exit(1)
+
+
+@share_token_app.command("revoke")
+def run_share_token_revoke(
+    run_id: Annotated[str, typer.Argument(..., help="Id of the run")],
+    token_id: Annotated[str, typer.Argument(..., help="Id of the share token to revoke")],
+) -> None:
+    """Revoke a share token's access grant for a specific run."""
+    try:
+        Service().application_run_revoke_share_token(run_id, token_id)
+        console.print(f"Share token '{token_id}' revoked for run '{run_id}'.")
+    except NotFoundException as e:
+        console.print(f"[warning]Warning:[/warning] {e}")
+        sys.exit(2)
+    except Exception as e:
+        logger.exception("Failed to revoke share token '{}' for run '{}'", token_id, run_id)
+        console.print(f"[error]Error:[/error] Failed to revoke share token '{token_id}' for run '{run_id}': {e}")
+        sys.exit(1)
+
+
 @result_app.command("download")
-def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
+def result_download(  # noqa: C901, PLR0913, PLR0915
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,

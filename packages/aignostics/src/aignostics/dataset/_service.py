@@ -62,7 +62,7 @@ atexit.register(_cleanup_processes)
 class Service(BaseService):
     """Service of the IDC module."""
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -73,7 +73,7 @@ class Service(BaseService):
         """
         return {}
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of hello service.
 
         Returns:
@@ -370,15 +370,17 @@ client.download_from_selection(
             if unmatched_ids:
                 logger.trace("Partial match for {}: matched {}, unmatched {}", column_name, matched_ids, unmatched_ids)
             logger.debug("Identified matching {}: {}", column_name, matched_ids)
-            client.download_from_selection(**{  # type: ignore[no-untyped-call]
-                kwarg_name: matched_ids,
-                "downloadDir": target_directory,
-                "dirTemplate": target_layout,
-                "quiet": False,
-                "show_progress_bar": True,
-                "use_s5cmd_sync": True,
-                "dry_run": dry_run,
-            })
+            client.download_from_selection(
+                **{  # type: ignore[no-untyped-call]
+                    kwarg_name: matched_ids,
+                    "downloadDir": target_directory,
+                    "dirTemplate": target_layout,
+                    "quiet": False,
+                    "show_progress_bar": True,
+                    "use_s5cmd_sync": True,
+                    "dry_run": dry_run,
+                }
+            )
             return True
 
         matches_found = 0

@@ -245,7 +245,7 @@ def _get_runner() -> _Runner:
 class Service(BaseService):
     """Service of the Marimo module."""
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -256,7 +256,7 @@ class Service(BaseService):
         """
         return {}
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of hello service.
 
         Returns:
@@ -264,7 +264,7 @@ class Service(BaseService):
         """
         return _get_runner().health()
 
-    def start(self) -> str:  # noqa: PLR6301
+    def start(self) -> str:
         """Start the Marimo server.
 
         Returns:
@@ -275,7 +275,7 @@ class Service(BaseService):
         """
         return _get_runner().start()
 
-    def is_marimo_server_running(self) -> bool:  # noqa: PLR6301
+    def is_marimo_server_running(self) -> bool:
         """Check if the marimo server is running.
 
         Returns:
@@ -283,7 +283,7 @@ class Service(BaseService):
         """
         return _get_runner().is_marimo_server_running()
 
-    def is_monitor_thread_alive(self) -> bool:  # noqa: PLR6301
+    def is_monitor_thread_alive(self) -> bool:
         """Check if the monitor thread is running.
 
         Returns:
@@ -291,6 +291,6 @@ class Service(BaseService):
         """
         return _get_runner().is_monitor_thread_alive()
 
-    def stop(self) -> None:  # noqa: PLR6301
+    def stop(self) -> None:
         """Stop the Marimo server."""
         return _get_runner().stop()

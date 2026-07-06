@@ -41,7 +41,7 @@ class PageBuilder(BasePageBuilder):
         download_form = DownloadForm()
 
         @ui.page("/dataset/idc")
-        async def page_idc() -> None:  # noqa: C901, PLR0915, RUF029
+        async def page_idc() -> None:  # noqa: C901, PLR0915
             """IDC page."""
             with frame("Download Datasets from Image Data", left_sidebar=False):
                 # No need to do anything here
@@ -135,7 +135,7 @@ class PageBuilder(BasePageBuilder):
                 else:
                     download_form.download_button.disable()
 
-            async def _select_data() -> None:  # noqa: RUF029
+            async def _select_data() -> None:
                 """Open a file picker dialog and show notifier when closed again."""
                 if (
                     download_form.destination_label is None
@@ -198,8 +198,7 @@ class PageBuilder(BasePageBuilder):
                 ui.label("Download Dataset").classes("text-h6")
                 with ui.row(align_items="center").classes("w-full"):
                     source_input = (
-                        ui
-                        .input(
+                        ui.input(
                             label="Enter ID of collection, patient case, study, series or instance.",
                             placeholder="Click 🔍 Explore Portal to find IDs",
                             on_change=lambda e: _on_source_input_change(e),  # noqa: PLW0108

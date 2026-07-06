@@ -93,7 +93,7 @@ class Service(BaseService):
         super().__init__(Settings)
         self._platform_service = PlatformService()
 
-    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002, PLR6301
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
         """Determine info of this service.
 
         Args:
@@ -104,7 +104,7 @@ class Service(BaseService):
         """
         return {}
 
-    async def health(self) -> Health:  # noqa: PLR6301
+    async def health(self) -> Health:
         """Determine health of this service.
 
         Returns:
@@ -307,7 +307,7 @@ class Service(BaseService):
         re_meta = re.compile(r"[.+*?^${}()\[\]|\\]")
 
         if what_is_key:
-            prefix = os.path.commonprefix(what)  # noqa: RUF071
+            prefix = os.path.commonprefix(what)
         else:
             literal_prefixes: list[str] = []
             for pattern in what:
@@ -316,7 +316,7 @@ class Service(BaseService):
                 if not literal_prefix:
                     return None
                 literal_prefixes.append(literal_prefix)
-            prefix = os.path.commonprefix(literal_prefixes)  # noqa: RUF071
+            prefix = os.path.commonprefix(literal_prefixes)
 
         return prefix or None
 

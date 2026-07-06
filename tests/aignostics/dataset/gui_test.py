@@ -74,7 +74,7 @@ async def test_gui_idc_downloads(user: User, tmp_path: Path, silent_logging: boo
         )
 
 
-async def _gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR0917
+async def _gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification."""
@@ -104,7 +104,7 @@ async def _gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR0917
     ],
 )
 @pytest.mark.timeout(timeout=60)
-async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913, PLR0917
+async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification when no IDs are provided."""
@@ -130,7 +130,7 @@ async def test_gui_idc_download_fails_with_no_inputs(  # noqa: PLR0913, PLR0917
         ),
     ],
 )
-async def test_gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913, PLR0917
+async def test_gui_idc_download_fails_with_invalid_inputs(  # noqa: PLR0913
     user: User, tmpdir, source_input: str, expected_notification: str, silent_logging: None, record_property
 ) -> None:
     """Test that the download fails with appropriate notification when invalid IDs are provided."""

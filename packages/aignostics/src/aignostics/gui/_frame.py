@@ -125,8 +125,7 @@ def frame(  # noqa: C901, PLR0915
             spinner.set_visibility(False)
             icon = "img:" + user_info.user.picture if user_info.user.picture else "account_circle"
             with (
-                ui
-                .dropdown_button(icon=icon)
+                ui.dropdown_button(icon=icon)
                 .style("width: 30px; height: 30px; border-radius: 50%")
                 .classes("mr-3")
                 .props(FLAT_COLOR_WHITE),
@@ -284,7 +283,7 @@ def frame(  # noqa: C901, PLR0915
     status_page_url = settings().status_page_url
 
     # Populate the right_drawer we created earlier
-    with right_drawer, ui.column(align_items="stretch").classes("h-full"):  # noqa: PLR1702
+    with right_drawer, ui.column(align_items="stretch").classes("h-full"):
         with ui.list():
             with ui.item(on_click=lambda _: ui.navigate.to("/")).props("clickable"):
                 with ui.item_section().props("avatar"):

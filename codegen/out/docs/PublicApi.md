@@ -1293,7 +1293,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **list_grants_v1_access_grants_get**
-> List[GrantReadResponse] list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, revoked=revoked, page=page, page_size=page_size, sort=sort)
+> List[GrantReadResponse] list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, relation=relation, revoked=revoked, page=page, page_size=page_size, sort=sort)
 
 List Grants
 
@@ -1306,6 +1306,7 @@ List grants.  Org admins see all grants for all resources in their organization.
 ```python
 import aignx.codegen
 from aignx.codegen.models.grant_read_response import GrantReadResponse
+from aignx.codegen.models.grant_relation import GrantRelation
 from aignx.codegen.models.resource_type import ResourceType
 from aignx.codegen.models.subject_type import SubjectType
 from aignx.codegen.rest import ApiException
@@ -1332,6 +1333,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     resource_id = 'resource_id_example' # str |  (optional)
     subject_type = aignx.codegen.SubjectType() # SubjectType |  (optional)
     subject_id = 'subject_id_example' # str |  (optional)
+    relation = [aignx.codegen.GrantRelation()] # List[GrantRelation] | Filter grants by relation type. Can be specified multiple times. (optional)
     revoked = True # bool |  (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
@@ -1339,7 +1341,7 @@ with aignx.codegen.ApiClient(configuration) as api_client:
 
     try:
         # List Grants
-        api_response = api_instance.list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, revoked=revoked, page=page, page_size=page_size, sort=sort)
+        api_response = api_instance.list_grants_v1_access_grants_get(resource_type=resource_type, resource_id=resource_id, subject_type=subject_type, subject_id=subject_id, relation=relation, revoked=revoked, page=page, page_size=page_size, sort=sort)
         print("The response of PublicApi->list_grants_v1_access_grants_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -1357,6 +1359,7 @@ Name | Type | Description  | Notes
  **resource_id** | **str**|  | [optional] 
  **subject_type** | [**SubjectType**](.md)|  | [optional] 
  **subject_id** | **str**|  | [optional] 
+ **relation** | [**List[GrantRelation]**](GrantRelation.md)| Filter grants by relation type. Can be specified multiple times. | [optional] 
  **revoked** | **bool**|  | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
@@ -1482,7 +1485,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **list_runs_v1_runs_get**
-> List[RunReadResponse] list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, for_organization=for_organization, sort=sort)
+> List[RunReadResponse] list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, submitted_by=submitted_by, organization_id=organization_id, for_organization=for_organization, sort=sort)
 
 List Runs
 
@@ -1521,12 +1524,14 @@ with aignx.codegen.ApiClient(configuration) as api_client:
     custom_metadata = '$' # str | Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: `$.study` - Runs that have a study field defined - **Exact value match**: `$.study ? (@ == \"high\")` - Runs with specific study value - **Numeric comparison**: `$.confidence_score ? (@ > 0.75)` - Runs with confidence score greater than 0.75 - **Array operations**: `$.tags[*] ? (@ == \"draft\")` - Runs with tags array containing \"draft\" - **Complex conditions**: `$.resources ? (@.gpu_count > 2 && @.memory_gb >= 16)` - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: `%24.study` - **Exact value match**: `%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)` - **Numeric comparison**: `%24.confidence_score%20%3F%20(%40%20%3E%200.75)` - **Array operations**: `%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)` - **Complex conditions**: `%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)`  #### Notes - JSONPath expressions are evaluated using PostgreSQL's `@?` operator - The `$.` prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use `&&` for AND operations and `||` for OR operations - Regular expressions use `like_regex` with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               (optional)
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
+    submitted_by = 'submitted_by_example' # str | Filter runs by the user who submitted them. Use the special value `me` to return only runs submitted by the current user. (optional)
+    organization_id = 'organization_id_example' # str | Filter runs by the organization of the submitter. Use the special value `my_org` to filter by the current user's organization. (optional)
     for_organization = 'for_organization_example' # str | Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller's own runs. (optional)
     sort = ['sort_example'] # List[str] | Sort the results by one or more fields. Use `+` for ascending and `-` for descending order.  **Available fields:** - `run_id` - `application_id` - `version_number` - `custom_metadata` - `submitted_at` - `submitted_by` - `terminated_at` - `termination_reason`  **Examples:** - `?sort=submitted_at` - Sort by creation time (ascending) - `?sort=-submitted_at` - Sort by creation time (descending) - `?sort=state&sort=-submitted_at` - Sort by state, then by time (descending)  (optional)
 
     try:
         # List Runs
-        api_response = api_instance.list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, for_organization=for_organization, sort=sort)
+        api_response = api_instance.list_runs_v1_runs_get(application_id=application_id, application_version=application_version, external_id=external_id, custom_metadata=custom_metadata, page=page, page_size=page_size, submitted_by=submitted_by, organization_id=organization_id, for_organization=for_organization, sort=sort)
         print("The response of PublicApi->list_runs_v1_runs_get:\n")
         pprint(api_response)
     except Exception as e:
@@ -1546,6 +1551,8 @@ Name | Type | Description  | Notes
  **custom_metadata** | **str**| Use PostgreSQL JSONPath expressions to filter runs by their custom_metadata. #### URL Encoding Required **Important**: JSONPath expressions contain special characters that must be URL-encoded when used in query parameters. Most HTTP clients handle this automatically, but when constructing URLs manually, please ensure proper encoding.  #### Examples (Clear Format): - **Field existence**: &#x60;$.study&#x60; - Runs that have a study field defined - **Exact value match**: &#x60;$.study ? (@ &#x3D;&#x3D; \&quot;high\&quot;)&#x60; - Runs with specific study value - **Numeric comparison**: &#x60;$.confidence_score ? (@ &gt; 0.75)&#x60; - Runs with confidence score greater than 0.75 - **Array operations**: &#x60;$.tags[*] ? (@ &#x3D;&#x3D; \&quot;draft\&quot;)&#x60; - Runs with tags array containing \&quot;draft\&quot; - **Complex conditions**: &#x60;$.resources ? (@.gpu_count &gt; 2 &amp;&amp; @.memory_gb &gt;&#x3D; 16)&#x60; - Runs with high resource requirements  #### Examples (URL-Encoded Format): - **Field existence**: &#x60;%24.study&#x60; - **Exact value match**: &#x60;%24.study%20%3F%20(%40%20%3D%3D%20%22high%22)&#x60; - **Numeric comparison**: &#x60;%24.confidence_score%20%3F%20(%40%20%3E%200.75)&#x60; - **Array operations**: &#x60;%24.tags%5B*%5D%20%3F%20(%40%20%3D%3D%20%22draft%22)&#x60; - **Complex conditions**: &#x60;%24.resources%20%3F%20(%40.gpu_count%20%3E%202%20%26%26%20%40.memory_gb%20%3E%3D%2016)&#x60;  #### Notes - JSONPath expressions are evaluated using PostgreSQL&#39;s &#x60;@?&#x60; operator - The &#x60;$.&#x60; prefix is automatically added to root-level field references if missing - String values in conditions must be enclosed in double quotes - Use &#x60;&amp;&amp;&#x60; for AND operations and &#x60;||&#x60; for OR operations - Regular expressions use &#x60;like_regex&#x60; with standard regex syntax - **Please remember to URL-encode the entire JSONPath expression when making HTTP requests**               | [optional] 
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
+ **submitted_by** | **str**| Filter runs by the user who submitted them. Use the special value &#x60;me&#x60; to return only runs submitted by the current user. | [optional] 
+ **organization_id** | **str**| Filter runs by the organization of the submitter. Use the special value &#x60;my_org&#x60; to filter by the current user&#39;s organization. | [optional] 
  **for_organization** | **str**| Filter runs by organization ID. Available for superadmins (any org) and admins (own org only). When provided, returns all runs for the specified organization instead of only the caller&#39;s own runs. | [optional] 
  **sort** | [**List[str]**](str.md)| Sort the results by one or more fields. Use &#x60;+&#x60; for ascending and &#x60;-&#x60; for descending order.  **Available fields:** - &#x60;run_id&#x60; - &#x60;application_id&#x60; - &#x60;version_number&#x60; - &#x60;custom_metadata&#x60; - &#x60;submitted_at&#x60; - &#x60;submitted_by&#x60; - &#x60;terminated_at&#x60; - &#x60;termination_reason&#x60;  **Examples:** - &#x60;?sort&#x3D;submitted_at&#x60; - Sort by creation time (ascending) - &#x60;?sort&#x3D;-submitted_at&#x60; - Sort by creation time (descending) - &#x60;?sort&#x3D;state&amp;sort&#x3D;-submitted_at&#x60; - Sort by state, then by time (descending)  | [optional] 
 

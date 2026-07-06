@@ -139,7 +139,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     with ui.dialog() as release_notes_dialog, ui.card().style(WIDTH_1200px):
         ui.label(f"Release notes of {application.name}").classes("text-h5")
         with ui.scroll_area().classes("w-full h-100"):
-            for application_version in application_versions:
+            for application_version in application_versions or []:
                 ui.label(f"Version {application_version.version_number}").classes("text-h6")
                 ui.markdown(application_version.changelog.replace("\n", "\n\n"))
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
@@ -283,7 +283,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
     def _add_application_version_selection_section() -> None:
         """Add application version selection section."""
         user_info: UserInfo | None = app.storage.tab.get("user_info", None)
-        with ui.step("Select Application Version"):  # noqa: PLR1702
+        with ui.step("Select Application Version"):
             with ui.row().classes("w-full justify-center"):
                 with ui.column():
                     ui.label(
@@ -338,7 +338,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             return
 
         with ui.scroll_area().classes("w-full h-[calc(100vh-2rem)]"):
-            for application_version in application_versions:
+            for application_version in application_versions or []:
                 if application_version.version_number == submit_form.application_version:
                     ui.label(f"Latest changes in v{application_version.version_number}").classes("text-h5")
                     ui.markdown(application_version.changelog.replace("\n", "\n\n"))
@@ -348,14 +348,16 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             artifact.name, icon=mime_type_to_icon(get_mime_type_for_artifact(artifact))
                         ).classes("w-full"):
                             ui.label("Metadata")
-                            ui.json_editor({
-                                "content": {"json": artifact.metadata_schema},
-                                "mode": "tree",
-                                "readOnly": True,
-                                "mainMenuBar": False,
-                                "navigationBar": True,
-                                "statusBar": False,
-                            }).classes("full-width")
+                            ui.json_editor(
+                                {
+                                    "content": {"json": artifact.metadata_schema},
+                                    "mode": "tree",
+                                    "readOnly": True,
+                                    "mainMenuBar": False,
+                                    "navigationBar": True,
+                                    "statusBar": False,
+                                }
+                            ).classes("full-width")
                     ui.label("Generated output artifacts:").classes("text-h5")
                     for artifact in application_version.output_artifacts:
                         with ui.expansion(
@@ -364,21 +366,23 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                             ui.label(f"Scope: {artifact.scope}")
                             ui.label(f"Mime Type: {get_mime_type_for_artifact(artifact)}")
                             ui.label("Metadata")
-                            ui.json_editor({
-                                "content": {"json": artifact.metadata_schema},
-                                "mode": "tree",
-                                "readOnly": True,
-                                "mainMenuBar": False,
-                                "navigationBar": True,
-                                "statusBar": False,
-                            }).classes("full-width")
+                            ui.json_editor(
+                                {
+                                    "content": {"json": artifact.metadata_schema},
+                                    "mode": "tree",
+                                    "readOnly": True,
+                                    "mainMenuBar": False,
+                                    "navigationBar": True,
+                                    "statusBar": False,
+                                }
+                            ).classes("full-width")
                     break
 
     with ui.dialog() as info_dialog, ui.card().style("width: 1200px; max-width: none; height: 1000px"):
         _info_dialog_content()
         with ui.row(align_items="end").classes("w-full"), ui.column(align_items="end").classes("w-full"):
             ui.button("Close", on_click=info_dialog.close)
-    with ui.stepper().props("vertical").classes("w-full") as stepper:  # noqa: PLR1702
+    with ui.stepper().props("vertical").classes("w-full") as stepper:
         _add_application_version_selection_section()
 
         with ui.step("Find Whole Slide Images"):
@@ -419,7 +423,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 """
             )
 
-            async def _pytest_meta() -> None:  # noqa: RUF029
+            async def _pytest_meta() -> None:
                 if submit_form.metadata_grid is None:
                     logger.error(MESSAGE_METADATA_GRID_IS_NOT_INITIALIZED)
                     return
@@ -532,90 +536,91 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             """
 
             submit_form.metadata_grid = (
-                ui
-                .aggrid({
-                    "columnDefs": [
-                        {"headerName": "Reference", "field": "path_short", "checkboxSelection": True},
-                        {
-                            "headerName": "Thumbnail",
-                            "field": "thumbnail",
-                            ":cellRenderer": thumbnail_renderer_js,
-                            "autoHeight": True,
-                        },
-                        {
-                            "headerName": "Tissue",
-                            "field": "tissue",
-                            "editable": True,
-                            "cellEditor": "agSelectCellEditor",
-                            "cellEditorParams": {
-                                "values": [
-                                    "ADRENAL_GLAND",
-                                    "BLADDER",
-                                    "BONE",
-                                    "BRAIN",
-                                    "BREAST",
-                                    "COLON",
-                                    "LIVER",
-                                    "LUNG",
-                                    "LYMPH_NODE",
-                                    "OTHER",
-                                ],
-                                "valueListGap": 10,
+                ui.aggrid(
+                    {
+                        "columnDefs": [
+                            {"headerName": "Reference", "field": "path_short", "checkboxSelection": True},
+                            {
+                                "headerName": "Thumbnail",
+                                "field": "thumbnail",
+                                ":cellRenderer": thumbnail_renderer_js,
+                                "autoHeight": True,
                             },
-                            "cellClassRules": {
-                                "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
-                                "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
+                            {
+                                "headerName": "Tissue",
+                                "field": "tissue",
+                                "editable": True,
+                                "cellEditor": "agSelectCellEditor",
+                                "cellEditorParams": {
+                                    "values": [
+                                        "ADRENAL_GLAND",
+                                        "BLADDER",
+                                        "BONE",
+                                        "BRAIN",
+                                        "BREAST",
+                                        "COLON",
+                                        "LIVER",
+                                        "LUNG",
+                                        "LYMPH_NODE",
+                                        "OTHER",
+                                    ],
+                                    "valueListGap": 10,
+                                },
+                                "cellClassRules": {
+                                    "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                    "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
+                                    "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
+                                    "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
+                                },
                             },
-                        },
-                        {
-                            "headerName": "Disease",
-                            "field": "disease",
-                            "editable": True,
-                            "cellEditor": "agSelectCellEditor",
-                            "cellEditorParams": {
-                                "values": [
-                                    "BREAST_CANCER",
-                                    "BLADDER_CANCER",
-                                    "COLORECTAL_CANCER",
-                                    "LIVER_CANCER",
-                                    "LUNG_CANCER",
-                                ],
-                                "valueListGap": 10,
+                            {
+                                "headerName": "Disease",
+                                "field": "disease",
+                                "editable": True,
+                                "cellEditor": "agSelectCellEditor",
+                                "cellEditorParams": {
+                                    "values": [
+                                        "BREAST_CANCER",
+                                        "BLADDER_CANCER",
+                                        "COLORECTAL_CANCER",
+                                        "LIVER_CANCER",
+                                        "LUNG_CANCER",
+                                    ],
+                                    "valueListGap": 10,
+                                },
+                                "cellClassRules": {
+                                    "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                    "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                    "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
+                                    "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                                },
                             },
-                            "cellClassRules": {
-                                "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
-                                "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
-                                "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
-                                "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
+                            {"headerName": "File size", "field": "file_size_human"},
+                            {"headerName": "MPP", "field": "resolution_mpp"},
+                            {"headerName": "Width", "field": "width_px"},
+                            {"headerName": "Height", "field": "height_px"},
+                            {"headerName": "Staining", "field": "staining_method"},
+                            {"headerName": "Source", "field": "source"},
+                            {"headerName": "Checksum", "field": "checksum_base64_crc32c"},
+                            {"headerName": "Upload progress", "field": "file_upload_progress", "initialHide": True},
+                            {
+                                "headerName": "Platform Bucket URL",
+                                "field": "platform_bucket_url",
+                                "initialHide": True,
                             },
+                        ],
+                        "rowData": [],
+                        "rowSelection": "multiple",
+                        "stopEditingWhenCellsLoseFocus": True,
+                        "enableCellTextSelection": "true",
+                        "autoSizeStrategy": {
+                            "type": "fitCellContents",
+                            "defaultMinWidth": 10,
+                            "columnLimits": [{"colId": "source", "minWidth": 150}],
                         },
-                        {"headerName": "File size", "field": "file_size_human"},
-                        {"headerName": "MPP", "field": "resolution_mpp"},
-                        {"headerName": "Width", "field": "width_px"},
-                        {"headerName": "Height", "field": "height_px"},
-                        {"headerName": "Staining", "field": "staining_method"},
-                        {"headerName": "Source", "field": "source"},
-                        {"headerName": "Checksum", "field": "checksum_base64_crc32c"},
-                        {"headerName": "Upload progress", "field": "file_upload_progress", "initialHide": True},
-                        {
-                            "headerName": "Platform Bucket URL",
-                            "field": "platform_bucket_url",
-                            "initialHide": True,
-                        },
-                    ],
-                    "rowData": [],
-                    "rowSelection": "multiple",
-                    "stopEditingWhenCellsLoseFocus": True,
-                    "enableCellTextSelection": "true",
-                    "autoSizeStrategy": {
-                        "type": "fitCellContents",
-                        "defaultMinWidth": 10,
-                        "columnLimits": [{"colId": "source", "minWidth": 150}],
-                    },
-                    "domLayout": "normal",
-                })
+                        "domLayout": "normal",
+                    }
+                )
                 .style("height: 210px")
                 .classes("ag-theme-balham-dark" if app.storage.general.get("dark_mode", False) else "ag-theme-balham")
                 .on("cellValueChanged", lambda _: _validate())
@@ -684,15 +689,13 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 with ui.row().classes("full-width"):
                     ui.label("")
                     due_date_date_picker = (
-                        ui
-                        .date(mask=DATETIME_MASK)
+                        ui.date(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props(f":options=\"(date) => date >= '{today}'\"")
                         .mark("DATE_DUE_DATE")
                     )
                     due_date_time_picker = (
-                        ui
-                        .time(mask=DATETIME_MASK)
+                        ui.time(mask=DATETIME_MASK)
                         .bind_value(submit_form, "due_date")
                         .props("format24h now-btn")
                         .mark("TIME_DUE_DATE")
@@ -769,13 +772,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                     custom_metadata=None,
                     note=submit_form.note,
                     tags=set(submit_form.tags) if submit_form.tags else None,
-                    due_date=datetime
-                    .strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
+                    due_date=datetime.strptime(submit_form.due_date, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
-                    deadline=datetime
-                    .strptime(submit_form.deadline, "%Y-%m-%d %H:%M")
+                    deadline=datetime.strptime(submit_form.deadline, "%Y-%m-%d %H:%M")
                     .astimezone()
                     .astimezone(UTC)
                     .isoformat(),
@@ -918,8 +919,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
 
                     # Show flex start duration input only when FLEX_START is selected
                     with (
-                        ui
-                        .row()
+                        ui.row()
                         .classes("w-full gap-4")
                         .bind_visibility_from(submit_form, "gpu_provisioning_mode", lambda v: v == "FLEX_START")
                     ):
