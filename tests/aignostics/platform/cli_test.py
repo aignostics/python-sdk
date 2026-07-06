@@ -619,7 +619,7 @@ class TestAuthTokenCLI:
         """Valid gcloud external-credential-helper JSON is written to stdout on success."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         result, future_expiry = TestAuthTokenCLI._invoke_success(runner, tmp_path)
-        response = json.loads(result.output[result.output.find("{"):])
+        response = json.loads(result.output[result.output.find("{") :])
         assert response["version"] == 1
         assert response["success"] is True
         assert response["token_type"] == "urn:ietf:params:oauth:token-type:id_token"  # noqa: S105
@@ -639,7 +639,7 @@ class TestAuthTokenCLI:
         """Gcloud-compatible error JSON is written to stdout when token retrieval fails."""
         record_property("tested-item-id", "SPEC-PLATFORM-CLI")
         result = TestAuthTokenCLI._invoke_failure(runner, tmp_path)
-        response = json.loads(result.output[result.output.find("{"):])
+        response = json.loads(result.output[result.output.find("{") :])
         assert response["version"] == 1
         assert response["success"] is False
         assert "code" in response
