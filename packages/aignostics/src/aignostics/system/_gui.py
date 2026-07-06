@@ -4,7 +4,7 @@ from pathlib import Path
 
 from aignostics.gui import frame
 from aignostics.utils import BasePageBuilder, locate_subclasses
-from aignostics_sdk.system._service import Service  # noqa: PLC2701
+from aignostics_sdk.system._service import Service
 from aignostics_sdk.utils import BaseService
 
 

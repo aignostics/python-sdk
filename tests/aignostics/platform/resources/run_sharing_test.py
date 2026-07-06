@@ -4,6 +4,9 @@ from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from aignostics.platform._api import _AuthenticatedApi
+from aignostics.platform.resources.access import AccessGrant
+from aignostics.platform.resources.runs import Run
 from aignx.codegen.models import (
     GrantCreateRequest,
     GrantReadResponse,
@@ -11,10 +14,6 @@ from aignx.codegen.models import (
     ResourceType,
     SubjectType,
 )
-
-from aignostics.platform._api import _AuthenticatedApi
-from aignostics.platform.resources.access import AccessGrant
-from aignostics.platform.resources.runs import Run
 
 _RUN_ID = "550e8400-e29b-41d4-a716-446655440000"
 _ORG_ID = "org-001"

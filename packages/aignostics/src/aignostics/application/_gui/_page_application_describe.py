@@ -28,8 +28,8 @@ from aignostics_sdk.utils import get_user_data_directory
 if TYPE_CHECKING:
     from aignostics_sdk.platform import UserInfo
 
-from aignostics_sdk.application._service import Service  # noqa: PLC2701  # noqa: TID252
-from aignostics_sdk.application._utils import get_mime_type_for_artifact  # noqa: PLC2701
+from aignostics_sdk.application._service import Service
+from aignostics_sdk.application._utils import get_mime_type_for_artifact
 
 from ._frame import _frame
 from ._utils import (

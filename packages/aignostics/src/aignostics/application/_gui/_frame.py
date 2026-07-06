@@ -7,7 +7,7 @@ from loguru import logger
 from nicegui import app, background_tasks, context, ui  # noq
 from nicegui import run as nicegui_run
 
-from aignostics_sdk.application._service import Service  # noqa: PLC2701  # noqa: TID252
+from aignostics_sdk.application._service import Service
 
 from ._utils import application_id_to_icon, run_status_to_icon_and_color
 
