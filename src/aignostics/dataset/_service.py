@@ -1,9 +1,11 @@
 """Service of dataset module."""
 
 import atexit
+import json
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Callable
@@ -218,53 +220,37 @@ class Service(BaseService):
             logger.debug("Identified matching {}: {}", column_name, matched_ids)
             queue.put_nowait(0.04)
 
-            # Properly handle Windows paths - convert to raw string format
-            safe_target_dir = str(target_directory).replace("\\", "\\\\")
+            # Write download parameters to a temp file so the worker subprocess
+            # receives structured data instead of executable code.
+            config = {
+                "kwarg_name": kwarg_name,
+                "matched_ids": matched_ids,
+                "download_dir": str(target_directory),
+                "dir_template": target_layout,
+                "dry_run": dry_run,
+            }
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as tf:
+                json.dump(config, tf)
+                config_file = Path(tf.name)
 
-            # Create command for the subprocess
-            script_content = f"""
-import sys
-from aignostics.third_party.idc_index import IDCClient
-
-client = IDCClient.client()
-client.fetch_index("sm_instance_index")
-client.download_from_selection(
-    {kwarg_name}={matched_ids!r},
-    downloadDir="{safe_target_dir}",
-    dirTemplate="{target_layout}",
-    quiet=False,
-    show_progress_bar=True,
-    use_s5cmd_sync=True,
-    dry_run={dry_run!r}
-)
-"""
-
-            # Run the download in a subprocess
+            worker = "aignostics.dataset._download_worker"
             if getattr(sys, "frozen", False):
-                # When running under PyInstaller, sys.executable points to the PyInstaller executable.
-                # We use a special flag to execute the script without launching the GUI.
-                # See src/aignostics.py
-                logger.trace("Running under PyInstaller - using --exec-script flag")
-                process = subprocess.Popen(  # noqa: S603
-                    [sys.executable, "--exec-script", script_content],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                    creationflags=SUBPROCESS_CREATION_FLAGS,
-                )
+                # sys.executable is the PyInstaller binary; use --run-module to
+                # invoke the worker without launching the GUI. See src/aignostics.py
+                logger.trace("Running under PyInstaller - using --run-module flag")
+                cmd = [sys.executable, "--run-module", worker, str(config_file)]
             else:
-                logger.trace(
-                    "Starting download subprocess with executable '{}' and script:\n{}", sys.executable, script_content
-                )
-                process = subprocess.Popen(  # noqa: S603
-                    [sys.executable, "-c", script_content],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                    creationflags=SUBPROCESS_CREATION_FLAGS,
-                )
+                logger.trace("Starting download subprocess with executable '{}'", sys.executable)
+                cmd = [sys.executable, "-m", worker, str(config_file)]
+
+            process = subprocess.Popen(  # noqa: S603
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+                creationflags=SUBPROCESS_CREATION_FLAGS,
+            )
 
             # Register process for cleanup
             _active_processes.append(process)
@@ -295,9 +281,9 @@ client.download_from_selection(
                 queue.put_nowait(1.0)
                 return True
             finally:
-                # Clean up process reference
                 if process in _active_processes:
                     _active_processes.remove(process)
+                config_file.unlink(missing_ok=True)
 
         matches_found = 0
         matches_found += check_and_download("collection_id", item_ids, target_directory, "collection_id")

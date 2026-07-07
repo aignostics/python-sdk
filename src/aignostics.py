@@ -29,25 +29,12 @@ from aignostics.utils import boot, gui_run  # noqa: E402
 boot(SENTRY_INTEGRATIONS)
 
 
-EXEC_SCRIPT_FLAG = "--exec-script"
-MIN_ARGS_FOR_SCRIPT = 3  # program name, flag, and script content
 MODULE_FLAG = "--run-module"
 MIN_ARGS_FOR_MODULE = 3  # program name, flag, and module name
 
 DEBUG_FLAG = "--debug"
 
-if len(sys.argv) > 1 and sys.argv[1] == EXEC_SCRIPT_FLAG:
-    if len(sys.argv) >= MIN_ARGS_FOR_SCRIPT:
-        script_content = sys.argv[2]
-        try:
-            exec(script_content)  # noqa: S102
-        except Exception:
-            logger.exception("Failed to execute script")
-            sys.exit(1)
-    else:
-        logger.error("No script content provided")
-        sys.exit(1)
-elif len(sys.argv) > 1 and sys.argv[1] == MODULE_FLAG:
+if len(sys.argv) > 1 and sys.argv[1] == MODULE_FLAG:
     if pyi_splash and pyi_splash.is_alive():
         pyi_splash.close()
 
