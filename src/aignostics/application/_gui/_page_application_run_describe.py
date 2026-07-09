@@ -19,7 +19,15 @@ from nicegui import (
 )
 from nicegui import run as nicegui_run
 
-from aignostics.platform import ArtifactOutput, ItemOutput, ItemResult, ItemState, Run, RunState
+from aignostics.platform import (
+    ArtifactOutput,
+    ConcurrencyConflictError,
+    ItemOutput,
+    ItemResult,
+    ItemState,
+    Run,
+    RunState,
+)
 from aignostics.third_party.showinfm.showinfm import show_in_file_manager
 from aignostics.utils import GUILocalFilePicker, get_user_data_directory
 
@@ -747,9 +755,15 @@ async def _page_application_run_describe(run_id: str) -> None:  # noqa: C901, PL
                                     Service.application_run_update_custom_metadata_static,
                                     run_id=run_id,
                                     custom_metadata=new_metadata,
+                                    custom_metadata_checksum=run_data.custom_metadata_checksum,
                                 )
                                 ui.notify("Custom metadata updated successfully!", type="positive")
                                 ui.navigate.reload()
+                        except ConcurrencyConflictError:
+                            ui.notify(
+                                "Metadata was modified by another process — reload the page and retry.",
+                                type="warning",
+                            )
                         except Exception as ex:
                             ui.notify(f"Failed to update custom metadata: {ex!s}", type="negative")
 

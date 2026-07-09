@@ -24,6 +24,7 @@ from aignostics.platform import (
     ApplicationSummary,
     ApplicationVersion,
     Client,
+    ConcurrencyConflictError,
     ForbiddenException,
     InputArtifact,
     InputItem,
@@ -1126,21 +1127,32 @@ class Service(BaseService):
         self,
         run_id: str,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Update custom metadata for an existing application run.
 
         Args:
             run_id (str): The ID of the run to update
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+            custom_metadata_checksum (str | None): Optional checksum obtained from a prior
+                read (e.g. ``RunData.custom_metadata_checksum``) used for optimistic
+                concurrency control. If the run's metadata was modified since the checksum
+                was read, the update is rejected with :class:`ConcurrencyConflictError`.
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
             ValueError: If the run ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the run's
+                current custom metadata (optimistic concurrency conflict).
             RuntimeError: If updating the run metadata fails unexpectedly.
         """
         try:
             logger.trace("Updating custom metadata for run with ID '{}'", run_id)
-            self._get_platform_client().run(run_id).update_custom_metadata(custom_metadata)
+            self._get_platform_client().run(run_id).update_custom_metadata(
+                custom_metadata,
+                custom_metadata_checksum=custom_metadata_checksum,
+            )
             logger.trace("Updated custom metadata for run with ID '{}'", run_id)
         except ValueError as e:
             message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
@@ -1151,6 +1163,13 @@ class Service(BaseService):
             logger.warning(message)
             raise NotFoundException(message) from e
         except ApiException as e:
+            if e.status == HTTPStatus.PRECONDITION_FAILED:
+                message = (
+                    f"Custom metadata for run '{run_id}' was modified since the checksum was read "
+                    f"(optimistic concurrency conflict): {e!s}."
+                )
+                logger.warning(message)
+                raise ConcurrencyConflictError(message) from e
             if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."
                 logger.warning(message)
@@ -1167,25 +1186,35 @@ class Service(BaseService):
     def application_run_update_custom_metadata_static(
         run_id: str,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Static wrapper for updating custom metadata for an application run.
 
         Args:
             run_id (str): The ID of the run to update
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic
+                concurrency control. See :meth:`application_run_update_custom_metadata`.
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
             ValueError: If the run ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the run's
+                current custom metadata (optimistic concurrency conflict).
             RuntimeError: If updating the run metadata fails unexpectedly.
         """
-        Service().application_run_update_custom_metadata(run_id, custom_metadata)
+        Service().application_run_update_custom_metadata(
+            run_id, custom_metadata, custom_metadata_checksum=custom_metadata_checksum
+        )
 
     def application_run_update_item_custom_metadata(
         self,
         run_id: str,
         external_id: str,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Update custom metadata for an existing item in an application run.
 
@@ -1193,10 +1222,16 @@ class Service(BaseService):
             run_id (str): The ID of the run containing the item
             external_id (str): The external ID of the item to update
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+            custom_metadata_checksum (str | None): Optional checksum obtained from a prior
+                read (e.g. ``ItemResultReadResponse.custom_metadata_checksum``) used for
+                optimistic concurrency control. If the item's metadata was modified since the
+                checksum was read, the update is rejected with :class:`ConcurrencyConflictError`.
 
         Raises:
             NotFoundException: If the application run or item with the given IDs is not found.
             ValueError: If the run ID or item external ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the item's
+                current custom metadata (optimistic concurrency conflict).
             RuntimeError: If updating the item metadata fails unexpectedly.
         """
         try:
@@ -1208,6 +1243,7 @@ class Service(BaseService):
             self._get_platform_client().run(run_id).update_item_custom_metadata(
                 external_id,
                 custom_metadata,
+                custom_metadata_checksum=custom_metadata_checksum,
             )
             logger.trace(
                 "Updated custom metadata for item '{}' in run with ID '{}'",
@@ -1225,6 +1261,13 @@ class Service(BaseService):
             logger.warning(message)
             raise NotFoundException(message) from e
         except ApiException as e:
+            if e.status == HTTPStatus.PRECONDITION_FAILED:
+                message = (
+                    f"Custom metadata for item '{external_id}' in run '{run_id}' was modified since the "
+                    f"checksum was read (optimistic concurrency conflict): {e!s}."
+                )
+                logger.warning(message)
+                raise ConcurrencyConflictError(message) from e
             if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' or item external ID '{external_id}' invalid: {e!s}."
                 logger.warning(message)
@@ -1242,6 +1285,8 @@ class Service(BaseService):
         run_id: str,
         external_id: str,
         custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
     ) -> None:
         """Static wrapper for updating custom metadata for an item in an application run.
 
@@ -1249,13 +1294,19 @@ class Service(BaseService):
             run_id (str): The ID of the run containing the item
             external_id (str): The external ID of the item to update
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic
+                concurrency control. See :meth:`application_run_update_item_custom_metadata`.
 
         Raises:
             NotFoundException: If the application run or item with the given IDs is not found.
             ValueError: If the run ID or item external ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the item's
+                current custom metadata (optimistic concurrency conflict).
             RuntimeError: If updating the item metadata fails unexpectedly.
         """
-        Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
+        Service().application_run_update_item_custom_metadata(
+            run_id, external_id, custom_metadata, custom_metadata_checksum=custom_metadata_checksum
+        )
 
     def application_run_cancel(self, run_id: str) -> None:
         """Cancel a run by its ID.
