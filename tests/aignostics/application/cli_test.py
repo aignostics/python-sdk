@@ -1161,8 +1161,9 @@ def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
 
 
 @pytest.mark.unit
-def test_cli_run_update_metadata_forwards_checksum(runner: CliRunner) -> None:
+def test_cli_run_update_metadata_forwards_checksum(runner: CliRunner, record_property) -> None:
     """Check run update-metadata forwards --checksum to the service as a keyword argument."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-01, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         result = runner.invoke(
             cli,
@@ -1184,8 +1185,9 @@ def test_cli_run_update_metadata_forwards_checksum(runner: CliRunner) -> None:
 
 
 @pytest.mark.unit
-def test_cli_run_update_metadata_default_enrich_sdk_metadata_true(runner: CliRunner) -> None:
+def test_cli_run_update_metadata_default_enrich_sdk_metadata_true(runner: CliRunner, record_property) -> None:
     """Check run update-metadata passes enrich_sdk_metadata=True to the service by default."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-04, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '{"key": "value"}'])
 
@@ -1196,8 +1198,11 @@ def test_cli_run_update_metadata_default_enrich_sdk_metadata_true(runner: CliRun
 
 
 @pytest.mark.unit
-def test_cli_run_update_metadata_no_enrich_sdk_metadata_reaches_service_false(runner: CliRunner) -> None:
+def test_cli_run_update_metadata_no_enrich_sdk_metadata_reaches_service_false(
+    runner: CliRunner, record_property
+) -> None:
     """Check run update-metadata --no-enrich-sdk-metadata reaches the service as enrich_sdk_metadata=False."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-03, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         result = runner.invoke(
             cli,
@@ -1218,8 +1223,9 @@ def test_cli_run_update_metadata_no_enrich_sdk_metadata_reaches_service_false(ru
 
 
 @pytest.mark.unit
-def test_cli_run_update_metadata_concurrency_conflict_exits_3(runner: CliRunner) -> None:
+def test_cli_run_update_metadata_concurrency_conflict_exits_3(runner: CliRunner, record_property) -> None:
     """Check run update-metadata exits with code 3 when the service raises ConcurrencyConflictError."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-02, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         mock_service_cls.return_value.application_run_update_custom_metadata.side_effect = ConcurrencyConflictError(
             "stale checksum"
@@ -1231,8 +1237,9 @@ def test_cli_run_update_metadata_concurrency_conflict_exits_3(runner: CliRunner)
 
 
 @pytest.mark.unit
-def test_cli_run_update_item_metadata_forwards_checksum(runner: CliRunner) -> None:
+def test_cli_run_update_item_metadata_forwards_checksum(runner: CliRunner, record_property) -> None:
     """Check run update-item-metadata forwards --checksum to the service as a keyword argument."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         result = runner.invoke(
             cli,
@@ -1255,8 +1262,14 @@ def test_cli_run_update_item_metadata_forwards_checksum(runner: CliRunner) -> No
 
 
 @pytest.mark.unit
-def test_cli_run_update_item_metadata_no_enrich_sdk_metadata_reaches_service_false(runner: CliRunner) -> None:
+def test_cli_run_update_item_metadata_no_enrich_sdk_metadata_reaches_service_false(
+    runner: CliRunner, record_property
+) -> None:
     """Check run update-item-metadata --no-enrich-sdk-metadata reaches the service as enrich_sdk_metadata=False."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-03, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE",
+    )
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         result = runner.invoke(
             cli,
@@ -1278,8 +1291,12 @@ def test_cli_run_update_item_metadata_no_enrich_sdk_metadata_reaches_service_fal
 
 
 @pytest.mark.unit
-def test_cli_run_update_item_metadata_concurrency_conflict_exits_3(runner: CliRunner) -> None:
+def test_cli_run_update_item_metadata_concurrency_conflict_exits_3(runner: CliRunner, record_property) -> None:
     """Check run update-item-metadata exits with code 3 when the service raises ConcurrencyConflictError."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-02, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE",
+    )
     with patch("aignostics.application._cli.Service") as mock_service_cls:
         mock_service_cls.return_value.application_run_update_item_custom_metadata.side_effect = (
             ConcurrencyConflictError("stale checksum")
@@ -1293,8 +1310,9 @@ def test_cli_run_update_item_metadata_concurrency_conflict_exits_3(runner: CliRu
 
 
 @pytest.mark.unit
-def test_cli_run_dump_metadata_show_checksum(runner: CliRunner) -> None:
+def test_cli_run_dump_metadata_show_checksum(runner: CliRunner, record_property) -> None:
     """Check run dump-metadata --show-checksum wraps output with the checksum."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-05, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_run_data = MagicMock()
     mock_run_data.custom_metadata = {"key": "value"}
     mock_run_data.custom_metadata_checksum = "checksum-abc"
@@ -1312,8 +1330,9 @@ def test_cli_run_dump_metadata_show_checksum(runner: CliRunner) -> None:
 
 
 @pytest.mark.unit
-def test_cli_run_dump_item_metadata_show_checksum(runner: CliRunner) -> None:
+def test_cli_run_dump_item_metadata_show_checksum(runner: CliRunner, record_property) -> None:
     """Check run dump-item-metadata --show-checksum wraps output with the checksum."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-05, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_item = MagicMock()
     mock_item.external_id = "item-ext-id"
     mock_item.custom_metadata = {"key": "value"}

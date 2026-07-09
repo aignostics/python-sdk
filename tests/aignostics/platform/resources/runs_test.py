@@ -1319,8 +1319,9 @@ _PATCH_VALIDATE_ITEM_SDK_METADATA = "aignostics.platform.resources.runs.validate
 
 
 @pytest.mark.unit
-def test_update_custom_metadata_forwards_checksum(app_run, mock_api) -> None:
+def test_update_custom_metadata_forwards_checksum(app_run, mock_api, record_property) -> None:
     """update_custom_metadata forwards custom_metadata_checksum on the update request."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-01, SWR-APPLICATION-2-17, SPEC-PLATFORM-SERVICE")
     with patch(_PATCH_BUILD_RUN_SDK_METADATA, return_value={}), patch(_PATCH_VALIDATE_RUN_SDK_METADATA):
         app_run.update_custom_metadata({"key": "value"}, custom_metadata_checksum="abc123")
 
@@ -1330,8 +1331,9 @@ def test_update_custom_metadata_forwards_checksum(app_run, mock_api) -> None:
 
 
 @pytest.mark.unit
-def test_update_custom_metadata_enrich_default_calls_sdk_metadata_builders(app_run, mock_api) -> None:
+def test_update_custom_metadata_enrich_default_calls_sdk_metadata_builders(app_run, mock_api, record_property) -> None:
     """Default enrich_sdk_metadata=True merges and validates SDK metadata."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-04, SWR-APPLICATION-2-17, SPEC-PLATFORM-SERVICE")
     mock_api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put.return_value = None
     with (
         patch(_PATCH_BUILD_RUN_SDK_METADATA, return_value={"schema_version": "0.0.1"}) as mock_build,
@@ -1348,8 +1350,9 @@ def test_update_custom_metadata_enrich_default_calls_sdk_metadata_builders(app_r
 
 
 @pytest.mark.unit
-def test_update_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api) -> None:
+def test_update_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api, record_property) -> None:
     """enrich_sdk_metadata=False skips build/validate and forwards custom_metadata verbatim."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-03, SWR-APPLICATION-2-17, SPEC-PLATFORM-SERVICE")
     with (
         patch(_PATCH_BUILD_RUN_SDK_METADATA) as mock_build,
         patch(_PATCH_VALIDATE_RUN_SDK_METADATA) as mock_validate,
@@ -1365,8 +1368,9 @@ def test_update_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, m
 
 
 @pytest.mark.unit
-def test_update_item_custom_metadata_forwards_checksum(app_run, mock_api) -> None:
+def test_update_item_custom_metadata_forwards_checksum(app_run, mock_api, record_property) -> None:
     """update_item_custom_metadata forwards custom_metadata_checksum on the update request."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-PLATFORM-SERVICE")
     with patch(_PATCH_BUILD_ITEM_SDK_METADATA, return_value={}), patch(_PATCH_VALIDATE_ITEM_SDK_METADATA):
         app_run.update_item_custom_metadata("item-ext-id", {"key": "value"}, custom_metadata_checksum="xyz789")
 
@@ -1378,8 +1382,12 @@ def test_update_item_custom_metadata_forwards_checksum(app_run, mock_api) -> Non
 
 
 @pytest.mark.unit
-def test_update_item_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api) -> None:
+def test_update_item_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api, record_property) -> None:
     """enrich_sdk_metadata=False skips build/validate for items and forwards metadata verbatim."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-03, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-PLATFORM-SERVICE",
+    )
     with (
         patch(_PATCH_BUILD_ITEM_SDK_METADATA) as mock_build,
         patch(_PATCH_VALIDATE_ITEM_SDK_METADATA) as mock_validate,

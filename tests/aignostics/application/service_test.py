@@ -521,8 +521,9 @@ def test_application_run_update_custom_metadata_success(mock_get_client: MagicMo
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_custom_metadata_forwards_checksum(mock_get_client: MagicMock) -> None:
+def test_application_run_update_custom_metadata_forwards_checksum(mock_get_client: MagicMock, record_property) -> None:
     """Test that custom_metadata_checksum is forwarded to the platform layer."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-01, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -540,8 +541,11 @@ def test_application_run_update_custom_metadata_forwards_checksum(mock_get_clien
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_custom_metadata_forwards_enrich_sdk_metadata_false(mock_get_client: MagicMock) -> None:
+def test_application_run_update_custom_metadata_forwards_enrich_sdk_metadata_false(
+    mock_get_client: MagicMock, record_property
+) -> None:
     """Test that enrich_sdk_metadata=False is forwarded to the platform layer."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-03, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -560,9 +564,10 @@ def test_application_run_update_custom_metadata_forwards_enrich_sdk_metadata_fal
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_update_custom_metadata_static_forwards_enrich_sdk_metadata(
-    mock_get_client: MagicMock,
+    mock_get_client: MagicMock, record_property
 ) -> None:
     """Test that the static wrapper forwards enrich_sdk_metadata."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-03, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -579,8 +584,11 @@ def test_application_run_update_custom_metadata_static_forwards_enrich_sdk_metad
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_custom_metadata_static_forwards_checksum(mock_get_client: MagicMock) -> None:
+def test_application_run_update_custom_metadata_static_forwards_checksum(
+    mock_get_client: MagicMock, record_property
+) -> None:
     """Test that the static wrapper forwards custom_metadata_checksum."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-01, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -597,8 +605,11 @@ def test_application_run_update_custom_metadata_static_forwards_checksum(mock_ge
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_custom_metadata_concurrency_conflict(mock_get_client: MagicMock) -> None:
+def test_application_run_update_custom_metadata_concurrency_conflict(
+    mock_get_client: MagicMock, record_property
+) -> None:
     """Test that a 412 ApiException is mapped to ConcurrencyConflictError."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-02, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_run.update_custom_metadata.side_effect = ApiException(
@@ -619,8 +630,11 @@ def test_application_run_update_custom_metadata_concurrency_conflict(mock_get_cl
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_custom_metadata_non_412_api_exception_unchanged(mock_get_client: MagicMock) -> None:
+def test_application_run_update_custom_metadata_non_412_api_exception_unchanged(
+    mock_get_client: MagicMock, record_property
+) -> None:
     """Test that a non-412 ApiException keeps the pre-existing behavior (RuntimeError)."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-02, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_run.update_custom_metadata.side_effect = ApiException(
@@ -636,8 +650,9 @@ def test_application_run_update_custom_metadata_non_412_api_exception_unchanged(
 
 
 @pytest.mark.unit
-def test_concurrency_conflict_error_is_value_error() -> None:
+def test_concurrency_conflict_error_is_value_error(record_property) -> None:
     """Test that ConcurrencyConflictError subclasses ValueError."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-07-02, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE")
     assert issubclass(ConcurrencyConflictError, ValueError)
 
 
@@ -683,9 +698,13 @@ def test_application_run_update_item_custom_metadata_success(mock_get_client: Ma
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_update_item_custom_metadata_forwards_enrich_sdk_metadata_false(
-    mock_get_client: MagicMock,
+    mock_get_client: MagicMock, record_property
 ) -> None:
     """Test that enrich_sdk_metadata=False is forwarded for item metadata updates."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-03, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE",
+    )
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -706,9 +725,13 @@ def test_application_run_update_item_custom_metadata_forwards_enrich_sdk_metadat
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
 def test_application_run_update_item_custom_metadata_static_forwards_enrich_sdk_metadata(
-    mock_get_client: MagicMock,
+    mock_get_client: MagicMock, record_property
 ) -> None:
     """Test that the item static wrapper forwards enrich_sdk_metadata."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-03, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE",
+    )
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_client.run.return_value = mock_run
@@ -725,8 +748,14 @@ def test_application_run_update_item_custom_metadata_static_forwards_enrich_sdk_
 
 @pytest.mark.unit
 @patch("aignostics.application._service.Service._get_platform_client")
-def test_application_run_update_item_custom_metadata_concurrency_conflict(mock_get_client: MagicMock) -> None:
+def test_application_run_update_item_custom_metadata_concurrency_conflict(
+    mock_get_client: MagicMock, record_property
+) -> None:
     """Test that a 412 ApiException for an item update is mapped to ConcurrencyConflictError."""
+    record_property(
+        "tested-item-id",
+        "TC-APPLICATION-CLI-07-02, TC-APPLICATION-CLI-07-06, SWR-APPLICATION-2-17, SPEC-APPLICATION-SERVICE",
+    )
     mock_client = MagicMock()
     mock_run = MagicMock()
     mock_run.update_item_custom_metadata.side_effect = ApiException(
