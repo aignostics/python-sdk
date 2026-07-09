@@ -544,6 +544,45 @@ class ApplicationRun(_AuthenticatedResource):
     ) -> None:
         """Ensures all AVAILABLE artifacts for an item are downloaded with checksum verification."""
 
+    def update_custom_metadata(
+        self,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Replace the run's custom metadata.
+
+        Args:
+            custom_metadata: New custom metadata to attach to the run.
+            custom_metadata_checksum: Optional checksum for optimistic concurrency
+                control (read from ``ApplicationRunData.custom_metadata_checksum``).
+                When provided, the platform rejects the write with HTTP 412 if the
+                stored metadata was modified since the checksum was read. ``None``
+                skips the precondition check.
+            enrich_sdk_metadata: When True (default), auto-generated SDK tracking
+                context is merged into ``custom_metadata["sdk"]`` and validated
+                against the SDK metadata schema. When False, ``custom_metadata`` is
+                forwarded verbatim — the ``sdk`` field is neither merged nor
+                validated — so a previously read ``sdk`` field round-trips unchanged.
+        """
+
+    def update_item_custom_metadata(
+        self,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Replace an item's custom metadata.
+
+        Same ``custom_metadata_checksum`` (checksum read from
+        ``ItemResultReadResponse.custom_metadata_checksum``) and
+        ``enrich_sdk_metadata`` semantics as ``update_custom_metadata``, scoped to
+        the item identified by ``external_id``.
+        """
+
     def grant_access(
         self,
         subject_type: SubjectType,
