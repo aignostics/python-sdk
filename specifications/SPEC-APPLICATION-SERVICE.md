@@ -395,6 +395,59 @@ class Service:
             ForbiddenException: When the caller is not an admin of the requested org.
         """
         pass
+
+    def application_run_update_custom_metadata(
+        self,
+        run_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Update the custom metadata of an existing run.
+
+        Args:
+            run_id: Application run identifier.
+            custom_metadata: New custom metadata to attach to the run.
+            custom_metadata_checksum: Optional checksum for optimistic concurrency
+                control. When provided, a stale write is rejected by the platform
+                with HTTP 412 and surfaced as ConcurrencyConflictError. None skips
+                the precondition check.
+            enrich_sdk_metadata: When True (default), auto-generated SDK tracking
+                context is merged into the `sdk` field and schema-validated. When
+                False, custom_metadata is forwarded verbatim (sdk field neither
+                merged nor validated).
+
+        Raises:
+            NotFoundException: When the run ID is not found.
+            ConcurrencyConflictError: When the checksum precondition fails (HTTP 412).
+            ValueError: When the run ID or metadata is invalid.
+            RuntimeError: When the update fails unexpectedly.
+        """
+        pass
+
+    def application_run_update_item_custom_metadata(
+        self,
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Update the custom metadata of an item within a run.
+
+        Same `custom_metadata_checksum` and `enrich_sdk_metadata` semantics as
+        `application_run_update_custom_metadata`, scoped to the item identified by
+        `external_id`.
+
+        Raises:
+            NotFoundException: When the run or item is not found.
+            ConcurrencyConflictError: When the checksum precondition fails (HTTP 412).
+            ValueError: When the run ID or item external ID is invalid.
+            RuntimeError: When the update fails unexpectedly.
+        """
+        pass
 ```
 
 ### 4.2 CLI Interface
@@ -422,6 +475,12 @@ uvx aignostics application [subcommand] [options]
 - `run cancel`: Cancel running application
 - `run result download`: Download run results
 - `run result delete`: Delete run results
+- `run dump-metadata` / `run dump-item-metadata`: Dump a run's/item's custom metadata as JSON;
+  `--show-checksum` additionally emits the current `custom_metadata_checksum`
+- `run update-metadata` / `run update-item-metadata`: Replace a run's/item's custom metadata.
+  `--checksum` guards the write with optimistic concurrency control (exit code 3 on conflict);
+  `--enrich-sdk-metadata / --no-enrich-sdk-metadata` (default enrich) controls whether the SDK
+  merges auto-generated tracking context into the `sdk` field or forwards it verbatim
 
 ### 4.3 GUI Interface
 
@@ -500,6 +559,7 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 | `FileNotFoundError`   | Missing input files              | File validation before upload                       | File path verification help                |
 | `ApiException`        | Platform API failures            | Retry mechanism with recovery                       | API error details and guidance             |
 | `ForbiddenException`  | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission    |
+| `ConcurrencyConflictError` | Custom-metadata update rejected (HTTP 412): metadata modified since the checksum was read | `ValueError` subclass; caught in CLI, exit 3 | User told to re-read and retry the update |
 
 ### 7.2 Input Validation
 
