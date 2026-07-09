@@ -31,7 +31,7 @@ from aignostics_sdk._codegen.models import (
     RunState,
     RunTerminationReason,
 )
-from aignostics_sdk.platform import ConcurrencyConflictError, LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+from aignostics_sdk.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, ConcurrencyConflictError
 from aignostics_sdk.utils import Health, sanitize_path
 from tests.conftest import assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (

@@ -21,7 +21,15 @@ from nicegui import (
 from nicegui import run as nicegui_run
 
 from aignostics.utils import GUILocalFilePicker
-from aignostics_sdk.platform import ArtifactOutput, ConcurrencyConflictError, ItemOutput, ItemResult, ItemState, Run, RunState
+from aignostics_sdk.platform import (
+    ArtifactOutput,
+    ConcurrencyConflictError,
+    ItemOutput,
+    ItemResult,
+    ItemState,
+    Run,
+    RunState,
+)
 from aignostics_sdk.utils import get_user_data_directory
 
 if TYPE_CHECKING:

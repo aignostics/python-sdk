@@ -54,10 +54,6 @@ from collections.abc import Iterator
 from datetime import datetime
 from typing import Any, cast
 
-from aignostics_sdk.platform._api import RETRYABLE_EXCEPTIONS, _AuthenticatedApi, _AuthenticatedResource, _log_retry_attempt
-from aignostics_sdk.platform._operation_cache import cached_operation, operation_cache_clear
-from aignostics_sdk.platform._settings import settings
-from aignostics_sdk.platform.resources.utils import paginate
 from aignx.codegen.models import (
     GrantReadResponse,
     GrantRelation,
@@ -68,6 +64,15 @@ from aignx.codegen.models import (
 from pydantic import BaseModel, ConfigDict, PrivateAttr
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential_jitter
 
+from aignostics_sdk.platform._api import (
+    RETRYABLE_EXCEPTIONS,
+    _AuthenticatedApi,
+    _AuthenticatedResource,
+    _log_retry_attempt,
+)
+from aignostics_sdk.platform._operation_cache import cached_operation, operation_cache_clear
+from aignostics_sdk.platform._settings import settings
+from aignostics_sdk.platform.resources.utils import paginate
 from aignostics_sdk.utils import user_agent
 
 
