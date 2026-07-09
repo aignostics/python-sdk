@@ -31,7 +31,7 @@ from typer.testing import CliRunner
 
 from aignostics.application import Service as ApplicationService
 from aignostics.cli import cli
-from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, ConcurrencyConflictError
 from aignostics.utils import Health, sanitize_path
 from tests.conftest import assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
@@ -1158,6 +1158,122 @@ def test_cli_run_update_metadata_not_dict(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '["array", "not", "dict"]'])
     assert result.exit_code == 1
     assert "Metadata must be a JSON object" in result.output
+
+
+@pytest.mark.unit
+def test_cli_run_update_metadata_forwards_checksum(runner: CliRunner) -> None:
+    """Check run update-metadata forwards --checksum to the service as a keyword argument."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-metadata",
+                "run-123",
+                '{"key": "value"}',
+                "--checksum",
+                "abc123",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_service_cls.return_value.application_run_update_custom_metadata.assert_called_once_with(
+        "run-123", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_metadata_concurrency_conflict_exits_3(runner: CliRunner) -> None:
+    """Check run update-metadata exits with code 3 when the service raises ConcurrencyConflictError."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run_update_custom_metadata.side_effect = ConcurrencyConflictError(
+            "stale checksum"
+        )
+        result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '{"key": "value"}'])
+
+    assert result.exit_code == 3
+    assert "modified by another process" in normalize_output(result.output)
+
+
+@pytest.mark.unit
+def test_cli_run_update_item_metadata_forwards_checksum(runner: CliRunner) -> None:
+    """Check run update-item-metadata forwards --checksum to the service as a keyword argument."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-item-metadata",
+                "run-123",
+                "item-ext-id",
+                '{"key": "value"}',
+                "--checksum",
+                "abc123",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_service_cls.return_value.application_run_update_item_custom_metadata.assert_called_once_with(
+        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123"
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_item_metadata_concurrency_conflict_exits_3(runner: CliRunner) -> None:
+    """Check run update-item-metadata exits with code 3 when the service raises ConcurrencyConflictError."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run_update_item_custom_metadata.side_effect = (
+            ConcurrencyConflictError("stale checksum")
+        )
+        result = runner.invoke(
+            cli, ["application", "run", "update-item-metadata", "run-123", "item-ext-id", '{"key": "value"}']
+        )
+
+    assert result.exit_code == 3
+    assert "modified by another process" in normalize_output(result.output)
+
+
+@pytest.mark.unit
+def test_cli_run_dump_metadata_show_checksum(runner: CliRunner) -> None:
+    """Check run dump-metadata --show-checksum wraps output with the checksum."""
+    mock_run_data = MagicMock()
+    mock_run_data.custom_metadata = {"key": "value"}
+    mock_run_data.custom_metadata_checksum = "checksum-abc"
+
+    mock_run_handle = MagicMock()
+    mock_run_handle.details.return_value = mock_run_data
+
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(cli, ["application", "run", "dump-metadata", "run-123", "--show-checksum"])
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output == {"custom_metadata": {"key": "value"}, "custom_metadata_checksum": "checksum-abc"}
+
+
+@pytest.mark.unit
+def test_cli_run_dump_item_metadata_show_checksum(runner: CliRunner) -> None:
+    """Check run dump-item-metadata --show-checksum wraps output with the checksum."""
+    mock_item = MagicMock()
+    mock_item.external_id = "item-ext-id"
+    mock_item.custom_metadata = {"key": "value"}
+    mock_item.custom_metadata_checksum = "checksum-xyz"
+
+    mock_run_handle = MagicMock()
+    mock_run_handle.results.return_value = iter([mock_item])
+
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        mock_service_cls.return_value.application_run.return_value = mock_run_handle
+        result = runner.invoke(
+            cli, ["application", "run", "dump-item-metadata", "run-123", "item-ext-id", "--show-checksum"]
+        )
+
+    assert result.exit_code == 0
+    output = json.loads(result.stdout)
+    assert output == {"custom_metadata": {"key": "value"}, "custom_metadata_checksum": "checksum-xyz"}
 
 
 @pytest.mark.integration
