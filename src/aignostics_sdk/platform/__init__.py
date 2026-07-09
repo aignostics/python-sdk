@@ -102,6 +102,7 @@ if TYPE_CHECKING:
     from aignostics_sdk._codegen.models import UserReadResponse as User
     from aignostics_sdk._codegen.models import VersionReadResponse as ApplicationVersion
 
+    from ._exceptions import ConcurrencyConflictError
     from ._service import Service, TokenInfo, UserInfo
     from .resources.applications import ApplicationVersionDocument, Documents
     from .resources.runs import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, LIST_APPLICATION_RUNS_MIN_PAGE_SIZE, Artifact, Run
@@ -113,6 +114,7 @@ _LAZY: dict[str, tuple[str, str]] = {
     "TokenInfo": ("aignostics_sdk.platform._service", "TokenInfo"),
     "UserInfo": ("aignostics_sdk.platform._service", "UserInfo"),
     # exceptions
+    "ConcurrencyConflictError": ("aignostics_sdk.platform._exceptions", "ConcurrencyConflictError"),
     "ApiException": ("aignostics_sdk._codegen.exceptions", "ApiException"),
     "ForbiddenException": ("aignostics_sdk._codegen.exceptions", "ForbiddenException"),
     "NotFoundException": ("aignostics_sdk._codegen.exceptions", "NotFoundException"),
@@ -221,6 +223,7 @@ __all__ = [
     "Artifact",
     "ArtifactOutput",
     "Client",
+    "ConcurrencyConflictError",
     "Documents",
     "ForbiddenException",
     "InputArtifact",

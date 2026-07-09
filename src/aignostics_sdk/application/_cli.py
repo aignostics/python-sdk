@@ -9,7 +9,7 @@ import time
 import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 from loguru import logger
@@ -1023,6 +1023,16 @@ def run_describe(
 def run_dump_metadata(
     run_id: Annotated[str, typer.Argument(help="Id of the run to dump custom metadata for")],
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+    show_checksum: Annotated[
+        bool,
+        typer.Option(
+            "--show-checksum",
+            help=(
+                "Wrap the output as {'custom_metadata': ..., 'custom_metadata_checksum': ...} to obtain the "
+                "checksum required for optimistic concurrency control on a subsequent 'update-metadata --checksum'."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Dump custom metadata of a run as JSON to stdout."""
     logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
@@ -1030,12 +1040,18 @@ def run_dump_metadata(
     try:
         run = _Service().application_run(run_id).details()
         custom_metadata = run.custom_metadata if hasattr(run, "custom_metadata") else {}
+        output: dict[str, Any] | Any = custom_metadata
+        if show_checksum:
+            output = {
+                "custom_metadata": custom_metadata,
+                "custom_metadata_checksum": getattr(run, "custom_metadata_checksum", None),
+            }
 
         # Output JSON to stdout
         if pretty:
-            print(json.dumps(custom_metadata, indent=2))
+            print(json.dumps(output, indent=2))
         else:
-            print(json.dumps(custom_metadata))
+            print(json.dumps(output))
 
         logger.debug("Dumped custom metadata for run with ID '{}'", run_id)
     except NotFoundException:
@@ -1053,6 +1069,17 @@ def run_dump_item_metadata(
     run_id: Annotated[str, typer.Argument(help="Id of the run containing the item")],
     external_id: Annotated[str, typer.Argument(help="External ID of the item to dump custom metadata for")],
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+    show_checksum: Annotated[
+        bool,
+        typer.Option(
+            "--show-checksum",
+            help=(
+                "Wrap the output as {'custom_metadata': ..., 'custom_metadata_checksum': ...} to obtain the "
+                "checksum required for optimistic concurrency control on a subsequent "
+                "'update-item-metadata --checksum'."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Dump custom metadata of an item as JSON to stdout."""
     logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
@@ -1076,12 +1103,18 @@ def run_dump_item_metadata(
             sys.exit(2)
 
         custom_metadata = item.custom_metadata if hasattr(item, "custom_metadata") else {}
+        output: dict[str, Any] | Any = custom_metadata
+        if show_checksum:
+            output = {
+                "custom_metadata": custom_metadata,
+                "custom_metadata_checksum": getattr(item, "custom_metadata_checksum", None),
+            }
 
         # Output JSON to stdout
         if pretty:
-            print(json.dumps(custom_metadata, indent=2))
+            print(json.dumps(output, indent=2))
         else:
-            print(json.dumps(custom_metadata))
+            print(json.dumps(output))
 
         logger.debug("Dumped custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
     except NotFoundException:
@@ -1238,9 +1271,31 @@ def run_update_metadata(
     metadata_json: Annotated[
         str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
     ],
+    checksum: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum",
+            help=(
+                "Optional custom metadata checksum obtained from 'dump-metadata --show-checksum', used for "
+                "optimistic concurrency control. If the run's metadata was modified since the checksum was "
+                "read, the update is rejected (exit code 3)."
+            ),
+        ),
+    ] = None,
+    enrich_sdk_metadata: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "Enrich the sdk field with auto-generated tracking context (submission, user, CI). "
+                "Use --no-enrich-sdk-metadata to forward the supplied sdk field unchanged."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
+
+    from aignostics.platform import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for run with ID '{}'", run_id)
 
@@ -1255,9 +1310,18 @@ def run_update_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        _Service().application_run_update_custom_metadata(run_id, custom_metadata)
+        _Service().application_run_update_custom_metadata(
+            run_id,
+            custom_metadata,
+            custom_metadata_checksum=checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
+        )
         logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
+    except ConcurrencyConflictError:
+        logger.warning(f"Custom metadata for run with ID '{run_id}' was modified by another process.")
+        console.print("[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry.")
+        sys.exit(3)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
@@ -1279,9 +1343,31 @@ def run_update_item_metadata(
     metadata_json: Annotated[
         str, typer.Argument(..., help='Custom metadata as JSON string (e.g., \'{"key": "value"}\')')
     ],
+    checksum: Annotated[
+        str | None,
+        typer.Option(
+            "--checksum",
+            help=(
+                "Optional custom metadata checksum obtained from 'dump-item-metadata --show-checksum', used "
+                "for optimistic concurrency control. If the item's metadata was modified since the checksum "
+                "was read, the update is rejected (exit code 3)."
+            ),
+        ),
+    ] = None,
+    enrich_sdk_metadata: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "Enrich the sdk field with auto-generated tracking context (submission, user, CI). "
+                "Use --no-enrich-sdk-metadata to forward the supplied sdk field unchanged."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
+
+    from aignostics.platform import ConcurrencyConflictError  # noqa: PLC0415
 
     logger.trace("Updating custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
 
@@ -1296,9 +1382,23 @@ def run_update_item_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        _Service().application_run_update_item_custom_metadata(run_id, external_id, custom_metadata)
+        _Service().application_run_update_item_custom_metadata(
+            run_id,
+            external_id,
+            custom_metadata,
+            custom_metadata_checksum=checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
+        )
         logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")
+    except ConcurrencyConflictError:
+        logger.warning(
+            "Custom metadata for item '{}' in run with ID '{}' was modified by another process.",
+            external_id,
+            run_id,
+        )
+        console.print("[warning]Warning:[/warning] Metadata was modified by another process. Re-read and retry.")
+        sys.exit(3)
     except NotFoundException:
         logger.warning(f"Run with ID '{run_id}' or item '{external_id}' not found.")
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' or item '{external_id}' not found.")
