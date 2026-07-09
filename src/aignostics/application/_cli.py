@@ -1267,6 +1267,15 @@ def run_update_metadata(
             ),
         ),
     ] = None,
+    enrich_sdk_metadata: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "Enrich the sdk field with auto-generated tracking context (submission, user, CI). "
+                "Use --no-enrich-sdk-metadata to forward the supplied sdk field unchanged."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Update custom metadata for a run."""
     import json  # noqa: PLC0415
@@ -1286,7 +1295,12 @@ def run_update_metadata(
             console.print(f"[error]Error:[/error] Invalid JSON: {e}")
             sys.exit(1)
 
-        Service().application_run_update_custom_metadata(run_id, custom_metadata, custom_metadata_checksum=checksum)
+        Service().application_run_update_custom_metadata(
+            run_id,
+            custom_metadata,
+            custom_metadata_checksum=checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
+        )
         logger.debug("Updated custom metadata for run with ID '{}'.", run_id)
         console.print(f"Successfully updated custom metadata for run with ID '{run_id}'.")
     except ConcurrencyConflictError:
@@ -1325,6 +1339,15 @@ def run_update_item_metadata(
             ),
         ),
     ] = None,
+    enrich_sdk_metadata: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "Enrich the sdk field with auto-generated tracking context (submission, user, CI). "
+                "Use --no-enrich-sdk-metadata to forward the supplied sdk field unchanged."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Update custom metadata for an item in a run."""
     import json  # noqa: PLC0415
@@ -1345,7 +1368,11 @@ def run_update_item_metadata(
             sys.exit(1)
 
         Service().application_run_update_item_custom_metadata(
-            run_id, external_id, custom_metadata, custom_metadata_checksum=checksum
+            run_id,
+            external_id,
+            custom_metadata,
+            custom_metadata_checksum=checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
         )
         logger.debug("Updated custom metadata for item '{}' in run with ID '{}'.", external_id, run_id)
         console.print(f"Successfully updated custom metadata for item '{external_id}' in run with ID '{run_id}'.")

@@ -1179,7 +1179,41 @@ def test_cli_run_update_metadata_forwards_checksum(runner: CliRunner) -> None:
 
     assert result.exit_code == 0
     mock_service_cls.return_value.application_run_update_custom_metadata.assert_called_once_with(
-        "run-123", {"key": "value"}, custom_metadata_checksum="abc123"
+        "run-123", {"key": "value"}, custom_metadata_checksum="abc123", enrich_sdk_metadata=True
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_metadata_default_enrich_sdk_metadata_true(runner: CliRunner) -> None:
+    """Check run update-metadata passes enrich_sdk_metadata=True to the service by default."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(cli, ["application", "run", "update-metadata", "run-123", '{"key": "value"}'])
+
+    assert result.exit_code == 0
+    mock_service_cls.return_value.application_run_update_custom_metadata.assert_called_once_with(
+        "run-123", {"key": "value"}, custom_metadata_checksum=None, enrich_sdk_metadata=True
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_metadata_no_enrich_sdk_metadata_reaches_service_false(runner: CliRunner) -> None:
+    """Check run update-metadata --no-enrich-sdk-metadata reaches the service as enrich_sdk_metadata=False."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-metadata",
+                "run-123",
+                '{"key": "value"}',
+                "--no-enrich-sdk-metadata",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_service_cls.return_value.application_run_update_custom_metadata.assert_called_once_with(
+        "run-123", {"key": "value"}, custom_metadata_checksum=None, enrich_sdk_metadata=False
     )
 
 
@@ -1216,7 +1250,30 @@ def test_cli_run_update_item_metadata_forwards_checksum(runner: CliRunner) -> No
 
     assert result.exit_code == 0
     mock_service_cls.return_value.application_run_update_item_custom_metadata.assert_called_once_with(
-        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123"
+        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum="abc123", enrich_sdk_metadata=True
+    )
+
+
+@pytest.mark.unit
+def test_cli_run_update_item_metadata_no_enrich_sdk_metadata_reaches_service_false(runner: CliRunner) -> None:
+    """Check run update-item-metadata --no-enrich-sdk-metadata reaches the service as enrich_sdk_metadata=False."""
+    with patch("aignostics.application._cli.Service") as mock_service_cls:
+        result = runner.invoke(
+            cli,
+            [
+                "application",
+                "run",
+                "update-item-metadata",
+                "run-123",
+                "item-ext-id",
+                '{"key": "value"}',
+                "--no-enrich-sdk-metadata",
+            ],
+        )
+
+    assert result.exit_code == 0
+    mock_service_cls.return_value.application_run_update_item_custom_metadata.assert_called_once_with(
+        "run-123", "item-ext-id", {"key": "value"}, custom_metadata_checksum=None, enrich_sdk_metadata=False
     )
 
 

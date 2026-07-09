@@ -1306,3 +1306,91 @@ def test_results_omits_none_filters(app_run, mock_api) -> None:
     assert "state" not in call_kwargs
     assert "termination_reason" not in call_kwargs
     assert "custom_metadata" not in call_kwargs
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# update_custom_metadata / update_item_custom_metadata: checksum + enrich_sdk_metadata
+# ─────────────────────────────────────────────────────────────────────────────
+
+_PATCH_BUILD_RUN_SDK_METADATA = "aignostics.platform.resources.runs.build_run_sdk_metadata"
+_PATCH_VALIDATE_RUN_SDK_METADATA = "aignostics.platform.resources.runs.validate_run_sdk_metadata"
+_PATCH_BUILD_ITEM_SDK_METADATA = "aignostics.platform.resources.runs.build_item_sdk_metadata"
+_PATCH_VALIDATE_ITEM_SDK_METADATA = "aignostics.platform.resources.runs.validate_item_sdk_metadata"
+
+
+@pytest.mark.unit
+def test_update_custom_metadata_forwards_checksum(app_run, mock_api) -> None:
+    """update_custom_metadata forwards custom_metadata_checksum on the update request."""
+    with patch(_PATCH_BUILD_RUN_SDK_METADATA, return_value={}), patch(_PATCH_VALIDATE_RUN_SDK_METADATA):
+        app_run.update_custom_metadata({"key": "value"}, custom_metadata_checksum="abc123")
+
+    call_kwargs = mock_api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put.call_args[1]
+    request = call_kwargs["custom_metadata_update_request"]
+    assert request.custom_metadata_checksum == "abc123"
+
+
+@pytest.mark.unit
+def test_update_custom_metadata_enrich_default_calls_sdk_metadata_builders(app_run, mock_api) -> None:
+    """Default enrich_sdk_metadata=True merges and validates SDK metadata."""
+    mock_api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put.return_value = None
+    with (
+        patch(_PATCH_BUILD_RUN_SDK_METADATA, return_value={"schema_version": "0.0.1"}) as mock_build,
+        patch(_PATCH_VALIDATE_RUN_SDK_METADATA) as mock_validate,
+    ):
+        app_run.update_custom_metadata({"key": "value"})
+
+    mock_build.assert_called_once()
+    mock_validate.assert_called_once()
+    call_kwargs = mock_api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put.call_args[1]
+    request = call_kwargs["custom_metadata_update_request"]
+    assert "sdk" in request.custom_metadata
+    assert request.custom_metadata["sdk"]["schema_version"] == "0.0.1"
+
+
+@pytest.mark.unit
+def test_update_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api) -> None:
+    """enrich_sdk_metadata=False skips build/validate and forwards custom_metadata verbatim."""
+    with (
+        patch(_PATCH_BUILD_RUN_SDK_METADATA) as mock_build,
+        patch(_PATCH_VALIDATE_RUN_SDK_METADATA) as mock_validate,
+    ):
+        app_run.update_custom_metadata({"key": "value"}, enrich_sdk_metadata=False)
+
+    mock_build.assert_not_called()
+    mock_validate.assert_not_called()
+    call_kwargs = mock_api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put.call_args[1]
+    request = call_kwargs["custom_metadata_update_request"]
+    assert request.custom_metadata == {"key": "value"}
+    assert "sdk" not in request.custom_metadata
+
+
+@pytest.mark.unit
+def test_update_item_custom_metadata_forwards_checksum(app_run, mock_api) -> None:
+    """update_item_custom_metadata forwards custom_metadata_checksum on the update request."""
+    with patch(_PATCH_BUILD_ITEM_SDK_METADATA, return_value={}), patch(_PATCH_VALIDATE_ITEM_SDK_METADATA):
+        app_run.update_item_custom_metadata("item-ext-id", {"key": "value"}, custom_metadata_checksum="xyz789")
+
+    call_kwargs = (
+        mock_api.put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put.call_args[1]
+    )
+    request = call_kwargs["custom_metadata_update_request"]
+    assert request.custom_metadata_checksum == "xyz789"
+
+
+@pytest.mark.unit
+def test_update_item_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_run, mock_api) -> None:
+    """enrich_sdk_metadata=False skips build/validate for items and forwards metadata verbatim."""
+    with (
+        patch(_PATCH_BUILD_ITEM_SDK_METADATA) as mock_build,
+        patch(_PATCH_VALIDATE_ITEM_SDK_METADATA) as mock_validate,
+    ):
+        app_run.update_item_custom_metadata("item-ext-id", {"key": "value"}, enrich_sdk_metadata=False)
+
+    mock_build.assert_not_called()
+    mock_validate.assert_not_called()
+    call_kwargs = (
+        mock_api.put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put.call_args[1]
+    )
+    request = call_kwargs["custom_metadata_update_request"]
+    assert request.custom_metadata == {"key": "value"}
+    assert "sdk" not in request.custom_metadata

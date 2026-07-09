@@ -613,6 +613,65 @@ def get_item_sdk_metadata_json_schema() -> dict[str, Any]:
 11. **Item Metadata** (NEW) - Separate schema for item-level metadata with platform bucket information
 12. **Metadata Updates** (NEW) - Update metadata via CLI (`aignostics application run custom-metadata update`)
 
+### Optimistic Concurrency Control & `enrich_sdk_metadata` Toggle (NEW)
+
+**Checksum-based optimistic concurrency (`ConcurrencyConflictError`):**
+
+`RunData.custom_metadata_checksum` and `ItemResultReadResponse.custom_metadata_checksum` expose a
+checksum for the run's/item's current custom metadata. `Run.update_custom_metadata()` and
+`Run.update_item_custom_metadata()` accept a keyword-only `custom_metadata_checksum: str | None`
+parameter that is forwarded verbatim on `CustomMetadataUpdateRequest`. If the checksum no longer
+matches the server-side value (i.e. the metadata was modified since it was read), the platform
+returns HTTP 412 Precondition Failed. The application service layer
+(`Service.application_run_update_custom_metadata` / `..._update_item_custom_metadata`) maps this
+412 to `aignostics.platform.ConcurrencyConflictError` — a `ValueError` subclass, so existing
+`except ValueError` callers keep working, while callers that need to distinguish a stale-checksum
+conflict from an invalid-ID error can catch `ConcurrencyConflictError` specifically.
+
+```python
+from aignostics.platform import ConcurrencyConflictError, Client
+
+client = Client()
+run = client.run("run-123")
+details = run.details()
+
+try:
+    run.update_custom_metadata(
+        {**details.custom_metadata, "note": "reviewed"},
+        custom_metadata_checksum=details.custom_metadata_checksum,
+    )
+except ConcurrencyConflictError:
+    # Metadata was modified since `details` was read — re-read and retry.
+    ...
+```
+
+**`enrich_sdk_metadata` toggle (preserve caller-supplied `sdk` field):**
+
+By default (`enrich_sdk_metadata=True`), `update_custom_metadata()` / `update_item_custom_metadata()`
+merge auto-generated SDK tracking context into `custom_metadata["sdk"]` and validate it against the
+SDK metadata schema, exactly as before. Passing `enrich_sdk_metadata=False` skips **both** the merge
+and the schema validation — `custom_metadata` (including any `sdk` field the caller supplied) is
+forwarded to the platform exactly as given. This lets a caller round-trip a previously dumped `sdk`
+field (e.g. one containing `tags` or a `note` it wants to preserve unmodified) without the SDK
+overwriting `submission`/`updated_at`/etc. on every write.
+
+**Combined read → modify → write loop (checksum + enrich toggle):**
+
+```bash
+# 1. Dump current metadata together with its checksum
+aignostics application run custom-metadata dump-metadata RUN_ID --show-checksum --pretty
+
+# 2. Edit the dumped JSON locally (e.g. add a tag, change a note) ...
+
+# 3. Write it back, guarding against concurrent modification and preserving `sdk` verbatim
+aignostics application run update-metadata RUN_ID "$(cat edited.json)" \
+  --checksum <checksum-from-step-1> \
+  --no-enrich-sdk-metadata
+```
+
+If another process modified the run's metadata between steps 1 and 3, step 3 exits with code 3
+(`ConcurrencyConflictError`) instead of silently overwriting the concurrent change.
+
 **Testing:**
 
 Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:

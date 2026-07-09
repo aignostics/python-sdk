@@ -1129,6 +1129,7 @@ class Service(BaseService):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Update custom metadata for an existing application run.
 
@@ -1139,6 +1140,9 @@ class Service(BaseService):
                 read (e.g. ``RunData.custom_metadata_checksum``) used for optimistic
                 concurrency control. If the run's metadata was modified since the checksum
                 was read, the update is rejected with :class:`ConcurrencyConflictError`.
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context into ``custom_metadata["sdk"]``. If False, forward ``custom_metadata``
+                verbatim, preserving a caller-supplied ``sdk`` field unchanged.
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
@@ -1152,6 +1156,7 @@ class Service(BaseService):
             self._get_platform_client().run(run_id).update_custom_metadata(
                 custom_metadata,
                 custom_metadata_checksum=custom_metadata_checksum,
+                enrich_sdk_metadata=enrich_sdk_metadata,
             )
             logger.trace("Updated custom metadata for run with ID '{}'", run_id)
         except ValueError as e:
@@ -1188,6 +1193,7 @@ class Service(BaseService):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Static wrapper for updating custom metadata for an application run.
 
@@ -1196,6 +1202,7 @@ class Service(BaseService):
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
             custom_metadata_checksum (str | None): Optional checksum for optimistic
                 concurrency control. See :meth:`application_run_update_custom_metadata`.
+            enrich_sdk_metadata (bool): See :meth:`application_run_update_custom_metadata`.
 
         Raises:
             NotFoundException: If the application run with the given ID is not found.
@@ -1205,7 +1212,10 @@ class Service(BaseService):
             RuntimeError: If updating the run metadata fails unexpectedly.
         """
         Service().application_run_update_custom_metadata(
-            run_id, custom_metadata, custom_metadata_checksum=custom_metadata_checksum
+            run_id,
+            custom_metadata,
+            custom_metadata_checksum=custom_metadata_checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
         )
 
     def application_run_update_item_custom_metadata(
@@ -1215,6 +1225,7 @@ class Service(BaseService):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Update custom metadata for an existing item in an application run.
 
@@ -1226,6 +1237,9 @@ class Service(BaseService):
                 read (e.g. ``ItemResultReadResponse.custom_metadata_checksum``) used for
                 optimistic concurrency control. If the item's metadata was modified since the
                 checksum was read, the update is rejected with :class:`ConcurrencyConflictError`.
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context into ``custom_metadata["sdk"]``. If False, forward ``custom_metadata``
+                verbatim, preserving a caller-supplied ``sdk`` field unchanged.
 
         Raises:
             NotFoundException: If the application run or item with the given IDs is not found.
@@ -1244,6 +1258,7 @@ class Service(BaseService):
                 external_id,
                 custom_metadata,
                 custom_metadata_checksum=custom_metadata_checksum,
+                enrich_sdk_metadata=enrich_sdk_metadata,
             )
             logger.trace(
                 "Updated custom metadata for item '{}' in run with ID '{}'",
@@ -1287,6 +1302,7 @@ class Service(BaseService):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Static wrapper for updating custom metadata for an item in an application run.
 
@@ -1296,6 +1312,7 @@ class Service(BaseService):
             custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
             custom_metadata_checksum (str | None): Optional checksum for optimistic
                 concurrency control. See :meth:`application_run_update_item_custom_metadata`.
+            enrich_sdk_metadata (bool): See :meth:`application_run_update_item_custom_metadata`.
 
         Raises:
             NotFoundException: If the application run or item with the given IDs is not found.
@@ -1305,7 +1322,11 @@ class Service(BaseService):
             RuntimeError: If updating the item metadata fails unexpectedly.
         """
         Service().application_run_update_item_custom_metadata(
-            run_id, external_id, custom_metadata, custom_metadata_checksum=custom_metadata_checksum
+            run_id,
+            external_id,
+            custom_metadata,
+            custom_metadata_checksum=custom_metadata_checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
         )
 
     def application_run_cancel(self, run_id: str) -> None:

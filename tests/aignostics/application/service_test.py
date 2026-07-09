@@ -514,7 +514,9 @@ def test_application_run_update_custom_metadata_success(mock_get_client: MagicMo
     # Verify the run() method was called with correct run_id
     mock_client.run.assert_called_once_with("run-123")
     # Verify the update_custom_metadata method was called with correct arguments
-    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata, custom_metadata_checksum=None)
+    mock_run.update_custom_metadata.assert_called_once_with(
+        custom_metadata, custom_metadata_checksum=None, enrich_sdk_metadata=True
+    )
 
 
 @pytest.mark.unit
@@ -531,7 +533,48 @@ def test_application_run_update_custom_metadata_forwards_checksum(mock_get_clien
 
     service.application_run_update_custom_metadata("run-123", custom_metadata, custom_metadata_checksum="abc123")
 
-    mock_run.update_custom_metadata.assert_called_once_with(custom_metadata, custom_metadata_checksum="abc123")
+    mock_run.update_custom_metadata.assert_called_once_with(
+        custom_metadata, custom_metadata_checksum="abc123", enrich_sdk_metadata=True
+    )
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_forwards_enrich_sdk_metadata_false(mock_get_client: MagicMock) -> None:
+    """Test that enrich_sdk_metadata=False is forwarded to the platform layer."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value"}
+
+    service.application_run_update_custom_metadata("run-123", custom_metadata, enrich_sdk_metadata=False)
+
+    mock_run.update_custom_metadata.assert_called_once_with(
+        custom_metadata, custom_metadata_checksum=None, enrich_sdk_metadata=False
+    )
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_custom_metadata_static_forwards_enrich_sdk_metadata(
+    mock_get_client: MagicMock,
+) -> None:
+    """Test that the static wrapper forwards enrich_sdk_metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    ApplicationService.application_run_update_custom_metadata_static(
+        "run-123", {"key": "value"}, enrich_sdk_metadata=False
+    )
+
+    mock_run.update_custom_metadata.assert_called_once_with(
+        {"key": "value"}, custom_metadata_checksum=None, enrich_sdk_metadata=False
+    )
 
 
 @pytest.mark.unit
@@ -547,7 +590,9 @@ def test_application_run_update_custom_metadata_static_forwards_checksum(mock_ge
         "run-123", {"key": "value"}, custom_metadata_checksum="abc123"
     )
 
-    mock_run.update_custom_metadata.assert_called_once_with({"key": "value"}, custom_metadata_checksum="abc123")
+    mock_run.update_custom_metadata.assert_called_once_with(
+        {"key": "value"}, custom_metadata_checksum="abc123", enrich_sdk_metadata=True
+    )
 
 
 @pytest.mark.unit
@@ -631,7 +676,50 @@ def test_application_run_update_item_custom_metadata_success(mock_get_client: Ma
     mock_client.run.assert_called_once_with("run-123")
     # Verify the update_item_custom_metadata method was called with correct arguments
     mock_run.update_item_custom_metadata.assert_called_once_with(
-        "item-ext-id", custom_metadata, custom_metadata_checksum=None
+        "item-ext-id", custom_metadata, custom_metadata_checksum=None, enrich_sdk_metadata=True
+    )
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_forwards_enrich_sdk_metadata_false(
+    mock_get_client: MagicMock,
+) -> None:
+    """Test that enrich_sdk_metadata=False is forwarded for item metadata updates."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    service = ApplicationService()
+    custom_metadata = {"key": "value"}
+
+    service.application_run_update_item_custom_metadata(
+        "run-123", "item-ext-id", custom_metadata, enrich_sdk_metadata=False
+    )
+
+    mock_run.update_item_custom_metadata.assert_called_once_with(
+        "item-ext-id", custom_metadata, custom_metadata_checksum=None, enrich_sdk_metadata=False
+    )
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_update_item_custom_metadata_static_forwards_enrich_sdk_metadata(
+    mock_get_client: MagicMock,
+) -> None:
+    """Test that the item static wrapper forwards enrich_sdk_metadata."""
+    mock_client = MagicMock()
+    mock_run = MagicMock()
+    mock_client.run.return_value = mock_run
+    mock_get_client.return_value = mock_client
+
+    ApplicationService.application_run_update_item_custom_metadata_static(
+        "run-123", "item-ext-id", {"key": "value"}, enrich_sdk_metadata=False
+    )
+
+    mock_run.update_item_custom_metadata.assert_called_once_with(
+        "item-ext-id", {"key": "value"}, custom_metadata_checksum=None, enrich_sdk_metadata=False
     )
 
 

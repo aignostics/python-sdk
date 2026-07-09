@@ -606,6 +606,7 @@ class Run(_AuthenticatedResource):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Update custom metadata for this application run.
 
@@ -617,16 +618,24 @@ class Run(_AuthenticatedResource):
                 application service layer) if the run's current custom metadata checksum does
                 not match, indicating the metadata was modified since the checksum was read
                 (e.g. via ``RunData.custom_metadata_checksum``).
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context (submission, user, CI) into ``custom_metadata["sdk"]`` and validate it
+                against the SDK metadata schema. If False, ``custom_metadata`` is forwarded to
+                the platform verbatim: the ``sdk`` field (if any) is neither merged nor
+                validated. Use False together with the read-modify-write loop (dump
+                ``--show-checksum`` -> edit -> update ``--checksum ... --no-enrich-sdk-metadata``)
+                to preserve a caller-supplied ``sdk`` field unchanged.
 
         Raises:
             Exception: If the API request fails.
         """
         custom_metadata = custom_metadata or {}
-        custom_metadata.setdefault("sdk", {})
-        existing_sdk_metadata = custom_metadata.get("sdk", {})
-        sdk_metadata = build_run_sdk_metadata(existing_sdk_metadata)
-        custom_metadata["sdk"].update(sdk_metadata)
-        validate_run_sdk_metadata(custom_metadata["sdk"])
+        if enrich_sdk_metadata:
+            custom_metadata.setdefault("sdk", {})
+            existing_sdk_metadata = custom_metadata.get("sdk", {})
+            sdk_metadata = build_run_sdk_metadata(existing_sdk_metadata)
+            custom_metadata["sdk"].update(sdk_metadata)
+            validate_run_sdk_metadata(custom_metadata["sdk"])
 
         self._api.put_run_custom_metadata_v1_runs_run_id_custom_metadata_put(
             self.run_id,
@@ -645,6 +654,7 @@ class Run(_AuthenticatedResource):
         custom_metadata: dict[str, Any],
         *,
         custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
     ) -> None:
         """Update custom metadata for an item in this application run.
 
@@ -657,16 +667,24 @@ class Run(_AuthenticatedResource):
                 application service layer) if the item's current custom metadata checksum does
                 not match, indicating the metadata was modified since the checksum was read
                 (e.g. via ``ItemResultReadResponse.custom_metadata_checksum``).
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context into ``custom_metadata["sdk"]`` and validate it against the item SDK
+                metadata schema. If False, ``custom_metadata`` is forwarded to the platform
+                verbatim: the ``sdk`` field (if any) is neither merged nor validated. Use False
+                together with the read-modify-write loop (dump ``--show-checksum`` -> edit ->
+                update ``--checksum ... --no-enrich-sdk-metadata``) to preserve a
+                caller-supplied ``sdk`` field unchanged.
 
         Raises:
             Exception: If the API request fails.
         """
         custom_metadata = custom_metadata or {}
-        custom_metadata.setdefault("sdk", {})
-        existing_sdk_metadata = custom_metadata.get("sdk", {})
-        sdk_metadata = build_item_sdk_metadata(existing_sdk_metadata)
-        custom_metadata["sdk"].update(sdk_metadata)
-        validate_item_sdk_metadata(custom_metadata["sdk"])
+        if enrich_sdk_metadata:
+            custom_metadata.setdefault("sdk", {})
+            existing_sdk_metadata = custom_metadata.get("sdk", {})
+            sdk_metadata = build_item_sdk_metadata(existing_sdk_metadata)
+            custom_metadata["sdk"].update(sdk_metadata)
+            validate_item_sdk_metadata(custom_metadata["sdk"])
 
         self._api.put_item_custom_metadata_by_run_v1_runs_run_id_items_external_id_custom_metadata_put(
             self.run_id,
