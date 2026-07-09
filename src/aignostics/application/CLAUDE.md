@@ -794,6 +794,38 @@ Every run submitted through the application module automatically includes SDK me
 
 See `platform/CLAUDE.md` for detailed SDK metadata documentation and schema.
 
+**Custom Metadata Updates: Checksum Concurrency Control & `enrich_sdk_metadata` Toggle (NEW):**
+
+`Service.application_run_update_custom_metadata()` / `..._update_item_custom_metadata()` (and their
+`_static` wrappers) accept two keyword-only parameters, threaded through to the platform layer:
+
+- `custom_metadata_checksum: str | None` — pass the checksum from a prior read
+  (`RunData.custom_metadata_checksum` / `ItemResultReadResponse.custom_metadata_checksum`) for
+  optimistic concurrency control. If the metadata changed since the checksum was read, the platform
+  returns HTTP 412 and the service raises `aignostics.platform.ConcurrencyConflictError` (a
+  `ValueError` subclass) instead of silently overwriting a concurrent change.
+- `enrich_sdk_metadata: bool = True` — set to `False` to forward `custom_metadata` (including any
+  `sdk` field) to the platform verbatim, skipping the automatic SDK metadata merge/validation. Use
+  this when round-tripping a previously dumped `sdk` field unchanged.
+
+CLI support (`_cli.py`):
+
+```bash
+# Read-modify-write loop, safe under concurrent edits:
+aignostics application run custom-metadata dump-metadata RUN_ID --show-checksum --pretty
+#  ... edit the dumped JSON ...
+aignostics application run custom-metadata update-metadata RUN_ID "<edited json>" \
+  --checksum <checksum-from-dump> --no-enrich-sdk-metadata
+```
+
+- `dump-metadata` / `dump-item-metadata` gained `--show-checksum`, wrapping the output as
+  `{"custom_metadata": ..., "custom_metadata_checksum": ...}`.
+- `update-metadata` / `update-item-metadata` gained `--checksum` and
+  `--enrich-sdk-metadata`/`--no-enrich-sdk-metadata`. A `ConcurrencyConflictError` from the service
+  exits the CLI with code 3 (distinct from the existing code 2 for not-found/invalid-ID errors).
+
+See `platform/CLAUDE.md` for the full checksum + `enrich_sdk_metadata` semantics.
+
 **Signed URL Generation:**
 
 The `_download.py` module uses `platform.generate_signed_url()` to convert `gs://` URLs to time-limited signed URLs for downloads.
