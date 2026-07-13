@@ -132,3 +132,6 @@ The `download_url` is a signed URL that allows the Aignostics Platform to downlo
 To make whole slide images available to the Aignostics Platform, you provide a signed URL the platform can download from. Signed URLs for files in Google Cloud Storage buckets can be generated with `generate_signed_url` ([code](https://github.com/aignostics/python-sdk/blob/main/src/aignostics/platform/_utils.py)).
 
 **You must provide the [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials) for the Google Cloud Storage bucket.**
+
+```{include} ../partials/_invite_your_team.md
+```
