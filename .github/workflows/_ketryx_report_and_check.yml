@@ -60,6 +60,15 @@ jobs:
           !contains(inputs.commit_message, 'skip:ketryx') &&
           !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
         uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
+        # The action derives `changeRequestNumber` from GITHUB_REF_NAME when it
+        # ends in `/merge` (pull_request runs, e.g. "694/merge"). Ketryx then
+        # tries to fetch the PR as a Code Change Request and returns HTTP 500
+        # when that fetch fails (PAT lacks permissions), failing the build even
+        # though it is otherwise reported successfully. We do not use the CCR
+        # feature (check-item-association is false), so override the ref name to
+        # the branch (never ends in `/merge`) to suppress changeRequestNumber.
+        env:
+          GITHUB_REF_NAME: ${{ github.head_ref || github.ref_name }}
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
