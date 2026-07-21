@@ -13,6 +13,6 @@ If you are your organization's **Administrator**, you can invite colleagues onto
 
    > ⚠️ The email address must use your organization's own domain — the same domain as yours.
 
-3. **Send the invitation.** Click **Send**. Your colleague receives a signup email from `support@aignostics.com` and completes the same steps you did — see **Sign up for the Aignostics Platform** at the start of this guide.
+3. **Send the invitation.** Click **Send**. Your colleague receives a signup email from `support@aignostics.com` and completes the same signup steps you did — accepting the invitation, setting a password, and configuring two-factor authentication.
 
 Return to the Members page any time to review your organization's users and their roles.
