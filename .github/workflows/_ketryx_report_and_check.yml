@@ -55,10 +55,28 @@ jobs:
           name: audit-results
           path: audit-results
 
+      # The Ketryx action derives `changeRequestNumber` from GITHUB_REF_NAME when
+      # it ends in "/merge" (pull_request runs, e.g. "694/merge"). Ketryx then
+      # tries to fetch that PR as a Code Change Request (CCR) and returns HTTP
+      # 500 when the fetch fails (its PAT lacks the required GitHub permissions),
+      # failing the build even though it is otherwise reported successfully. We
+      # do not use the CCR feature (check-item-association is false). A step-level
+      # `env:` cannot override the default GITHUB_REF_NAME, so rewrite it via
+      # $GITHUB_ENV to the branch name (never ends in "/merge") to suppress
+      # changeRequestNumber.
+      - name: Suppress PR merge ref for Ketryx report
+        if: |
+          !contains(inputs.commit_message, 'skip:ketryx') &&
+          !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
+        run: echo "GITHUB_REF_NAME=${{ github.head_ref || github.ref_name }}" >> "$GITHUB_ENV"
+
       - name: Report build to Ketryx and check for approval
         if: |
           !contains(inputs.commit_message, 'skip:ketryx') &&
           !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
+        # Safety net: a Ketryx-side 500 must not block PR CI (the build still
+        # lands in Ketryx). On push/tag runs (releases) the gate is enforced.
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
