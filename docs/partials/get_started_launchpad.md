@@ -129,6 +129,9 @@ Your slide appears in QuPath with the analysis annotations layered on top — ti
 
 **Congratulations** — you have signed up, installed Launchpad, run your first analysis, and opened the results in QuPath.
 
+```{include} ../partials/_invite_your_team.md
+```
+
 ## Troubleshooting
 
 <details>

@@ -117,3 +117,6 @@ To check system health manually:
 ```shell
 uvx aignostics system health
 ```
+
+```{include} ../partials/_invite_your_team.md
+```
