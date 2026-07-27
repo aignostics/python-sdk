@@ -229,6 +229,7 @@ required-version = ">=0.11.6" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p
 # WARNING: override-dependencies is *not* respected by uvx
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pytest>=9.0.1",    # pytest-md-report depends on pytest<9 unnecessarily
+    "pymdown-extensions>=11.0.0", # GHSA-9xwg-3r6f-jcx2
 ]
 
 [tool.uv.sources]
