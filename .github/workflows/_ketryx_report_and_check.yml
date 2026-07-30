@@ -33,7 +33,7 @@ jobs:
       packages: read
     steps:
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
 
@@ -77,7 +77,7 @@ jobs:
         # Safety net: a Ketryx-side 500 must not block PR CI (the build still
         # lands in Ketryx). On push/tag runs (releases) the gate is enforced.
         continue-on-error: ${{ github.event_name == 'pull_request' }}
-        uses: Ketryx/ketryx-github-action@40b13ef68c772e96e58ec01a81f5b216d7710186 # v1.4.0
+        uses: Ketryx/ketryx-github-action@719ef26488ed7f9d36a45a6d67d649726d5ece6a # v1.5.0
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
