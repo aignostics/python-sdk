@@ -90,6 +90,60 @@ def _js_set_membership(values: tuple[str, ...], *, negate: bool = False) -> str:
     return f"{'!' if negate else ''}new Set([{elements}]).has(x)"
 
 
+def _metadata_row_is_valid(row: dict[str, Any]) -> bool:
+    """Return whether a metadata grid row has a supported tissue and disease (indication).
+
+    Args:
+        row: A metadata grid row; the ``"tissue"`` and ``"disease"`` values are checked.
+
+    Returns:
+        True if both ``tissue`` and ``disease`` are in the supported sets, False otherwise.
+    """
+    return row.get("tissue") in TISSUE_TYPES and row.get("disease") in DISEASE_TYPES
+
+
+def _specimen_metadata_column_defs() -> list[dict[str, Any]]:
+    """Build the AG Grid column definitions for the editable Tissue and Disease columns.
+
+    The dropdown values and the red/green cell-coloring rules are derived from the single
+    source of truth :data:`TISSUE_TYPES` / :data:`DISEASE_TYPES`, so the run-submission grid
+    stays in sync with the platform API's supported specimen indications.
+
+    Returns:
+        The Tissue and Disease column definition dicts, in display order.
+    """
+    return [
+        {
+            "headerName": "Tissue",
+            "field": "tissue",
+            "editable": True,
+            "cellEditor": "agSelectCellEditor",
+            "cellEditorParams": {
+                "values": list(TISSUE_TYPES),
+                "valueListGap": 10,
+            },
+            "cellClassRules": {
+                "bg-red-300": _js_set_membership(TISSUE_TYPES, negate=True),
+                "bg-green-300": _js_set_membership(TISSUE_TYPES),
+            },
+        },
+        {
+            "headerName": "Disease",
+            "field": "disease",
+            "editable": True,
+            "cellEditor": "agSelectCellEditor",
+            "cellEditorParams": {
+                "values": list(DISEASE_TYPES),
+                "valueListGap": 10,
+            },
+            "cellClassRules": {
+                "bg-red-300": _js_set_membership(DISEASE_TYPES, negate=True),
+                "bg-green-300": _js_set_membership(DISEASE_TYPES),
+            },
+        },
+    ]
+
+
 @binding.bindable_dataclass
 class SubmitForm:
     """Submit form."""
@@ -484,7 +538,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 rows = await submit_form.metadata_grid.get_client_data()
                 valid = True
                 for row in rows:
-                    if (row["tissue"] not in set(TISSUE_TYPES)) or (row["disease"] not in set(DISEASE_TYPES)):
+                    if not _metadata_row_is_valid(row):
                         valid = False
                         break
                 if submit_form.metadata_next_button is None:
@@ -567,34 +621,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 ":cellRenderer": thumbnail_renderer_js,
                                 "autoHeight": True,
                             },
-                            {
-                                "headerName": "Tissue",
-                                "field": "tissue",
-                                "editable": True,
-                                "cellEditor": "agSelectCellEditor",
-                                "cellEditorParams": {
-                                    "values": list(TISSUE_TYPES),
-                                    "valueListGap": 10,
-                                },
-                                "cellClassRules": {
-                                    "bg-red-300": _js_set_membership(TISSUE_TYPES, negate=True),
-                                    "bg-green-300": _js_set_membership(TISSUE_TYPES),
-                                },
-                            },
-                            {
-                                "headerName": "Disease",
-                                "field": "disease",
-                                "editable": True,
-                                "cellEditor": "agSelectCellEditor",
-                                "cellEditorParams": {
-                                    "values": list(DISEASE_TYPES),
-                                    "valueListGap": 10,
-                                },
-                                "cellClassRules": {
-                                    "bg-red-300": _js_set_membership(DISEASE_TYPES, negate=True),
-                                    "bg-green-300": _js_set_membership(DISEASE_TYPES),
-                                },
-                            },
+                            *_specimen_metadata_column_defs(),
                             {"headerName": "File size", "field": "file_size_human"},
                             {"headerName": "MPP", "field": "resolution_mpp"},
                             {"headerName": "Width", "field": "width_px"},
