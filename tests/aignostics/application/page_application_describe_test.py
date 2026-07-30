@@ -15,15 +15,16 @@ from aignostics.application._gui._page_application_describe import (
     _specimen_metadata_column_defs,
 )
 
-# Indications added in Atlas H&E-TME v1.2.0 ("Added prostate, pancreatic, and stomach cancer types").
-_NEWLY_SUPPORTED_DISEASES = ("PROSTATE_CANCER", "PANCREATIC_CANCER", "STOMACH_CANCER")
-_NEWLY_SUPPORTED_TISSUES = ("PANCREAS", "PROSTATE", "SPLEEN", "STOMACH")
-
 
 @pytest.mark.unit
 def test_supported_indication_lists_match_platform_api() -> None:
-    """The GUI lists mirror the platform API's whole_slide_image metadata_schema."""
-    assert set(TISSUE_TYPES) == {
+    """The GUI lists mirror the platform API's whole_slide_image metadata_schema.
+
+    Exact tuple equality pins the supported values (including the prostate/pancreatic/stomach
+    additions from Atlas H&E-TME v1.2.0), their dropdown display order, and the absence of
+    duplicates in one assertion.
+    """
+    assert TISSUE_TYPES == (
         "ADRENAL_GLAND",
         "BLADDER",
         "BONE",
@@ -38,8 +39,8 @@ def test_supported_indication_lists_match_platform_api() -> None:
         "PROSTATE",
         "SPLEEN",
         "STOMACH",
-    }
-    assert set(DISEASE_TYPES) == {
+    )
+    assert DISEASE_TYPES == (
         "BLADDER_CANCER",
         "BREAST_CANCER",
         "COLORECTAL_CANCER",
@@ -48,23 +49,7 @@ def test_supported_indication_lists_match_platform_api() -> None:
         "PANCREATIC_CANCER",
         "PROSTATE_CANCER",
         "STOMACH_CANCER",
-    }
-
-
-@pytest.mark.unit
-def test_newly_supported_indications_are_present() -> None:
-    """The prostate/pancreatic/stomach additions are selectable."""
-    for disease in _NEWLY_SUPPORTED_DISEASES:
-        assert disease in DISEASE_TYPES
-    for tissue in _NEWLY_SUPPORTED_TISSUES:
-        assert tissue in TISSUE_TYPES
-
-
-@pytest.mark.unit
-def test_indication_lists_have_no_duplicates() -> None:
-    """A single source of truth must not carry duplicate entries."""
-    assert len(TISSUE_TYPES) == len(set(TISSUE_TYPES))
-    assert len(DISEASE_TYPES) == len(set(DISEASE_TYPES))
+    )
 
 
 @pytest.mark.unit
