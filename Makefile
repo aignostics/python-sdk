@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit clean codegen dist dist_native docs docker_build gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
+.PHONY: act all audit clean codegen dist dist_native docs docker_build gui_watch install lint lint_fix merge-release merge_bots pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -158,6 +158,19 @@ docker_build:
 pre_commit_run_all:
 	uv run pre-commit run --all-files
 
+## Merge all origin/renovate/* and origin/dependabot/* branches into the current branch, preferring their side on conflicts
+merge_bots:
+	@set -e; \
+	git fetch --prune origin; \
+	for branch in $$(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/renovate/*' 'refs/remotes/origin/dependabot/*'); do \
+		echo "==> merging $$branch"; \
+		git merge --no-edit -X theirs "$$branch" --no-verify || { \
+			echo "unresolvable conflict in $$branch - resolve it, then 'git commit' and re-run this target"; \
+			exit 1; \
+		}; \
+	done; \
+	echo "done - now regenerate the lockfile: uv lock"
+
 gui_watch:
 	uv run runner/gui_watch.py
 
@@ -238,6 +251,7 @@ help:
 	@echo "  gui_watch             - Open GUI in browser and update on changes in source code"
 	@echo "  install               - Install or update development dependencies inc. pre-commit hooks"
 	@echo "  lint                  - Run linting and formatting checks"
+	@echo "  merge_bots            - Merge all origin/renovate/* and origin/dependabot/* branches, preferring their side"
 	@echo "  pre_commit_run_all    - Run pre-commit hooks on all files"
 	@echo "  profile               - Profile with Scalene"
 	@echo "  setup                 - Setup development environment"
