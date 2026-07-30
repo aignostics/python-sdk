@@ -101,6 +101,8 @@ After the slide table, Launchpad shows a few optional screens — one for notes 
 
 The submission screen shows how many slides will be analyzed and where they are. Click **UPLOAD AND SUBMIT**. A progress bar shows your slide uploading to the Aignostics Platform. When the upload finishes, your run appears in the list on the left with a running icon (🏃).
 
+**Stay on this page until the upload finishes and your run appears in the list on the left.** The run is only created once the upload completes. If you leave the page, close Launchpad, or let your computer go to sleep before the upload finishes, the run is not created and you will need to start the submission again. Once the run shows up in the list with the running icon (🏃), the upload is done — from that point the analysis continues on Aignostics servers and you can safely close Launchpad.
+
 ### 6. Wait for results
 
 The analysis now runs on Aignostics servers, not on your computer, so you can do other things while you wait. How long it takes depends on the size and number of slides — anywhere from a few minutes to several hours. Click your run in the list on the left to see its status. The icon updates on its own as the slide is processed.

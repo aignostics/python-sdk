@@ -43,6 +43,106 @@ CLASS_WIDTH_ONE_THIRD = "w-1/3"
 CLASS_WIDTH_ONE_HALF = "w-1/2"
 DATETIME_MASK = "YYYY-MM-DD HH:mm"
 
+# Supported specimen tissue and disease (indication) values for per-slide metadata.
+# Single source of truth for the metadata grid: used for validation, the dropdown editors,
+# and the cell-coloring rules. Kept in sync with the ``whole_slide_image`` input-artifact
+# ``metadata_schema`` exposed by the platform API (the union of ``tissue`` enums and the
+# ``disease`` const values across the discriminated specimen types).
+TISSUE_TYPES: tuple[str, ...] = (
+    "ADRENAL_GLAND",
+    "BLADDER",
+    "BONE",
+    "BRAIN",
+    "BREAST",
+    "COLON",
+    "LIVER",
+    "LUNG",
+    "LYMPH_NODE",
+    "OTHER",
+    "PANCREAS",
+    "PROSTATE",
+    "SPLEEN",
+    "STOMACH",
+)
+DISEASE_TYPES: tuple[str, ...] = (
+    "BLADDER_CANCER",
+    "BREAST_CANCER",
+    "COLORECTAL_CANCER",
+    "LIVER_CANCER",
+    "LUNG_CANCER",
+    "PANCREATIC_CANCER",
+    "PROSTATE_CANCER",
+    "STOMACH_CANCER",
+)
+
+
+def _js_set_membership(values: tuple[str, ...], *, negate: bool = False) -> str:
+    """Build an AG Grid ``cellClassRules`` expression testing whether edited value ``x`` is in ``values``.
+
+    Args:
+        values: Allowed values.
+        negate: If True, the expression is true when ``x`` is *not* in ``values``.
+
+    Returns:
+        A JavaScript expression string, e.g. ``new Set(['LUNG', 'OTHER']).has(x)``.
+    """
+    elements = ", ".join(f"'{value}'" for value in values)
+    return f"{'!' if negate else ''}new Set([{elements}]).has(x)"
+
+
+def _metadata_row_is_valid(row: dict[str, Any]) -> bool:
+    """Return whether a metadata grid row has a supported tissue and disease (indication).
+
+    Args:
+        row: A metadata grid row; the ``"tissue"`` and ``"disease"`` values are checked.
+
+    Returns:
+        True if both ``tissue`` and ``disease`` are in the supported sets, False otherwise.
+    """
+    return row.get("tissue") in TISSUE_TYPES and row.get("disease") in DISEASE_TYPES
+
+
+def _specimen_metadata_column_defs() -> list[dict[str, Any]]:
+    """Build the AG Grid column definitions for the editable Tissue and Disease columns.
+
+    The dropdown values and the red/green cell-coloring rules are derived from the single
+    source of truth :data:`TISSUE_TYPES` / :data:`DISEASE_TYPES`, so the run-submission grid
+    stays in sync with the platform API's supported specimen indications.
+
+    Returns:
+        The Tissue and Disease column definition dicts, in display order.
+    """
+    return [
+        {
+            "headerName": "Tissue",
+            "field": "tissue",
+            "editable": True,
+            "cellEditor": "agSelectCellEditor",
+            "cellEditorParams": {
+                "values": list(TISSUE_TYPES),
+                "valueListGap": 10,
+            },
+            "cellClassRules": {
+                "bg-red-300": _js_set_membership(TISSUE_TYPES, negate=True),
+                "bg-green-300": _js_set_membership(TISSUE_TYPES),
+            },
+        },
+        {
+            "headerName": "Disease",
+            "field": "disease",
+            "editable": True,
+            "cellEditor": "agSelectCellEditor",
+            "cellEditorParams": {
+                "values": list(DISEASE_TYPES),
+                "valueListGap": 10,
+            },
+            "cellClassRules": {
+                "bg-red-300": _js_set_membership(DISEASE_TYPES, negate=True),
+                "bg-green-300": _js_set_membership(DISEASE_TYPES),
+            },
+        },
+    ]
+
 
 @binding.bindable_dataclass
 class SubmitForm:
@@ -438,30 +538,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                 rows = await submit_form.metadata_grid.get_client_data()
                 valid = True
                 for row in rows:
-                    if (
-                        row["tissue"]
-                        not in {
-                            "ADRENAL_GLAND",
-                            "BLADDER",
-                            "BONE",
-                            "BRAIN",
-                            "BREAST",
-                            "COLON",
-                            "LIVER",
-                            "LUNG",
-                            "LYMPH_NODE",
-                            "OTHER",
-                        }
-                    ) or (
-                        row["disease"]
-                        not in {
-                            "BREAST_CANCER",
-                            "BLADDER_CANCER",
-                            "COLORECTAL_CANCER",
-                            "LIVER_CANCER",
-                            "LUNG_CANCER",
-                        }
-                    ):
+                    if not _metadata_row_is_valid(row):
                         valid = False
                         break
                 if submit_form.metadata_next_button is None:
@@ -544,55 +621,7 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
                                 ":cellRenderer": thumbnail_renderer_js,
                                 "autoHeight": True,
                             },
-                            {
-                                "headerName": "Tissue",
-                                "field": "tissue",
-                                "editable": True,
-                                "cellEditor": "agSelectCellEditor",
-                                "cellEditorParams": {
-                                    "values": [
-                                        "ADRENAL_GLAND",
-                                        "BLADDER",
-                                        "BONE",
-                                        "BRAIN",
-                                        "BREAST",
-                                        "COLON",
-                                        "LIVER",
-                                        "LUNG",
-                                        "LYMPH_NODE",
-                                        "OTHER",
-                                    ],
-                                    "valueListGap": 10,
-                                },
-                                "cellClassRules": {
-                                    "bg-red-300": "!new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                    "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
-                                    "bg-green-300": "new Set(['ADRENAL_GLAND', 'BLADDER', 'BONE', 'BRAIN',"
-                                    "'BREAST', 'COLON', 'LIVER', 'LUNG', 'LYMPH_NODE', 'OTHER']).has(x)",
-                                },
-                            },
-                            {
-                                "headerName": "Disease",
-                                "field": "disease",
-                                "editable": True,
-                                "cellEditor": "agSelectCellEditor",
-                                "cellEditorParams": {
-                                    "values": [
-                                        "BREAST_CANCER",
-                                        "BLADDER_CANCER",
-                                        "COLORECTAL_CANCER",
-                                        "LIVER_CANCER",
-                                        "LUNG_CANCER",
-                                    ],
-                                    "valueListGap": 10,
-                                },
-                                "cellClassRules": {
-                                    "bg-red-300": "!new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
-                                    "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
-                                    "bg-green-300": "new Set(['BREAST_CANCER', 'BLADDER_CANCER', "
-                                    "'COLORECTAL_CANCER', 'LIVER_CANCER', 'LUNG_CANCER']).has(x)",
-                                },
-                            },
+                            *_specimen_metadata_column_defs(),
                             {"headerName": "File size", "field": "file_size_human"},
                             {"headerName": "MPP", "field": "resolution_mpp"},
                             {"headerName": "Width", "field": "width_px"},
