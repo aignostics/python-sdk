@@ -110,8 +110,8 @@ dependencies = [
     "pandas>=3.0.2,<4",
     "platformdirs>=4.3.2,<5",
     "procrastinate>=3.5.3",
-    "fastparquet>=2026.5.0,<2026.6.0; python_version < '3.14'",
-    "pyarrow>=23.0.1,<24; python_version >= '3.14'",
+    "fastparquet>=2026.3.0,<2026.4.0; python_version < '3.14'",
+    "pyarrow>=25,<26; python_version >= '3.14'",
     "pyjwt[crypto]>=2.13.0,<3", # CVE-2026-32597 requires >=2.12.0 (Renovate #475)
     "python-dateutil>=2.9.0.post0,<3",
     # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
