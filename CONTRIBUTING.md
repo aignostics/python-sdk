@@ -122,6 +122,27 @@ Notes:
    - **PR labels**: Add labels with the same names (e.g., `skip:ci`, `skip:test:long-running`) to your pull request
    - Both methods work independently - you can use either or both
 
+
+### Run Github Actions
+
+One can trigger GitHub Actions workflows locally using commands like so:
+
+```shell
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Hourly (quick smoke) and Daily (thorough) â staging
+gh workflow run scheduled-testing-staging-hourly.yml    --ref "$BRANCH" -f branch="$BRANCH"
+gh workflow run scheduled-testing-staging-daily.yml     --ref "$BRANCH" -f branch="$BRANCH"
+
+# Same against production
+gh workflow run scheduled-testing-production-hourly.yml --ref "$BRANCH" -f branch="$BRANCH"
+gh workflow run scheduled-testing-production-daily.yml  --ref "$BRANCH" -f branch="$BRANCH"
+```
+
+This is especially useful for testing that new he-tme versions will pass the scheduled testing workflows before merging into main.
+
+
+
 ### Publish Release
 
 Releases follow a four-phase workflow that allows Ketryx compliance approvals to be collected before publishing:
