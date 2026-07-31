@@ -42,6 +42,7 @@ def test_cli_health_yaml_format(mock_service: MagicMock, runner: CliRunner, reco
 
 @pytest.mark.e2e
 @pytest.mark.scheduled
+@pytest.mark.platform_api
 @pytest.mark.timeout(timeout=60)
 def test_cli_health_json(runner: CliRunner) -> None:
     """Check health CLI returns valid JSON with a valid status value."""

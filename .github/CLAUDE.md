@@ -712,12 +712,13 @@ External monitoring and alerting for scheduled jobs to detect failures outside G
 
 * `_scheduled-audit.yml` - Audit job monitoring
 * `_scheduled-test.yml` - Test job monitoring (staging & production)
+* `_scheduled-test-hourly.yml` - Three-way split hourly monitoring
 
 **Functionality**:
 
 1. Job runs (audit or test)
 2. Captures exit code (0 = success, non-zero = failure)
-3. Constructs JSON payload with metadata
+3. Constructs JSON payload with metadata via `_betterstack_heartbeat.py`
 4. Sends POST request to BetterStack heartbeat URL with exit code appended
 5. BetterStack tracks heartbeat and alerts on failures or missed beats
 
@@ -745,16 +746,35 @@ External monitoring and alerting for scheduled jobs to detect failures outside G
 
 **URL Format**: `{HEARTBEAT_URL}/{EXIT_CODE}`
 
+**Hourly Three-Way Split** (`_scheduled-test-hourly.yml`):
+
+The hourly workflow runs tests in three independent slices and sends a separate heartbeat per slice so failures are routed to the correct BetterStack monitor:
+
+| Slice | pytest marker filter | Heartbeat secret |
+|-------|---------------------|-----------------|
+| SDK | `not platform_api and not platform_applications` | `BETTERSTACK_HEARTBEAT_URL_{STAGING|PRODUCTION}` |
+| Platform API | `platform_api` | `BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_{STAGING|PRODUCTION}` |
+| Platform Applications | `platform_applications` | `BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_{STAGING|PRODUCTION}` |
+
+**Marker scheme for scheduled tests**:
+
+* `platform_api` — test monitors the Platform API layer (auth, app listing, run listing)
+* `platform_applications` — test monitors a platform application (he-tme, test-app)
+* Neither marker — test is an SDK-layer health check (token management, service wiring)
+
+Tag tests in `tests/` with the boolean markers above. The `monitors` parametrised marker has been removed; use the boolean markers for pytest `-m` expressions.
+
 **Required Secrets**:
 
 * `BETTERSTACK_AUDIT_HEARTBEAT_URL` - For audit jobs
-* `BETTERSTACK_HEARTBEAT_URL_STAGING` - For staging test jobs
-* `BETTERSTACK_HEARTBEAT_URL_PRODUCTION` - For production test jobs
+* `BETTERSTACK_HEARTBEAT_URL_{STAGING|PRODUCTION}` - SDK / general test monitoring
+* `BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_{STAGING|PRODUCTION}` - Platform API monitoring (optional)
+* `BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_{STAGING|PRODUCTION}` - Platform Applications monitoring (optional)
 
 **Behavior**:
 
 * If heartbeat URL is configured: Sends heartbeat regardless of job success/failure
-* If heartbeat URL is NOT configured: Logs warning and continues
+* If heartbeat URL is NOT configured: Logs info and continues (heartbeat steps never fail the job)
 * Exit code passed to URL allows BetterStack to distinguish success (0) from failures
 
 ## Environment Configuration
@@ -805,7 +825,9 @@ External monitoring and alerting for scheduled jobs to detect failures outside G
 * `AIGNOSTICS_REFRESH_TOKEN_{STAGING|PRODUCTION}`
 * `GCP_CREDENTIALS_{STAGING|PRODUCTION}` - Base64 encoded JSON
 * `BETTERSTACK_AUDIT_HEARTBEAT_URL` - Audit monitoring
-* `BETTERSTACK_HEARTBEAT_URL_{STAGING|PRODUCTION}` - Test monitoring
+* `BETTERSTACK_HEARTBEAT_URL_{STAGING|PRODUCTION}` - SDK test monitoring
+* `BETTERSTACK_HEARTBEAT_URL_PLATFORM_API_{STAGING|PRODUCTION}` - Platform API monitoring (optional)
+* `BETTERSTACK_HEARTBEAT_URL_PLATFORM_APPLICATIONS_{STAGING|PRODUCTION}` - Platform Applications monitoring (optional)
 * `CODECOV_TOKEN` - Coverage reporting to Codecov
 * `SONAR_TOKEN` - Code quality reporting to SonarCloud
 * `UV_PUBLISH_TOKEN` - PyPI publishing token
