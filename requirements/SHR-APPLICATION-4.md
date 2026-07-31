@@ -2,7 +2,7 @@
 itemId: SHR-APPLICATION-4
 itemTitle: Run Sharing and Access Management
 itemType: Requirement
-Requirement type: USER
+Requirement type: ENVIRONMENT
 ---
 
 ## Description
