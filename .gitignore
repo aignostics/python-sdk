@@ -105,3 +105,6 @@ __marimo__
 dist_native/**
 !dist_native/.keep
 notes.md
+
+# scripts
+scripts/
