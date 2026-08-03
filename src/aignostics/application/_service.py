@@ -1735,6 +1735,10 @@ class Service(BaseService):
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
             raise NotFoundException(message) from e
+        except ForbiddenException:
+            # Propagate 403 unchanged so the CLI can surface a share-token-specific
+            # "access denied" message; do not wrap it into RuntimeError below.
+            raise
         except ApiException as e:
             if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."

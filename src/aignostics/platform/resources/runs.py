@@ -12,6 +12,7 @@ from http import HTTPStatus
 from pathlib import Path
 from time import sleep
 from typing import Any, cast
+from urllib.parse import urlencode
 
 import requests
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
@@ -148,8 +149,10 @@ class Artifact(_AuthenticatedResource):
         configuration = self._api.api_client.configuration
         host = configuration.host.rstrip("/")
         endpoint_url = f"{host}/api/v1/runs/{self.run_id}/artifacts/{self.artifact_id}/file"
-        if self._share_token:
-            endpoint_url += f"?share_token={self._share_token}"
+        if self._share_token is not None:
+            # Percent-encode the secret so reserved characters (& # = space) cannot
+            # corrupt the URL or inject extra query parameters.
+            endpoint_url += f"?{urlencode({'share_token': self._share_token})}"
         proxy = getattr(configuration, "proxy", None)
         ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
         verify_ssl = getattr(configuration, "verify_ssl", True)
@@ -197,6 +200,10 @@ class Artifact(_AuthenticatedResource):
             RuntimeError: 3xx without a Location header, or unexpected non-3xx status.
         """
         try:
+            # Always send the OAuth Bearer token: the platform requires an
+            # authenticated account on every request. When a share_token is present
+            # it is carried as a query parameter on ``endpoint_url`` and elevates
+            # that authenticated user's access to the shared resource.
             with requests.get(
                 endpoint_url,
                 headers={
@@ -263,7 +270,7 @@ class Run(_AuthenticatedResource):
             run_id (str): The ID of the application run.
             share_token (str | None): Optional share token secret.  When supplied the
                 token is forwarded as the ``share_token`` query parameter on every API
-                request, granting access without an OAuth Bearer token.
+                request, elevating the authenticated user's access to the shared run.
         """
         super().__init__(api)
         self.run_id = run_id
@@ -273,25 +280,25 @@ class Run(_AuthenticatedResource):
     def for_run_id(cls, run_id: str, cache_token: bool = True, share_token: str | None = None) -> "Run":
         """Creates a Run instance for an existing run.
 
-        When *share_token* is provided the run is accessed via the ``share_token``
-        query parameter on every API request without an OAuth Bearer token.
+        When *share_token* is provided it is forwarded as the ``share_token`` query
+        parameter on every API request, elevating the calling (OAuth-authenticated)
+        user's access to a run they would otherwise not be able to read.
 
         Args:
             run_id (str): The ID of the application run.
-            cache_token (bool): Whether to use the cached OAuth token.  Ignored
-                when *share_token* is supplied.
-            share_token (str | None): Optional share token secret.  When provided
-                no OAuth login is required.
+            cache_token (bool): Whether to use the cached OAuth token.
+            share_token (str | None): Optional share token secret.  The caller must
+                still be authenticated; the token grants access to the shared run.
 
         Returns:
             Run: The initialized Run instance.
 
         Example::
 
-            # Authenticated access
+            # Authenticated access to a run you own
             run = Run.for_run_id("run-abc123")
 
-            # Share-token access (no OAuth required)
+            # Share-token access to a run shared with you (still authenticated)
             run = Run.for_run_id("run-abc123", share_token="shr_xxxx")
             details = run.details()
             for item in run.results():
@@ -299,6 +306,10 @@ class Run(_AuthenticatedResource):
         """
         from aignostics.platform._client import Client  # noqa: PLC0415
 
+        # Share-token access still authenticates as the calling user: the platform
+        # requires an OAuth Bearer token on every request. The share_token is
+        # forwarded as a query parameter (see details/results/Artifact) and elevates
+        # the authenticated user's access to the shared resource.
         api = Client.get_api_client(cache_token=cache_token)
         return cls(api, run_id, share_token=share_token)
 
@@ -323,8 +334,11 @@ class Run(_AuthenticatedResource):
         """
         share_token = self._share_token
 
+        # share_token is threaded as an explicit argument (not a closure capture) so it
+        # participates in the operation cache key, keeping share-token reads isolated
+        # from authenticated reads of the same run_id.
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def details_with_retry(run_id: str, _share_token: str | None = None) -> RunData:
+        def details_with_retry(run_id: str, share_token: str | None = None) -> RunData:
             def _fetch() -> RunData:
                 return Retrying(
                     retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
@@ -337,7 +351,7 @@ class Run(_AuthenticatedResource):
                 )(
                     lambda: self._api.get_run_v1_runs_run_id_get(
                         run_id,
-                        share_token=_share_token,
+                        share_token=share_token,
                         _request_timeout=settings().run_timeout,
                         _headers={"User-Agent": user_agent()},
                     )
@@ -352,7 +366,7 @@ class Run(_AuthenticatedResource):
                 reraise=True,
             )(_fetch)
 
-        run_data: RunData = details_with_retry(self.run_id, _share_token=share_token, nocache=nocache)  # type: ignore[call-arg]
+        run_data: RunData = details_with_retry(self.run_id, share_token=share_token, nocache=nocache)  # type: ignore[call-arg]
         if hide_platform_queue_position:
             run_data = run_data.model_copy(deep=True)
             run_data.num_preceding_items_platform = None
@@ -420,9 +434,11 @@ class Run(_AuthenticatedResource):
         share_token = self._share_token
 
         # Create a wrapper function that applies retry logic and caching to each API call
-        # Caching at this level ensures having a fresh iterator on cache hits
+        # Caching at this level ensures having a fresh iterator on cache hits.
+        # share_token is an explicit argument (not a closure capture) so it participates
+        # in the operation cache key, isolating share-token reads from authenticated reads.
         @cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-        def results_with_retry(run_id: str, _share_token: str | None = None, **kwargs: object) -> list[ItemResultData]:
+        def results_with_retry(run_id: str, share_token: str | None = None, **kwargs: object) -> list[ItemResultData]:
             return Retrying(
                 retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
                 stop=stop_after_attempt(settings().run_retry_attempts),
@@ -432,7 +448,7 @@ class Run(_AuthenticatedResource):
             )(
                 lambda: self._api.list_run_items_v1_runs_run_id_items_get(
                     run_id=run_id,
-                    share_token=_share_token,
+                    share_token=share_token,
                     _request_timeout=settings().run_timeout,
                     _headers={"User-Agent": user_agent()},
                     **kwargs,  # pyright: ignore[reportArgumentType]
@@ -453,7 +469,7 @@ class Run(_AuthenticatedResource):
 
         return paginate(
             lambda **kwargs: results_with_retry(
-                self.run_id, _share_token=share_token, nocache=nocache, **filter_kwargs, **kwargs
+                self.run_id, share_token=share_token, nocache=nocache, **filter_kwargs, **kwargs
             )
         )
 

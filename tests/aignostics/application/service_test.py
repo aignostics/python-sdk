@@ -5,7 +5,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aignx.codegen.exceptions import ApiException
+from aignx.codegen.exceptions import ApiException, ForbiddenException
 from aignx.codegen.models import SubjectType
 from typer.testing import CliRunner
 
@@ -1070,3 +1070,21 @@ def test_application_run_revoke_share_token_not_found(mock_get_client: MagicMock
 
     with pytest.raises(NotFoundException, match="No grant found"):
         ApplicationService().application_run_revoke_share_token("run-123", "tok-missing")
+
+
+@pytest.mark.unit
+def test_application_run_download_reraises_forbidden(tmp_path, record_property: object) -> None:
+    """A 403 from run.details() propagates as ForbiddenException, not wrapped into RuntimeError.
+
+    Guards the CLI's share-token 'access denied' handler: the download path must not
+    swallow ForbiddenException into RuntimeError via its generic ApiException branch.
+    """
+    record_property("tested-item-id", "PYSDK-145")
+    mock_run = MagicMock()
+    mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
+
+    with (
+        patch.object(ApplicationService, "application_run", return_value=mock_run),
+        pytest.raises(ForbiddenException),
+    ):
+        ApplicationService().application_run_download("run-id", tmp_path, share_token="s3cr3t")  # noqa: S106

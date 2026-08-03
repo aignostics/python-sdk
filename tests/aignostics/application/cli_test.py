@@ -1041,6 +1041,7 @@ def test_cli_run_describe_with_share_token_json(runner: CliRunner, record_proper
         )
 
     assert result.exit_code == 0, f"Unexpected exit: {result.output}"
+    mock_svc_cls.return_value.application_run.assert_called_once_with("run-shared-002", share_token="s3cr3t")  # noqa: S106
     data = json.loads(result.stdout)
     assert data["run_id"] == "run-shared-002"
     assert "items" in data
@@ -1169,6 +1170,62 @@ def test_cli_result_download_with_share_token_forbidden(
 
     assert result.exit_code == 1
     assert "Access denied" in normalize_output(result.output)
+
+
+@pytest.mark.integration
+def test_cli_run_describe_without_share_token_passes_none(runner: CliRunner, record_property: object) -> None:
+    """Run describe without --share-token calls the service with share_token=None (no leakage)."""
+    record_property("tested-item-id", "PYSDK-145")
+    mock_run = _make_mock_run("run-noshare")
+
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
+        mock_svc_cls.return_value.application_run.return_value = mock_run
+        result = runner.invoke(cli, ["application", "run", "describe", "run-noshare"])
+
+    assert result.exit_code == 0, f"Unexpected exit: {result.output}"
+    mock_svc_cls.return_value.application_run.assert_called_once_with("run-noshare", share_token=None)
+
+
+@pytest.mark.integration
+def test_cli_run_dump_metadata_with_share_token_not_found(runner: CliRunner, record_property: object) -> None:
+    """Run dump-metadata --share-token exits 2 when run does not exist."""
+    record_property("tested-item-id", "PYSDK-145")
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
+        mock_svc_cls.return_value.application_run.side_effect = ApiNotFound(status=404, reason="Not Found")
+        result = runner.invoke(cli, ["application", "run", "dump-metadata", "bad-run-id", "--share-token", "s3cr3t"])
+
+    assert result.exit_code == 2
+    assert "not found" in normalize_output(result.output).lower()
+
+
+@pytest.mark.integration
+def test_cli_run_dump_item_metadata_with_share_token_not_found(runner: CliRunner, record_property: object) -> None:
+    """Run dump-item-metadata --share-token exits 2 when run does not exist."""
+    record_property("tested-item-id", "PYSDK-145")
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
+        mock_svc_cls.return_value.application_run.side_effect = ApiNotFound(status=404, reason="Not Found")
+        result = runner.invoke(
+            cli, ["application", "run", "dump-item-metadata", "bad-run-id", "item-id", "--share-token", "s3cr3t"]
+        )
+
+    assert result.exit_code == 2
+    assert "not found" in normalize_output(result.output).lower()
+
+
+@pytest.mark.integration
+def test_cli_result_download_with_share_token_not_found(
+    runner: CliRunner, tmp_path: Path, record_property: object
+) -> None:
+    """Result download --share-token exits 2 when run does not exist."""
+    record_property("tested-item-id", "PYSDK-145")
+    with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
+        mock_svc_cls.return_value.application_run_download.side_effect = ApiNotFound(status=404, reason="Not Found")
+        result = runner.invoke(
+            cli, ["application", "run", "result", "download", "bad-run-id", str(tmp_path), "--share-token", "s3cr3t"]
+        )
+
+    assert result.exit_code == 2
+    assert "not found" in normalize_output(result.output).lower()
 
 
 @pytest.mark.e2e

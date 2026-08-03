@@ -38,6 +38,7 @@ from ._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
+    share_token_access_denied_message,
     validate_mappings,
     write_metadata_dict_to_csv,
 )
@@ -120,6 +121,10 @@ CpuProvisioningModeOption = Annotated[
 NodeAcquisitionTimeoutOption = Annotated[
     int,
     typer.Option(help="Timeout for acquiring compute nodes in minutes (1-3600).", min=1, max=3600),
+]
+ShareTokenOption = Annotated[
+    str | None,
+    typer.Option(help="Share token secret for link-based access. OAuth login is still required."),
 ]
 
 
@@ -970,12 +975,7 @@ def run_describe(  # noqa: PLR0912
             help="Show only run and item status summary (external ID, state, error message)",
         ),
     ] = False,
-    share_token: Annotated[
-        str | None,
-        typer.Option(
-            help="Share token secret for link-based access.",
-        ),
-    ] = None,
+    share_token: ShareTokenOption = None,
 ) -> None:
     """Describe run."""
     logger.trace("Describing run with ID '{}'", run_id)
@@ -1003,10 +1003,7 @@ def run_describe(  # noqa: PLR0912
             console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ForbiddenException:
-        logger.warning("Access denied for run '{}'", run_id)
-        msg = f"Access denied for run '{run_id}'."
-        if share_token is not None:
-            msg += " The share token may be invalid, expired, or revoked."
+        msg = share_token_access_denied_message(run_id, share_token)
         if format == "json":
             print(json.dumps({"error": "access_denied", "message": msg}), file=sys.stderr)
         else:
@@ -1035,10 +1032,7 @@ def run_dump_metadata(
             ),
         ),
     ] = False,
-    share_token: Annotated[
-        str | None,
-        typer.Option(help="Share token secret for link-based access. When provided, OAuth login is not required."),
-    ] = None,
+    share_token: ShareTokenOption = None,
 ) -> None:
     """Dump custom metadata of a run as JSON to stdout."""
     logger.trace("Dumping custom metadata for run with ID '{}'", run_id)
@@ -1065,11 +1059,7 @@ def run_dump_metadata(
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ForbiddenException:
-        logger.warning("Access denied for run '{}'", run_id)
-        msg = f"Access denied for run '{run_id}'."
-        if share_token is not None:
-            msg += " The share token may be invalid, expired, or revoked."
-        console.print(f"[error]Error:[/error] {msg}")
+        console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to dump custom metadata for run with ID '{run_id}'")
@@ -1082,6 +1072,7 @@ def run_dump_item_metadata(
     run_id: Annotated[str, typer.Argument(help="Id of the run containing the item")],
     external_id: Annotated[str, typer.Argument(help="External ID of the item to dump custom metadata for")],
     pretty: Annotated[bool, typer.Option(help="Pretty print JSON output with indentation")] = False,
+    share_token: ShareTokenOption = None,
     show_checksum: Annotated[
         bool,
         typer.Option(
@@ -1093,10 +1084,6 @@ def run_dump_item_metadata(
             ),
         ),
     ] = False,
-    share_token: Annotated[
-        str | None,
-        typer.Option(help="Share token secret for link-based access. When provided, OAuth login is not required."),
-    ] = None,
 ) -> None:
     """Dump custom metadata of an item as JSON to stdout."""
     logger.trace("Dumping custom metadata for item '{}' in run with ID '{}'", external_id, run_id)
@@ -1139,11 +1126,7 @@ def run_dump_item_metadata(
         print(f"Warning: Run with ID '{run_id}' not found.", file=sys.stderr)
         sys.exit(2)
     except ForbiddenException:
-        logger.warning("Access denied for run '{}'", run_id)
-        msg = f"Access denied for run '{run_id}'."
-        if share_token is not None:
-            msg += " The share token may be invalid, expired, or revoked."
-        print(f"Error: {msg}", file=sys.stderr)
+        print(f"Error: {share_token_access_denied_message(run_id, share_token)}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}'")
@@ -1700,10 +1683,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915
             'Run uvx --with "aignostics[qupath]" aignostics qupath install'
         ),
     ] = False,
-    share_token: Annotated[
-        str | None,
-        typer.Option(help="Share token secret for link-based access. When provided, OAuth login is not required."),
-    ] = None,
+    share_token: ShareTokenOption = None,
 ) -> None:
     """Download results of a run."""
     logger.trace(
@@ -1868,11 +1848,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915
         console.print(f"[warning]Warning:[/warning] Bad input to download results of run with ID '{run_id}': {e}")
         sys.exit(2)
     except ForbiddenException:
-        logger.warning("Access denied for run '{}'", run_id)
-        msg = f"Access denied for run '{run_id}'."
-        if share_token is not None:
-            msg += " The share token may be invalid, expired, or revoked."
-        console.print(f"[error]Error:[/error] {msg}")
+        console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to download results of run with ID '{run_id}'")

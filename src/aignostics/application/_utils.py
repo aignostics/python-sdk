@@ -599,3 +599,25 @@ def get_supported_extensions_for_application(application_id: str) -> set[str]:
     message = f"Unsupported application {application_id}"
     logger.critical(message)
     raise RuntimeError(message)
+
+
+def share_token_access_denied_message(run_id: str, share_token: str | None) -> str:
+    """Compose the operator-facing "access denied" message for a run and log a warning.
+
+    Centralizes the wording, share-token hint, and warning log shared by the run CLI
+    commands that support ``--share-token``. The caller owns the output sink (console,
+    stderr, or JSON) and the exit code.
+
+    Args:
+        run_id (str): The run access was denied for.
+        share_token (str | None): The share token supplied, if any. When set, a hint
+            that the token may be invalid, expired, or revoked is appended.
+
+    Returns:
+        str: The composed message.
+    """
+    logger.warning("Access denied for run '{}'", run_id)
+    message = f"Access denied for run '{run_id}'."
+    if share_token is not None:
+        message += " The share token may be invalid, expired, or revoked."
+    return message
