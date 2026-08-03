@@ -130,7 +130,7 @@ One can trigger GitHub Actions workflows locally using commands like so:
 ```shell
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# Hourly (quick smoke) and Daily (thorough) â staging
+# Hourly (quick smoke) and Daily (thorough) against staging
 gh workflow run scheduled-testing-staging-hourly.yml    --ref "$BRANCH" -f branch="$BRANCH"
 gh workflow run scheduled-testing-staging-daily.yml     --ref "$BRANCH" -f branch="$BRANCH"
 
