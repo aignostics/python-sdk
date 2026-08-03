@@ -127,10 +127,10 @@ logger.debug("Application started", extra={"correlation_id": "123"})
 
 ```python
 from aignostics.utils import load_settings
-from pydantic import BaseModel
+from pydantic_settings import BaseSettings
 
 
-class MySettings(BaseModel):
+class MySettings(BaseSettings):  # load_settings is bound to BaseSettings, not pydantic.BaseModel
     api_url: str = "https://api.example.com"
 
 
@@ -148,179 +148,17 @@ class MyService(BaseService):
         return Health(status=Health.Code.UP, details={"database": "connected"})
 ```
 
-**MCP Server Utilities:**
+## User Agent Detection (`_user_agent.py`)
 
-```python
-from aignostics.utils import (
-    MCP_SERVER_NAME,
-    MCP_TRANSPORT,
-    mcp_create_server,
-    mcp_run,
-    mcp_list_tools,
-    mcp_discover_servers,
-)
-
-# Constants
-print(MCP_SERVER_NAME)  # "Central Aignostics MCP Server"
-print(MCP_TRANSPORT)  # "stdio"
-
-# Create and configure MCP server
-server = mcp_create_server()
-server = mcp_create_server(server_name="Custom Server")
-
-# Run MCP server (blocking)
-mcp_run()
-
-# List available tools
-tools = mcp_list_tools()
-for tool in tools:
-    print(f"{tool['name']}: {tool['description']}")
-
-# Discover all MCP servers from SDK and plugins
-servers = mcp_discover_servers()
-```
-
-## Technical Implementation
-
-**User Agent System (`_user_agent.py`):**
-
-Enhanced user agent generation with automatic CI/CD context detection.
-
-**Format:** `{project_name}-python-sdk/{version_full} ({platform}; +{repository_url}; {optional_parts})`
-
-**Detection:**
-
-- **Platform**: `platform.platform()` (e.g., `macOS-15.0-arm64-arm-64bit`, `Linux-6.1-x86_64`)
-- **Repository URL**: From package metadata (`__repository_url__`)
-- **Pytest**: `PYTEST_CURRENT_TEST` environment variable
-- **GitHub Actions**: `GITHUB_RUN_ID` + `GITHUB_REPOSITORY` environment variables
-
-**Usage in SDK:**
-
-1. **SDK Metadata**: Included in every run's metadata (`platform._sdk_metadata.build_sdk_metadata()`)
-2. **HTTP Headers**: Set in API client configuration for all HTTP requests
-3. **Logging Context**: Available for structured logging and observability
-4. **Debugging**: Provides traceability from API requests back to specific tests or workflow runs
-
-**Key Features:**
-
-- **Automatic Context Detection**: No manual configuration required
-- **CI/CD Integration**: Captures GitHub Actions workflow context with direct links to runs
-- **Test Traceability**: Links API requests to specific pytest tests
-- **Platform Identification**: Detailed OS detection via `platform.platform()` for debugging
-- **Lightweight**: Minimal performance overhead, simple environment variable reads
-
-**Service Discovery System:**
-
-- Dynamic discovery of implementations and subclasses
-- Automatic module loading across the package
-- Caching of discovered implementations
-- No decorator needed - uses class inheritance
-
-**Structured Logging:**
-
-- Multiple backend support (Logfire, Sentry, Console)
-- Correlation ID tracking
-- Structured JSON output
-- Performance monitoring integration
-- Error tracking and alerting
-
-**Settings Architecture:**
-
-- Pydantic models for type safety
-- Environment variable binding
-- Validation and transformation
-- Sensitive data masking
-- Multi-environment support
-
-**Health Monitoring:**
-
-- Service-level health checks
-- Dependency health aggregation
-- Standardized health reporting format
-- Integration with monitoring systems
-
-## File Organization
-
-**Core Files:**
-
-- `__init__.py` - Public API exports and module coordination
-- `boot.py` - Application initialization and setup
-- `_service.py` - `BaseService` abstract base class
-- `_di.py` - Dependency injection implementation
-- `_settings.py` - Configuration management
-- `_log.py` - Logging infrastructure
-- `_health.py` - Health check framework
-- `_user_agent.py` - User agent string generation
-
-**System Utilities:**
-
-- `_fs.py` - File system operations
-- `_process.py` - Process utilities
-- `_constants.py` - Environment and metadata
-- `_console.py` - Console interface
-
-**Navigation & GUI:**
-
-- `_nav.py` - Navigation infrastructure for GUI sidebar
-- `_gui.py` - GUI framework utilities (conditional on `nicegui`)
-- `_notebook.py` - Marimo notebook integration (conditional on `marimo`)
-
-**Integration Modules:**
-
-- `_sentry.py` - Error monitoring (conditional on `sentry`)
-- `_mcp.py` - MCP server utilities
-
-## Development Notes
-
-**Service Management:**
-
-- Dynamic service discovery via inheritance
-- Module-wide implementation scanning
-- Cached discovery results for performance
-- BaseService abstract class pattern
-
-**Configuration Patterns:**
-
-- Environment-based configuration
-- Pydantic validation and transformation
-- Sensitive data handling
-- Development vs production settings
-
-**Observability:**
-
-- Structured logging with correlation IDs
-- Error tracking and performance monitoring
-- Health check aggregation
-- Telemetry and metrics collection
-
-**Testing Considerations:**
-
-- Mock dependency injection for unit tests
-- Isolated service testing
-- Configuration override for test environments
-- Health check validation
-- Log output verification
-
-**Performance Considerations:**
-
-- Lazy service initialization
-- Efficient module discovery
-- Minimal overhead logging
-- Optimized path operations
-- Memory-efficient configuration loading
-
-**Cross-Platform Support:**
-
-- Windows, macOS, and Linux compatibility
-- Path separator handling
-- Process creation flags
-- File system permissions
-- Environment variable handling
+`user_agent()` auto-detects CI/CD context (no configuration). The optional
+trailing parts of the format above come from environment: `PYTEST_CURRENT_TEST`
+(pytest), `GITHUB_RUN_ID` + `GITHUB_REPOSITORY` (GitHub Actions). Platform is
+`platform.platform()`, repository URL is read from package metadata
+(`__repository_url__`).
 
 ## MCP Server System (`_mcp.py`)
 
-The MCP module provides utilities for creating and running Model Context Protocol servers that expose SDK functionality to AI agents.
+The MCP module provides utilities for creating and running Model Context Protocol servers that expose SDK functionality to AI agents. All exported via `aignostics.utils`. Constants: `MCP_SERVER_NAME` (`"Central Aignostics MCP Server"`), `MCP_TRANSPORT` (`"stdio"`).
 
 **Functions:**
 
