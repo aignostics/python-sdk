@@ -1088,3 +1088,33 @@ def test_application_run_download_reraises_forbidden(tmp_path, record_property: 
         pytest.raises(ForbiddenException),
     ):
         ApplicationService().application_run_download("run-id", tmp_path, share_token="s3cr3t")  # noqa: S106
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Run.for_run_id")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_empty_share_token_uses_oauth_path(
+    mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
+) -> None:
+    """An empty --share-token is normalized to None and takes the normal authenticated path."""
+    record_property("tested-item-id", "PYSDK-145")
+
+    ApplicationService().application_run("run-id", share_token="")
+
+    mock_get_client.return_value.run.assert_called_once_with("run-id")
+    mock_for_run_id.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Run.for_run_id")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_with_share_token_uses_share_token_path(
+    mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
+) -> None:
+    """A non-empty share token takes the Run.for_run_id path and is forwarded verbatim."""
+    record_property("tested-item-id", "PYSDK-145")
+
+    ApplicationService().application_run("run-id", share_token="s3cr3t")  # noqa: S106
+
+    mock_for_run_id.assert_called_once_with("run-id", share_token="s3cr3t")  # noqa: S106
+    mock_get_client.return_value.run.assert_not_called()

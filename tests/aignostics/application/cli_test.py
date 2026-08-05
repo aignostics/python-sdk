@@ -1061,14 +1061,23 @@ def test_cli_run_describe_with_share_token_not_found(runner: CliRunner, record_p
 
 @pytest.mark.integration
 def test_cli_run_describe_with_share_token_forbidden(runner: CliRunner, record_property: object) -> None:
-    """Run describe --share-token exits 1 when token is invalid, expired, or has no access."""
+    """Run describe --share-token exits 1 when token is invalid, expired, or has no access.
+
+    The 403 is raised from run.details() (the real network-call source), not from
+    application_run() which wraps all exceptions into RuntimeError and can never raise a
+    bare ForbiddenException in production.
+    """
     record_property("tested-item-id", "PYSDK-145")
+    mock_run = MagicMock()
+    mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
+
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
-        mock_svc_cls.return_value.application_run.side_effect = ForbiddenException(status=403, reason="Forbidden")
+        mock_svc_cls.return_value.application_run.return_value = mock_run
         result = runner.invoke(cli, ["application", "run", "describe", "run-id", "--share-token", "bad-token"])
 
     assert result.exit_code == 1
     assert "Access denied" in normalize_output(result.output)
+    assert "bad-token" not in result.output  # the token secret must never be echoed back
 
 
 @pytest.mark.integration
@@ -1088,10 +1097,17 @@ def test_cli_run_dump_metadata_with_share_token_success(runner: CliRunner, recor
 
 @pytest.mark.integration
 def test_cli_run_dump_metadata_with_share_token_forbidden(runner: CliRunner, record_property: object) -> None:
-    """Run dump-metadata --share-token exits 1 on forbidden."""
+    """Run dump-metadata --share-token exits 1 on forbidden.
+
+    The 403 is raised from run.details() (the real source) rather than from application_run,
+    which wraps exceptions into RuntimeError in production.
+    """
     record_property("tested-item-id", "PYSDK-145")
+    mock_run = MagicMock()
+    mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
+
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
-        mock_svc_cls.return_value.application_run.side_effect = ForbiddenException(status=403, reason="Forbidden")
+        mock_svc_cls.return_value.application_run.return_value = mock_run
         result = runner.invoke(cli, ["application", "run", "dump-metadata", "run-id", "--share-token", "bad"])
 
     assert result.exit_code == 1
@@ -1123,10 +1139,17 @@ def test_cli_run_dump_item_metadata_with_share_token_success(runner: CliRunner, 
 
 @pytest.mark.integration
 def test_cli_run_dump_item_metadata_with_share_token_forbidden(runner: CliRunner, record_property: object) -> None:
-    """Run dump-item-metadata --share-token exits 1 on forbidden."""
+    """Run dump-item-metadata --share-token exits 1 on forbidden.
+
+    The 403 is raised from run.results() (the real source iterated by the command) rather
+    than from application_run, which wraps exceptions into RuntimeError in production.
+    """
     record_property("tested-item-id", "PYSDK-145")
+    mock_run = MagicMock()
+    mock_run.results.side_effect = ForbiddenException(status=403, reason="Forbidden")
+
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
-        mock_svc_cls.return_value.application_run.side_effect = ForbiddenException(status=403, reason="Forbidden")
+        mock_svc_cls.return_value.application_run.return_value = mock_run
         result = runner.invoke(
             cli, ["application", "run", "dump-item-metadata", "run-id", "item-id", "--share-token", "bad"]
         )

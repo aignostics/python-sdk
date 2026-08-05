@@ -1003,6 +1003,7 @@ def run_describe(  # noqa: PLR0912
             console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ForbiddenException:
+        logger.warning("Access denied for run '{}'", run_id)
         msg = share_token_access_denied_message(run_id, share_token)
         if format == "json":
             print(json.dumps({"error": "access_denied", "message": msg}), file=sys.stderr)
@@ -1059,6 +1060,7 @@ def run_dump_metadata(
         console.print(f"[warning]Warning:[/warning] Run with ID '{run_id}' not found.")
         sys.exit(2)
     except ForbiddenException:
+        logger.warning("Access denied for run '{}'", run_id)
         console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:
@@ -1126,6 +1128,7 @@ def run_dump_item_metadata(
         print(f"Warning: Run with ID '{run_id}' not found.", file=sys.stderr)
         sys.exit(2)
     except ForbiddenException:
+        logger.warning("Access denied for run '{}'", run_id)
         print(f"Error: {share_token_access_denied_message(run_id, share_token)}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
@@ -1848,6 +1851,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915
         console.print(f"[warning]Warning:[/warning] Bad input to download results of run with ID '{run_id}': {e}")
         sys.exit(2)
     except ForbiddenException:
+        logger.warning("Access denied for run '{}'", run_id)
         console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:

@@ -602,11 +602,11 @@ def get_supported_extensions_for_application(application_id: str) -> set[str]:
 
 
 def share_token_access_denied_message(run_id: str, share_token: str | None) -> str:
-    """Compose the operator-facing "access denied" message for a run and log a warning.
+    """Compose the operator-facing "access denied" message for a run.
 
-    Centralizes the wording, share-token hint, and warning log shared by the run CLI
-    commands that support ``--share-token``. The caller owns the output sink (console,
-    stderr, or JSON) and the exit code.
+    Pure message builder: it centralizes the wording and the share-token hint shared by
+    the run CLI commands that support ``--share-token``. It has no side effects — the
+    caller owns logging, the output sink (console, stderr, or JSON), and the exit code.
 
     Args:
         run_id (str): The run access was denied for.
@@ -616,7 +616,6 @@ def share_token_access_denied_message(run_id: str, share_token: str | None) -> s
     Returns:
         str: The composed message.
     """
-    logger.warning("Access denied for run '{}'", run_id)
     message = f"Access denied for run '{run_id}'."
     if share_token is not None:
         message += " The share token may be invalid, expired, or revoked."

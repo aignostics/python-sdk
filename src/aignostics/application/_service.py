@@ -805,8 +805,10 @@ class Service(BaseService):
 
         Args:
             run_id (str): The ID of the run to find.
-            share_token (str | None): Optional share token secret.  When provided the run
-                is accessed via the ``share_token`` query parameter without OAuth.
+            share_token (str | None): Optional share token secret. When provided the run is
+                accessed with the ``share_token`` forwarded as a query parameter, elevating
+                the calling (OAuth-authenticated) user's access to a run shared with them.
+                The caller must still be authenticated. An empty string is treated as absent.
 
         Returns:
             Run: The run that can be fetched using the .details() call.
@@ -814,6 +816,9 @@ class Service(BaseService):
         Raises:
             RuntimeError: If initializing the client fails or the run cannot be retrieved.
         """
+        # Treat an empty --share-token the same as "not supplied" so a blank value falls back
+        # to the normal authenticated read instead of forwarding an empty share_token query param.
+        share_token = share_token or None
         try:
             if share_token is not None:
                 return Run.for_run_id(run_id, share_token=share_token)
@@ -1696,7 +1701,9 @@ class Service(BaseService):
                 of the destination directory.
             download_progress_queue (Queue | None): Queue for GUI progress updates.
             download_progress_callable (Callable | None): Callback for CLI progress updates.
-            share_token (str | None): Optional share token secret for unauthenticated access.
+            share_token (str | None): Optional share token secret forwarded as the
+                ``share_token`` query parameter, elevating the authenticated caller's access
+                to a run shared with them. OAuth authentication is still required.
 
         Returns:
             Path: The directory containing downloaded results.
