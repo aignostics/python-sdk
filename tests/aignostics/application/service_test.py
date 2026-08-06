@@ -5,7 +5,7 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aignx.codegen.exceptions import ApiException
+from aignx.codegen.exceptions import ApiException, ForbiddenException
 from aignx.codegen.models import SubjectType
 from typer.testing import CliRunner
 
@@ -1070,3 +1070,51 @@ def test_application_run_revoke_share_token_not_found(mock_get_client: MagicMock
 
     with pytest.raises(NotFoundException, match="No grant found"):
         ApplicationService().application_run_revoke_share_token("run-123", "tok-missing")
+
+
+@pytest.mark.unit
+def test_application_run_download_reraises_forbidden(tmp_path, record_property: object) -> None:
+    """A 403 from run.details() propagates as ForbiddenException, not wrapped into RuntimeError.
+
+    Guards the CLI's share-token 'access denied' handler: the download path must not
+    swallow ForbiddenException into RuntimeError via its generic ApiException branch.
+    """
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-08, SWR-APPLICATION-4-3")
+    mock_run = MagicMock()
+    mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
+
+    with (
+        patch.object(ApplicationService, "application_run", return_value=mock_run),
+        pytest.raises(ForbiddenException),
+    ):
+        ApplicationService().application_run_download("run-id", tmp_path, share_token="s3cr3t")  # noqa: S106
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Run.for_run_id")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_empty_share_token_uses_oauth_path(
+    mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
+) -> None:
+    """An empty --share-token is normalized to None and takes the normal authenticated path."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3")
+
+    ApplicationService().application_run("run-id", share_token="")
+
+    mock_get_client.return_value.run.assert_called_once_with("run-id")
+    mock_for_run_id.assert_not_called()
+
+
+@pytest.mark.unit
+@patch("aignostics.application._service.Run.for_run_id")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_application_run_with_share_token_uses_share_token_path(
+    mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
+) -> None:
+    """A non-empty share token takes the Run.for_run_id path and is forwarded verbatim."""
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-01, SWR-APPLICATION-4-3, SPEC-APPLICATION-SERVICE")
+
+    ApplicationService().application_run("run-id", share_token="s3cr3t")  # noqa: S106
+
+    mock_for_run_id.assert_called_once_with("run-id", share_token="s3cr3t")  # noqa: S106
+    mock_get_client.return_value.run.assert_not_called()

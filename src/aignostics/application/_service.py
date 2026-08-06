@@ -800,11 +800,15 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run(self, run_id: str) -> Run:
+    def application_run(self, run_id: str, share_token: str | None = None) -> Run:
         """Select a run by its ID.
 
         Args:
-            run_id (str): The ID of the run to find
+            run_id (str): The ID of the run to find.
+            share_token (str | None): Optional share token secret. When provided the run is
+                accessed with the ``share_token`` forwarded as a query parameter, elevating
+                the calling (OAuth-authenticated) user's access to a run shared with them.
+                The caller must still be authenticated. An empty string is treated as absent.
 
         Returns:
             Run: The run that can be fetched using the .details() call.
@@ -812,7 +816,12 @@ class Service(BaseService):
         Raises:
             RuntimeError: If initializing the client fails or the run cannot be retrieved.
         """
+        # Treat an empty --share-token the same as "not supplied" so a blank value falls back
+        # to the normal authenticated read instead of forwarding an empty share_token query param.
+        share_token = share_token or None
         try:
+            if share_token is not None:
+                return Run.for_run_id(run_id, share_token=share_token)
             return self._get_platform_client().run(run_id)
         except Exception as e:
             message = f"Failed to retrieve application run with ID '{run_id}': {e}"
@@ -1675,6 +1684,7 @@ class Service(BaseService):
         qupath_project: bool = False,
         download_progress_queue: Any | None = None,  # noqa: ANN401
         download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
+        share_token: str | None = None,
     ) -> Path:
         """Download application run results with progress tracking.
 
@@ -1691,6 +1701,9 @@ class Service(BaseService):
                 of the destination directory.
             download_progress_queue (Queue | None): Queue for GUI progress updates.
             download_progress_callable (Callable | None): Callback for CLI progress updates.
+            share_token (str | None): Optional share token secret forwarded as the
+                ``share_token`` query parameter, elevating the authenticated caller's access
+                to a run shared with them. OAuth authentication is still required.
 
         Returns:
             Path: The directory containing downloaded results.
@@ -1721,7 +1734,7 @@ class Service(BaseService):
         progress = DownloadProgress()
         update_progress(progress, download_progress_callable, download_progress_queue)
 
-        application_run = self.application_run(run_id)
+        application_run = self.application_run(run_id, share_token=share_token)
         final_destination_directory = destination_directory
         try:
             details = application_run.details()
@@ -1729,6 +1742,10 @@ class Service(BaseService):
             message = f"Application run with ID '{run_id}' not found: {e}"
             logger.warning(message)
             raise NotFoundException(message) from e
+        except ForbiddenException:
+            # Propagate 403 unchanged so the CLI can surface a share-token-specific
+            # "access denied" message; do not wrap it into RuntimeError below.
+            raise
         except ApiException as e:
             if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
                 message = f"Run ID '{run_id}' invalid: {e!s}."

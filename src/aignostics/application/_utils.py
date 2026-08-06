@@ -599,3 +599,20 @@ def get_supported_extensions_for_application(application_id: str) -> set[str]:
     message = f"Unsupported application {application_id}"
     logger.critical(message)
     raise RuntimeError(message)
+
+
+def run_access_denied_message(run_id: str, share_token: str | None) -> str:
+    """Compose the operator-facing "access denied" message for a run.
+
+    Args:
+        run_id (str): The run access was denied for.
+        share_token (str | None): The share token supplied, if any. When set, a hint
+            that the token may be invalid, expired, or revoked is appended.
+
+    Returns:
+        str: The composed message.
+    """
+    message = f"Access denied for run '{run_id}'."
+    if share_token is not None:
+        message += " The share token may be invalid, expired, or revoked."
+    return message
