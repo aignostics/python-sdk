@@ -1,6 +1,6 @@
 [project]
 name = "aignostics-sdk"
-version = "1.4.8"
+version = "1.4.9"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
