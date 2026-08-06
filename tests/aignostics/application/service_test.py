@@ -1079,7 +1079,7 @@ def test_application_run_download_reraises_forbidden(tmp_path, record_property: 
     Guards the CLI's share-token 'access denied' handler: the download path must not
     swallow ForbiddenException into RuntimeError via its generic ApiException branch.
     """
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-08, SWR-APPLICATION-4-3")
     mock_run = MagicMock()
     mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
 
@@ -1097,7 +1097,7 @@ def test_application_run_empty_share_token_uses_oauth_path(
     mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
 ) -> None:
     """An empty --share-token is normalized to None and takes the normal authenticated path."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3")
 
     ApplicationService().application_run("run-id", share_token="")
 
@@ -1112,7 +1112,7 @@ def test_application_run_with_share_token_uses_share_token_path(
     mock_get_client: MagicMock, mock_for_run_id: MagicMock, record_property: object
 ) -> None:
     """A non-empty share token takes the Run.for_run_id path and is forwarded verbatim."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-01, SWR-APPLICATION-4-3, SPEC-APPLICATION-SERVICE")
 
     ApplicationService().application_run("run-id", share_token="s3cr3t")  # noqa: S106
 

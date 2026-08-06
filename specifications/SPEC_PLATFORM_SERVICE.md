@@ -2,11 +2,11 @@
 itemId: SPEC-PLATFORM-SERVICE
 itemTitle: Platform Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-17, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3, SWR-APPLICATION-4-1, SWR-APPLICATION-4-2
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-1, SWR-APPLICATION-2-5, SWR-APPLICATION-2-6, SWR-APPLICATION-2-7, SWR-APPLICATION-2-9, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-17, SWR-APPLICATION-3-1, SWR-APPLICATION-3-2, SWR-APPLICATION-3-3, SWR-APPLICATION-4-1, SWR-APPLICATION-4-2, SWR-APPLICATION-4-3
 Module: Platform
 Layer: Platform Service
 Version: 1.2.0
-Date: 2026-06-09
+Date: 2026-08-06
 ---
 
 ## 1. Description
@@ -33,6 +33,7 @@ The Platform Module shall:
 - **[FR-12]** Generate signed URLs for secure Google Cloud Storage access
 - **[FR-13]** Provide user and organization information retrieval with sensitive data masking options
 - **[FR-14]** Support external token providers to bypass internal OAuth 2.0 flows for machine-to-machine, service account, or custom token lifecycle scenarios.
+- **[FR-15]** Forward an optional share token (percent-encoded) as the `share_token` query parameter on the run read endpoints while always sending the OAuth Bearer, isolate it in the operation-cache key, and propagate `ForbiddenException` unchanged for caller-side handling
 
 ### 1.3 Non-Functional Requirements
 
@@ -717,6 +718,9 @@ class Artifact:
         ``allow_redirects=False`` and returns the presigned URL from the redirect
         ``Location`` header. The presigned URL is short-lived; resolve immediately
         before downloading.
+
+        A share token, when present, is appended as the URL-encoded ``share_token``
+        query parameter (Bearer still sent).
         """
 ```
 
@@ -846,7 +850,7 @@ The Platform module provides foundational services but does not directly expose 
 | `NetworkError`         | Connection timeouts or proxy issues      | Retry with backoff; fallback to device flow         | Automatic retry or alternative auth flow     |
 | `TokenExpiredError`    | JWT token past expiration                | Automatic refresh using refresh token               | Transparent token renewal                    |
 | `ValidationError`      | Invalid input parameters or file formats | Input sanitization and validation                   | Clear validation error messages              |
-| `ForbiddenException`   | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission           |
+| `ForbiddenException`   | Not authorized for the org, or share-token read denied | Propagated unchanged; org denial exits 2, share-token denial exits 1 | Lacks permission / token may be invalid, expired, or revoked |
 
 ### 7.2 Input Validation
 

@@ -1015,7 +1015,7 @@ def _make_mock_run(run_id: str = "run-shared-001", custom_metadata: dict | None 
 @pytest.mark.integration
 def test_cli_run_describe_with_share_token_success(runner: CliRunner, record_property: object) -> None:
     """Run describe --share-token succeeds without OAuth and returns run details."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-01, SWR-APPLICATION-4-3")
     mock_run = _make_mock_run("run-shared-001")
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -1030,7 +1030,7 @@ def test_cli_run_describe_with_share_token_success(runner: CliRunner, record_pro
 @pytest.mark.integration
 def test_cli_run_describe_with_share_token_json(runner: CliRunner, record_property: object) -> None:
     """Run describe --share-token --format json returns valid JSON without OAuth."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-01, SWR-APPLICATION-4-3")
     mock_run = _make_mock_run("run-shared-002")
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -1050,7 +1050,7 @@ def test_cli_run_describe_with_share_token_json(runner: CliRunner, record_proper
 @pytest.mark.integration
 def test_cli_run_describe_with_share_token_not_found(runner: CliRunner, record_property: object) -> None:
     """Run describe --share-token exits 2 when run does not exist."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-06, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run.side_effect = ApiNotFound(status=404, reason="Not Found")
         result = runner.invoke(cli, ["application", "run", "describe", "bad-run-id", "--share-token", "s3cr3t"])
@@ -1067,7 +1067,7 @@ def test_cli_run_describe_with_share_token_forbidden(runner: CliRunner, record_p
     application_run() which wraps all exceptions into RuntimeError and can never raise a
     bare ForbiddenException in production.
     """
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-05, SWR-APPLICATION-4-3")
     mock_run = MagicMock()
     mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
 
@@ -1083,7 +1083,7 @@ def test_cli_run_describe_with_share_token_forbidden(runner: CliRunner, record_p
 @pytest.mark.integration
 def test_cli_run_dump_metadata_with_share_token_success(runner: CliRunner, record_property: object) -> None:
     """Run dump-metadata --share-token returns custom metadata JSON without OAuth."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-02, SWR-APPLICATION-4-3")
     mock_run = _make_mock_run("run-001", custom_metadata={"key": "value"})
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -1102,7 +1102,7 @@ def test_cli_run_dump_metadata_with_share_token_forbidden(runner: CliRunner, rec
     The 403 is raised from run.details() (the real source) rather than from application_run,
     which wraps exceptions into RuntimeError in production.
     """
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-05, SWR-APPLICATION-4-3")
     mock_run = MagicMock()
     mock_run.details.side_effect = ForbiddenException(status=403, reason="Forbidden")
 
@@ -1117,7 +1117,7 @@ def test_cli_run_dump_metadata_with_share_token_forbidden(runner: CliRunner, rec
 @pytest.mark.integration
 def test_cli_run_dump_item_metadata_with_share_token_success(runner: CliRunner, record_property: object) -> None:
     """Run dump-item-metadata --share-token finds an item and returns its metadata without OAuth."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-03, SWR-APPLICATION-4-3")
     mock_item = MagicMock()
     mock_item.external_id = "slide-001.svs"
     mock_item.custom_metadata = {"slide": "meta"}
@@ -1144,7 +1144,7 @@ def test_cli_run_dump_item_metadata_with_share_token_forbidden(runner: CliRunner
     The 403 is raised from run.results() (the real source iterated by the command) rather
     than from application_run, which wraps exceptions into RuntimeError in production.
     """
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-05, SWR-APPLICATION-4-3")
     mock_run = MagicMock()
     mock_run.results.side_effect = ForbiddenException(status=403, reason="Forbidden")
 
@@ -1163,7 +1163,7 @@ def test_cli_result_download_with_share_token_passes_token_to_service(
     runner: CliRunner, tmp_path: Path, record_property: object
 ) -> None:
     """Result download --share-token forwards the token to application_run_download."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-04, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_download.return_value = tmp_path
         result = runner.invoke(
@@ -1181,7 +1181,7 @@ def test_cli_result_download_with_share_token_forbidden(
     runner: CliRunner, tmp_path: Path, record_property: object
 ) -> None:
     """Result download --share-token exits 1 on forbidden."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-05, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_download.side_effect = ForbiddenException(
             status=403, reason="Forbidden"
@@ -1198,7 +1198,7 @@ def test_cli_result_download_with_share_token_forbidden(
 @pytest.mark.integration
 def test_cli_run_describe_without_share_token_passes_none(runner: CliRunner, record_property: object) -> None:
     """Run describe without --share-token calls the service with share_token=None (no leakage)."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3")
     mock_run = _make_mock_run("run-noshare")
 
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
@@ -1212,7 +1212,7 @@ def test_cli_run_describe_without_share_token_passes_none(runner: CliRunner, rec
 @pytest.mark.integration
 def test_cli_run_dump_metadata_with_share_token_not_found(runner: CliRunner, record_property: object) -> None:
     """Run dump-metadata --share-token exits 2 when run does not exist."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-06, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run.side_effect = ApiNotFound(status=404, reason="Not Found")
         result = runner.invoke(cli, ["application", "run", "dump-metadata", "bad-run-id", "--share-token", "s3cr3t"])
@@ -1224,7 +1224,7 @@ def test_cli_run_dump_metadata_with_share_token_not_found(runner: CliRunner, rec
 @pytest.mark.integration
 def test_cli_run_dump_item_metadata_with_share_token_not_found(runner: CliRunner, record_property: object) -> None:
     """Run dump-item-metadata --share-token exits 2 when run does not exist."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-06, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run.side_effect = ApiNotFound(status=404, reason="Not Found")
         result = runner.invoke(
@@ -1240,7 +1240,7 @@ def test_cli_result_download_with_share_token_not_found(
     runner: CliRunner, tmp_path: Path, record_property: object
 ) -> None:
     """Result download --share-token exits 2 when run does not exist."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-06, SWR-APPLICATION-4-3")
     with patch(APPLICATION_CLI_SERVICE_PATCH_TARGET) as mock_svc_cls:
         mock_svc_cls.return_value.application_run_download.side_effect = ApiNotFound(status=404, reason="Not Found")
         result = runner.invoke(

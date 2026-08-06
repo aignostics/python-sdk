@@ -1417,7 +1417,7 @@ def test_update_item_custom_metadata_no_enrich_skips_sdk_metadata_builders(app_r
 @pytest.mark.unit
 def test_details_forwards_share_token(mock_api, record_property) -> None:
     """Run.details() forwards a configured share_token to the get-run API call."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     mock_api.get_run_v1_runs_run_id_get.return_value = RunReadResponse.model_construct(run_id="test-run-id")
 
     Run(mock_api, "test-run-id", share_token="s3cr3t").details()  # noqa: S106
@@ -1428,7 +1428,7 @@ def test_details_forwards_share_token(mock_api, record_property) -> None:
 @pytest.mark.unit
 def test_details_share_token_none_when_not_supplied(app_run, mock_api, record_property) -> None:
     """Run.details() sends share_token=None when no share token was supplied (no leakage)."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     mock_api.get_run_v1_runs_run_id_get.return_value = RunReadResponse.model_construct(run_id="test-run-id")
 
     app_run.details()
@@ -1439,7 +1439,7 @@ def test_details_share_token_none_when_not_supplied(app_run, mock_api, record_pr
 @pytest.mark.unit
 def test_results_forwards_share_token(mock_api, record_property) -> None:
     """Run.results() forwards a configured share_token to the list-items API call on every page."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
 
     list(Run(mock_api, "test-run-id", share_token="s3cr3t").results())  # noqa: S106
@@ -1450,7 +1450,7 @@ def test_results_forwards_share_token(mock_api, record_property) -> None:
 @pytest.mark.unit
 def test_results_share_token_none_when_not_supplied(app_run, mock_api, record_property) -> None:
     """Run.results() sends share_token=None when no share token was supplied (no leakage)."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     mock_api.list_run_items_v1_runs_run_id_items_get.return_value = []
 
     list(app_run.results())
@@ -1461,7 +1461,7 @@ def test_results_share_token_none_when_not_supplied(app_run, mock_api, record_pr
 @pytest.mark.unit
 def test_artifact_get_download_url_appends_share_token(configured_api, record_property) -> None:
     """Artifact.get_download_url() adds the share_token as a query parameter on the /file URL."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID, share_token="s3cr3t")  # noqa: S106
     response = _redirect_response(_PRESIGNED_URL)
 
@@ -1474,7 +1474,7 @@ def test_artifact_get_download_url_appends_share_token(configured_api, record_pr
 @pytest.mark.unit
 def test_artifact_get_download_url_percent_encodes_share_token(configured_api, record_property) -> None:
     """A share_token with reserved characters is percent-encoded, not injected as extra query params."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID, share_token="a b&x=1")  # noqa: S106
     response = _redirect_response(_PRESIGNED_URL)
 
@@ -1491,7 +1491,7 @@ def test_artifact_get_download_url_percent_encodes_share_token(configured_api, r
 @pytest.mark.unit
 def test_artifact_get_download_url_sends_bearer_with_share_token(configured_api, record_property) -> None:
     """The /file request always sends the OAuth Bearer header alongside the share_token query param."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID, share_token="s3cr3t")  # noqa: S106
     response = _redirect_response(_PRESIGNED_URL)
 
@@ -1505,7 +1505,7 @@ def test_artifact_get_download_url_sends_bearer_with_share_token(configured_api,
 @pytest.mark.unit
 def test_for_run_id_with_share_token_uses_authenticated_client(mock_api, record_property) -> None:
     """Run.for_run_id(share_token=...) uses the normal authenticated client and stores the token."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     with patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api) as mock_get_api_client:
         run = Run.for_run_id("run-abc", share_token="s3cr3t")  # noqa: S106
 
@@ -1516,7 +1516,7 @@ def test_for_run_id_with_share_token_uses_authenticated_client(mock_api, record_
 @pytest.mark.unit
 def test_for_run_id_without_share_token_uses_oauth(mock_api, record_property) -> None:
     """Run.for_run_id() without a share token uses the normal cached OAuth client."""
-    record_property("tested-item-id", "PYSDK-145")
+    record_property("tested-item-id", "TC-APPLICATION-CLI-08-07, SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
     with patch("aignostics.platform._client.Client.get_api_client", return_value=mock_api) as mock_get_api_client:
         run = Run.for_run_id("run-abc", cache_token=True)
 

@@ -2,11 +2,11 @@
 itemId: SPEC-APPLICATION-SERVICE
 itemTitle: Application Module Specification
 itemType: Software Item Spec
-itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SHR-APPLICATION-3, SWR-APPLICATION-2-12, SWR-APPLICATION-2-11, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-17, SWR-APPLICATION-2-5, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-3-3
+itemFulfills: SWR-APPLICATION-1-1, SWR-APPLICATION-1-2, SWR-APPLICATION-1-3, SWR-APPLICATION-2-3, SWR-APPLICATION-2-4, SHR-APPLICATION-3, SWR-APPLICATION-2-12, SWR-APPLICATION-2-11, SWR-APPLICATION-2-13, SWR-APPLICATION-2-14, SWR-APPLICATION-2-15, SWR-APPLICATION-2-16, SWR-APPLICATION-2-17, SWR-APPLICATION-2-5, SWR-APPLICATION-2-7, SWR-APPLICATION-2-8, SWR-APPLICATION-2-9, SWR-APPLICATION-3-3, SWR-APPLICATION-4-3
 Module: Application
 Layer: Domain Service
 Version: 0.2.107
-Date: 2026-04-29
+Date: 2026-08-06
 ---
 
 ## 1. Description
@@ -28,6 +28,7 @@ The Application Module shall:
 - **FR-05** **Result Download**: Progressive download of analysis results with resumable operations and organized directory hierarchies
 - **FR-06** **QuPath Integration**: Automatic QuPath project creation with downloaded results for pathology analysis
 - **FR-07** **Multi-Modal Interface**: Provide CLI, GUI, and programmatic interfaces for different user workflows
+- **FR-08** **Shared Run Access via Share Token**: Read a run shared with you via `--share-token` (status, metadata, result download); denied token exits 1, missing run exits 2, no token behaves as before
 
 ### 1.3 Non-Functional Requirements
 
@@ -481,6 +482,9 @@ uvx aignostics application [subcommand] [options]
   `--checksum` guards the write with optimistic concurrency control (exit code 3 on conflict);
   `--enrich-sdk-metadata / --no-enrich-sdk-metadata` (default enrich) controls whether the SDK
   merges auto-generated tracking context into the `sdk` field or forwards it verbatim
+- `--share-token <secret>` (on `run describe`, `run dump-metadata`, `run dump-item-metadata`,
+  `run result download`): read a run shared with you; OAuth login still required. Denied token
+  exits 1, missing run exits 2; omitted behaves as before
 
 ### 4.3 GUI Interface
 
@@ -558,7 +562,7 @@ Configuration is managed through environment variables with the prefix `AIGNOSTI
 | `NotFoundException`   | Missing runs or applications     | Graceful rejection with info                        | Clear resource not found info              |
 | `FileNotFoundError`   | Missing input files              | File validation before upload                       | File path verification help                |
 | `ApiException`        | Platform API failures            | Retry mechanism with recovery                       | API error details and guidance             |
-| `ForbiddenException`  | Caller not authorized for the requested org | Caught in CLI; exit 2 with access-denied message | User informed they lack permission    |
+| `ForbiddenException`  | Not authorized for the org, or share-token read denied | Caught in CLI; org denial exits 2, share-token denial exits 1 (token never echoed) | Lacks permission / token may be invalid, expired, or revoked |
 | `ConcurrencyConflictError` | Custom-metadata update rejected (HTTP 412): metadata modified since the checksum was read | `ValueError` subclass; caught in CLI, exit 3 | User told to re-read and retry the update |
 
 ### 7.2 Input Validation
