@@ -175,6 +175,31 @@ make merge-release
 
 Merges the release branch into `main` with `--no-ff` and deletes the branch.
 
+### Publish `aignostics-sdk` to the internal registry
+
+The slim `aignostics-sdk` package is published manually to the internal Google Artifact Registry.
+
+**Prerequisites:** `~/.config/uv/uv.toml` must contain a `publish-url` for the `aignx-private-registry` index (one-time setup):
+
+```toml
+[[index]]
+name = "aignx-private-registry"
+url = "https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/simple/"
+publish-url = "https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/"
+authenticate = "always"
+default = true
+```
+
+**Build and publish:**
+
+```shell
+uv build --package aignostics-sdk
+uv publish dist/aignostics_sdk-<version>* \
+  --index aignx-private-registry \
+  -u oauth2accesstoken \
+  -p $(gcloud auth print-access-token)
+```
+
 ## Advanced usage
 
 ### Developing the GUI

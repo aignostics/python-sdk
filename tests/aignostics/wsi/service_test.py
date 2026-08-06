@@ -10,12 +10,11 @@ from pathlib import Path
 
 import pydicom
 import pytest
+from aignostics.wsi import Service as WSIService
 from fastapi.testclient import TestClient
 from nicegui import app
 from nicegui.testing import User
 from PIL import Image
-
-from aignostics.wsi import Service as WSIService
 
 CONTENT_LENGTH_FALLBACK = 32066  # Fallback image size in bytes
 

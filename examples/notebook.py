@@ -228,7 +228,7 @@ def _(client):
 def _(mo):
     mo.md(
         r"""
-    from aignostics.platform.resources.runs import ApplicationRun
+    from aignostics_sdk.platform.resources.runs import ApplicationRun
     application_run = ApplicationRun.for_run_id("<run_id>")
     # download
     download_folder = "/tmp/"

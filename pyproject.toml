@@ -1,175 +1,3 @@
-[project]
-name = "aignostics"
-version = "1.4.0"
-description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
-readme = "README.md"
-authors = [
-    { name = "Helmut Hoffer von Ankershoffen", email = "support@aignostics.com" },
-    { name = "Andreas Kunft", email = "support@aignostics.com" },
-]
-maintainers = [
-    { name = "Oliver Meyer", email = "support@aignostics.com" },
-    { name = "Arne Baumann", email = "support@aignostics.com" },
-]
-license = { file = "LICENSE" }
-
-keywords = [
-    "aignostics",
-    "atlas",
-    "whole-slide-imaging",
-    "machine-learning",
-    "digital-pathology",
-    "medical-imaging",
-    "qupath",
-    "dicom",
-    "pydicom",
-    "openslide",
-    "image-data-commons",
-    "act",
-    "codecov",
-    "copier",
-    "cyclonedx",
-    "devcontainer",
-    "detect-secrets",
-    "docker",
-    "git-cliff",
-    "jupyter",
-    "marimo",
-    "mypy",
-    "nox",
-    "nicegui",
-    "oe-python-template",
-    "pip-audit",
-    "pip-licenses",
-    "pre-commit",
-    "pydantic",
-    "pytest",
-    "python",
-    "pypi",
-    "readthedocs",
-    "ruff",
-    "sonarqube",
-    "sonarcloud",
-    "sphinx",
-    "typer",
-    "uv",
-]
-
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Intended Audience :: End Users/Desktop",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: MacOS :: MacOS X",
-    "Operating System :: POSIX :: Linux",
-    "Operating System :: Microsoft :: Windows",
-    "Framework :: Pydantic",
-    "Framework :: Pytest",
-    "Typing :: Typed",
-    "Natural Language :: English",
-]
-
-# WARNING: The upper bound of requires-python is *not* respected by uvx
-requires-python = ">=3.11, <3.15"
-
-dependencies = [
-    # From Template
-    "fastapi[all,standard]>=0.123.10",
-    "humanize>=4.14.0,<5",
-    "nicegui[native]>=3.11.0,<4",  # CVE-2026-21871, CVE-2026-21873, CVE-2026-21874 (>=3.5.0); CVE-2026-25516 (>=3.7.0, #418); CVE-2026-27156 (>=3.8.0, #448); CVE-2026-33332 (>=3.9.0, #498); CVE-2026-39844 (>=3.10.0, #531). 3.11.0 fixes async event handler exception leaks and refines ValueChangeEventArguments generics.
-    "packaging>=26,<27",
-    "platformdirs>=4.5.1,<5",
-    "psutil>=7.1.3,<8",
-    "pydantic-settings>=2.12.0,<3",
-    "pywin32>=312,<313; sys_platform == 'win32'",
-    "pyyaml>=6.0.3,<7",
-    "sentry-sdk>=2.47.0,<3",
-    "typer>=0.20.0,<1",
-    # Custom
-    "boto3>=1.42.4,<2",
-    "certifi>=2025.11.12",
-    "defusedxml>=0.7.1",
-    "dicom-validator>=0.7.3,<1",
-    "dicomweb-client[gcp]>=0.59.3,<1",
-    "duckdb>=1.4.2,<=2",
-    "google-cloud-storage>=3.6.0,<4",
-    "crc32c>=2.8,<3", # TODO(Helmut): Remove and back to google_crc32c when that supports Python 3.14
-    "highdicom>=0.26.1,<1; python_version < '3.14'", # transitive dependency pyjpegls not yet supporting Python 3.14
-    "html-sanitizer>=2.6.0,<3",
-    "httpx>=0.28.1,<1",
-    "idc-index-data==24.0.3",
-    "ijson>=3.4.0.post0,<4",
-    "jsf>=0.11.2,<1",
-    "jsonschema[format-nongpl]>=4.25.1,<5",
-    "loguru>=0.7.3,<1",
-    "msgpack>=1.2.1", # GHSA-6v7p-g79w-8964
-    "openslide-bin>=4.0.0.10,<5",
-    "openslide-python>=1.4.3,<2",
-    "pandas>=2.3.3,<4",
-    "platformdirs>=4.3.2,<5",
-    "procrastinate>=3.5.3",
-    "fastparquet>=2026.3.0,<2026.4.0; python_version < '3.14'",
-    "pyarrow>=23.0.1,<26; python_version >= '3.14'",
-    "pyjwt[crypto]>=2.13.0,<3", # CVE-2026-32597 requires >=2.12.0 (Renovate #475)
-    "python-dateutil>=2.9.0.post0,<3",
-    # "pywebview[qt6]>=5.4,<6; sys_platform == 'linux'",
-    "requests>=2.33.0,<3", # CVE-2026-25645 requires >= 2.33.0
-    "requests-oauthlib>=2.0.0,<3",
-    "s5cmd>=0.3.3,<1",
-    "semver>=3.0.4,<4",
-    "shapely>=2.1.2,<3",
-    "tenacity>=9.1.2,<10",
-    "tqdm>=4.67.1,<5",
-    "truststore>=0.10.4,<1",
-    "urllib3>=2.6.3,<3", # CVE-2026-21441 requires >= 2.6.3
-    "wsidicom>=0.28.1,<1",
-    "fastmcp>=3.2.0,<4",
-    # Transitive overrides: lower bounds enforced to shield consumers from known CVEs/GHSAs.
-    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "rfc3987; sys_platform == 'never'", # GPLv3
-    "h11>=0.16.0",                      # CVE-2025-43859
-    "tornado>=6.5.5",                   # CVE-2025-47287 (>=6.5.0); GHSA-78cv-mqj4-43f7 (>=6.5.5, Renovate #472)
-    "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182
-    "pillow>=12.2.0",                   # CVE-2025-48379 (>=11.3.0); CVE-2026-25990 (>=12.1.1, Renovate #428); CVE-2026-40192 (>=12.2.0, Renovate #539)
-    "aiohttp>=3.13.4",                  # CVE-2025-53643, CVE-2025-69223..9 (>=3.13.3); CVE-2026-22815 (>=3.13.4, Renovate #527)
-    "starlette>=1.0.1",                 # CVE-2025-54121, GHSA-7f5h-v6xp-fcq8, PYSEC-2026-161
-    "lxml>=6.1.0",                      # CVE-2026-41066 (Renovate #556); also required for python 3.14 pre-built wheels
-    "filelock>=3.20.3",                 # CVE-2025-68146 (>=3.20.1); CVE-2026-22701 (>=3.20.3, Renovate #387)
-    "marshmallow>=3.26.2",              # CVE-2025-68480
-    "pygments>=2.20.0",                 # CVE-2026-4539 (>=2.20.0); transitive via rich
-    "cryptography>=46.0.7",             # CVE-2026-39892 (>=46.0.7); transitive via pyjwt[crypto]
-    "pydicom>=3.0.2",                   # CVE-2026-32711 (>=3.0.2); transitive via dicomweb-client/wsidicom/highdicom
-    "pyasn1>=0.6.3",                    # CVE-2026-30922 (>=0.6.3); transitive via cryptography
-    "lxml-html-clean>=0.4.4",           # CVE-2026-28348, CVE-2026-28350 (>=0.4.4); transitive via html-sanitizer
-    "python-multipart>=0.0.26",         # CVE-2026-24486 (>=0.0.22), CVE-2026-40347 (>=0.0.26); transitive via fastapi/starlette
-    "protobuf>=6.33.5",                 # CVE-2026-0994 (>=6.33.5); transitive via google-cloud-storage/sentry-sdk
-]
-
-[project.optional-dependencies]
-pyinstaller = ["pyinstaller>=6.14.0,<7"]
-jupyter = [
-    "jupyter>=1.1.1,<2",
-    # Transitive overrides
-    # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "jupyter-core>=5.8.1",              # CVE-2025-30167
-    "jupyter-server>=2.20.0",           # CVE-2026-44727
-    "jupyterlab>=4.5.9",                # CVE-2025-59842
-    "nbconvert>=7.17.1",                # CVE-2025-53000 (>=7.17.0, Dependabot #424); CVE-2026-39377, CVE-2026-39378 (>=7.17.1, Dependabot #553)
-]
-marimo = [
-    "cloudpathlib>=0.23.0,<1",
-    "ipython>=9.8.0,<10",
-    "marimo>=0.23.0,<1", # GHSA-2679-6mx9-h9xc (Renovate #533)
-    "matplotlib>=3.10.7,<4",
-    "shapely>=2.1.0,<3",
-]
-qupath = []
 [dependency-groups]
 dev = [
     "autodoc-pydantic>=2.2.0,<3",
@@ -239,28 +67,8 @@ override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
 [tool.uv.sources]
 # No additional sources outside of src/ yet
 
-[project.scripts]
-aignostics = "aignostics.cli:cli"
-
-[project.urls]
-Homepage = "https://aignostics.readthedocs.io/en/latest/"
-Documentation = "https://aignostics.readthedocs.io/en/latest/"
-Source = "https://github.com/aignostics/python-sdk"
-Changelog = "https://github.com/aignostics/python-sdk/releases"
-Issues = "https://github.com/aignostics/python-sdk/issues"
-
-[build-system]
-requires = ["hatchling==1.29.0"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build]
-include = ["src/*", "codegen/out/*", "examples"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/aignostics", "codegen/out/aignx", "examples"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
+[tool.uv.workspace]
+members = ["packages/*"]
 
 [tool.ruff]
 target-version = "py311"
@@ -276,6 +84,7 @@ extend-exclude = [
     "examples/*.py",
     "examples/*.ipynb",
     "codegen",
+    "**/_codegen/**",
 ]
 
 [tool.ruff.lint]
@@ -303,8 +112,9 @@ ignore = [
     "T201",     # Remove `print`
     "INP001",   # Checks for packages that are missing an __init__.py file.
     "BLE001",   # Accept for now TODO(Helmut): Add proper exception handling later
-    "ASYNC240", # Aiopath broken in Python 3.11 which we want to support
-    "PLW0717"   # Allow try-clauses with more than 5 statements
+    "ASYNC240",  # Aiopath broken in Python 3.11 which we want to support
+    "PLW0717",   # try clause contains too many statements -> new in ruff 0.15.13, pre-existing patterns, address in individual PRs
+    "RUF075",    # fallible context manager -> new in ruff 0.15.13, pre-existing patterns, address in individual PRs
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -342,7 +152,15 @@ docstring-code-format = true
 convention = "google"
 
 [tool.mypy] # https://mypy.readthedocs.io/en/latest/config_file.html
-exclude = ["src/aignostics/third_party", "_notebook.py", "_pydicom_handler.py"]
+exclude = [
+    "packages/aignostics-sdk/src/aignostics_sdk/third_party",
+    "packages/aignostics/src/aignostics/third_party",
+    "packages/aignostics/src/aignostics/notebook/_notebook.py",
+    "packages/aignostics/src/aignostics/wsi/_pydicom_handler.py",
+    "packages/aignostics/src/aignostics/wsi/_openslide_handler.py",
+    "packages/aignostics-sdk/src/aignx",
+    "codegen",
+]
 junit_xml = "reports/mypy_junit.xml"
 plugins = "pydantic.mypy"
 strict = true
@@ -355,6 +173,17 @@ show_error_codes = true
 show_error_context = true
 warn_unreachable = true
 
+[[tool.mypy.overrides]]
+module = "aignx.*"
+ignore_errors = true
+follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = "aignostics_sdk._codegen.*"
+ignore_errors = true
+follow_imports = "skip"
+
+
 [tool.pydantic-mypy] # https://docs.pydantic.dev/latest/integrations/mypy/#configuring-the-plugin
 init_forbid_extra = true
 init_typed = true
@@ -365,7 +194,7 @@ warn_untyped_fields = true
 main_file = "tests/main.py"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
-addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
+addopts = "-p nicegui.testing.plugin -v --strict-markers --log-disable=aignostics --cov=aignostics_sdk --cov=aignostics --cov-report=term-missing --cov-report=xml:reports/coverage.xml --cov-report=html:reports/coverage_html"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 10 # We use a rather short default timeout. Override with @pytest.mark.timeout(timeout=N)
@@ -391,6 +220,7 @@ markers = [
     "unit: Solitary unit tests - test a layer of a module in isolation with all dependencies mocked, except interaction with shared utils and the systems module. Unit tests must be able to pass offline, i.e. not calls to external services. The timeout should not be bigger than the default 10s, and must be <5 min.",
     "integration: Sociable integration tests - test interactions across architectural layers (e.g. CLI/GUI→Service, Service→Utils) or between modules (e.g. Application→Platform), using real SDK collaborators, real file I/O, real subprocesses, and real Docker containers. Integration test must be able to pass offline, i.e. mock external services (Aignostics Platform API, Auth0, S3/GCS buckets, IDC). The timeout should not be bigger than the default 10s, and must be <5 min.",
     "e2e: End-to-end tests - test complete workflows with real external network services (Aignostics Platform API, cloud storage, IDC, etc). If the test timeout is >= 5 min and < 60 min, additionally mark as `long_running`, if >= 60min mark as 'very_long_running'.",
+    "slim: Tests for the aignostics-sdk slim package distribution.",
 ]
 md_report = true
 md_report_output = "reports/pytest.md"
@@ -402,20 +232,27 @@ md_report_exclude_outcomes = ["passed", "skipped"]
 [tool.coverage.run]
 sigterm = true
 relative_files = true
-source = ["src"]
+source = [
+    "packages/aignostics-sdk/src",
+    "packages/aignostics/src",
+]
 omit = [
-    "src/aignostics/aignostics.py",
-    "src/aignostics/third_party/*",
-    "src/aignostics/notebook/_notebook.py",
-    "src/aignostics/wsi/_pydicom_handler.py",
-    "src/aignostics/wsi/_openslide_handler.py",
+    "*/aignostics/aignostics.py",
+    "*/aignostics/third_party/*",
+    "*/aignostics_sdk/third_party/*",
+    "*/aignostics/notebook/_notebook.py",
+    "*/aignostics/wsi/_pydicom_handler.py",
+    "*/aignostics/wsi/_openslide_handler.py",
 ]
 branch = true
 parallel = true
 concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.paths]
-source = ["src/"]
+source = [
+    "packages/aignostics-sdk/src",
+    "packages/aignostics/src",
+]
 
 
 [tool.bumpversion]
@@ -443,15 +280,26 @@ pre_commit_hooks = [
 post_commit_hooks = []
 
 [[tool.bumpversion.files]]
-filename = "pyproject.toml"
+filename = "packages/aignostics-sdk/pyproject.toml"
+search = """
+[project]
+name = \"aignostics-sdk\"
+version = \"{current_version}\"\""""
+replace = """
+[project]
+name = \"aignostics-sdk\"
+version = \"{new_version}\"\""""
+
+[[tool.bumpversion.files]]
+filename = "packages/aignostics/pyproject.toml"
 search = """
 [project]
 name = \"aignostics\"
-version = \"{current_version}\""""
+version = \"{current_version}\"\""""
 replace = """
 [project]
 name = \"aignostics\"
-version = \"{new_version}\""""
+version = \"{new_version}\"\""""
 
 [[tool.bumpversion.files]]
 filename = "VERSION"

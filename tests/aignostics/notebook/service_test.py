@@ -6,9 +6,8 @@ import re
 from unittest.mock import MagicMock, patch
 
 import pytest
-from nicegui.testing import User
-
 from aignostics.notebook._service import MARIMO_SERVER_STARTUP_TIMEOUT, Service, _get_runner, _Runner
+from nicegui.testing import User
 
 
 @pytest.mark.integration

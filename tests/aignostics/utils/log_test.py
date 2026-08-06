@@ -7,7 +7,7 @@ from unittest import mock
 
 import pytest
 
-from aignostics.utils._log import _validate_file_name, logging_initialize
+from aignostics_sdk.utils._log import _validate_file_name, logging_initialize
 
 
 @pytest.mark.unit
@@ -105,10 +105,10 @@ def test_validate_file_name_invalid_path(record_property) -> None:
 def test_logging_initialize_with_defaults(record_property, caplog: pytest.LogCaptureFixture) -> None:
     """Test logging_initialize with default settings."""
     record_property("tested-item-id", "SPEC-UTILS-SERVICE")
-    from aignostics.utils._log import logger
+    from aignostics_sdk.utils._log import logger
 
     with (
-        mock.patch("aignostics.utils._log.load_settings") as mock_load_settings,
+        mock.patch("aignostics_sdk.utils._log.load_settings") as mock_load_settings,
         mock.patch.object(logger, "remove") as mock_remove,
         mock.patch.object(logger, "configure") as mock_configure,
         mock.patch.object(logger, "add") as mock_add,

@@ -5,9 +5,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
+from aignostics.cli import cli
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
 from tests.conftest import normalize_output
 from tests.constants_test import HETA_APPLICATION_ID
 

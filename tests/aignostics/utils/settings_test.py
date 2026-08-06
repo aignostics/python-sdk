@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import SecretStr
 
-from aignostics.utils._settings import (
+from aignostics_sdk.utils._settings import (
     UNHIDE_SENSITIVE_INFO,
     OpaqueSettings,
     load_settings,

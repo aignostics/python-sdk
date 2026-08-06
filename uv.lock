@@ -17,250 +17,16 @@ resolution-markers = [
 ]
 
 [manifest]
+members = [
+    "aignostics",
+    "aignostics-sdk",
+]
 overrides = [
     { name = "pymdown-extensions", specifier = ">=11.0.0" },
     { name = "pytest", specifier = ">=9.0.1" },
 ]
 
-[[package]]
-name = "accessible-pygments"
-version = "0.0.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pygments" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/c1/bbac6a50d02774f91572938964c582fff4270eee73ab822a4aeea4d8b11b/accessible_pygments-0.0.5.tar.gz", hash = "sha256:40918d3e6a2b619ad424cb91e556bd3bd8865443d9f22f1dcdf79e33c8046872", size = 1377899, upload-time = "2024-05-10T11:23:10.216Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/3f/95338030883d8c8b91223b4e21744b04d11b161a3ef117295d8241f50ab4/accessible_pygments-0.0.5-py3-none-any.whl", hash = "sha256:88ae3211e68a1d0b011504b2ffc1691feafce124b845bd072ab6f9f66f34d4b7", size = 1395903, upload-time = "2024-05-10T11:23:08.421Z" },
-]
-
-[[package]]
-name = "aignostics"
-version = "1.4.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aiohttp" },
-    { name = "boto3" },
-    { name = "certifi" },
-    { name = "crc32c" },
-    { name = "cryptography" },
-    { name = "defusedxml" },
-    { name = "dicom-validator" },
-    { name = "dicomweb-client", extra = ["gcp"] },
-    { name = "duckdb" },
-    { name = "fastapi", extra = ["all", "standard"] },
-    { name = "fastmcp" },
-    { name = "fastparquet", marker = "python_full_version < '3.14'" },
-    { name = "filelock" },
-    { name = "google-cloud-storage" },
-    { name = "h11" },
-    { name = "highdicom", marker = "python_full_version < '3.14'" },
-    { name = "html-sanitizer" },
-    { name = "httpx" },
-    { name = "humanize" },
-    { name = "idc-index-data" },
-    { name = "ijson" },
-    { name = "jsf" },
-    { name = "jsonschema", extra = ["format-nongpl"] },
-    { name = "loguru" },
-    { name = "lxml" },
-    { name = "lxml-html-clean" },
-    { name = "marshmallow" },
-    { name = "msgpack" },
-    { name = "nicegui", extra = ["native"] },
-    { name = "openslide-bin" },
-    { name = "openslide-python" },
-    { name = "packaging" },
-    { name = "pandas" },
-    { name = "pillow" },
-    { name = "platformdirs" },
-    { name = "procrastinate" },
-    { name = "protobuf" },
-    { name = "psutil" },
-    { name = "pyarrow", marker = "python_full_version >= '3.14'" },
-    { name = "pyasn1" },
-    { name = "pydantic-settings" },
-    { name = "pydicom" },
-    { name = "pygments" },
-    { name = "pyjwt", extra = ["crypto"] },
-    { name = "python-dateutil" },
-    { name = "python-multipart" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
-    { name = "pyyaml" },
-    { name = "requests" },
-    { name = "requests-oauthlib" },
-    { name = "rfc3987", marker = "sys_platform == 'never'" },
-    { name = "s5cmd" },
-    { name = "semver" },
-    { name = "sentry-sdk" },
-    { name = "shapely" },
-    { name = "starlette" },
-    { name = "tenacity" },
-    { name = "tornado" },
-    { name = "tqdm" },
-    { name = "truststore" },
-    { name = "typer" },
-    { name = "urllib3" },
-    { name = "wsidicom" },
-]
-
-[package.optional-dependencies]
-jupyter = [
-    { name = "jupyter" },
-    { name = "jupyter-core" },
-    { name = "jupyter-server" },
-    { name = "jupyterlab" },
-    { name = "nbconvert" },
-]
-marimo = [
-    { name = "cloudpathlib" },
-    { name = "ipython" },
-    { name = "marimo" },
-    { name = "matplotlib" },
-    { name = "shapely" },
-]
-pyinstaller = [
-    { name = "pyinstaller" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "autodoc-pydantic" },
-    { name = "bleach" },
-    { name = "bump-my-version" },
-    { name = "coverage" },
-    { name = "cyclonedx-py" },
-    { name = "detect-secrets" },
-    { name = "enum-tools" },
-    { name = "fonttools" },
-    { name = "furo" },
-    { name = "git-cliff" },
-    { name = "linkify-it-py" },
-    { name = "mypy" },
-    { name = "myst-parser" },
-    { name = "nox", extra = ["uv"] },
-    { name = "pip" },
-    { name = "pip-audit" },
-    { name = "pip-licenses" },
-    { name = "pre-commit" },
-    { name = "pyright" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-docker" },
-    { name = "pytest-durations" },
-    { name = "pytest-env" },
-    { name = "pytest-md-report" },
-    { name = "pytest-regressions" },
-    { name = "pytest-retry" },
-    { name = "pytest-selenium" },
-    { name = "pytest-subprocess" },
-    { name = "pytest-timeout" },
-    { name = "pytest-watcher" },
-    { name = "pytest-xdist", extra = ["psutil"] },
-    { name = "ruff" },
-    { name = "scalene" },
-    { name = "sphinx" },
-    { name = "sphinx-autobuild" },
-    { name = "sphinx-click" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-inline-tabs" },
-    { name = "sphinx-rtd-theme" },
-    { name = "sphinx-selective-exclude" },
-    { name = "sphinx-toolbox" },
-    { name = "sphinxcontrib-mermaid" },
-    { name = "sphinxext-opengraph" },
-    { name = "swagger-plugin-for-sphinx" },
-    { name = "tomli" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "uv" },
-    { name = "virtualenv" },
-    { name = "watchdog" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = ">=3.13.4" },
-    { name = "boto3", specifier = ">=1.42.4,<2" },
-    { name = "certifi", specifier = ">=2025.11.12" },
-    { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
-    { name = "crc32c", specifier = ">=2.8,<3" },
-    { name = "cryptography", specifier = ">=46.0.7" },
-    { name = "defusedxml", specifier = ">=0.7.1" },
-    { name = "dicom-validator", specifier = ">=0.7.3,<1" },
-    { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.3,<1" },
-    { name = "duckdb", specifier = ">=1.4.2,<=2" },
-    { name = "fastapi", extras = ["all", "standard"], specifier = ">=0.123.10" },
-    { name = "fastmcp", specifier = ">=3.2.0,<4" },
-    { name = "fastparquet", marker = "python_full_version < '3.14'", specifier = ">=2026.3.0,<2026.4.0" },
-    { name = "filelock", specifier = ">=3.20.3" },
-    { name = "google-cloud-storage", specifier = ">=3.6.0,<4" },
-    { name = "h11", specifier = ">=0.16.0" },
-    { name = "highdicom", marker = "python_full_version < '3.14'", specifier = ">=0.26.1,<1" },
-    { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
-    { name = "httpx", specifier = ">=0.28.1,<1" },
-    { name = "humanize", specifier = ">=4.14.0,<5" },
-    { name = "idc-index-data", specifier = "==24.0.3" },
-    { name = "ijson", specifier = ">=3.4.0.post0,<4" },
-    { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.8.0,<10" },
-    { name = "jsf", specifier = ">=0.11.2,<1" },
-    { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1,<5" },
-    { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1,<2" },
-    { name = "jupyter-core", marker = "extra == 'jupyter'", specifier = ">=5.8.1" },
-    { name = "jupyter-server", marker = "extra == 'jupyter'", specifier = ">=2.20.0" },
-    { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=4.5.9" },
-    { name = "loguru", specifier = ">=0.7.3,<1" },
-    { name = "lxml", specifier = ">=6.1.0" },
-    { name = "lxml-html-clean", specifier = ">=0.4.4" },
-    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
-    { name = "marshmallow", specifier = ">=3.26.2" },
-    { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
-    { name = "msgpack", specifier = ">=1.2.1" },
-    { name = "nbconvert", marker = "extra == 'jupyter'", specifier = ">=7.17.1" },
-    { name = "nicegui", extras = ["native"], specifier = ">=3.11.0,<4" },
-    { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
-    { name = "openslide-python", specifier = ">=1.4.3,<2" },
-    { name = "packaging", specifier = ">=26,<27" },
-    { name = "pandas", specifier = ">=2.3.3,<4" },
-    { name = "pillow", specifier = ">=12.2.0" },
-    { name = "platformdirs", specifier = ">=4.3.2,<5" },
-    { name = "platformdirs", specifier = ">=4.5.1,<5" },
-    { name = "procrastinate", specifier = ">=3.5.3" },
-    { name = "protobuf", specifier = ">=6.33.5" },
-    { name = "psutil", specifier = ">=7.1.3,<8" },
-    { name = "pyarrow", marker = "python_full_version >= '3.14'", specifier = ">=23.0.1,<26" },
-    { name = "pyasn1", specifier = ">=0.6.3" },
-    { name = "pydantic-settings", specifier = ">=2.12.0,<3" },
-    { name = "pydicom", specifier = ">=3.0.2" },
-    { name = "pygments", specifier = ">=2.20.0" },
-    { name = "pyinstaller", marker = "extra == 'pyinstaller'", specifier = ">=6.14.0,<7" },
-    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.13.0,<3" },
-    { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
-    { name = "python-multipart", specifier = ">=0.0.26" },
-    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=312,<313" },
-    { name = "pyyaml", specifier = ">=6.0.3,<7" },
-    { name = "requests", specifier = ">=2.33.0,<3" },
-    { name = "requests-oauthlib", specifier = ">=2.0.0,<3" },
-    { name = "rfc3987", marker = "sys_platform == 'never'" },
-    { name = "s5cmd", specifier = ">=0.3.3,<1" },
-    { name = "semver", specifier = ">=3.0.4,<4" },
-    { name = "sentry-sdk", specifier = ">=2.47.0,<3" },
-    { name = "shapely", specifier = ">=2.1.2,<3" },
-    { name = "shapely", marker = "extra == 'marimo'", specifier = ">=2.1.0,<3" },
-    { name = "starlette", specifier = ">=1.0.1" },
-    { name = "tenacity", specifier = ">=9.1.2,<10" },
-    { name = "tornado", specifier = ">=6.5.5" },
-    { name = "tqdm", specifier = ">=4.67.1,<5" },
-    { name = "truststore", specifier = ">=0.10.4,<1" },
-    { name = "typer", specifier = ">=0.20.0,<1" },
-    { name = "urllib3", specifier = ">=2.5.0" },
-    { name = "urllib3", specifier = ">=2.6.3,<3" },
-    { name = "wsidicom", specifier = ">=0.28.1,<1" },
-]
-provides-extras = ["pyinstaller", "jupyter", "marimo", "qupath"]
-
-[package.metadata.requires-dev]
+[manifest.dependency-groups]
 dev = [
     { name = "autodoc-pydantic", specifier = ">=2.2.0,<3" },
     { name = "bleach", specifier = ">=6.4.0" },
@@ -314,6 +80,201 @@ dev = [
     { name = "uv", specifier = ">=0.11.6" },
     { name = "virtualenv", specifier = ">=20.36.1" },
     { name = "watchdog", specifier = ">=6.0.0,<7" },
+]
+
+[[package]]
+name = "accessible-pygments"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bc/c1/bbac6a50d02774f91572938964c582fff4270eee73ab822a4aeea4d8b11b/accessible_pygments-0.0.5.tar.gz", hash = "sha256:40918d3e6a2b619ad424cb91e556bd3bd8865443d9f22f1dcdf79e33c8046872", size = 1377899, upload-time = "2024-05-10T11:23:10.216Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/3f/95338030883d8c8b91223b4e21744b04d11b161a3ef117295d8241f50ab4/accessible_pygments-0.0.5-py3-none-any.whl", hash = "sha256:88ae3211e68a1d0b011504b2ffc1691feafce124b845bd072ab6f9f66f34d4b7", size = 1395903, upload-time = "2024-05-10T11:23:08.421Z" },
+]
+
+[[package]]
+name = "aignostics"
+version = "1.4.0"
+source = { editable = "packages/aignostics" }
+dependencies = [
+    { name = "aignostics-sdk" },
+    { name = "aiohttp" },
+    { name = "boto3" },
+    { name = "crc32c" },
+    { name = "defusedxml" },
+    { name = "dicom-validator" },
+    { name = "dicomweb-client", extra = ["gcp"] },
+    { name = "duckdb" },
+    { name = "fastparquet", marker = "python_full_version < '3.14'" },
+    { name = "google-cloud-storage" },
+    { name = "highdicom", marker = "python_full_version < '3.14'" },
+    { name = "html-sanitizer" },
+    { name = "humanize" },
+    { name = "idc-index-data" },
+    { name = "ijson" },
+    { name = "lxml" },
+    { name = "lxml-html-clean" },
+    { name = "marshmallow" },
+    { name = "openslide-bin" },
+    { name = "openslide-python" },
+    { name = "packaging" },
+    { name = "pandas" },
+    { name = "procrastinate" },
+    { name = "protobuf" },
+    { name = "pyarrow", marker = "python_full_version >= '3.14'" },
+    { name = "pydicom" },
+    { name = "python-dateutil" },
+    { name = "pyyaml" },
+    { name = "s5cmd" },
+    { name = "shapely" },
+    { name = "wsidicom" },
+]
+
+[package.optional-dependencies]
+jupyter = [
+    { name = "jupyter" },
+    { name = "jupyter-core" },
+    { name = "jupyterlab" },
+    { name = "nbconvert" },
+]
+marimo = [
+    { name = "cloudpathlib" },
+    { name = "ipython" },
+    { name = "marimo" },
+    { name = "matplotlib" },
+    { name = "shapely" },
+]
+pyinstaller = [
+    { name = "pyinstaller" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aignostics-sdk", editable = "packages/aignostics-sdk" },
+    { name = "aiohttp", specifier = ">=3.13.4" },
+    { name = "boto3", specifier = ">=1.42.4,<2" },
+    { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
+    { name = "crc32c", specifier = ">=2.8,<3" },
+    { name = "defusedxml", specifier = ">=0.7.1" },
+    { name = "dicom-validator", specifier = ">=0.7.3,<1" },
+    { name = "dicomweb-client", extras = ["gcp"], specifier = ">=0.59.3,<1" },
+    { name = "duckdb", specifier = ">=1.4.2,<=2" },
+    { name = "fastparquet", marker = "python_full_version < '3.14'", specifier = ">=2026.3.0,<2026.4.0" },
+    { name = "google-cloud-storage", specifier = ">=3.6.0,<4" },
+    { name = "highdicom", marker = "python_full_version < '3.14'", specifier = ">=0.26.1,<1" },
+    { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
+    { name = "humanize", specifier = ">=4.14.0,<5" },
+    { name = "idc-index-data", specifier = "==24.0.3" },
+    { name = "ijson", specifier = ">=3.4.0.post0,<4" },
+    { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.8.0,<10" },
+    { name = "jupyter", marker = "extra == 'jupyter'", specifier = ">=1.1.1,<2" },
+    { name = "jupyter-core", marker = "extra == 'jupyter'", specifier = ">=5.8.1" },
+    { name = "jupyterlab", marker = "extra == 'jupyter'", specifier = ">=4.4.9" },
+    { name = "lxml", specifier = ">=6.1.0" },
+    { name = "lxml-html-clean", specifier = ">=0.4.4" },
+    { name = "marimo", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
+    { name = "marshmallow", specifier = ">=3.26.2" },
+    { name = "matplotlib", marker = "extra == 'marimo'", specifier = ">=3.10.7,<4" },
+    { name = "nbconvert", marker = "extra == 'jupyter'", specifier = ">=7.17.1" },
+    { name = "openslide-bin", specifier = ">=4.0.0.10,<5" },
+    { name = "openslide-python", specifier = ">=1.4.3,<2" },
+    { name = "packaging", specifier = ">=26,<27" },
+    { name = "pandas", specifier = ">=2.3.3,<4" },
+    { name = "procrastinate", specifier = ">=3.5.3" },
+    { name = "protobuf", specifier = ">=6.33.5" },
+    { name = "pyarrow", marker = "python_full_version >= '3.14'", specifier = ">=23.0.1,<26" },
+    { name = "pydicom", specifier = ">=3.0.2" },
+    { name = "pyinstaller", marker = "extra == 'pyinstaller'", specifier = ">=6.14.0,<7" },
+    { name = "python-dateutil", specifier = ">=2.9.0.post0,<3" },
+    { name = "pyyaml", specifier = ">=6.0.3,<7" },
+    { name = "s5cmd", specifier = ">=0.3.3,<1" },
+    { name = "shapely", specifier = ">=2.1.2,<3" },
+    { name = "shapely", marker = "extra == 'marimo'", specifier = ">=2.1.0,<3" },
+    { name = "wsidicom", specifier = ">=0.28.1,<1" },
+]
+provides-extras = ["pyinstaller", "jupyter", "marimo", "qupath"]
+
+[[package]]
+name = "aignostics-sdk"
+version = "1.4.9"
+source = { editable = "packages/aignostics-sdk" }
+dependencies = [
+    { name = "certifi" },
+    { name = "crc32c" },
+    { name = "cryptography" },
+    { name = "fastapi", extra = ["all", "standard"] },
+    { name = "fastmcp" },
+    { name = "filelock" },
+    { name = "h11" },
+    { name = "httpx" },
+    { name = "humanize" },
+    { name = "jsf" },
+    { name = "jsonschema", extra = ["format-nongpl"] },
+    { name = "loguru" },
+    { name = "nicegui", extra = ["native"] },
+    { name = "pillow" },
+    { name = "platformdirs" },
+    { name = "psutil" },
+    { name = "pyasn1" },
+    { name = "pydantic-settings" },
+    { name = "pygments" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "python-multipart" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "pyyaml" },
+    { name = "requests" },
+    { name = "requests-oauthlib" },
+    { name = "rfc3987", marker = "sys_platform == 'never'" },
+    { name = "semver" },
+    { name = "sentry-sdk" },
+    { name = "starlette" },
+    { name = "tenacity" },
+    { name = "tornado" },
+    { name = "tqdm" },
+    { name = "truststore" },
+    { name = "typer" },
+    { name = "urllib3" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "certifi", specifier = ">=2025.11.12" },
+    { name = "crc32c", specifier = ">=2.8,<3" },
+    { name = "cryptography", specifier = ">=46.0.7" },
+    { name = "fastapi", extras = ["all", "standard"], specifier = ">=0.123.10" },
+    { name = "fastmcp", specifier = ">=3.2.0,<4" },
+    { name = "filelock", specifier = ">=3.20.3" },
+    { name = "h11", specifier = ">=0.16.0" },
+    { name = "httpx", specifier = ">=0.28.1,<1" },
+    { name = "humanize", specifier = ">=4.14.0,<5" },
+    { name = "jsf", specifier = ">=0.11.2,<1" },
+    { name = "jsonschema", extras = ["format-nongpl"], specifier = ">=4.25.1,<5" },
+    { name = "loguru", specifier = ">=0.7.3,<1" },
+    { name = "nicegui", extras = ["native"], specifier = ">=3.11.0,<4" },
+    { name = "pillow", specifier = ">=12.2.0" },
+    { name = "platformdirs", specifier = ">=4.5.1,<5" },
+    { name = "psutil", specifier = ">=7.1.3,<8" },
+    { name = "pyasn1", specifier = ">=0.6.3" },
+    { name = "pydantic-settings", specifier = ">=2.12.0,<3" },
+    { name = "pygments", specifier = ">=2.20.0" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0,<3" },
+    { name = "python-multipart", specifier = ">=0.0.26" },
+    { name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311,<312" },
+    { name = "pyyaml", specifier = ">=6.0.3,<7" },
+    { name = "requests", specifier = ">=2.33.0,<3" },
+    { name = "requests-oauthlib", specifier = ">=2.0.0,<3" },
+    { name = "rfc3987", marker = "sys_platform == 'never'" },
+    { name = "semver", specifier = ">=3.0.4,<4" },
+    { name = "sentry-sdk", specifier = ">=2.47.0,<3" },
+    { name = "starlette", specifier = ">=1.0.1" },
+    { name = "tenacity", specifier = ">=9.1.2,<10" },
+    { name = "tornado", specifier = ">=6.5.5" },
+    { name = "tqdm", specifier = ">=4.67.1,<5" },
+    { name = "truststore", specifier = ">=0.10.4,<1" },
+    { name = "typer", specifier = ">=0.20.0,<1" },
+    { name = "urllib3", specifier = ">=2.6.3,<3" },
 ]
 
 [[package]]
@@ -6476,21 +6437,21 @@ wheels = [
 
 [[package]]
 name = "pywin32"
-version = "312"
+version = "311"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1f/f5/10a6e845a00fc5e7afd0a988b744f403d4d57162a28d160a093c4d9322f0/pywin32-312-cp311-cp311-win32.whl", hash = "sha256:17948aeadbdb091f0ced6ef0841620794e68327b94ee415571c1203594b7215c", size = 6362659, upload-time = "2026-06-04T07:49:21.349Z" },
-    { url = "https://files.pythonhosted.org/packages/35/c4/dcd2d62b5944b6d5db53413a5899016ccd57ffcb7278f3f81655d25d2027/pywin32-312-cp311-cp311-win_amd64.whl", hash = "sha256:d11417d84412f859b722fad0841b3614459ed0047f7542d8362e77884f6b6e8a", size = 6928825, upload-time = "2026-06-04T07:49:23.934Z" },
-    { url = "https://files.pythonhosted.org/packages/b7/56/3cbb433fe4501cdba2eb9040f56a4e1a8243faa4186b25295564d1a7a79d/pywin32-312-cp311-cp311-win_arm64.whl", hash = "sha256:b2200a054ca6d6625c4842fc56a4976a4b47f96b73dbe5538c3f813a80359f47", size = 6721875, upload-time = "2026-06-04T07:49:26.416Z" },
-    { url = "https://files.pythonhosted.org/packages/83/ff/32aa7d2ed0ab12b323aaa64f9b75e6ad4f8fd09f9ccfc28c79414d46838d/pywin32-312-cp312-cp312-win32.whl", hash = "sha256:dab4f65ac9c4e48400a2a0530c46c3c579cd5905ecd11b80692373915269208b", size = 6371877, upload-time = "2026-06-04T07:49:28.836Z" },
-    { url = "https://files.pythonhosted.org/packages/03/d9/77040d3b43df3f3be32ea289433d660d2727f5ba327bc73be835127d9d60/pywin32-312-cp312-cp312-win_amd64.whl", hash = "sha256:b457f6d628a47e8a7346ce22acb7e1a46a4a78b52e1d17e1af56871bd19a93bc", size = 6914841, upload-time = "2026-06-04T07:49:31.85Z" },
-    { url = "https://files.pythonhosted.org/packages/e3/cc/7b1ec671775756020a0ee7f4feeaf3c568f0ab86bd3900088cf986937a92/pywin32-312-cp312-cp312-win_arm64.whl", hash = "sha256:6017c58e12f6809fbb0555b75df144c2922a9ffd18e4b9b5afa863b6c1a9d950", size = 6727901, upload-time = "2026-06-04T07:49:34.244Z" },
-    { url = "https://files.pythonhosted.org/packages/2d/41/12fbfd7f36ed2146d8bc9de96c2741296bf0d490b98508496cff322e274c/pywin32-312-cp313-cp313-win32.whl", hash = "sha256:7a27df850933d16a8eabfbaeb73d52b273e2da667f80d70b01a89d1f6828d02c", size = 6370184, upload-time = "2026-06-04T07:49:36.253Z" },
-    { url = "https://files.pythonhosted.org/packages/ba/db/36a78e3403099d31d9746d13fdcde5accc43c1155f375a34d15983a479a7/pywin32-312-cp313-cp313-win_amd64.whl", hash = "sha256:c53e878d15a1c44788082bfe712a905433473aa38f86375b7cf8b45e3acbaaf9", size = 6914298, upload-time = "2026-06-04T07:49:38.876Z" },
-    { url = "https://files.pythonhosted.org/packages/84/37/c1697194092b76de9ed47ca124323f02c57ffc8a45c06f88a3d5acaf01eb/pywin32-312-cp313-cp313-win_arm64.whl", hash = "sha256:59aba5d5940842075343a5ddc6b11f1cdf0d1567fe745290359dfbcc7c2eb831", size = 6727640, upload-time = "2026-06-04T07:49:41.083Z" },
-    { url = "https://files.pythonhosted.org/packages/fc/2b/1f3cded5822fd49c02f40544cbb5f58c7cfd6b1694869fd476cb6170ee97/pywin32-312-cp314-cp314-win32.whl", hash = "sha256:a77a90fbb6881238d2ca9c6fd797b25817f3768fe78d214a90137ff055a75f5b", size = 6468928, upload-time = "2026-06-04T07:49:43.188Z" },
-    { url = "https://files.pythonhosted.org/packages/21/82/3bf86d2e2808902013132e1ce905a7da0da53790f3836c64bf44d55e24f3/pywin32-312-cp314-cp314-win_amd64.whl", hash = "sha256:a4dd3a848290ef724347b19f301045831d8e802fa4464f491b98b1e0a081432e", size = 7024157, upload-time = "2026-06-04T07:49:45.34Z" },
-    { url = "https://files.pythonhosted.org/packages/a4/0e/73f6d6800b4f27655abd9e9f6aaeaefcddb2b946e4674efa2bab184a7f7b/pywin32-312-cp314-cp314-win_arm64.whl", hash = "sha256:9fce94568364e0155e6dfb781ac5d95903be8baf28670632beab1b523f300daa", size = 6839598, upload-time = "2026-06-04T07:49:47.613Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/af/449a6a91e5d6db51420875c54f6aff7c97a86a3b13a0b4f1a5c13b988de3/pywin32-311-cp311-cp311-win32.whl", hash = "sha256:184eb5e436dea364dcd3d2316d577d625c0351bf237c4e9a5fabbcfa5a58b151", size = 8697031, upload-time = "2025-07-14T20:13:13.266Z" },
+    { url = "https://files.pythonhosted.org/packages/51/8f/9bb81dd5bb77d22243d33c8397f09377056d5c687aa6d4042bea7fbf8364/pywin32-311-cp311-cp311-win_amd64.whl", hash = "sha256:3ce80b34b22b17ccbd937a6e78e7225d80c52f5ab9940fe0506a1a16f3dab503", size = 9508308, upload-time = "2025-07-14T20:13:15.147Z" },
+    { url = "https://files.pythonhosted.org/packages/44/7b/9c2ab54f74a138c491aba1b1cd0795ba61f144c711daea84a88b63dc0f6c/pywin32-311-cp311-cp311-win_arm64.whl", hash = "sha256:a733f1388e1a842abb67ffa8e7aad0e70ac519e09b0f6a784e65a136ec7cefd2", size = 8703930, upload-time = "2025-07-14T20:13:16.945Z" },
+    { url = "https://files.pythonhosted.org/packages/e7/ab/01ea1943d4eba0f850c3c61e78e8dd59757ff815ff3ccd0a84de5f541f42/pywin32-311-cp312-cp312-win32.whl", hash = "sha256:750ec6e621af2b948540032557b10a2d43b0cee2ae9758c54154d711cc852d31", size = 8706543, upload-time = "2025-07-14T20:13:20.765Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/a8/a0e8d07d4d051ec7502cd58b291ec98dcc0c3fff027caad0470b72cfcc2f/pywin32-311-cp312-cp312-win_amd64.whl", hash = "sha256:b8c095edad5c211ff31c05223658e71bf7116daa0ecf3ad85f3201ea3190d067", size = 9495040, upload-time = "2025-07-14T20:13:22.543Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/3a/2ae996277b4b50f17d61f0603efd8253cb2d79cc7ae159468007b586396d/pywin32-311-cp312-cp312-win_arm64.whl", hash = "sha256:e286f46a9a39c4a18b319c28f59b61de793654af2f395c102b4f819e584b5852", size = 8710102, upload-time = "2025-07-14T20:13:24.682Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/be/3fd5de0979fcb3994bfee0d65ed8ca9506a8a1260651b86174f6a86f52b3/pywin32-311-cp313-cp313-win32.whl", hash = "sha256:f95ba5a847cba10dd8c4d8fefa9f2a6cf283b8b88ed6178fa8a6c1ab16054d0d", size = 8705700, upload-time = "2025-07-14T20:13:26.471Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/28/e0a1909523c6890208295a29e05c2adb2126364e289826c0a8bc7297bd5c/pywin32-311-cp313-cp313-win_amd64.whl", hash = "sha256:718a38f7e5b058e76aee1c56ddd06908116d35147e133427e59a3983f703a20d", size = 9494700, upload-time = "2025-07-14T20:13:28.243Z" },
+    { url = "https://files.pythonhosted.org/packages/04/bf/90339ac0f55726dce7d794e6d79a18a91265bdf3aa70b6b9ca52f35e022a/pywin32-311-cp313-cp313-win_arm64.whl", hash = "sha256:7b4075d959648406202d92a2310cb990fea19b535c7f4a78d3f5e10b926eeb8a", size = 8709318, upload-time = "2025-07-14T20:13:30.348Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/31/097f2e132c4f16d99a22bfb777e0fd88bd8e1c634304e102f313af69ace5/pywin32-311-cp314-cp314-win32.whl", hash = "sha256:b7a2c10b93f8986666d0c803ee19b5990885872a7de910fc460f9b0c2fbf92ee", size = 8840714, upload-time = "2025-07-14T20:13:32.449Z" },
+    { url = "https://files.pythonhosted.org/packages/90/4b/07c77d8ba0e01349358082713400435347df8426208171ce297da32c313d/pywin32-311-cp314-cp314-win_amd64.whl", hash = "sha256:3aca44c046bd2ed8c90de9cb8427f581c479e594e99b5c0bb19b29c10fd6cb87", size = 9656800, upload-time = "2025-07-14T20:13:34.312Z" },
+    { url = "https://files.pythonhosted.org/packages/c0/d2/21af5c535501a7233e734b8af901574572da66fcc254cb35d0609c9080dd/pywin32-311-cp314-cp314-win_arm64.whl", hash = "sha256:a508e2d9025764a8270f93111a970e1d0fbfc33f4153b388bb649b7eec4f9b42", size = 8932540, upload-time = "2025-07-14T20:13:36.379Z" },
 ]
 
 [[package]]

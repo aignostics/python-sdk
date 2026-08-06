@@ -5,12 +5,12 @@ from http import HTTPStatus
 from unittest.mock import MagicMock, patch
 
 import pytest
+from aignostics.application import Service as ApplicationService
 from aignx.codegen.exceptions import ApiException
 from aignx.codegen.models import SubjectType
 from typer.testing import CliRunner
 
-from aignostics.application import Service as ApplicationService
-from aignostics.platform import ConcurrencyConflictError, NotFoundException, RunData, RunOutput
+from aignostics_sdk.platform import ConcurrencyConflictError, NotFoundException, RunData, RunOutput
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
@@ -136,7 +136,7 @@ def test_application_runs_query_with_tags_raises() -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_searches_note_and_tags(mock_get_client: MagicMock) -> None:
     """Test that query parameter searches both note and tags with union semantics."""
     # Create mock runs
@@ -199,7 +199,7 @@ def test_application_runs_query_searches_note_and_tags(mock_get_client: MagicMoc
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_deduplicates_results(mock_get_client: MagicMock) -> None:
     """Test that query parameter deduplicates runs that match both note and tags."""
     # Create mock run that matches both searches
@@ -230,7 +230,7 @@ def test_application_runs_query_deduplicates_results(mock_get_client: MagicMock)
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_respects_limit(mock_get_client: MagicMock) -> None:
     """Test that query parameter respects the limit parameter and returns the newest runs."""
     base_time = datetime(2024, 1, 10, tzinfo=UTC)
@@ -275,7 +275,7 @@ def test_application_runs_query_respects_limit(mock_get_client: MagicMock) -> No
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_tag_search_has_independent_limit(mock_get_client: MagicMock) -> None:
     """Tag search gets its own N-slot budget; a full note search does not starve the tag search."""
     base_time = datetime(2024, 1, 1, tzinfo=UTC)
@@ -320,7 +320,7 @@ def test_application_runs_query_tag_search_has_independent_limit(mock_get_client
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_sorts_results_by_submitted_at(mock_get_client: MagicMock) -> None:
     """No-limit case: mixed note+tag results are returned newest-first regardless of which search found them."""
     base_time = datetime(2024, 3, 1, tzinfo=UTC)
@@ -359,7 +359,7 @@ def test_application_runs_query_sorts_results_by_submitted_at(mock_get_client: M
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_deduplicates_with_independent_budget(mock_get_client: MagicMock) -> None:
     """A run matching both note and tag appears exactly once.
 
@@ -407,7 +407,7 @@ def test_application_runs_query_deduplicates_with_independent_budget(mock_get_cl
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_query_escapes_special_characters(mock_get_client: MagicMock) -> None:
     """Test that query parameter properly escapes special regex characters."""
     # Mock the platform client
@@ -435,7 +435,7 @@ def test_application_runs_query_escapes_special_characters(mock_get_client: Magi
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_tags_single_generates_equality_jsonpath(mock_get_client: MagicMock) -> None:
     """Test that a single tag generates a JSONPath equality expression instead of like_regex."""
     mock_client = MagicMock()
@@ -452,7 +452,7 @@ def test_application_runs_tags_single_generates_equality_jsonpath(mock_get_clien
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_tags_multiple_generates_or_equality_jsonpath(mock_get_client: MagicMock) -> None:
     """Test that multiple tags generate a JSONPath OR equality expression."""
     mock_client = MagicMock()
@@ -476,7 +476,7 @@ def test_application_runs_tags_multiple_generates_or_equality_jsonpath(mock_get_
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_runs_tags_escapes_quotes_and_backslashes(mock_get_client: MagicMock) -> None:
     """Test that tag values with quotes and backslashes are properly escaped in JSONPath."""
     mock_client = MagicMock()
@@ -497,7 +497,7 @@ def test_application_runs_tags_escapes_quotes_and_backslashes(mock_get_client: M
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_run_update_custom_metadata_success(mock_get_client: MagicMock) -> None:
     """Test successful update of run custom metadata."""
     mock_client = MagicMock()
@@ -657,7 +657,7 @@ def test_concurrency_conflict_error_is_value_error(record_property) -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_run_update_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
     """Test update metadata with non-existent run."""
     mock_client = MagicMock()
@@ -673,7 +673,7 @@ def test_application_run_update_custom_metadata_not_found(mock_get_client: Magic
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_run_update_item_custom_metadata_success(mock_get_client: MagicMock) -> None:
     """Test successful update of item custom metadata."""
     mock_client = MagicMock()
@@ -773,7 +773,7 @@ def test_application_run_update_item_custom_metadata_concurrency_conflict(
 
 
 @pytest.mark.unit
-@patch("aignostics.application._service.Service._get_platform_client")
+@patch("aignostics_sdk.application._service.Service._get_platform_client")
 def test_application_run_update_item_custom_metadata_not_found(mock_get_client: MagicMock) -> None:
     """Test update item metadata with non-existent run or item."""
     mock_client = MagicMock()

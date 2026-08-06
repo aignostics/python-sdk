@@ -6,14 +6,14 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import requests
 
-from aignostics.application._download import (
+from aignostics_sdk.application._download import (
     download_available_items,
     download_item_artifact,
     download_url_to_file_with_progress,
     extract_filename_from_url,
 )
-from aignostics.application._models import DownloadProgress, DownloadProgressState
-from aignostics.platform import ArtifactOutput
+from aignostics_sdk.application._models import DownloadProgress, DownloadProgressState
+from aignostics_sdk.platform import ArtifactOutput
 
 
 @pytest.mark.unit
@@ -76,10 +76,10 @@ def test_download_url_to_file_with_progress_gs_url_success(tmp_path: Path) -> No
             }
         )
 
-    with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
+    with patch("aignostics_sdk.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
 
-        with patch("aignostics.application._download.requests.get") as mock_get:
+        with patch("aignostics_sdk.application._download.requests.get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status = Mock()
             mock_response.headers = {"content-length": str(len(file_content))}
@@ -126,10 +126,10 @@ def test_download_url_to_file_with_progress_queue(tmp_path: Path) -> None:
     progress_queue = Mock()
     progress_queue.put_nowait = Mock()  # Mock the put_nowait method
 
-    with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
+    with patch("aignostics_sdk.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
 
-        with patch("aignostics.application._download.requests.get") as mock_get:
+        with patch("aignostics_sdk.application._download.requests.get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status = Mock()
             mock_response.headers = {"content-length": str(len(file_content))}
@@ -162,10 +162,10 @@ def test_download_url_to_file_with_progress_chunked(tmp_path: Path) -> None:
     def progress_callback(p: DownloadProgress) -> None:
         progress_updates.append(p.input_slide_downloaded_size)
 
-    with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
+    with patch("aignostics_sdk.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
 
-        with patch("aignostics.application._download.requests.get") as mock_get:
+        with patch("aignostics_sdk.application._download.requests.get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status = Mock()
             mock_response.headers = {"content-length": str(total_size)}
@@ -196,10 +196,10 @@ def test_download_url_to_file_with_progress_http_error(tmp_path: Path) -> None:
 
     progress = DownloadProgress()
 
-    with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
+    with patch("aignostics_sdk.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
 
-        with patch("aignostics.application._download.requests.get") as mock_get:
+        with patch("aignostics_sdk.application._download.requests.get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status = Mock(side_effect=requests.HTTPError("404 Not Found"))
             mock_get.return_value = mock_response
@@ -238,10 +238,10 @@ def test_download_url_to_file_with_progress_normalized_values(tmp_path: Path) ->
             }
         )
 
-    with patch("aignostics.application._download.generate_signed_url") as mock_generate_signed_url:
+    with patch("aignostics_sdk.application._download.generate_signed_url") as mock_generate_signed_url:
         mock_generate_signed_url.return_value = signed_url
 
-        with patch("aignostics.application._download.requests.get") as mock_get:
+        with patch("aignostics_sdk.application._download.requests.get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status = Mock()
             mock_response.headers = {"content-length": str(file_size)}
@@ -305,7 +305,7 @@ def test_download_url_to_file_with_progress_https_url_success(tmp_path: Path) ->
             }
         )
 
-    with patch("aignostics.application._download.requests.get") as mock_get:
+    with patch("aignostics_sdk.application._download.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.raise_for_status = Mock()
         mock_response.headers = {"content-length": str(len(file_content))}
@@ -340,7 +340,7 @@ def test_download_url_to_file_with_progress_http_url_success(tmp_path: Path) -> 
 
     progress = DownloadProgress()
 
-    with patch("aignostics.application._download.requests.get") as mock_get:
+    with patch("aignostics_sdk.application._download.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.raise_for_status = Mock()
         mock_response.headers = {"content-length": str(len(file_content))}
@@ -388,7 +388,7 @@ def test_download_url_to_file_with_progress_https_with_chunked(tmp_path: Path) -
     def progress_callback(p: DownloadProgress) -> None:
         progress_updates.append(p.input_slide_downloaded_size)
 
-    with patch("aignostics.application._download.requests.get") as mock_get:
+    with patch("aignostics_sdk.application._download.requests.get") as mock_get:
         mock_response = Mock()
         mock_response.raise_for_status = Mock()
         mock_response.headers = {"content-length": str(total_size)}
@@ -420,8 +420,8 @@ _PRESIGNED_URL = "https://storage.googleapis.com/bucket/file?sig=abc"
 # Patch _download.get_file_extension_for_artifact (NOT _utils.*) — the function
 # is imported by name into _download, so re-binding it on _utils does nothing.
 # Copilot called this out on PR #478 (comments #3 + #4).
-_PATCH_GET_EXT = "aignostics.application._download.get_file_extension_for_artifact"
-_PATCH_DOWNLOAD_FILE_WITH_PROGRESS = "aignostics.application._download.download_file_with_progress"
+_PATCH_GET_EXT = "aignostics_sdk.application._download.get_file_extension_for_artifact"
+_PATCH_DOWNLOAD_FILE_WITH_PROGRESS = "aignostics_sdk.application._download.download_file_with_progress"
 
 
 def _mock_artifact(
@@ -532,7 +532,7 @@ def test_download_available_items_skips_non_available_artifacts(tmp_path: Path) 
     artifacts that aren't AVAILABLE. Calling it for a NONE artifact would fail
     the whole download. This test pins the guard.
     """
-    from aignostics.platform import ItemOutput, ItemState
+    from aignostics_sdk.platform import ItemOutput, ItemState
 
     available = _mock_artifact(output_artifact_id="art-ok", output=ArtifactOutput.AVAILABLE)
     none_artifact = _mock_artifact(output_artifact_id="art-skip", output=ArtifactOutput.NONE)
@@ -547,7 +547,7 @@ def test_download_available_items_skips_non_available_artifacts(tmp_path: Path) 
     run.run_id = "run-xyz"
     run.results.return_value = [item]
 
-    with patch("aignostics.application._download.download_item_artifact") as mock_dia:
+    with patch("aignostics_sdk.application._download.download_item_artifact") as mock_dia:
         download_available_items(
             progress=DownloadProgress(),
             application_run=run,
@@ -569,7 +569,7 @@ def test_download_available_items_passes_run_to_download_item_artifact(tmp_path:
     so the calling site must pass it through. Pinning the call shape keeps the
     contract explicit.
     """
-    from aignostics.platform import ItemOutput, ItemState
+    from aignostics_sdk.platform import ItemOutput, ItemState
 
     artifact = _mock_artifact()
     item = MagicMock()
@@ -582,7 +582,7 @@ def test_download_available_items_passes_run_to_download_item_artifact(tmp_path:
     run.run_id = "run-xyz"
     run.results.return_value = [item]
 
-    with patch("aignostics.application._download.download_item_artifact") as mock_dia:
+    with patch("aignostics_sdk.application._download.download_item_artifact") as mock_dia:
         download_available_items(
             progress=DownloadProgress(),
             application_run=run,

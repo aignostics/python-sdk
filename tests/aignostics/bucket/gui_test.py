@@ -9,10 +9,10 @@ from unittest.mock import patch
 
 import psutil
 import pytest
+from aignostics.cli import cli
 from nicegui.testing import User
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
 from tests.conftest import assert_notified
 
 

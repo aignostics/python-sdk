@@ -5,21 +5,21 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from aignostics.cli import cli
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
-from aignostics.utils import __project_name__
+from aignostics_sdk.utils import __project_name__
 from tests.conftest import normalize_output
 
 THE_VALUE = "test_secret_value_not_real_for_testing_only"
 
 
 @pytest.mark.unit
-@patch("aignostics.system._cli._service")
+@patch("aignostics_sdk.system._cli._service")
 def test_cli_health_json_format(mock_service: MagicMock, runner: CliRunner, record_property) -> None:
     """Check health CLI renders UP status correctly as JSON."""
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-JSON")
-    from aignostics.utils import Health
+    from aignostics_sdk.utils import Health
 
     mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health"])
@@ -28,11 +28,11 @@ def test_cli_health_json_format(mock_service: MagicMock, runner: CliRunner, reco
 
 
 @pytest.mark.unit
-@patch("aignostics.system._cli._service")
+@patch("aignostics_sdk.system._cli._service")
 def test_cli_health_yaml_format(mock_service: MagicMock, runner: CliRunner, record_property) -> None:
     """Check health CLI renders UP status correctly as YAML."""
     record_property("tested-item-id", "TEST-SYSTEM-CLI-HEALTH-YAML")
-    from aignostics.utils import Health
+    from aignostics_sdk.utils import Health
 
     mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health", "--output-format", "yaml"])
@@ -112,10 +112,10 @@ def test_cli_info_secrets(runner: CliRunner, caplog: pytest.LogCaptureFixture, r
 
 
 @pytest.mark.unit
-@patch("aignostics.system._cli._service")
+@patch("aignostics_sdk.system._cli._service")
 def test_cli_health_up_exits_zero(mock_service: MagicMock, runner: CliRunner) -> None:
     """Check health command exits with code 0 when status is UP."""
-    from aignostics.utils import Health
+    from aignostics_sdk.utils import Health
 
     mock_service.health = AsyncMock(return_value=Health(status=Health.Code.UP))
     result = runner.invoke(cli, ["system", "health"])
@@ -123,10 +123,10 @@ def test_cli_health_up_exits_zero(mock_service: MagicMock, runner: CliRunner) ->
 
 
 @pytest.mark.unit
-@patch("aignostics.system._cli._service")
+@patch("aignostics_sdk.system._cli._service")
 def test_cli_health_degraded_exits_zero(mock_service: MagicMock, runner: CliRunner) -> None:
     """Check health command exits with code 0 when status is DEGRADED."""
-    from aignostics.utils import Health
+    from aignostics_sdk.utils import Health
 
     mock_service.health = AsyncMock(return_value=Health(status=Health.Code.DEGRADED, reason="some component degraded"))
     result = runner.invoke(cli, ["system", "health"])
@@ -134,10 +134,10 @@ def test_cli_health_degraded_exits_zero(mock_service: MagicMock, runner: CliRunn
 
 
 @pytest.mark.unit
-@patch("aignostics.system._cli._service")
+@patch("aignostics_sdk.system._cli._service")
 def test_cli_health_down_exits_one(mock_service: MagicMock, runner: CliRunner) -> None:
     """Check health command exits with code 1 when status is DOWN."""
-    from aignostics.utils import Health
+    from aignostics_sdk.utils import Health
 
     mock_service.health = AsyncMock(return_value=Health(status=Health.Code.DOWN, reason="service unavailable"))
     result = runner.invoke(cli, ["system", "health"])
@@ -223,7 +223,7 @@ def test_cli_install(runner: CliRunner, record_property) -> None:
 def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path, record_property) -> None:
     """Check set, unset, and get commands."""
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
-    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+    with patch("aignostics_sdk.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         (tmp_path / ".env").touch()
         result = runner.invoke(cli, ["system", "config", "unset", "test_key"])
 
@@ -258,7 +258,7 @@ def test_cli_set_unset_get(runner: CliRunner, silent_logging, tmp_path, record_p
 def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Path, record_property) -> None:
     """Check disable/enable remote diagnostics."""
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
-    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+    with patch("aignostics_sdk.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         (tmp_path / ".env").touch()
         result = runner.invoke(cli, ["system", "config", "remote-diagnostics-disable"])
 
@@ -302,7 +302,7 @@ def test_cli_remote_diagnostics(runner: CliRunner, silent_logging, tmp_path: Pat
 def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path, record_property) -> None:  # noqa: PLR0915
     """Check disable/enable remote diagnostics."""
     record_property("tested-item-id", "SPEC-SYSTEM-SERVICE")
-    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+    with patch("aignostics_sdk.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         # Set up a mock .env file
         (tmp_path / ".env").touch()
 
@@ -449,7 +449,7 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path, recor
 @pytest.mark.integration
 def test_cli_dump_dot_env_file(runner: CliRunner, silent_logging, tmp_path: Path) -> None:
     """Check dump-dot-env-file command creates a file with all settings."""
-    with patch("aignostics.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
+    with patch("aignostics_sdk.system.Service._get_env_files_paths", return_value=[tmp_path / ".env"]):
         # Create the .env file that the system expects to exist
         (tmp_path / ".env").touch()
 

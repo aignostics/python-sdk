@@ -4,6 +4,12 @@ from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 import pytest
+from aignostics.platform._api import _AuthenticatedApi
+from aignostics.platform.resources.access import (
+    AccessGrant,
+    ShareToken,
+    ShareTokens,
+)
 from aignx.codegen.models import (
     GrantReadResponse,
     GrantRelation,
@@ -12,13 +18,6 @@ from aignx.codegen.models import (
     ShareTokenCreateResponse,
     ShareTokenReadResponse,
     SubjectType,
-)
-
-from aignostics.platform._api import _AuthenticatedApi
-from aignostics.platform.resources.access import (
-    AccessGrant,
-    ShareToken,
-    ShareTokens,
 )
 
 _GRANT_ID = "grant-001"

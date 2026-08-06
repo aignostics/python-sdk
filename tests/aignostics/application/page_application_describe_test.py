@@ -6,7 +6,6 @@ without building the NiceGUI page itself.
 """
 
 import pytest
-
 from aignostics.application._gui._page_application_describe import (
     DISEASE_TYPES,
     TISSUE_TYPES,

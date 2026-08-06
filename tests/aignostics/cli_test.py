@@ -8,12 +8,12 @@ from importlib.util import find_spec
 from unittest.mock import patch
 
 import pytest
+from aignostics.cli import cli
+from aignostics.constants import WINDOW_TITLE
 from fastmcp import FastMCP
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
-from aignostics.constants import WINDOW_TITLE
-from aignostics.utils import (
+from aignostics_sdk.utils import (
     __python_version__,
     __version__,
 )

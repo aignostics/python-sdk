@@ -6,9 +6,15 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from aignx.codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
+from aignostics.constants import (
+    HETA_APPLICATION_ID,
+    TEST_APP_APPLICATION_ID,
+    WSI_SUPPORTED_FILE_EXTENSIONS,
+    WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
+)
 
-from aignostics.application._utils import (
+from aignostics_sdk._codegen.models import ArtifactOutput, ArtifactState, ArtifactTerminationReason, ItemOutput
+from aignostics_sdk.application._utils import (
     application_run_status_to_str,
     get_mime_type_for_artifact,
     get_supported_extensions_for_application,
@@ -24,13 +30,7 @@ from aignostics.application._utils import (
     validate_scheduling_constraints,
     write_metadata_dict_to_csv,
 )
-from aignostics.constants import (
-    HETA_APPLICATION_ID,
-    TEST_APP_APPLICATION_ID,
-    WSI_SUPPORTED_FILE_EXTENSIONS,
-    WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
-)
-from aignostics.platform import (
+from aignostics_sdk.platform import (
     ItemResult,
     ItemState,
     ItemTerminationReason,
@@ -203,9 +203,10 @@ def test_get_supported_extensions_returns_different_sets() -> None:
     heta_extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID)
     test_extensions = get_supported_extensions_for_application(TEST_APP_APPLICATION_ID)
 
-    # Verify they are separate sets (even if they might have the same contents)
-    assert heta_extensions is WSI_SUPPORTED_FILE_EXTENSIONS
-    assert test_extensions is WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
+    # Verify they are the correct sets (using value equality; object identity not guaranteed
+    # now that constants may come from different modules)
+    assert heta_extensions == WSI_SUPPORTED_FILE_EXTENSIONS
+    assert test_extensions == WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
 
 
 # Tests for application_run_status_to_str
@@ -542,7 +543,7 @@ def test_get_mime_type_for_output_artifact_element_default() -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
     """Test verbose printing of a single run."""
     run = _make_run_data(
@@ -566,7 +567,7 @@ def test_print_runs_verbose_with_single_run(mock_console: Mock) -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
     """Test non-verbose printing of runs with errors."""
     run = _make_run_data(
@@ -590,7 +591,7 @@ def test_print_runs_non_verbose_with_error(mock_console: Mock) -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with items."""
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
@@ -630,7 +631,7 @@ def test_retrieve_and_print_run_details_with_items(mock_console: Mock) -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     """Test retrieving and printing run details with no items."""
     run_data = _make_run_data(run_id="run-empty")
@@ -652,7 +653,7 @@ def test_retrieve_and_print_run_details_no_items(mock_console: Mock) -> None:
     "hide_platform_queue_position",
     [True, False],
 )
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_can_hide_platform_position(
     mock_console: Mock, hide_platform_queue_position: bool
 ) -> None:
@@ -852,7 +853,7 @@ def test_queue_position_string_from_run_with_only_platform_position() -> None:
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> None:
     """Test summarize mode shows concise output with external ID, state, and errors."""
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)
@@ -907,7 +908,7 @@ def test_retrieve_and_print_run_details_summarize_mode(mock_console: Mock) -> No
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -> None:
     """Test summarize mode with no items shows appropriate message."""
     run_data = _make_run_data(run_id="run-no-items")
@@ -924,7 +925,7 @@ def test_retrieve_and_print_run_details_summarize_no_items(mock_console: Mock) -
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: Mock) -> None:
     """Test summarize mode shows run-level errors."""
     run_data = _make_run_data(
@@ -949,7 +950,7 @@ def test_retrieve_and_print_run_details_summarize_with_run_error(mock_console: M
 
 
 @pytest.mark.unit
-@patch("aignostics.application._utils.console")
+@patch("aignostics_sdk.application._utils.console")
 def test_retrieve_and_print_run_details_default_is_detailed(mock_console: Mock) -> None:
     """Test that default mode (summarize=False) shows detailed output with artifacts."""
     terminated_at = datetime(2025, 1, 1, 13, 0, 0, tzinfo=UTC)

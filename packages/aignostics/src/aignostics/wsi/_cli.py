@@ -1,0 +1,187 @@
+"""CLI for operations on wsi files."""
+
+import sys
+from pathlib import Path
+from typing import Annotated
+
+import typer
+from loguru import logger
+
+from aignostics_sdk.utils import console
+
+from ._service import Service
+from ._utils import print_slide_info, print_study_info
+
+# Python version for highdicom compatibility check
+_PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}"
+_HIGHDICOM_UNSUPPORTED_VERSIONS = {"3.14"}
+
+
+def _check_highdicom_available() -> bool:
+    """Check if highdicom is available (not supported on Python 3.14+).
+
+    Returns:
+        True if highdicom can be imported, False otherwise.
+    """
+    try:
+        from ._pydicom_handler import PydicomHandler  # noqa: PLC0415, F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def _print_highdicom_unsupported_error() -> None:
+    """Print error message when highdicom is not available."""
+    console.print(f"[red]This command requires 'highdicom' which is not available on Python {_PYTHON_VERSION}.[/red]")
+    console.print("[yellow]Please run with Python 3.13 or earlier:[/yellow]")
+    console.print("[green]  uvx -p 3.13 aignostics wsi dicom <command> ...[/green]")
+    sys.exit(1)
+
+
+cli = typer.Typer(name="wsi", help="Operations on whole slide images.")
+
+
+@cli.command()
+def inspect(  # noqa: PLR0915
+    path: Annotated[Path, typer.Argument(help="Path to the wsi file", exists=True)],
+) -> None:
+    """Inspect a wsi file and display its metadata."""
+    try:
+        metadata = Service().get_metadata(path)
+
+        # Basics
+        console.print("Format:", style="blue", end=" ")
+        console.print(metadata["format"], style="green")
+        console.print("Path:", style="blue", end=" ")
+        console.print(metadata["file"]["path"], style="green")
+        console.print("Size (human):", style="blue", end=" ")
+        console.print(metadata["file"]["size_human"], style="green")
+        console.print("Width:", style="blue", end=" ")
+        console.print(metadata["dimensions"]["width"], style="green")
+        console.print("Height:", style="blue", end=" ")
+        console.print(metadata["dimensions"]["height"], style="green")
+        console.print("MPP (x):", style="blue", end=" ")
+        console.print(metadata["resolution"]["mpp_x"], style="green")
+        console.print("MPP (y):", style="blue", end=" ")
+        console.print(metadata["resolution"]["mpp_y"], style="green")
+
+        # Image Properties
+        if "properties" in metadata and "image" in metadata["properties"]:
+            img = metadata["properties"]["image"]
+            created = f"{img['date']} (libvips {img['version']})"
+            console.print("Created:", style="blue", end=" ")
+            console.print(created, style="green")
+
+            if "properties" in img and "bands" in img["properties"]:
+                console.print("Color channels:", style="blue", end=" ")
+                console.print(str(img["properties"]["bands"]), style="green")
+
+            if "properties" in img and "aix-original-format" in img["properties"]:
+                console.print("aix-original-format:", style="blue", end=" ")
+                console.print(str(img["properties"]["aix-original-format"]), style="green")
+
+        # Level Structure
+        console.print("\nLevel Structure:", style="bold blue")
+        for level in metadata["levels"]["data"]:
+            console.print(f"\nLevel {level['index']}", style="blue")
+
+            dimensions = f"{level['dimensions']['width']} x {level['dimensions']['height']} pixels"
+            console.print("  Dimensions:", style="blue", end=" ")
+            console.print(dimensions, style="green")
+
+            downsample = f"{level['downsample']:.1f}x"
+            console.print("  Downsample factor:", style="blue", end=" ")
+            console.print(downsample, style="green")
+
+            pixel_size = f"{metadata['resolution']['mpp_x'] * level['downsample']:.3f} μm/pixel"
+            console.print("  Pixel size:", style="blue", end=" ")
+            console.print(pixel_size, style="green")
+
+            tile_size = f"{level['tile']['width']} x {level['tile']['height']} pixels"
+            console.print("  Tile size:", style="blue", end=" ")
+            console.print(tile_size, style="green")
+
+            tiles = (
+                f"{level['tile']['grid']['x']} x {level['tile']['grid']['y']} ({level['tile']['grid']['total']} total)"
+            )
+            console.print("  Tiles:", style="blue", end=" ")
+            console.print(tiles, style="green")
+
+        # Associated Images
+        if metadata.get("associated_images"):
+            console.print("\nAssociated Images:", style="bold blue")
+            for img in metadata["associated_images"]:
+                console.print(f"  - {img}", style="green")
+    except Exception as e:
+        message = f"Failed to inspect path '{path}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
+
+
+cli_dicom = typer.Typer(no_args_is_help=True)
+cli.add_typer(cli_dicom, name="dicom")
+
+
+@cli_dicom.command(name="inspect")
+def dicom_inspect(
+    path: Annotated[
+        Path,
+        typer.Argument(..., help="Path of file or directory to inspect", exists=True),
+    ],
+    verbose: Annotated[bool, typer.Option(help="Verbose output")] = False,
+    summary: Annotated[bool, typer.Option(help="Show only summary information")] = False,
+    wsi_only: Annotated[bool, typer.Option(help="Filter to WSI files only")] = False,
+) -> None:  # pylint: disable=W0613
+    """Inspect DICOM files at any hierarchy level."""
+    if not _check_highdicom_available():
+        _print_highdicom_unsupported_error()
+        return
+
+    from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
+
+    try:
+        with PydicomHandler.from_file(str(path)) as handler:
+            metadata = handler.get_metadata(verbose, wsi_only)
+
+            if metadata["type"] == "empty":
+                console.print("[bold red]No DICOM files found in the specified path.[/bold red]")
+                return
+
+            # Print hierarchy
+            for study_uid, study_data in metadata["studies"].items():
+                console.print(f"\n[bold]Study:[/bold] {study_uid}")
+                print_study_info(study_data)
+
+                if not summary:
+                    for container_id, slide_data in study_data["slides"].items():
+                        console.print(f"\n[bold]Slide (Container ID):[/bold] {container_id}")
+                        print_slide_info(slide_data, indent=1, verbose=verbose)
+    except Exception as e:
+        message = f"Failed to inspect DICOM path '{path}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)
+
+
+@cli_dicom.command(name="geojson_import")
+def dicom_geojson_import(
+    dicom_path: Annotated[Path, typer.Argument(help="Path to the DICOM file", exists=True)],
+    geojson_path: Annotated[Path, typer.Argument(help="Path to the GeoJSON file", exists=True)],
+) -> None:  # pylint: disable=W0613
+    """Import GeoJSON annotations into DICOM ANN instance."""
+    if not _check_highdicom_available():
+        _print_highdicom_unsupported_error()
+        return
+
+    from ._pydicom_handler import PydicomHandler  # noqa: PLC0415
+
+    try:
+        console.print("\nImporting GeoJSON annotations into DICOM ANN instance...", style="blue")
+        PydicomHandler.geojson_import(dicom_path, geojson_path)
+    except Exception as e:
+        message = f"Failed to import GeoJSON '{geojson_path}' into DICOM '{dicom_path}': {e!s}"
+        logger.exception(message)
+        console.print(f"[red]{message}[/red]")
+        sys.exit(1)

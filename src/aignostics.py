@@ -24,7 +24,8 @@ if pyi_splash and pyi_splash.is_alive():
 os.environ["LOGFIRE_PYDANTIC_RECORD"] = "off"
 
 from aignostics.constants import SENTRY_INTEGRATIONS, WINDOW_TITLE  # noqa: E402
-from aignostics.utils import boot, gui_run  # noqa: E402
+
+from aignostics_sdk.utils import boot, gui_run  # noqa: E402
 
 boot(SENTRY_INTEGRATIONS)
 

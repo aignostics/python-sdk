@@ -12,9 +12,15 @@ from time import sleep
 from unittest.mock import MagicMock, patch
 
 import pytest
-from aignx.codegen.exceptions import ForbiddenException
-from aignx.codegen.exceptions import NotFoundException as ApiNotFound
-from aignx.codegen.models import (
+from aignostics.application import Service as ApplicationService
+from aignostics.cli import cli
+from loguru import logger
+from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
+from typer.testing import CliRunner
+
+from aignostics_sdk._codegen.exceptions import ForbiddenException
+from aignostics_sdk._codegen.exceptions import NotFoundException as ApiNotFound
+from aignostics_sdk._codegen.models import (
     ItemOutput,
     ItemResultReadResponse,
     ItemState,
@@ -25,14 +31,8 @@ from aignx.codegen.models import (
     RunState,
     RunTerminationReason,
 )
-from loguru import logger
-from tenacity import Retrying, retry, stop_after_attempt, wait_exponential
-from typer.testing import CliRunner
-
-from aignostics.application import Service as ApplicationService
-from aignostics.cli import cli
-from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, ConcurrencyConflictError
-from aignostics.utils import Health, sanitize_path
+from aignostics_sdk.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, ConcurrencyConflictError
+from aignostics_sdk.utils import Health, sanitize_path
 from tests.conftest import assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
     HETA_APPLICATION_ID,
@@ -66,7 +66,7 @@ RUN_CSV_FILENAME = "run.csv"
 DOCUMENT_OUTPUT_DESCRIPTION_PDF = "output_description.pdf"
 DOCUMENT_MODEL_CARD_PDF = "model_card.pdf"
 DOCUMENT_MISSING_PDF = "missing.pdf"
-APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics.application._cli.Client"
+APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics_sdk.application._cli.Client"
 
 # Stub values reused across the document CLI tests.
 DOCUMENT_TEST_FAILURE_MESSAGE = "kaboom"  # canonical exception body for unexpected-failure paths
@@ -314,7 +314,7 @@ def test_cli_application_run_upload_fails_on_missing_source(runner: CliRunner, t
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -347,7 +347,7 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -362,7 +362,7 @@ def test_cli_run_submit_succeeds_when_system_degraded_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -393,7 +393,7 @@ def test_cli_run_upload_fails_when_system_unhealthy_and_no_force(
 
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=10)
-@patch("aignostics.application._cli.SystemService.health_static")
+@patch("aignostics_sdk.application._cli.SystemService.health_static")
 def test_cli_run_execute_fails_when_system_unhealthy_and_no_force(
     mock_health: MagicMock, runner: CliRunner, tmp_path: Path
 ) -> None:
@@ -956,8 +956,8 @@ def test_cli_run_describe_json_includes_items(runner: CliRunner) -> None:
     mock_run_handle.results.return_value = iter([mock_item])
 
     with (
-        patch("aignostics.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
-        patch("aignostics.application._cli.Service") as mock_service_cls,
+        patch("aignostics_sdk.application._cli.PlatformService.get_user_info", return_value=mock_user_info),
+        patch("aignostics_sdk.application._cli.Service") as mock_service_cls,
     ):
         mock_service_cls.return_value.application_run.return_value = mock_run_handle
 
@@ -1966,6 +1966,7 @@ def test_cli_application_version_document_describe_success(runner: CliRunner, re
 def test_cli_application_version_document_describe_not_found(runner: CliRunner, record_property) -> None:
     """`application version document describe` exits 2 with a clear message on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
@@ -2061,6 +2062,7 @@ def test_cli_application_version_document_list_json_empty(runner: CliRunner, rec
 def test_cli_application_version_document_list_resolve_not_found_text(runner: CliRunner, record_property) -> None:
     """`application version document list` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
+
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2077,6 +2079,7 @@ def test_cli_application_version_document_list_resolve_not_found_text(runner: Cl
 def test_cli_application_version_document_list_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`application version document list --format json` emits structured error on 404."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-01")
+
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2163,6 +2166,7 @@ def test_cli_application_version_document_describe_json_success(runner: CliRunne
 def test_cli_application_version_document_describe_resolve_not_found_text(runner: CliRunner, record_property) -> None:
     """`describe` exits 2 when the application version cannot be resolved (text format)."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2181,6 +2185,7 @@ def test_cli_application_version_document_describe_resolve_not_found_text(runner
 def test_cli_application_version_document_describe_resolve_not_found_json(runner: CliRunner, record_property) -> None:
     """`describe --format json` emits structured error when version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2209,6 +2214,7 @@ def test_cli_application_version_document_describe_resolve_not_found_json(runner
 def test_cli_application_version_document_describe_not_found_json(runner: CliRunner, record_property) -> None:
     """`describe --format json` emits structured error when the document is missing."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-03")
+
     fake_documents = MagicMock()
     fake_documents.details.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()
@@ -2292,6 +2298,7 @@ def test_cli_application_version_document_download_resolve_not_found(
 ) -> None:
     """`download` exits 2 when the application version cannot be resolved."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
+
     fake_client = MagicMock()
     fake_client.applications.versions.documents.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
 
@@ -2321,6 +2328,7 @@ def test_cli_application_version_document_download_not_found(
 ) -> None:
     """`download` exits 2 with a clear message when the document does not exist."""
     record_property("tested-item-id", "TC-APPLICATION-CLI-05-04")
+
     fake_documents = MagicMock()
     fake_documents.download_to_path.side_effect = ApiNotFound(status=404, reason=API_REASON_NOT_FOUND)
     fake_client = MagicMock()

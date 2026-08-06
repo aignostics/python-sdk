@@ -1135,6 +1135,20 @@ gh pr edit --add-label "skip:test:long_running"
 
 *This documentation provides comprehensive guidance for working with the Aignostics Python SDK. Each module has detailed CLAUDE.md files with implementation specifics, usage examples, and best practices.*
 
+## Publishing
+
+**Internal registry (use for pre-release / integration builds on this branch):**
+
+```
+https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/aignostics-sdk
+```
+
+To publish to the internal registry instead of PyPI:
+
+```bash
+uv publish --index-url https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/ dist/aignostics_sdk-*
+```
+
 ## SDLC Configuration
 
 - **JIRA Project Key:** PYSDK

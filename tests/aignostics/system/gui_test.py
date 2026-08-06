@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from nicegui.testing import User, UserInteraction
     from nicegui.ui import switch
 
-from aignostics.utils import __project_name__
+from aignostics_sdk.utils import __project_name__
 
 
 @pytest.mark.integration

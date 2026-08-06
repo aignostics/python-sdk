@@ -7,9 +7,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from aignostics.cli import cli
 from typer.testing import CliRunner
 
-from aignostics.cli import cli
 from tests.conftest import normalize_output
 from tests.constants_test import SPOT_1_FILENAME, SPOT_1_FILESIZE, SPOT_1_GS_URL
 

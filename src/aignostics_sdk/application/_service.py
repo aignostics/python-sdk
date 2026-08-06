@@ -1,0 +1,1919 @@
+"""Service of the application module."""
+
+import base64
+import re
+import time
+from collections.abc import Callable, Generator, Iterator
+from datetime import datetime
+from http import HTTPStatus
+from importlib.util import find_spec
+from pathlib import Path
+from typing import Any
+
+import crc32c
+import requests
+from aignx.codegen.models import GrantRelation, SubjectType
+from loguru import logger
+
+from aignostics_sdk.constants import TEST_APP_APPLICATION_ID
+from aignostics_sdk.platform import (
+    LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ApiException,
+    Application,
+    ApplicationSummary,
+    ApplicationVersion,
+    Client,
+    ConcurrencyConflictError,
+    ForbiddenException,
+    InputArtifact,
+    InputItem,
+    NotFoundException,
+    Run,
+    RunData,
+    RunOutput,
+    RunState,
+)
+from aignostics_sdk.platform import Service as PlatformService
+from aignostics_sdk.platform.resources.access import AccessGrant, ShareToken
+from aignostics_sdk.utils import BaseService, Health, sanitize_path_component
+
+from ._download import (
+    download_available_items,
+    download_url_to_file_with_progress,
+    extract_filename_from_url,
+    update_progress,
+)
+from ._models import DownloadProgress, DownloadProgressState
+from ._settings import Settings
+from ._utils import (
+    get_mime_type_for_artifact,
+    get_supported_extensions_for_application,
+    is_not_terminated_with_deadline_exceeded,
+    validate_deadline,
+    validate_due_date,
+    validate_scheduling_constraints,
+)
+
+has_qupath_extra = find_spec("aignostics")
+if has_qupath_extra:
+    from aignostics.qupath import AddProgress as QuPathAddProgress
+    from aignostics.qupath import AnnotateProgress as QuPathAnnotateProgress
+    from aignostics.qupath import Service as QuPathService
+
+
+APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
+APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
+APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+# Buffer for streaming a source slide while computing its CRC32C checksum during metadata
+# preparation. Sized to amortize per-read overhead (which dominates on slow/high-latency
+# storage such as USB or network drives) while staying well within the 8GB RAM floor.
+APPLICATION_RUN_METADATA_CHECKSUM_CHUNK_SIZE = 8 * 1024 * 1024  # 8MB
+
+
+class Service(BaseService):
+    """Service of the application module."""
+
+    _settings: Settings
+    _client: Client | None = None
+    _platform_service: PlatformService | None = None
+
+    def __init__(self) -> None:
+        """Initialize service."""
+        super().__init__(Settings)  # automatically loads and validates the settings
+
+    async def info(self, mask_secrets: bool = True) -> dict[str, Any]:  # noqa: ARG002
+        """Determine info of this service.
+
+        Args:
+            mask_secrets (bool): If True, mask sensitive information in the output.
+
+        Returns:
+            dict[str,Any]: The info of this service.
+        """
+        return {}
+
+    async def health(self) -> Health:
+        """Determine health of this service.
+
+        Returns:
+            Health: The health of the service.
+        """
+        return Health(
+            status=Health.Code.UP,
+        )
+
+    def _get_platform_client(self) -> Client:
+        """Get the platform client.
+
+        Returns:
+            Client: The platform client.
+
+        Raises:
+            Exception: If the client cannot be created.
+        """
+        if self._client is None:
+            logger.trace("Creating platform client.")
+            self._client = Client()
+        else:
+            logger.trace("Reusing platform client.")
+        return self._client
+
+    def _get_platform_service(self) -> PlatformService:
+        """Get the platform service.
+
+        Returns:
+            PlatformService: The platform service.
+
+        Raises:
+            Exception: If the client cannot be created.
+        """
+        if self._platform_service is None:
+            logger.trace("Creating platform service.")
+            self._platform_service = PlatformService()
+        else:
+            logger.trace("Reusing platform service.")
+        return self._platform_service
+
+    @staticmethod
+    def applications_static() -> list[ApplicationSummary]:
+        """Get a list of all applications, static variant.
+
+        Returns:
+            list[str]: A list of all applications.
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            Exception: If the application list cannot be retrieved.
+        """
+        return Service().applications()
+
+    def applications(self) -> list[ApplicationSummary]:
+        """Get a list of all applications.
+
+        Returns:
+            list[str]: A list of all applications.
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            Exception: If the application list cannot be retrieved.
+        """
+        return [
+            app
+            for app in list(self._get_platform_client().applications.list())
+            if app.application_id not in {"h-e-tme", "two-task-dummy"}
+        ]
+
+    def application(self, application_id: str) -> Application:
+        """Get application.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            Application: The application.
+
+        Raises:
+            NotFoundException: If the application with the given ID is not found.
+            RuntimeError: If the application cannot be retrieved unexpectedly.
+        """
+        try:
+            return self._get_platform_client().application(application_id)
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_version(self, application_id: str, application_version: str | None = None) -> ApplicationVersion:
+        """Get a specific application version.
+
+        Args:
+            application_id (str): The ID of the application
+            application_version (str|None): The version of the application (semver).
+                If not given latest version is used.
+
+        Returns:
+            ApplicationVersion: The application version
+
+        Raises:
+            ValueError: If
+                the application version number is invalid.
+            NotFoundException: If the application version with the given ID and number is not found.
+            RuntimeError: If the application cannot be retrieved unexpectedly.
+        """
+        try:
+            return self._get_platform_client().application_version(application_id, application_version)
+        except ValueError:
+            raise
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_versions_static(application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application, static variant.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            Exception: If the application versions cannot be retrieved.
+        """
+        return Service().application_versions(application_id)
+
+    def application_versions(self, application_id: str) -> list[ApplicationVersion]:
+        """Get a list of all versions for a specific application.
+
+        Args:
+            application_id (str): The ID of the application.
+
+        Returns:
+            list[ApplicationVersion]: A list of all versions for the application.
+
+        Raises:
+            RuntimeError: If the versions cannot be retrieved unexpectedly.
+            NotFoundException: If the application with the given ID is not found.
+        """
+        # TODO(Andreas): Have to make calls for all application versions to construct
+        # Changelog dialog on run describe page.
+        # Can be optimized to one call if API would support it.
+        # Let's discuss if we should re-add the endpoint that existed.
+        try:
+            client = self._get_platform_client()
+            return [
+                client.application_version(application_id, version.number)
+                for version in client.versions.list(application_id)
+            ]
+        except NotFoundException as e:
+            message = f"Application with ID '{application_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to retrieve versions for application with ID '{application_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def _process_key_value_pair(entry: dict[str, Any], key_value: str, external_id: str) -> None:
+        """Process a single key-value pair from a mapping.
+
+        Args:
+            entry (dict[str, Any]): The entry dictionary to update
+            key_value (str): String in the format "key=value"
+            external_id (str): The external_id value for logging
+        """
+        key, value = key_value.split("=", 1)
+        key = key.strip()
+        value = value.strip()
+        if not key:
+            return
+
+        if key not in entry:
+            logger.warning("key '{}' not found in entry, ignoring mapping for '{}'", key, external_id)
+            return
+
+        logger.trace("Updating key '{}' with value '{}' for external_id '{}'.", key, value, external_id)
+        entry[key.strip()] = value.strip()
+
+    @staticmethod
+    def _apply_mappings_to_entry(entry: dict[str, Any], mappings: list[str]) -> None:
+        """Apply key/value mappings to an entry.
+
+        If the external_id attribute of the entry matches the regex pattern in the mapping,
+            the key/value pairs are applied.
+
+        Args:
+            entry (dict[str, Any]): The entry dictionary to update with mapped values
+            mappings (list[str]): List of strings with format 'regex:key=value,...'
+                where regex ismatched against the external_id attribute in the entry
+        """
+        external_id = entry["external_id"]
+        for mapping in mappings:
+            parts = mapping.split(":", 1)
+            if len(parts) != 2:  # noqa: PLR2004
+                continue
+
+            pattern = parts[0].strip()
+            if not re.search(pattern, external_id):
+                continue
+
+            key_value_pairs = parts[1].split(",")
+            for key_value in key_value_pairs:
+                Service._process_key_value_pair(entry, key_value, external_id)
+
+    @staticmethod
+    def generate_metadata_from_source_directory(  # noqa: PLR0913
+        source_directory: Path,
+        application_id: str,
+        application_version: str | None = None,
+        with_gui_metadata: bool = False,
+        mappings: list[str] | None = None,
+        with_extra_metadata: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Generate metadata from the source directory.
+
+        Steps:
+        1. Recursively scans files ending with supported extensions in the source directory
+        2. For DICOM files (.dcm), filters out auxiliary and redundant files
+        3. Creates a dict for each file with the following fields:
+            - external_id (str): The external_id of the file, by default equivalent to the absolute file name
+            - source (str): The absolute filename
+            - checksum_base64_crc32c (str): The CRC32C checksum of the file, base64 encoded
+            - resolution_mpp (float): The microns per pixel, inspecting the base layer
+            - height_px (int): The height of the image in pixels, inspecting the base layer
+            - width_px (int): The width of the image in pixels, inspecting the base layer
+            - Further attributes depending on the application and its version
+        4. Applies the optional mappings to fill in additional metadata fields in the dict
+
+        Args:
+            source_directory: The source directory to generate metadata from.
+            application_id: The ID of the application.
+            application_version: The version of the application (semver).
+                If not given, latest version is used.
+            with_gui_metadata: If True, include additional metadata for GUI display.
+            mappings: Mappings of the form '<regexp>:<key>=<value>,<key>=<value>,...'.
+                The regular expression is matched against the external_id attribute of the entry.
+                The key/value pairs are applied to the entry if the pattern matches.
+            with_extra_metadata: If True, include extra metadata from the WSIService.
+
+        Returns:
+            List of metadata dictionaries, one per processable file found.
+
+        Raises:
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If the source directory does not exist or is not a directory.
+            RuntimeError: If the metadata generation fails unexpectedly.
+        """
+        logger.trace("Generating metadata from source directory: {}", source_directory)
+
+        # TODO(Helmut): Use it
+        _ = Service().application_version(application_id, application_version)
+
+        metadata: list[dict[str, Any]] = []
+        from aignostics.wsi import Service as WSIService  # noqa: PLC0415
+
+        wsi_service = WSIService()
+
+        try:
+            extensions = get_supported_extensions_for_application(application_id)
+            for extension in extensions:
+                files_to_process = wsi_service.get_wsi_files_to_process(source_directory, extension)
+
+                for file_path in files_to_process:
+                    # Generate CRC32C checksum with crc32c and encode as base64
+                    hash_sum = crc32c.CRC32CHash()
+                    with file_path.open("rb") as f:
+                        while chunk := f.read(APPLICATION_RUN_METADATA_CHECKSUM_CHUNK_SIZE):
+                            hash_sum.update(chunk)
+                    checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
+
+                    try:
+                        image_metadata = wsi_service.get_metadata(file_path)
+                        width = image_metadata["dimensions"]["width"]
+                        height = image_metadata["dimensions"]["height"]
+                        mpp = image_metadata["resolution"]["mpp_x"]
+                        file_size_human = image_metadata["file"]["size_human"]
+                        path = file_path.absolute()
+                        entry = {
+                            "external_id": str(path),
+                            "path_name": str(path.name),
+                            "source": str(file_path),
+                            "checksum_base64_crc32c": checksum,
+                            "resolution_mpp": mpp,
+                            "width_px": width,
+                            "height_px": height,
+                            "staining_method": None,
+                            "tissue": None,
+                            "disease": None,
+                            "file_size_human": file_size_human,
+                            "file_upload_progress": 0.0,
+                            "platform_bucket_url": None,
+                        }
+                        if with_extra_metadata:
+                            entry["extra"] = image_metadata.get("extra", {})
+
+                        if not with_gui_metadata:
+                            entry.pop("path_name", None)
+                            entry.pop("source", None)
+                            entry.pop("file_size_human", None)
+                            entry.pop("file_upload_progress", None)
+
+                        if mappings:
+                            Service._apply_mappings_to_entry(entry, mappings)
+
+                        metadata.append(entry)
+                    except Exception as e:
+                        message = f"Failed to process file '{file_path}': {e}"
+                        logger.warning(message)
+                        continue
+
+            logger.trace("Generated metadata for {} files", len(metadata))
+            return metadata
+
+        except Exception as e:
+            message = f"Failed to generate metadata from source directory '{source_directory}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_upload(  # noqa: PLR0913
+        application_id: str,
+        metadata: list[dict[str, Any]],
+        application_version: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        upload_prefix: str = str(time.time() * 1000),
+        upload_progress_queue: Any | None = None,  # noqa: ANN401
+        upload_progress_callable: Callable[[int, Path, str], None] | None = None,
+    ) -> bool:
+        """Upload files with a progress queue.
+
+        Args:
+            application_id (str): The ID of the application.
+            metadata (list[dict[str, Any]]): The metadata to upload.
+            application_version (str|None): The version ID of the application.
+                If not given latest version is used.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
+            upload_prefix (str): The prefix for the upload, defaults to current milliseconds.
+            upload_progress_queue (Queue | None): The queue to send progress updates to.
+            upload_progress_callable (Callable[[int, Path, str], None] | None): The task to update for progress updates.
+
+        Returns:
+            bool: True if the upload was successful, False otherwise.
+
+        Raises:
+            NotFoundException: If the application version with the given ID is not found.
+            RuntimeError: If fetching the application version fails unexpectedly.
+            requests.HTTPError: If the upload fails with an HTTP error.
+        """
+        import psutil  # noqa: PLC0415
+        from aignostics.bucket import Service as BucketService  # noqa: PLC0415
+
+        logger.trace("Uploading files with upload ID '{}'", upload_prefix)
+        app_version = Service().application_version(application_id, application_version=application_version)
+        for row in metadata:
+            external_id = row["external_id"]
+            source_file_path = Path(row["external_id"])
+            if not source_file_path.is_file():
+                logger.warning("Source file '{}' does not exist.", row["external_id"])
+                return False
+            username = psutil.Process().username().replace("\\", "_")
+            object_key = (
+                f"{username}/{upload_prefix}/{application_id}/{app_version.version_number}/{source_file_path.name}"
+            )
+            if onboard_to_aignostics_portal:
+                object_key = f"onboard/{object_key}"
+            platform_bucket_url = (
+                f"{BucketService().get_bucket_protocol()}://{BucketService().get_bucket_name()}/{object_key}"
+            )
+            signed_upload_url = BucketService().create_signed_upload_url(object_key)
+            logger.trace("Generated signed upload URL '{}' for object '{}'", signed_upload_url, platform_bucket_url)
+            if upload_progress_queue:
+                upload_progress_queue.put_nowait(
+                    {
+                        "external_id": external_id,
+                        "platform_bucket_url": platform_bucket_url,
+                    }
+                )
+            file_size = source_file_path.stat().st_size
+            logger.trace(
+                "Uploading file '{}' with size {} bytes to '{}' via '{}'",
+                source_file_path,
+                file_size,
+                platform_bucket_url,
+                signed_upload_url,
+            )
+            with (
+                open(source_file_path, "rb") as f,
+            ):
+
+                def read_in_chunks(  # noqa: PLR0913
+                    external_id: str,
+                    file_size: int,
+                    upload_progress_queue: Any | None = None,  # noqa: ANN401
+                    upload_progress_callable: Callable[[int, Path, str], None] | None = None,
+                    file_path: Path = source_file_path,
+                    platform_bucket_url: str = platform_bucket_url,
+                ) -> Generator[bytes, None, None]:
+                    while True:
+                        chunk = f.read(APPLICATION_RUN_UPLOAD_CHUNK_SIZE)
+                        if not chunk:
+                            break
+                        if upload_progress_queue:
+                            upload_progress_queue.put_nowait(
+                                {
+                                    "external_id": external_id,
+                                    "file_upload_progress": min(100.0, f.tell() / file_size),
+                                }
+                            )
+                        if upload_progress_callable:
+                            upload_progress_callable(len(chunk), file_path, platform_bucket_url)
+                        yield chunk
+
+                response = requests.put(
+                    signed_upload_url,
+                    data=read_in_chunks(external_id, file_size, upload_progress_queue, upload_progress_callable),
+                    headers={"Content-Type": "application/octet-stream"},
+                    timeout=60,
+                )
+                response.raise_for_status()
+        logger.debug("Upload completed successfully.")
+        return True
+
+    @staticmethod
+    def application_runs_static(  # noqa: PLR0913
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        has_output: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
+        for_organization: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get a list of all application runs, static variant.
+
+        Args:
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
+            has_output (bool): If True, only runs with partial or full output are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
+
+        Returns:
+            list[RunData]: A list of all application runs.
+
+        Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
+            RuntimeError: If the application run list cannot be retrieved.
+        """
+        return [
+            {
+                "run_id": run.run_id,
+                "application_id": run.application_id,
+                "version_number": run.version_number,
+                "submitted_at": run.submitted_at,
+                "terminated_at": run.terminated_at,
+                "state": run.state,
+                "termination_reason": run.termination_reason,
+                "item_count": run.statistics.item_count,
+                "item_succeeded_count": run.statistics.item_succeeded_count,
+                "tags": run.custom_metadata.get("sdk", {}).get("tags", []) if run.custom_metadata else [],
+                "is_not_terminated_with_deadline_exceeded": is_not_terminated_with_deadline_exceeded(
+                    run.state,
+                    scheduling=getattr(run, "scheduling", None),
+                    custom_metadata=run.custom_metadata,
+                ),
+            }
+            for run in Service().application_runs(
+                application_id=application_id,
+                application_version=application_version,
+                external_id=external_id,
+                has_output=has_output,
+                note_regex=note_regex,
+                note_query_case_insensitive=note_query_case_insensitive,
+                tags=tags,
+                query=query,
+                limit=limit,
+                for_organization=for_organization,
+            )
+        ]
+
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0915
+        self,
+        application_id: str | None = None,
+        application_version: str | None = None,
+        external_id: str | None = None,
+        has_output: bool = False,
+        note_regex: str | None = None,
+        note_query_case_insensitive: bool = True,
+        tags: set[str] | None = None,
+        query: str | None = None,
+        limit: int | None = None,
+        for_organization: str | None = None,
+    ) -> list[RunData]:
+        """Get a list of all application runs.
+
+        Args:
+            application_id (str | None): The ID of the application to filter runs. If None, no filtering is applied.
+            application_version (str | None): The version of the application to filter runs.
+                If None, no filtering is applied.
+            external_id (str | None): The external ID to filter runs. If None, no filtering is applied.
+            has_output (bool): If True, only runs with partial or full output are retrieved.
+            note_regex (str | None): Optional regex to filter runs by note metadata. If None, no filtering is applied.
+                Cannot be used together with query parameter.
+            note_query_case_insensitive (bool): If True, the note_regex is case insensitive. Default is True.
+            tags (set[str] | None): Optional set of tags to filter runs. All tags must match.
+                If None, no filtering is applied. Cannot be used together with query parameter.
+            query (str | None): Optional string to filter runs by note OR tags (case insensitive partial match).
+                If None, no filtering is applied. Cannot be used together with custom_metadata, note_regex, or tags.
+                Performs a union search: matches runs where the query appears in the note OR matches any tag.
+            limit (int | None): The maximum number of runs to retrieve. If None, all runs are retrieved.
+            for_organization (str | None): If set, returns all runs triggered by users of the specified
+                organization. If None, only the runs of the current user are returned.
+
+        Returns:
+            list[RunData]: A list of all application runs.
+
+        Raises:
+            ValueError: If query is used together with custom_metadata, note_regex, or tags.
+            ForbiddenException: If the user is not authorized to list runs for the specified organization.
+            RuntimeError: If the application run list cannot be retrieved.
+        """
+        # Validate that query is not used with other metadata filters
+        if query is not None:
+            if note_regex is not None:
+                message = "Cannot use 'query' parameter together with 'note_regex' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+            if tags is not None:
+                message = "Cannot use 'query' parameter together with 'tags' parameter."
+                logger.warning(message)
+                raise ValueError(message)
+
+        if limit is not None and limit <= 0:
+            return []
+        runs = []
+        page_size = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE
+        try:
+            # Handle query parameter with union semantics (note OR tags)
+            if query:
+                # Search for runs matching query in notes
+                note_runs_dict: dict[str, RunData] = {}
+                flag_case_insensitive = ' flag "i"'
+                escaped_query = query.replace("\\", "\\\\").replace('"', '\\"')
+                custom_metadata_note = f'$.sdk.note ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                note_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_note,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                    for_organization=for_organization,
+                )
+                for run in note_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    note_runs_dict[run.run_id] = run
+                    if limit is not None and len(note_runs_dict) >= limit:
+                        break
+
+                # Search for runs matching query in tags
+                tag_runs_dict: dict[str, RunData] = {}
+                custom_metadata_tags = f'$.sdk.tags ? (@ like_regex "{escaped_query}"{flag_case_insensitive})'
+
+                tag_run_iterator = self._get_platform_client().runs.list_data(
+                    application_id=application_id,
+                    application_version=application_version,
+                    external_id=external_id,
+                    custom_metadata=custom_metadata_tags,
+                    sort="-submitted_at",
+                    page_size=page_size,
+                    for_organization=for_organization,
+                )
+                for run in tag_run_iterator:
+                    if has_output and run.output == RunOutput.NONE:
+                        continue
+                    # Add to dict if not already present from note search
+                    if run.run_id not in note_runs_dict:
+                        tag_runs_dict[run.run_id] = run
+                    if limit is not None and len(tag_runs_dict) >= limit:
+                        break
+
+                # Union of results from both searches, sorted newest-first
+                runs = list(note_runs_dict.values()) + list(tag_runs_dict.values())
+                runs.sort(key=lambda r: r.submitted_at, reverse=True)
+                if limit is not None:
+                    runs = runs[:limit]
+
+                return runs
+
+            custom_metadata = None
+            client_side_note_filter = None
+
+            # Handle note_regex filter
+            if note_regex:
+                flag_case_insensitive = ' flag "i"' if note_query_case_insensitive else ""
+                # If we also have tags, we'll need to do note filtering client-side
+                if tags:
+                    # Store for client-side filtering
+                    client_side_note_filter = (note_regex, note_query_case_insensitive)
+                else:
+                    # No tags, so we can filter note on backend
+                    custom_metadata = f'$.sdk.note ? (@ like_regex "{note_regex}"{flag_case_insensitive})'
+
+            # Handle tags filter
+            if tags:
+                # Use equality checks instead of like_regex for exact tag matching.
+                # PostgreSQL GIN indexes (jsonb_path_ops) can accelerate == but not like_regex.
+                # PostgreSQL JSONPath does not support combining separate path expressions
+                # (e.g. $.sdk.tags ? (...) && $.sdk.note ? (...) is invalid JSONPath syntax),
+                # so we can only filter on one path per API call.
+                # Strategy: filter on backend for ANY tag match, then filter client-side for ALL.
+                escaped_tags = [tag.replace("\\", "\\\\").replace('"', '\\"') for tag in tags]
+                if len(escaped_tags) == 1:
+                    custom_metadata = f'$.sdk.tags[*] ? (@ == "{escaped_tags[0]}")'
+                else:
+                    conditions = " || ".join(f'@ == "{t}"' for t in escaped_tags)
+                    custom_metadata = f"$.sdk.tags[*] ? ({conditions})"
+
+            run_iterator = self._get_platform_client().runs.list_data(
+                application_id=application_id,
+                application_version=application_version,
+                external_id=external_id,
+                custom_metadata=custom_metadata,
+                sort="-submitted_at",
+                page_size=page_size,
+                for_organization=for_organization,
+            )
+            for run in run_iterator:
+                if has_output and run.output == RunOutput.NONE:
+                    continue
+                # Client-side filtering when combining multiple criteria
+                # 1. If multiple tags specified, ensure ALL are present
+                if tags and len(tags) > 1:
+                    # Backend filter with regex alternation matches ANY tag
+                    # Now verify ALL tags are present in run metadata
+                    run_tags = set()
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        if "tags" in sdk_metadata:
+                            run_tags = set(sdk_metadata.get("tags", []))
+
+                    # Check if all required tags are present
+                    if not tags.issubset(run_tags):
+                        continue  # Skip this run, not all tags match
+
+                # 2. If note filter is applied client-side (when combined with tags)
+                if client_side_note_filter:
+                    note_pattern, case_insensitive = client_side_note_filter
+                    run_note = None
+                    if run.custom_metadata and "sdk" in run.custom_metadata:
+                        sdk_metadata = run.custom_metadata.get("sdk", {})
+                        run_note = sdk_metadata.get("note")
+
+                    # Check if note matches the regex pattern
+                    if run_note:
+                        flags = re.IGNORECASE if case_insensitive else 0
+                        if not re.search(note_pattern, run_note, flags):
+                            continue  # Skip this run, note doesn't match
+                    else:
+                        continue  # Skip this run, no note present
+
+                runs.append(run)
+                if limit is not None and len(runs) >= limit:
+                    break
+            return runs
+        except ForbiddenException:
+            raise
+        except Exception as e:
+            message = f"Failed to retrieve application runs: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run(self, run_id: str) -> Run:
+        """Select a run by its ID.
+
+        Args:
+            run_id (str): The ID of the run to find
+
+        Returns:
+            Run: The run that can be fetched using the .details() call.
+
+        Raises:
+            RuntimeError: If initializing the client fails or the run cannot be retrieved.
+        """
+        try:
+            return self._get_platform_client().run(run_id)
+        except Exception as e:
+            message = f"Failed to retrieve application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_submit_from_metadata(  # noqa: PLR0913
+        self,
+        application_id: str,
+        metadata: list[dict[str, Any]],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
+        """Submit a run for the given application.
+
+        Args:
+            application_id (str): The ID of the application to run.
+            metadata (list[dict[str, Any]]): The metadata for the run.
+            custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
+            note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
+            due_date (str | None): An optional requested completion time for the run, ISO8601 format.
+                The scheduler will try to complete the run before this time, taking
+                the subscription tier and available GPU resources into account.
+            deadline (str | None): An optional hard deadline for the run, ISO8601 format.
+                If processing exceeds this deadline, the run can be aborted.
+            application_version (str | None): The version of the application.
+                If not given latest version is used.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
+
+        Returns:
+            Run: The submitted run.
+
+        Raises:
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If
+                platform bucket URL is missing
+                or has unsupported protocol,
+                or if the application version ID is invalid,
+                or if due_date is not ISO 8601
+                or if due_date not in the future.
+            RuntimeError: If submitting the run failed unexpectedly.
+        """
+        from aignostics.bucket import Service as BucketService  # noqa: PLC0415
+
+        validate_due_date(due_date)
+        logger.trace("Submitting application run with metadata: {}", metadata)
+        app_version = self.application_version(application_id, application_version=application_version)
+        if len(app_version.input_artifacts) != 1:
+            message = (
+                f"Application version '{app_version.version_number}' has "
+                f"{len(app_version.input_artifacts)} input artifacts, "
+                "but only 1 is supported."
+            )
+            logger.warning(message)
+            raise RuntimeError(message)
+        input_artifact_name = app_version.input_artifacts[0].name
+
+        items = []
+        for row in metadata:
+            platform_bucket_url = row["platform_bucket_url"]
+            if platform_bucket_url and platform_bucket_url.startswith("gs://"):
+                url_parts = platform_bucket_url[5:].split("/", 1)
+                bucket_name = url_parts[0]
+                object_key = url_parts[1]
+                download_url = BucketService().create_signed_download_url(object_key, bucket_name)
+            else:
+                message = f"Invalid platform bucket URL: '{platform_bucket_url}'."
+                logger.warning(message)
+                raise ValueError(message)
+
+            item_metadata = {
+                "checksum_base64_crc32c": row["checksum_base64_crc32c"],
+                "height_px": int(row["height_px"]),
+                "width_px": int(row["width_px"]),
+                "media_type": (
+                    "image/tiff"
+                    if row["external_id"].lower().endswith((".tif", ".tiff"))
+                    else "application/dicom"
+                    if row["external_id"].lower().endswith(".dcm")
+                    else "application/octet-stream"
+                ),
+                "resolution_mpp": float(row["resolution_mpp"]),
+            }
+
+            # Only add specimen and staining_method metadata if not test-app
+            # TODO(Helmut): Remove condition when test-app reached input parity with heta
+            if application_id != TEST_APP_APPLICATION_ID:
+                item_metadata["specimen"] = {
+                    "disease": row["disease"],
+                    "tissue": row["tissue"],
+                }
+                item_metadata["staining_method"] = row["staining_method"]
+
+            items.append(
+                InputItem(
+                    external_id=row["external_id"],
+                    input_artifacts=[
+                        InputArtifact(
+                            name=input_artifact_name,
+                            download_url=download_url,
+                            metadata=item_metadata,
+                        )
+                    ],
+                    custom_metadata={
+                        "sdk": {
+                            "platform_bucket": {
+                                "bucket_name": bucket_name,
+                                "object_key": object_key,
+                                "signed_download_url": download_url,
+                            }
+                        }
+                    },
+                )
+            )
+        logger.trace("Items for application run submission: {}", items)
+
+        try:
+            run = self.application_run_submit(
+                application_id=application_id,
+                items=items,
+                application_version=app_version.version_number,
+                custom_metadata=custom_metadata,
+                note=note,
+                tags=tags,
+                due_date=due_date,
+                deadline=deadline,
+                onboard_to_aignostics_portal=onboard_to_aignostics_portal,
+                gpu_type=gpu_type,
+                gpu_provisioning_mode=gpu_provisioning_mode,
+                max_gpus_per_slide=max_gpus_per_slide,
+                flex_start_max_run_duration_minutes=flex_start_max_run_duration_minutes,
+                cpu_provisioning_mode=cpu_provisioning_mode,
+                node_acquisition_timeout_minutes=node_acquisition_timeout_minutes,
+            )
+            logger.debug(
+                "Submitted application run with items: {}, application run id {}, custom metadata: {}",
+                items,
+                run.run_id,
+                custom_metadata,
+            )
+            return run
+        except ValueError as e:
+            message = (
+                f"Failed to submit application run for application '{application_id}' "
+                f"(version: {app_version.version_number}): {e}"
+            )
+            logger.warning(message)
+            raise ValueError(message) from e
+        except Exception as e:
+            message = (
+                f"Failed to submit application run for application '{application_id}' "
+                f"(version: {app_version.version_number}): {e}"
+            )
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_submit(  # noqa: PLR0913, PLR0912, C901, PLR0915
+        self,
+        application_id: str,
+        items: list[InputItem],
+        application_version: str | None = None,
+        custom_metadata: dict[str, Any] | None = None,
+        note: str | None = None,
+        tags: set[str] | None = None,
+        due_date: str | None = None,
+        deadline: str | None = None,
+        onboard_to_aignostics_portal: bool = False,
+        gpu_type: str | None = None,
+        gpu_provisioning_mode: str | None = None,
+        max_gpus_per_slide: int | None = None,
+        flex_start_max_run_duration_minutes: int | None = None,
+        cpu_provisioning_mode: str | None = None,
+        node_acquisition_timeout_minutes: int | None = None,
+    ) -> Run:
+        """Submit a run for the given application.
+
+        Args:
+            application_id (str): The ID of the application to run.
+            items (list[InputItem]): The input items for the run.
+            application_version (str | None): The version of the application to run.
+            custom_metadata (dict[str, Any] | None): Optional custom metadata to attach to the run.
+            note (str | None): An optional note for the run.
+            tags (set[str] | None): Optional set of tags to attach to the run for filtering.
+            due_date (str | None): An optional requested completion time for the run, ISO8601 format.
+                The scheduler will try to complete the run before this time, taking
+                the subscription tier and available GPU resources into account.
+            deadline (str | None): An optional hard deadline for the run, ISO8601 format.
+                If processing exceeds this deadline, the run can be aborted.
+            onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
+            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
+                (SPOT, ON_DEMAND, or FLEX_START).
+            max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
+            flex_start_max_run_duration_minutes (int | None): Maximum run duration in minutes
+                when using FLEX_START provisioning mode (1-3600).
+            cpu_provisioning_mode (str | None): The provisioning mode for CPU resources (SPOT or ON_DEMAND).
+            node_acquisition_timeout_minutes (int | None): Timeout for acquiring compute nodes in minutes.
+
+        Returns:
+            Run: The submitted run.
+
+        Raises:
+            NotFoundException: If the application version with the given ID is not found.
+            ValueError: If
+                the application version ID is invalid
+                or items invalid
+                or due_date not ISO 8601
+                or due_date not in the future
+                or deadline not ISO 8601
+                or deadline not in the future
+                or due_date not before deadline.
+            RuntimeError: If submitting the run failed unexpectedly.
+        """
+        validate_due_date(due_date)
+        validate_deadline(deadline)
+        validate_scheduling_constraints(due_date, deadline)
+        try:
+            if custom_metadata is None:
+                custom_metadata = {}
+
+            sdk_metadata: dict[str, Any] = {}
+            if note:
+                sdk_metadata["note"] = note
+            if tags:
+                sdk_metadata["tags"] = tags
+            if onboard_to_aignostics_portal:
+                sdk_metadata["workflow"] = {
+                    "onboard_to_aignostics_portal": onboard_to_aignostics_portal,
+                }
+            # Build scheduling payload for the top-level request field (not custom_metadata)
+            scheduling = None
+            if due_date or deadline:
+                from aignostics_sdk._codegen.models import SchedulingRequest  # noqa: PLC0415
+
+                def _parse_iso(value: str | None) -> datetime | None:
+                    if value is None:
+                        return None
+                    return datetime.fromisoformat(value)
+
+                scheduling = SchedulingRequest(
+                    due_date=_parse_iso(due_date),
+                    deadline=_parse_iso(deadline),
+                )
+
+            has_gpu_config = (
+                gpu_type or gpu_provisioning_mode or max_gpus_per_slide or flex_start_max_run_duration_minutes
+            )
+            has_pipeline_config = has_gpu_config or cpu_provisioning_mode or node_acquisition_timeout_minutes
+            if has_pipeline_config:
+                sdk_metadata["pipeline"] = {}
+                if has_gpu_config:
+                    sdk_metadata["pipeline"]["gpu"] = {}
+                    if gpu_type:
+                        sdk_metadata["pipeline"]["gpu"]["gpu_type"] = gpu_type
+                    if gpu_provisioning_mode:
+                        sdk_metadata["pipeline"]["gpu"]["provisioning_mode"] = gpu_provisioning_mode
+                    if max_gpus_per_slide:
+                        sdk_metadata["pipeline"]["gpu"]["max_gpus_per_slide"] = max_gpus_per_slide
+                    if flex_start_max_run_duration_minutes:
+                        sdk_metadata["pipeline"]["gpu"]["flex_start_max_run_duration_minutes"] = (
+                            flex_start_max_run_duration_minutes
+                        )
+                if cpu_provisioning_mode:
+                    sdk_metadata["pipeline"]["cpu"] = {"provisioning_mode": cpu_provisioning_mode}
+                if node_acquisition_timeout_minutes:
+                    sdk_metadata["pipeline"]["node_acquisition_timeout_minutes"] = node_acquisition_timeout_minutes
+
+            # Validate pipeline configuration if present
+            if "pipeline" in sdk_metadata:
+                from aignostics_sdk.platform._sdk_metadata import PipelineConfig  # noqa: PLC0415
+
+                try:
+                    PipelineConfig.model_validate(sdk_metadata["pipeline"])
+                except Exception as e:
+                    message = f"Invalid pipeline configuration: {e}"
+                    logger.warning(message)
+                    raise ValueError(message) from e
+
+            custom_metadata["sdk"] = sdk_metadata
+
+            return self._get_platform_client().runs.submit(
+                application_id=application_id,
+                items=items,
+                application_version=application_version,
+                custom_metadata=custom_metadata,
+                scheduling=scheduling,
+            )
+        except ValueError as e:
+            message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except Exception as e:
+            message = f"Failed to submit application run for '{application_id}' (version: {application_version}): {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_update_custom_metadata(
+        self,
+        run_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Update custom metadata for an existing application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+            custom_metadata_checksum (str | None): Optional checksum obtained from a prior
+                read (e.g. ``RunData.custom_metadata_checksum``) used for optimistic
+                concurrency control. If the run's metadata was modified since the checksum
+                was read, the update is rejected with :class:`ConcurrencyConflictError`.
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context into ``custom_metadata["sdk"]``. If False, forward ``custom_metadata``
+                verbatim, preserving a caller-supplied ``sdk`` field unchanged.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the run's
+                current custom metadata (optimistic concurrency conflict).
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        try:
+            logger.trace("Updating custom metadata for run with ID '{}'", run_id)
+            self._get_platform_client().run(run_id).update_custom_metadata(
+                custom_metadata,
+                custom_metadata_checksum=custom_metadata_checksum,
+                enrich_sdk_metadata=enrich_sdk_metadata,
+            )
+            logger.trace("Updated custom metadata for run with ID '{}'", run_id)
+        except ValueError as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.PRECONDITION_FAILED:
+                message = (
+                    f"Custom metadata for run '{run_id}' was modified since the checksum was read "
+                    f"(optimistic concurrency conflict): {e!s}."
+                )
+                logger.warning(message)
+                raise ConcurrencyConflictError(message) from e
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_custom_metadata_static(
+        run_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Static wrapper for updating custom metadata for an application run.
+
+        Args:
+            run_id (str): The ID of the run to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the run.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic
+                concurrency control. See :meth:`application_run_update_custom_metadata`.
+            enrich_sdk_metadata (bool): See :meth:`application_run_update_custom_metadata`.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If the run ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the run's
+                current custom metadata (optimistic concurrency conflict).
+            RuntimeError: If updating the run metadata fails unexpectedly.
+        """
+        Service().application_run_update_custom_metadata(
+            run_id,
+            custom_metadata,
+            custom_metadata_checksum=custom_metadata_checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
+        )
+
+    def application_run_update_item_custom_metadata(
+        self,
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Update custom metadata for an existing item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+            custom_metadata_checksum (str | None): Optional checksum obtained from a prior
+                read (e.g. ``ItemResultReadResponse.custom_metadata_checksum``) used for
+                optimistic concurrency control. If the item's metadata was modified since the
+                checksum was read, the update is rejected with :class:`ConcurrencyConflictError`.
+            enrich_sdk_metadata (bool): If True (default), merge auto-generated SDK tracking
+                context into ``custom_metadata["sdk"]``. If False, forward ``custom_metadata``
+                verbatim, preserving a caller-supplied ``sdk`` field unchanged.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the item's
+                current custom metadata (optimistic concurrency conflict).
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        try:
+            logger.trace(
+                "Updating custom metadata for item '{}' in run with ID '{}'",
+                external_id,
+                run_id,
+            )
+            self._get_platform_client().run(run_id).update_item_custom_metadata(
+                external_id,
+                custom_metadata,
+                custom_metadata_checksum=custom_metadata_checksum,
+                enrich_sdk_metadata=enrich_sdk_metadata,
+            )
+            logger.trace(
+                "Updated custom metadata for item '{}' in run with ID '{}'",
+                external_id,
+                run_id,
+            )
+        except ValueError as e:
+            message = (
+                f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': ValueError {e}"
+            )
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' or item '{external_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.PRECONDITION_FAILED:
+                message = (
+                    f"Custom metadata for item '{external_id}' in run '{run_id}' was modified since the "
+                    f"checksum was read (optimistic concurrency conflict): {e!s}."
+                )
+                logger.warning(message)
+                raise ConcurrencyConflictError(message) from e
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' or item external ID '{external_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to update custom metadata for item '{external_id}' in run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    @staticmethod
+    def application_run_update_item_custom_metadata_static(
+        run_id: str,
+        external_id: str,
+        custom_metadata: dict[str, Any],
+        *,
+        custom_metadata_checksum: str | None = None,
+        enrich_sdk_metadata: bool = True,
+    ) -> None:
+        """Static wrapper for updating custom metadata for an item in an application run.
+
+        Args:
+            run_id (str): The ID of the run containing the item
+            external_id (str): The external ID of the item to update
+            custom_metadata (dict[str, Any]): The new custom metadata to attach to the item.
+            custom_metadata_checksum (str | None): Optional checksum for optimistic
+                concurrency control. See :meth:`application_run_update_item_custom_metadata`.
+            enrich_sdk_metadata (bool): See :meth:`application_run_update_item_custom_metadata`.
+
+        Raises:
+            NotFoundException: If the application run or item with the given IDs is not found.
+            ValueError: If the run ID or item external ID is invalid.
+            ConcurrencyConflictError: If the provided checksum no longer matches the item's
+                current custom metadata (optimistic concurrency conflict).
+            RuntimeError: If updating the item metadata fails unexpectedly.
+        """
+        Service().application_run_update_item_custom_metadata(
+            run_id,
+            external_id,
+            custom_metadata,
+            custom_metadata_checksum=custom_metadata_checksum,
+            enrich_sdk_metadata=enrich_sdk_metadata,
+        )
+
+    def application_run_cancel(self, run_id: str) -> None:
+        """Cancel a run by its ID.
+
+        Args:
+            run_id (str): The ID of the run to cancel
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If
+                the run ID is invalid
+                or the run cannot be canceled given its current state.
+            RuntimeError: If canceling the run fails unexpectedly.
+        """
+        try:
+            self.application_run(run_id).cancel()
+        except ValueError as e:
+            message = f"Failed to cancel application run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to retrieve application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        except Exception as e:
+            message = f"Failed to cancel application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_delete(self, run_id: str) -> None:
+        """Delete a run by its ID.
+
+        Args:
+            run_id (str): The ID of the run to delete
+
+        Raises:
+            Exception: If the client cannot be created.
+
+        Raises:
+            NotFoundException: If the application run with the given ID is not found.
+            ValueError: If
+                the run ID is invalid
+                or the run cannot be deleted given its current state.
+            RuntimeError: If deleting the run fails unexpectedly.
+        """
+        try:
+            logger.trace("Deleting application run with ID '{}'", run_id)
+            self.application_run(run_id).delete()
+            logger.trace("Deleted application run with ID '{}'", run_id)
+        except ValueError as e:
+            message = f"Failed to delete application run with ID '{run_id}': ValueError {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to delete application run with ID '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_organization_grants(
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ) -> Iterator[AccessGrant]:
+        """List active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of grants per page. Defaults to max (100).
+
+        Returns:
+            Iterator[AccessGrant]: Active grants for this run.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            return self.application_run(run_id).list_share_grants(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                relation=[GrantRelation.VIEWER],
+                page_size=page_size,
+            )
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list organization grants for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_tokens(
+        self,
+        run_id: str,
+        page_size: int = LIST_APPLICATION_RUNS_MAX_PAGE_SIZE,
+    ) -> Iterator[ShareToken]:
+        """List share tokens that have an active grant for a run.
+
+        Derives the list from active grants rather than from the token's own
+        revoked flag.  This ensures that a token whose *grant* was revoked (via
+        ``application_run_revoke_share_token``) is no longer returned, even
+        though the token itself has not been revoked.
+
+        Args:
+            run_id (str): The ID of the run.
+            page_size (int): Number of grants per page. Defaults to max (100).
+
+        Yields:
+            ShareToken: Each token with an active grant on this run.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            client = self._get_platform_client()
+            run = client.run(run_id)
+
+            tokens = self._get_platform_client().share_tokens.list(run_id=run_id, page_size=page_size)
+            token_grants = {
+                g.subject_id
+                for g in run.list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    page_size=page_size,
+                    nocache=True,
+                )
+            }
+
+            for token in tokens:
+                if token.share_token_id in token_grants:
+                    yield token
+
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to list share tokens for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_share_with_organization(
+        self,
+        run_id: str,
+        organization_id: str | None = None,
+    ) -> AccessGrant:
+        """Share a run with all users in an organization.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): The organization to share with. Defaults to
+                the authenticated user's own organization.
+
+        Returns:
+            AccessGrant: The created grant.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            organization_id = organization_id or self._get_platform_client().me().organization.id
+            return self.application_run(run_id).grant_access(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                subject_id=organization_id,
+            )
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to share run '{run_id}' with organization {organization_id}: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_unshare_with_organization(self, run_id: str, organization_id: str | None = None) -> None:
+        """Revoke active organization grants for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            organization_id (str | None): Organization whose grants to revoke.
+                Defaults to the authenticated user's own organization.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            organization_id = organization_id or self._get_platform_client().me().organization.id
+            for grant in self.application_run(run_id).list_share_grants(
+                subject_type=SubjectType.ORGANIZATION_USER,
+                subject_id=organization_id,
+                relation=[GrantRelation.VIEWER],
+            ):
+                grant.revoke()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to unshare run '{run_id}' with organization: {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_create_share_token(self, run_id: str, expires_at: datetime | None = None) -> ShareToken:
+        """Create a share token for a run.
+
+        Args:
+            run_id (str): The ID of the run.
+            expires_at (datetime | None): Optional UTC datetime at which the token expires.
+                Pass ``None`` (default) for a token that never expires.
+
+        Returns:
+            ShareToken: The created token. Access the one-time secret via ``share_token``.
+
+        Raises:
+            NotFoundException: If the run is not found.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        try:
+            share_token = self._get_platform_client().share_tokens.create(expires_at=expires_at)
+            self.application_run(run_id).grant_access(
+                subject_type=SubjectType.SHARE_TOKEN,
+                subject_id=share_token.share_token_id,
+            )
+            return share_token
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except Exception as e:
+            message = f"Failed to create share token for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+    def application_run_revoke_share_token(self, run_id: str, share_token_id: str) -> None:
+        """Revoke the grant giving a share token access to a run.
+
+        Removes the token's access to this specific run without invalidating
+        the token itself; the token may still be valid for other runs.
+
+        Args:
+            run_id (str): The ID of the run.
+            share_token_id (str): The ID of the share token whose grant to revoke.
+
+        Raises:
+            NotFoundException: If the run is not found or no grant exists for
+                the token on this run.
+            RuntimeError: If the request fails unexpectedly.
+        """
+        grants: list[AccessGrant] = []
+        try:
+            grants = list(
+                self.application_run(run_id).list_share_grants(
+                    subject_type=SubjectType.SHARE_TOKEN,
+                    subject_id=share_token_id,
+                    nocache=True,
+                )
+            )
+            for grant in grants:
+                grant.revoke()
+        except NotFoundException:
+            raise
+        except Exception as e:
+            message = f"Failed to revoke share token '{share_token_id}' for run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+        if not grants:
+            message = f"No grant found for share token '{share_token_id}' on run '{run_id}'"
+            logger.warning(message)
+            raise NotFoundException(message)
+
+    @staticmethod
+    def application_run_download_static(  # noqa: PLR0913
+        run_id: str,
+        destination_directory: Path,
+        create_subdirectory_for_run: bool = True,
+        create_subdirectory_per_item: bool = True,
+        wait_for_completion: bool = True,
+        qupath_project: bool = False,
+        download_progress_queue: Any | None = None,  # noqa: ANN401
+    ) -> Path:
+        """Download application run results with progress tracking, static variant.
+
+        Args:
+            run_id (str): The ID of the application run to download.
+            destination_directory (Path): Directory to save downloaded files.
+            create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
+            create_subdirectory_per_item (bool): Whether to create a subdirectory for each item,
+                if not set, all items will be downloaded to the same directory but prefixed
+                with the item external ID and underscore.
+            wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
+            qupath_project (bool): If True, create QuPath project referencing input slides and results.
+                This requires QuPath to be installed. The QuPath project will be created in a subfolder
+                of the destination directory.
+            download_progress_queue (Queue | None): Queue for GUI progress updates.
+
+        Returns:
+            Path: The directory containing downloaded results.
+
+        Raises:
+            ValueError: If
+                the run ID is invalid
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
+            NotFoundException: If the application run with the given ID is not found.
+            RuntimeError: If run details cannot be retrieved or download fails.
+        """
+        return Service().application_run_download(
+            run_id,
+            destination_directory,
+            create_subdirectory_for_run,
+            create_subdirectory_per_item,
+            wait_for_completion,
+            qupath_project,
+            download_progress_queue,
+        )
+
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915
+        self,
+        run_id: str,
+        destination_directory: Path,
+        create_subdirectory_for_run: bool = True,
+        create_subdirectory_per_item: bool = True,
+        wait_for_completion: bool = True,
+        qupath_project: bool = False,
+        download_progress_queue: Any | None = None,  # noqa: ANN401
+        download_progress_callable: Callable | None = None,  # type: ignore[type-arg]
+    ) -> Path:
+        """Download application run results with progress tracking.
+
+        Args:
+            run_id (str): The ID of the application run to download.
+            destination_directory (Path): Directory to save downloaded files.
+            create_subdirectory_for_run (bool): Whether to create a subdirectory for the run.
+            create_subdirectory_per_item (bool): Whether to create a subdirectory for each item,
+                if not set, all items will be downloaded to the same directory but prefixed
+                with the item external id and underscore.
+            wait_for_completion (bool): Whether to wait for run completion. Defaults to True.
+            qupath_project (bool): If True, create QuPath project referencing input slides and results.
+                This requires QuPath to be installed. The QuPath project will be created in a subfolder
+                of the destination directory.
+            download_progress_queue (Queue | None): Queue for GUI progress updates.
+            download_progress_callable (Callable | None): Callback for CLI progress updates.
+
+        Returns:
+            Path: The directory containing downloaded results.
+
+        Raises:
+            ValueError: If
+                the run ID is invalid
+                or destination directory cannot be created
+                or QuPath extra is not installed when qupath_project=True.
+            NotFoundException: If the application run with the given ID is not found.
+            RuntimeError: If run details cannot be retrieved or download fails.
+        """
+        logger.trace(
+            "Downloading application run '{}' to '{}', create_subdirectory_for_run={}, "
+            "create_subdirectory_per_item={}, wait_for_completion={}, qupath_project={}",
+            run_id,
+            destination_directory,
+            create_subdirectory_for_run,
+            create_subdirectory_per_item,
+            wait_for_completion,
+            qupath_project,
+        )
+        if qupath_project and not has_qupath_extra:
+            message = "QuPath project creation requested, but 'qupath' extra is not installed."
+            message += 'Start launchpad with `uvx --with "aignostics[qupath]" ....'
+            logger.warning(message)
+            raise ValueError(message)
+        progress = DownloadProgress()
+        update_progress(progress, download_progress_callable, download_progress_queue)
+
+        application_run = self.application_run(run_id)
+        final_destination_directory = destination_directory
+        try:
+            details = application_run.details()
+        except NotFoundException as e:
+            message = f"Application run with ID '{run_id}' not found: {e}"
+            logger.warning(message)
+            raise NotFoundException(message) from e
+        except ApiException as e:
+            if e.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                message = f"Run ID '{run_id}' invalid: {e!s}."
+                logger.warning(message)
+                raise ValueError(message) from e
+            message = f"Failed to retrieve details for application run '{run_id}': {e}"
+            logger.exception(message)
+            raise RuntimeError(message) from e
+
+        if create_subdirectory_for_run:
+            final_destination_directory = destination_directory / details.run_id
+        try:
+            final_destination_directory.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            message = f"Failed to create destination directory '{final_destination_directory}': {e}"
+            logger.warning(message)
+            raise ValueError(message) from e
+
+        results = list(application_run.results())
+        for item_index, item in enumerate(results):
+            if item.external_id.startswith(("gs://", "http://", "https://")):
+                # Download URL to local input directory and update external_id
+                try:
+                    filename = extract_filename_from_url(item.external_id)
+                    local_path = final_destination_directory / "input" / filename
+                    if not local_path.exists():
+                        progress.item_index = item_index
+                        progress.item = item
+                        download_url_to_file_with_progress(
+                            progress,
+                            item.external_id,
+                            local_path,
+                            download_progress_queue,
+                            download_progress_callable,
+                        )
+                    item.external_id = str(local_path)  # Update external_id so subsequent code uses the local path
+                except Exception as e:
+                    logger.warning(
+                        "Failed to download input slide from '{}' to '{}': {}", item.external_id, local_path, e
+                    )
+
+        if qupath_project:
+
+            def update_qupath_add_input_progress(qupath_add_input_progress: QuPathAddProgress) -> None:
+                progress.status = DownloadProgressState.QUPATH_ADD_INPUT
+                progress.qupath_add_input_progress = qupath_add_input_progress
+                update_progress(progress, download_progress_callable, download_progress_queue)
+
+            logger.trace("Adding input slides to QuPath project ...")
+            image_paths = []
+            for item in results:
+                local_path = Path(item.external_id)
+                if not local_path.is_file():
+                    logger.warning("Input slide '{}' not found, skipping QuPath addition.", local_path)
+                    continue
+                image_paths.append(local_path.resolve())
+            added = QuPathService.add(
+                final_destination_directory / "qupath", image_paths, update_qupath_add_input_progress
+            )
+            message = f"Added '{added}' input slides to QuPath project."
+            logger.debug(message)
+
+        logger.trace("Downloading results for run '{}' to '{}'", run_id, final_destination_directory)
+
+        progress.status = DownloadProgressState.CHECKING
+        update_progress(progress, download_progress_callable, download_progress_queue)
+
+        downloaded_items: set[str] = set()  # Track downloaded items to avoid re-downloading
+        while True:
+            run_details = application_run.details()  # (Re)load current run details
+            progress.run = run_details
+            update_progress(progress, download_progress_callable, download_progress_queue)
+
+            download_available_items(
+                progress,
+                application_run,
+                final_destination_directory,
+                downloaded_items,
+                create_subdirectory_per_item,
+                download_progress_queue,
+                download_progress_callable,
+            )
+
+            if run_details.state == RunState.TERMINATED:
+                logger.trace(
+                    "Run '{}' reached final status '{}' with message '{}' ({}).",
+                    run_id,
+                    run_details.state,
+                    run_details.error_message,
+                    run_details.error_code,
+                )
+                break
+
+            if not wait_for_completion:
+                logger.trace(
+                    "Run '{}' is in progress with status '{}' and message '{}' ({}), "
+                    "but not requested to wait for completion.",
+                    run_id,
+                    run_details.state,
+                    run_details.error_message,
+                    run_details.error_code,
+                )
+                break
+
+            logger.trace(
+                "Run '{}' is in progress with status '{}', waiting for completion ...", run_id, run_details.state
+            )
+            progress.status = DownloadProgressState.WAITING
+            update_progress(progress, download_progress_callable, download_progress_queue)
+            time.sleep(APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS)
+
+        if qupath_project:
+            logger.trace("Adding result images to QuPath project ...")
+
+            def update_qupath_add_results_progress(qupath_add_results_progress: QuPathAddProgress) -> None:
+                progress.status = DownloadProgressState.QUPATH_ADD_RESULTS
+                progress.qupath_add_results_progress = qupath_add_results_progress
+                update_progress(progress, download_progress_callable, download_progress_queue)
+
+            added = QuPathService.add(
+                final_destination_directory / "qupath",
+                [final_destination_directory],
+                update_qupath_add_results_progress,
+            )
+            message = f"Added {added} result images to QuPath project."
+            logger.debug(message)
+            logger.trace("Annotating input slides with polygons from results ...")
+
+            def update_qupath_annotate_input_with_results_progress(
+                qupath_annotate_input_with_results_progress: QuPathAnnotateProgress,
+            ) -> None:
+                progress.status = DownloadProgressState.QUPATH_ANNOTATE_INPUT_WITH_RESULTS
+                progress.qupath_annotate_input_with_results_progress = qupath_annotate_input_with_results_progress
+                update_progress(progress, download_progress_callable, download_progress_queue)
+
+            total_annotations = 0
+            progress.item_count = len(results)
+            for item_index, item in enumerate(results):
+                progress.item_index = item_index
+                update_progress(progress, download_progress_callable, download_progress_queue)
+
+                image_path = Path(item.external_id)
+                if not image_path.is_file():
+                    logger.warning("Input slide '{}' not found, skipping QuPath annotation.", image_path)
+                    continue
+                for artifact in item.output_artifacts:
+                    if (
+                        get_mime_type_for_artifact(artifact) == "application/geo+json"
+                        and artifact.name == "cell_classification:geojson_polygons"
+                    ):
+                        artifact_name = artifact.name
+                        if create_subdirectory_per_item:
+                            path = Path(item.external_id)
+                            stem_name = path.stem
+                            artifact_path = (
+                                final_destination_directory
+                                / stem_name
+                                / f"{sanitize_path_component(artifact_name)}.json"
+                            )
+                        else:
+                            artifact_path = (
+                                final_destination_directory / f"{sanitize_path_component(artifact_name)}.json"
+                            )
+                        message = f"Annotating input slide '{image_path}' with artifact '{artifact_path}' ..."
+                        logger.trace(message)
+                        added = QuPathService.annotate(
+                            final_destination_directory / "qupath",
+                            image_path,
+                            artifact_path,
+                            update_qupath_annotate_input_with_results_progress,
+                        )
+                        message = f"Added {added} annotations to input slide '{image_path}' from '{artifact_path}'."
+                        logger.debug(message)
+                        total_annotations += added
+            message = f"Added {added} annotations to input slides."
+            logger.debug(message)
+
+        else:
+            logger.trace("QuPath project creation not requested, skipping ...")
+
+        logger.trace("Completed downloading application run '{}' to '{}'", run_id, final_destination_directory)
+        progress.status = DownloadProgressState.COMPLETED
+        update_progress(progress, download_progress_callable, download_progress_queue)
+
+        return final_destination_directory

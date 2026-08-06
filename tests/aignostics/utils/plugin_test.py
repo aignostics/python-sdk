@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 import typer
+from aignostics.utils._di import _implementation_cache, _subclass_cache, discover_plugin_packages
 
 from aignostics.utils import BaseNavBuilder
-from aignostics.utils._di import _implementation_cache, _subclass_cache, discover_plugin_packages
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -51,8 +51,9 @@ def test_plugin_nav_builder_registered(install_dummy_plugin, clear_plugin_caches
     """Integration: plugin BaseNavBuilder subclass is discovered via DI after installation."""
     record_property("tested-item-id", "TC-UTILS-PLUGIN-03")
 
-    from aignostics.utils import gui_get_nav_groups
     from aignostics.utils._di import locate_subclasses
+
+    from aignostics.utils import gui_get_nav_groups
 
     nav_builder_classes = locate_subclasses(BaseNavBuilder)
     class_names = [cls.__name__ for cls in nav_builder_classes]

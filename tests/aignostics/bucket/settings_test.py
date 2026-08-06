@@ -3,11 +3,10 @@
 import json
 
 import pytest
-from pydantic import ValidationError
-from typer.testing import CliRunner
-
 from aignostics.bucket._settings import Settings
 from aignostics.cli import cli
+from pydantic import ValidationError
+from typer.testing import CliRunner
 
 
 @pytest.mark.unit
