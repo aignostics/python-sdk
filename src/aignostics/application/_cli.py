@@ -38,7 +38,7 @@ from ._utils import (
     print_runs_verbose,
     read_metadata_csv_to_dict,
     retrieve_and_print_run_details,
-    share_token_access_denied_message,
+    run_access_denied_message,
     validate_mappings,
     write_metadata_dict_to_csv,
 )
@@ -961,7 +961,7 @@ def run_list(  # noqa: PLR0913
 
 
 @run_app.command("describe")
-def run_describe(  # noqa: PLR0912
+def run_describe(
     run_id: Annotated[str, typer.Argument(help="Id of the run to describe")],
     format: Annotated[  # noqa: A002
         str,
@@ -1004,7 +1004,7 @@ def run_describe(  # noqa: PLR0912
         sys.exit(2)
     except ForbiddenException:
         logger.warning("Access denied for run '{}'", run_id)
-        msg = share_token_access_denied_message(run_id, share_token)
+        msg = run_access_denied_message(run_id, share_token)
         if format == "json":
             print(json.dumps({"error": "access_denied", "message": msg}), file=sys.stderr)
         else:
@@ -1061,7 +1061,7 @@ def run_dump_metadata(
         sys.exit(2)
     except ForbiddenException:
         logger.warning("Access denied for run '{}'", run_id)
-        console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
+        console.print(f"[error]Error:[/error] {run_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to dump custom metadata for run with ID '{run_id}'")
@@ -1129,7 +1129,7 @@ def run_dump_item_metadata(
         sys.exit(2)
     except ForbiddenException:
         logger.warning("Access denied for run '{}'", run_id)
-        print(f"Error: {share_token_access_denied_message(run_id, share_token)}", file=sys.stderr)
+        print(f"Error: {run_access_denied_message(run_id, share_token)}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to dump custom metadata for item '{external_id}' in run with ID '{run_id}'")
@@ -1852,7 +1852,7 @@ def result_download(  # noqa: C901, PLR0913, PLR0915
         sys.exit(2)
     except ForbiddenException:
         logger.warning("Access denied for run '{}'", run_id)
-        console.print(f"[error]Error:[/error] {share_token_access_denied_message(run_id, share_token)}")
+        console.print(f"[error]Error:[/error] {run_access_denied_message(run_id, share_token)}")
         sys.exit(1)
     except Exception as e:
         logger.exception(f"Failed to download results of run with ID '{run_id}'")

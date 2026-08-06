@@ -1468,24 +1468,7 @@ def test_artifact_get_download_url_appends_share_token(configured_api, record_pr
     with patch(_PATCH_GET_TOKEN, return_value="t"), patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get:
         art.get_download_url()
 
-    assert "share_token=s3cr3t" in mock_get.call_args.args[0]
-
-
-@pytest.mark.unit
-def test_artifact_get_download_url_percent_encodes_share_token(configured_api, record_property) -> None:
-    """A share_token with reserved characters is percent-encoded, not injected as extra query params."""
-    record_property("tested-item-id", "SWR-APPLICATION-4-3, SPEC-PLATFORM-SERVICE")
-    art = Artifact(configured_api, _RUN_ID, _ARTIFACT_ID, share_token="a b&x=1")  # noqa: S106
-    response = _redirect_response(_PRESIGNED_URL)
-
-    with patch(_PATCH_GET_TOKEN, return_value="t"), patch(_PATCH_REQUESTS_GET, return_value=response) as mock_get:
-        art.get_download_url()
-
-    url = mock_get.call_args.args[0]
-    assert "share_token=a+b%26x%3D1" in url
-    # The raw "&" must not have created a second query parameter.
-    assert url.count("?") == 1
-    assert "&" not in url.split("?", 1)[1]
+    assert mock_get.call_args.kwargs["params"] == {"share_token": "s3cr3t"}
 
 
 @pytest.mark.unit
@@ -1499,7 +1482,7 @@ def test_artifact_get_download_url_sends_bearer_with_share_token(configured_api,
         art.get_download_url()
 
     assert mock_get.call_args.kwargs["headers"]["Authorization"] == "Bearer t"
-    assert "share_token=s3cr3t" in mock_get.call_args.args[0]
+    assert mock_get.call_args.kwargs["params"] == {"share_token": "s3cr3t"}
 
 
 @pytest.mark.unit

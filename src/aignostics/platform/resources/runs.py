@@ -12,7 +12,6 @@ from http import HTTPStatus
 from pathlib import Path
 from time import sleep
 from typing import Any, cast
-from urllib.parse import urlencode
 
 import requests
 from aignx.codegen.exceptions import ApiException, NotFoundException, ServiceException
@@ -149,10 +148,6 @@ class Artifact(_AuthenticatedResource):
         configuration = self._api.api_client.configuration
         host = configuration.host.rstrip("/")
         endpoint_url = f"{host}/api/v1/runs/{self.run_id}/artifacts/{self.artifact_id}/file"
-        if self._share_token is not None:
-            # Percent-encode the secret so reserved characters (& # = space) cannot
-            # corrupt the URL or inject extra query parameters.
-            endpoint_url += f"?{urlencode({'share_token': self._share_token})}"
         proxy = getattr(configuration, "proxy", None)
         ssl_ca_cert = getattr(configuration, "ssl_ca_cert", None)
         verify_ssl = getattr(configuration, "verify_ssl", True)
@@ -202,10 +197,13 @@ class Artifact(_AuthenticatedResource):
         try:
             # Always send the OAuth Bearer token: the platform requires an
             # authenticated account on every request. When a share_token is present
-            # it is carried as a query parameter on ``endpoint_url`` and elevates
-            # that authenticated user's access to the shared resource.
+            # it is passed via the ``params`` argument as a ``share_token`` query
+            # parameter and elevates that authenticated user's access to the shared
+            # resource.
+            params = {"share_token": self._share_token} if self._share_token else {}
             with requests.get(
                 endpoint_url,
+                params=params,
                 headers={
                     "Authorization": f"Bearer {token_provider()}",
                     "User-Agent": user_agent(),
