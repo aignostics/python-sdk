@@ -1205,6 +1205,33 @@ def test_ensure_artifacts_downloaded_skips_artifact_with_no_metadata(app_run, tm
 
 
 @pytest.mark.unit
+def test_ensure_artifacts_downloaded_sanitizes_illegal_chars_in_names(app_run, tmp_path) -> None:
+    """Colons in item external_id / artifact name are illegal on Windows (NTFS) and must be sanitized.
+
+    PAPI artifact names such as ``tissue_segmentation:geojson_polygons`` otherwise create an NTFS
+    alternate data stream (silently losing the file) or raise OSError. Both customer-controlled path
+    components must be routed through ``sanitize_path_component``.
+    """
+    item = _make_item_mock(
+        external_id="slide:1",
+        artifacts=[_make_artifact_mock(name="tissue_segmentation:geojson_polygons", output_artifact_id="art-xyz")],
+    )
+    app_run.get_artifact_download_url = Mock(return_value=_PRESIGNED_URL)
+
+    with (
+        patch(_PATCH_MIME_TYPE_TO_FILE_ENDING, return_value=".json"),
+        patch(_PATCH_DOWNLOAD_FILE_RUNS) as mock_download,
+    ):
+        app_run.ensure_artifacts_downloaded(tmp_path, item, print_status=False)
+
+    written_path = mock_download.call_args.args[1]
+    expected = tmp_path / "slide_1" / "tissue_segmentation_geojson_polygons.json"
+    assert written_path == str(expected)
+    # No colon anywhere in the components the SDK constructed (ignore any in tmp_path itself).
+    assert ":" not in written_path[len(str(tmp_path)) :]
+
+
+@pytest.mark.unit
 def test_download_to_folder_post_termination_loop_filters_by_item_state(app_run, mock_api, tmp_path) -> None:
     """Post-termination loop must filter items by state==TERMINATED and output==FULL."""
     from aignostics_sdk._codegen.models import ItemOutput, ItemState, RunState

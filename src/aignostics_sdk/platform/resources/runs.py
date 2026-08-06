@@ -79,7 +79,7 @@ from aignostics_sdk.platform._utils import (
 from aignostics_sdk.platform.resources.access import AccessGrant
 from aignostics_sdk.platform.resources.applications import Versions
 from aignostics_sdk.platform.resources.utils import paginate
-from aignostics_sdk.utils import user_agent
+from aignostics_sdk.utils import sanitize_path_component, user_agent
 
 LIST_APPLICATION_RUNS_MAX_PAGE_SIZE = 100
 LIST_APPLICATION_RUNS_MIN_PAGE_SIZE = 5
@@ -559,7 +559,7 @@ class Run(_AuthenticatedResource):
             ValueError: If checksums don't match.
             Exception: If downloads fail.
         """
-        item_dir = base_folder / item.external_id
+        item_dir = base_folder / sanitize_path_component(item.external_id)
 
         downloaded_at_least_one_artifact = False
         for artifact in item.output_artifacts:
@@ -577,7 +577,7 @@ class Run(_AuthenticatedResource):
                 continue
             item_dir.mkdir(exist_ok=True, parents=True)
             file_ending = mime_type_to_file_ending(get_mime_type_for_artifact(artifact))
-            file_path = item_dir / f"{artifact.name}{file_ending}"
+            file_path = item_dir / f"{sanitize_path_component(artifact.name)}{file_ending}"
             checksum = artifact.metadata[checksum_attribute_key]
 
             if file_path.exists():
