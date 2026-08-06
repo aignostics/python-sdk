@@ -24,6 +24,10 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 | **qupath** | QuPath integration | ✅ | ✅ | ✅ |
 | **system** | System information | ✅ | ✅ | ✅ |
 
+Helper packages without their own CLAUDE.md: `dicom/`, `idc/`, `marimo/`,
+`thumbnail/`, `tiff/` — internal support used by the modules above (DICOM
+handling, IDC access, Marimo notebook assets, thumbnailing, TIFF I/O).
+
 ## Module Descriptions
 
 ### 🔐 platform
@@ -33,11 +37,13 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 - **Core Features**:
   - OAuth 2.0 authentication, JWT token management, API client wrapper
   - **SDK Metadata System**: Automatic tracking of execution context, user info, CI/CD environment
-  - JSON Schema validation for metadata with versioning (Run v0.0.4, Item v0.0.3)
+  - JSON Schema validation for metadata; schema versions live in
+    `platform/_sdk_metadata.py` (`SDK_METADATA_SCHEMA_VERSION` /
+    `ITEM_SDK_METADATA_SCHEMA_VERSION`) — not hardcoded here
   - Operation caching for non-mutating API calls
 - **CLI**:
   - `user login`, `user logout`, `user whoami` for authentication
-  - `sdk metadata-schema` for JSON Schema export
+  - `sdk run-metadata-schema`, `sdk item-metadata-schema` for JSON Schema export
 - **Dependencies**: `utils` (logging, user_agent generation)
 - **Used By**: All modules requiring API access; application module for automatic metadata attachment
 
@@ -56,7 +62,7 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 **Medical image file handling and processing**
 
 - **Core Features**: Format detection, thumbnail generation, metadata extraction
-- **CLI**: `info`, `thumbnail` commands for WSI inspection
+- **CLI**: `inspect`; `dicom inspect`, `dicom geojson_import` (see `wsi/_cli.py`)
 - **GUI**: Image viewer and metadata display
 - **Handlers**: OpenSlide (.svs, .tiff), PyDICOM (DICOM files)
 - **Dependencies**: `utils` (logging)
@@ -99,9 +105,10 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 **Desktop application launchpad**
 
 - **Core Features**: Module launcher, unified interface
-- **GUI Only**: NiceGUI-based desktop interface
+- **GUI Only**: NiceGUI-based desktop interface (nicegui is a core dependency;
+  there is no `[gui]` extra)
 - **Dependencies**: All modules with GUI components
-- **Launch**: `uvx --with aignostics[gui] aignostics gui`
+- **Launch**: `aignostics launchpad`
 
 ### 📓 notebook
 
@@ -136,7 +143,7 @@ This file provides a comprehensive overview of all modules in the Aignostics SDK
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                     GUI Launchpad (_gui/)                  │
+│                     GUI Launchpad (gui/)                   │
 │                  (Desktop Interface Aggregator)            │
 └─────────────────────────────────────────────────────────────┘
                                 ↓
@@ -160,33 +167,8 @@ This pattern repeats for: platform, application, wsi, dataset,
 bucket, qupath, system (each module has CLI + Service, most have GUI)
 ```
 
-### Service Layer Dependencies
-
-```text
-                    ┌──────────────────┐
-                    │   application    │
-                    │    (service)     │
-                    └──────┬───────────┘
-                           │ uses
-        ┌──────────┬───────┼────────┬──────────┐
-        ↓          ↓       ↓        ↓          ↓
-  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-  │   wsi   │ │ dataset │ │ bucket  │ │ qupath  │
-  │(service)│ │(service)│ │(service)│ │(service)│
-  └─────────┘ └─────────┘ └────┬────┘ └─────────┘
-                                │
-                                ↓
-                        ┌──────────────┐
-                        │   platform    │
-                        │   (service)   │
-                        └──────┬───────┘
-                                │
-                                ↓
-                        ┌──────────────┐
-                        │     utils     │
-                        │(infrastructure)│
-                        └───────────────┘
-```
+The service dependency graph is captured textually under "Module
+Communication → Direct Dependencies" below.
 
 ### Common Integration Patterns
 
@@ -222,14 +204,31 @@ utils.locate_implementations(BaseService)
 
 ### Direct Dependencies
 
-- **application** → `platform`, `bucket`, `wsi`, `utils`, `qupath` (optional)
-- **dataset** → `platform`, `utils`
-- **bucket** → `platform`, `utils`
-- **wsi** → `utils`
-- **gui** → All modules with GUI components
-- **notebook** → `utils`, `marimo` (external)
-- **qupath** → `utils`
-- **system** → All modules (for health checks)
+Verified from cross-module imports. `utils` and `constants` are foundation
+(imported almost everywhere) and omitted from the graph for clarity. `dicom`,
+`idc`, `thumbnail`, `tiff` are leaf modules that import only `utils`.
+
+```mermaid
+graph TD
+    application --> platform
+    application --> bucket
+    application --> wsi
+    application --> qupath
+    application --> system
+    application --> gui
+    bucket --> platform
+    dataset --> platform
+    bucket --> gui
+    dataset --> gui
+    notebook --> gui
+    qupath --> gui
+    gui --> platform
+    gui --> system
+    system --> gui
+```
+
+`gui` and `system` are mutually coupled: `system` registers GUI pages through
+`gui`, and the `gui` frame calls `SystemService.health_static()`.
 
 ### Shared Resources
 
@@ -247,27 +246,17 @@ aignostics user login
 # List applications
 aignostics application list
 
-# Submit a run
-aignostics application run submit --application-id heta --files slide.svs
+# Submit a run (positional: application_id, metadata CSV file)
+aignostics application run submit heta metadata.csv
 
-# Download dataset
-aignostics dataset download --collection-id TCGA-LUAD --output-dir ./data
+# Download an IDC dataset (positional: source, target)
+aignostics dataset idc download <source> <target>
 
 # Get WSI info
 aignostics wsi inspect slide.svs
-```
 
-## GUI Launch
-
-```bash
-# Install with GUI support
-pip install "aignostics[gui]"
-
-# Launch desktop interface
-uvx --with "aignostics[gui]" aignostics gui
-
-# Or if installed locally
-aignostics gui
+# Launch the desktop interface
+aignostics launchpad
 ```
 
 ## Module-Specific Documentation
@@ -287,53 +276,10 @@ For detailed information about each module, see:
 
 ## Development Guidelines
 
-1. **New Module Checklist:**
-   - Inherit from `BaseService` for service discovery
-   - Implement `health()` and `info()` methods
-   - Add `_cli.py` for CLI commands using Typer
-   - Add `_gui.py` for GUI components using NiceGUI
-   - Create `CLAUDE.md` documentation
-   - Update this index
-
-2. **Service Pattern:**
-
-   ```python
-   from aignostics.utils import BaseService
-
-
-   class Service(BaseService):
-       async def health(self) -> Health:
-           return Health(status=Health.Code.UP)
-
-       async def info(self, mask_secrets=True) -> dict:
-           return {"version": "1.0.0"}
-   ```
-
-3. **CLI Pattern:**
-
-   ```python
-   import typer
-
-   cli = typer.Typer(name="module", help="Module description")
-
-
-   @cli.command("action")
-   def action_command():
-       """Action description."""
-       service = Service()
-       service.perform_action()
-   ```
-
-4. **GUI Pattern:**
-
-   ```python
-   from nicegui import ui
-
-
-   def create_page():
-       ui.label("Module Interface")
-       # Add components
-   ```
+New module checklist: inherit from `utils.BaseService` (for service discovery),
+implement `health()` and `info()`, add a Typer `_cli.py`, add `_gui.py` (NiceGUI)
+if it has a UI, create a `CLAUDE.md`, and update this index. Copy an existing
+module (e.g. `system/`) as the pattern rather than scaffolding from scratch.
 
 ---
 

@@ -4,8 +4,12 @@ version = "1.4.0"
 description = "🔬 Python SDK providing access to the Aignostics Platform. Includes Aignostics Launchpad (Desktop Application), Aignostics CLI (Command-Line Interface), example notebooks, and Aignostics Client Library."
 readme = "README.md"
 authors = [
-    { name = "Helmut Hoffer von Ankershoffen", email = "helmut@aignostics.com" },
-    { name = "Andreas Kunft", email = "andreas@aignostics.com" },
+    { name = "Helmut Hoffer von Ankershoffen", email = "support@aignostics.com" },
+    { name = "Andreas Kunft", email = "support@aignostics.com" },
+]
+maintainers = [
+    { name = "Oliver Meyer", email = "support@aignostics.com" },
+    { name = "Arne Baumann", email = "support@aignostics.com" },
 ]
 license = { file = "LICENSE" }
 
@@ -95,7 +99,7 @@ dependencies = [
     "packaging>=26,<27",
     "pandas>=2.3.3,<4",
     "procrastinate>=3.5.3",
-    "pyarrow>=23.0.1,<24; python_version >= '3.14'",
+    "pyarrow>=23.0.1,<26; python_version >= '3.14'",
     "pydicom>=3.0.2",
     "python-dateutil>=2.9.0.post0,<3",
     "pyyaml>=6.0.3,<7",

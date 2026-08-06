@@ -17,7 +17,7 @@ The gui module provides common GUI framework components and theming for the Aign
 
 - `_theme.py` - Application theme and styling (`PageBuilder`, `theme`)
 - `_frame.py` - Common layout components and health updates
-- `_error.py` - Error page handling (`ErrorPageBuilder`)
+- `_error.py` - Error page handling (in-file class `PageBuilder`, imported as `ErrorPageBuilder`)
 
 **Usage Pattern:**
 
@@ -51,20 +51,10 @@ The GUI enforces health checks before allowing critical operations:
 
 **Health State Management (`_frame.py`):**
 
-```python
-launchpad_healthy: bool | None = None  # None = loading, True = healthy, False = unhealthy
-
-
-async def _health_load_and_render() -> None:
-    nonlocal launchpad_healthy
-    with contextlib.suppress(Exception):
-        launchpad_healthy = bool(await run.cpu_bound(SystemService.health_static))
-    health_icon.refresh()
-    health_link.refresh()
-
-
-ui.timer(interval=HEALTH_UPDATE_INTERVAL, callback=_update_health, immediate=True)
-```
+A `ui.timer` fires every `HEALTH_UPDATE_INTERVAL` seconds; the callback sets a
+`launchpad_healthy: bool | None` state (`None` while loading) from
+`await SystemService.health_static()` and refreshes the display components.
+Health-enforcement semantics are owned by `system/CLAUDE.md` — see it for details.
 
 **Health Display Components:**
 

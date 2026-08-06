@@ -132,6 +132,18 @@ manage your organization, applications, quotas, and users registered with the Ai
 2. Administrators of your organization can invite additional users, manage the organisation and user specific quotas and monitor usage.
 3. Both roles can trigger application runs.
 
+#### Inviting and managing users
+
+If you have the Administrator role, you invite colleagues to your organization directly from the Console:
+
+1. Log in to the [Console](https://platform.aignostics.com) and select **Admin** in the sidebar, then open **Members**.
+2. At the bottom of the Members page, enter the colleague's email address and assign a role:
+   - **Member** — a regular user who can run applications and manage their own runs.
+   - **Admin** — everything a member can do, plus inviting and managing other users.
+3. Click **Send**. The colleague receives a signup email from `support@aignostics.com` inviting them to accept the invitation, set a password, and configure two-factor authentication.
+
+The email address must use your organization's official domain (see the registration requirements above). Return to the Members page at any time to review your organization's users and their roles.
+
 ### Applications
 An application is a fully automated advanced machine learning based workflow composed of one or more specific tasks (e.g. Tissue Quality Control, Tissue Segmentation, Cell Detection, Cell Classification and predictive analysis). Each application is designed for a particular analysis purpose (e.g. Tumor Micro Environment analysis or biomarker scoring). For each application we define input requirements, processing tasks and output formats.
 
@@ -213,7 +225,6 @@ The Aignostics Platform delivers enterprise-grade computational pathology throug
 - **NVIDIA® GPU clusters**: Dedicated compute provisioned per application run for maximum security and compliance
 
 ```mermaid
-%%{init: {'theme':'dark', 'themeVariables': { 'fontSize':'18px', 'fontFamily':'arial', 'darkMode':'true', 'background':'#1e1e1e', 'primaryColor':'#4a4a4a', 'primaryTextColor':'#ffffff', 'primaryBorderColor':'#ffffff', 'lineColor':'#ffffff', 'secondaryColor':'#3a3a3a', 'tertiaryColor':'#2a2a2a', 'actorBkg':'#4a4a4a', 'actorBorder':'#ffffff', 'actorTextColor':'#ffffff', 'actorLineColor':'#ffffff', 'signalColor':'#ffffff', 'signalTextColor':'#ffffff', 'labelBoxBkgColor':'#3a3a3a', 'labelBoxBorderColor':'#ffffff', 'labelTextColor':'#ffffff', 'noteBkgColor':'#4a4a4a', 'noteTextColor':'#ffffff', 'noteBorderColor':'#ffffff', 'sequenceNumberColor':'#000000'}}}%%
 sequenceDiagram
     autonumber
     actor User as User<br/>(Organization Member)

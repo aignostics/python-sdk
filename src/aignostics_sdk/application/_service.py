@@ -65,6 +65,10 @@ APPLICATION_RUN_DOWNLOAD_SLEEP_SECONDS = 5
 APPLICATION_RUN_FILE_READ_CHUNK_SIZE = 1024 * 1024 * 1024  # 1GB
 APPLICATION_RUN_DOWNLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
 APPLICATION_RUN_UPLOAD_CHUNK_SIZE = 1024 * 1024  # 1MB
+# Buffer for streaming a source slide while computing its CRC32C checksum during metadata
+# preparation. Sized to amortize per-read overhead (which dominates on slow/high-latency
+# storage such as USB or network drives) while staying well within the 8GB RAM floor.
+APPLICATION_RUN_METADATA_CHECKSUM_CHUNK_SIZE = 8 * 1024 * 1024  # 8MB
 
 
 class Service(BaseService):
@@ -375,7 +379,7 @@ class Service(BaseService):
                     # Generate CRC32C checksum with crc32c and encode as base64
                     hash_sum = crc32c.CRC32CHash()
                     with file_path.open("rb") as f:
-                        while chunk := f.read(1024):
+                        while chunk := f.read(APPLICATION_RUN_METADATA_CHECKSUM_CHUNK_SIZE):
                             hash_sum.update(chunk)
                     checksum = str(base64.b64encode(hash_sum.digest()), "UTF-8")
 

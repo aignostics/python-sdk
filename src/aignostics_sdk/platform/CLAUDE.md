@@ -14,25 +14,25 @@ The platform module serves as the foundational API client interface for the Aign
 - **Environment Management**: Multi-environment support (dev/staging/production) with automatic endpoint detection
 - **Resource Abstraction**: Type-safe wrappers for applications, versions, runs with memory-efficient pagination
 
-**Performance & Reliability (NEW in v1.0.0-beta.7):**
+**Performance & Reliability:**
 
-- **Operation Caching**: Token-aware caching for read operations with configurable TTLs (5-15 min)
-- **Retry Logic**: Exponential backoff with jitter for transient failures (4 attempts default)
-- **Timeout Management**: Per-operation timeouts (30s default, configurable 0.1s-300s)
+- **Operation Caching**: Token-aware caching for read operations with configurable TTLs
+- **Retry Logic**: Exponential backoff with jitter for transient failures
+- **Timeout Management**: Per-operation timeouts, configurable via env vars
 - **Cache Invalidation**: Automatic global cache clearing on mutations for consistency
 
-**Observability & Tracking (NEW in v1.0.0-beta.7):**
+**Observability & Tracking:**
 
-- **SDK Metadata System**: Automatic tracking of execution context, user, CI/CD environment for all runs
-- **JSON Schema Validation**: Pydantic-based validation with versioned schemas (v0.0.1)
+- **SDK Metadata System**: Automatic tracking of execution context, user, CI/CD environment for all runs and items
+- **JSON Schema Validation**: Pydantic-based validation with versioned schemas
+  (see `SDK_METADATA_SCHEMA_VERSION` / `ITEM_SDK_METADATA_SCHEMA_VERSION` in `_sdk_metadata.py`)
 - **Enhanced User Agent**: Context-aware user agent with pytest and GitHub Actions integration
-- **Structured Logging**: Retry warnings, cache hits/misses, performance metrics
 
-**API v1.0.0-beta.7 Support:**
+**State & statistics:**
 
-- **State Models**: Enum-based RunState, ItemState, ArtifactState with termination reasons
-- **Statistics Tracking**: Aggregate RunItemStatistics for progress monitoring
-- **Error Handling**: Comprehensive error recovery with user guidance
+- **State enums**: `RunState`, `ItemState` (`PENDING`/`PROCESSING`/`TERMINATED`) plus per-run/item/artifact
+  *output* enums (`RunOutput`, `ItemOutput`, `ArtifactOutput`) — see State Models section below
+- **Statistics Tracking**: Aggregate `RunItemStatistics` for progress monitoring
 
 ### User Interfaces
 
@@ -44,9 +44,10 @@ User authentication commands:
 - `user logout` - Remove cached authentication token
 - `user whoami` - Display current user information and organization details
 
-SDK metadata commands:
+SDK metadata commands (`--pretty` / `--no-pretty`):
 
-- `sdk metadata-schema` - Display or export the JSON Schema for SDK metadata (supports `--pretty` flag)
+- `sdk run-metadata-schema` - Print the JSON Schema for Run SDK metadata
+- `sdk item-metadata-schema` - Print the JSON Schema for Item SDK metadata
 
 **Service Layer (`_service.py`):**
 
@@ -60,19 +61,8 @@ The service provides authentication management used by both CLI and other module
 
 ### Layered Architecture
 
-```
-┌─────────────────────────────────────────────┐
-│            Public API (Client)              │
-├─────────────────────────────────────────────┤
-│         Resources (Applications, Runs)      │
-├─────────────────────────────────────────────┤
-│      Authentication & Token Management      │
-├─────────────────────────────────────────────┤
-│        Generated API Client (aignx)         │
-├─────────────────────────────────────────────┤
-│         HTTP Client (urllib3)               │
-└─────────────────────────────────────────────┘
-```
+`Client` (public API) → resource accessors (`Applications`, `Versions`, `Runs`, `ShareTokens`)
+→ authenticated wrapper (`_AuthenticatedApi`) → generated `aignx.codegen` client → urllib3.
 
 ### Resource Pattern
 
@@ -86,50 +76,20 @@ Each resource follows consistent REST conventions:
 
 ### Client Implementation (`_client.py`)
 
-**Main Client Class:**
+`Client` exposes four resource accessors: `applications`, `versions`, `share_tokens`, `runs`.
+Public methods (all cached + retried where noted — see below):
 
-```python
-class Client:
-    """Main client with resource accessors."""
+- `me(nocache=False)` → `Me` — current user/org.
+- `application(application_id, nocache=False)` → `Application` — direct endpoint
+  `read_application_by_id_v1_applications_application_id_get` (NOT a list iteration).
+- `application_version(application_id, version_number=None, nocache=False)` → `ApplicationVersion`
+  (`VersionReadResponse`). `None` resolves the latest via `Versions.latest()`; validates semver.
+- `run(run_id)` → `Run` handle (not cached; just wraps the id).
 
-    applications: Applications
-    runs: Runs
-    # Note: No separate 'versions' accessor - versions accessed via applications
-
-    def __init__(self, cache_token: bool = True, token_provider: Callable[[], str] | None = None):
-        self._api = Client.get_api_client(cache_token=cache_token, token_provider=token_provider)
-        self.applications = Applications(self._api)
-        self.runs = Runs(self._api)
-
-    def me(self) -> Me:
-        """Get current user info."""
-        return self._api.get_me_v1_me_get()
-
-    def run(self, run_id: str) -> Run:
-        """Get specific run by ID."""
-        return Run(self._api, run_id)
-
-    def application(self, application_id: str) -> Application:
-        """Find application by ID (iterates through list)."""
-        # NOTE: Currently no direct endpoint, iterates all apps
-        for app in self.applications.list():
-            if app.application_id == application_id:
-                return app
-        raise NotFoundException
-
-    def application_version(self, application_id: str, version_number: str | None = None) -> ApplicationVersion:
-        """Get application version details.
-
-        Args:
-            application_id: The ID of the application (e.g., 'heta')
-            version_number: The semantic version number (e.g., '1.0.0')
-                          If None, returns the latest version
-
-        Returns:
-            ApplicationVersion with application_id and version_number attributes
-        """
-        return Versions(self._api).details(application_id=application_id, application_version=version_number)
-```
+API client instances are shared across `Client` instances via three class-level pools
+(cached-token / uncached-token / external-provider); see `get_api_client`.
+Type aliases: `Application = ApplicationReadResponse`, `Me = MeReadResponse`,
+`ApplicationVersion = VersionReadResponse`.
 
 ### Authentication Flow (`_authentication.py`)
 
@@ -228,392 +188,43 @@ class Runs:
 
 ### SDK Metadata System (`_sdk_metadata.py`)
 
-**ENHANCED FEATURE:** The SDK now automatically attaches structured metadata to every application run and item, providing comprehensive tracking of execution context, user information, CI/CD environment details, tags, and timestamps.
-
-**Architecture:**
-
-```
-┌────────────────────────────────────────────────────┐
-│           SDK Metadata System                      │
-├────────────────────────────────────────────────────┤
-│  Pydantic Models (Validation + Schema Generation)  │
-│  ├─ RunSdkMetadata (run-level metadata)            │
-│  │   ├─ SubmissionMetadata (how/when submitted)    │
-│  │   ├─ UserMetadata (organization/user info)      │
-│  │   ├─ CIMetadata (GitHub Actions + pytest)       │
-│  │   ├─ WorkflowMetadata (control flags)           │
-│  │   ├─ SchedulingMetadata (due dates/deadlines)   │
-│  │   ├─ tags (set[str]) - NEW                      │
-│  │   ├─ created_at (timestamp) - NEW               │
-│  │   └─ updated_at (timestamp) - NEW               │
-│  └─ ItemSdkMetadata (item-level metadata) - NEW    │
-│      ├─ PlatformBucketMetadata (storage info)      │
-│      ├─ tags (set[str])                            │
-│      ├─ created_at (timestamp)                     │
-│      └─ updated_at (timestamp)                     │
-├────────────────────────────────────────────────────┤
-│  Runtime Functions                                 │
-│  ├─ build_run_sdk_metadata() → dict                │
-│  ├─ validate_run_sdk_metadata() → bool             │
-│  ├─ get_run_sdk_metadata_json_schema() → dict      │
-│  ├─ build_item_sdk_metadata() → dict - NEW         │
-│  ├─ validate_item_sdk_metadata() → bool - NEW      │
-│  └─ get_item_sdk_metadata_json_schema() → dict     │
-├────────────────────────────────────────────────────┤
-│  JSON Schema (Versioned)                           │
-│  ├─ Run schema version: 0.0.4                      │
-│  └─ Item schema version: 0.0.3                     │
-│     Published at: docs/source/_static/             │
-│     URLs: sdk_{run|item}_custom_metadata_schema_*  │
-└────────────────────────────────────────────────────┘
-```
-
-**Schema Versions:** Run `0.0.4`, Item `0.0.3`
-
-**Core Pydantic Models:**
-
-```python
-# From _sdk_metadata.py (actual implementation)
-
-
-class SubmissionMetadata(BaseModel):
-    """Metadata about how the SDK was invoked."""
-
-    date: str  # ISO 8601 timestamp
-    interface: Literal["script", "cli", "launchpad"]  # How SDK was accessed
-    source: Literal["user", "test", "bridge"]  # Who initiated the run
-
-
-class UserMetadata(BaseModel):
-    """User information metadata."""
-
-    organization_id: str
-    organization_name: str
-    user_email: str
-    user_id: str
-
-
-class GitHubCIMetadata(BaseModel):
-    """GitHub Actions CI metadata."""
-
-    action: str | None
-    job: str | None
-    ref: str | None
-    ref_name: str | None
-    ref_type: str | None  # branch or tag
-    repository: str  # owner/repo
-    run_attempt: str | None
-    run_id: str
-    run_number: str | None
-    run_url: str  # Full URL to workflow run
-    runner_arch: str | None  # x64, ARM64, etc.
-    runner_os: str | None  # Linux, Windows, macOS
-    sha: str | None  # Git commit SHA
-    workflow: str | None
-    workflow_ref: str | None
-
-
-class PytestCIMetadata(BaseModel):
-    """Pytest test execution metadata."""
-
-    current_test: str  # Test name being executed
-    markers: list[str] | None  # Pytest markers applied
-
-
-class CIMetadata(BaseModel):
-    """CI/CD environment metadata."""
-
-    github: GitHubCIMetadata | None
-    pytest: PytestCIMetadata | None
-
-
-class WorkflowMetadata(BaseModel):
-    """Workflow control metadata."""
-
-    onboard_to_aignostics_portal: bool = False
-
-
-class SchedulingMetadata(BaseModel):
-    """Scheduling metadata for run execution."""
-
-    due_date: str | None  # ISO 8601, requested completion time
-    deadline: str | None  # ISO 8601, hard deadline
-
-
-class RunSdkMetadata(BaseModel):
-    """Complete Run SDK metadata schema."""
-
-    schema_version: str  # Currently "0.0.4"
-    created_at: str  # ISO 8601 timestamp - NEW
-    updated_at: str  # ISO 8601 timestamp - NEW
-    tags: set[str] | None  # Optional tags - NEW
-    submission: SubmissionMetadata
-    user_agent: str  # Enhanced user agent from utils module
-    user: UserMetadata | None  # Present if authenticated
-    ci: CIMetadata | None  # Present if running in CI
-    note: str | None  # Optional user note
-    workflow: WorkflowMetadata | None  # Optional workflow control
-    scheduling: SchedulingMetadata | None  # Optional scheduling info
-
-    model_config = {"extra": "forbid"}  # Strict validation
-
-
-class PlatformBucketMetadata(BaseModel):
-    """Platform bucket storage metadata for items - NEW"""
-
-    bucket_name: str  # Name of the cloud storage bucket
-    object_key: str  # Object key/path within the bucket
-    signed_download_url: str  # Signed URL for downloading
-
-
-class ItemSdkMetadata(BaseModel):
-    """Complete Item SDK metadata schema - NEW"""
-
-    schema_version: str  # Currently "0.0.3"
-    created_at: str  # ISO 8601 timestamp
-    updated_at: str  # ISO 8601 timestamp
-    tags: set[str] | None  # Optional item-level tags
-    platform_bucket: PlatformBucketMetadata | None  # Storage location
-
-    model_config = {"extra": "forbid"}  # Strict validation
-```
-
-**Automatic Metadata Generation:**
-
-```python
-def build_run_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build SDK metadata automatically attached to runs.
-
-    Detection Logic:
-    - Interface: Detects script vs CLI vs launchpad (NiceGUI)
-    - Source: Detects user vs test (pytest) vs bridge
-    - User info: Fetches from Client().me() if authenticated
-    - GitHub CI: Reads GITHUB_* environment variables
-    - Pytest: Reads PYTEST_CURRENT_TEST environment variable
-    - Preserves created_at and submission.date from existing metadata
-
-    Args:
-        existing_metadata: Existing SDK metadata to preserve timestamps
-
-    Returns:
-        dict with complete metadata structure including timestamps
-    """
-    # Interface detection
-    if "typer" in sys.argv[0] or "aignostics" in sys.argv[0]:
-        interface = "cli"
-    elif os.getenv("NICEGUI_HOST"):
-        interface = "launchpad"
-    else:
-        interface = "script"
-
-    # Source detection (initiator)
-    if os.environ.get("AIGNOSTICS_BRIDGE_VERSION"):
-        initiator = "bridge"
-    elif os.environ.get("PYTEST_CURRENT_TEST"):
-        initiator = "test"
-    else:
-        initiator = "user"
-
-    # Handle timestamps - preserve created_at, always update updated_at
-    now = datetime.now(UTC).isoformat(timespec="seconds")
-    existing_sdk = existing_metadata or {}
-    created_at = existing_sdk.get("created_at", now)
-
-    # Preserve submission.date from existing metadata
-    existing_submission = existing_sdk.get("submission", {})
-    submission_date = existing_submission.get("date", now)
-
-    # Build metadata structure
-    metadata = {
-        "schema_version": "0.0.4",
-        "created_at": created_at,  # NEW
-        "updated_at": now,  # NEW
-        "submission": {
-            "date": submission_date,  # Preserved from existing
-            "interface": interface,
-            "initiator": initiator,  # Changed from "source"
-        },
-        "user_agent": user_agent(),  # From utils module
-    }
-
-    # Add user info if authenticated
-    try:
-        me = Client().me()
-        metadata["user"] = {
-            "organization_id": me.organization.id,
-            "organization_name": me.organization.name,
-            "user_email": me.user.email,
-            "user_id": me.user.id,
-        }
-    except Exception:
-        pass  # User info optional
-
-    # Add GitHub CI metadata if present
-    if os.environ.get("GITHUB_RUN_ID"):
-        metadata["ci"] = {"github": {...}}  # Populated from env vars
-
-    # Add pytest metadata if running in test
-    if os.environ.get("PYTEST_CURRENT_TEST"):
-        metadata["ci"] = metadata.get("ci", {})
-        metadata["ci"]["pytest"] = {
-            "current_test": os.environ["PYTEST_CURRENT_TEST"],
-            "markers": os.environ.get("PYTEST_MARKERS", "").split(","),
-        }
-
-    return metadata
-```
-
-**Integration with Run Submission:**
-
-```python
-# From resources/runs.py (actual implementation)
-
-
-def submit(self, application_id: str, items: list, custom_metadata: dict = None):
-    """Submit run with automatic SDK metadata attachment."""
-
-    # Build SDK metadata automatically
-    sdk_metadata = build_sdk_metadata()
-
-    # Validate SDK metadata
-    validate_sdk_metadata(sdk_metadata)
-
-    # Merge with custom metadata under 'sdk' key
-    if custom_metadata is None:
-        custom_metadata = {}
-
-    custom_metadata.setdefault("sdk", {})
-    custom_metadata["sdk"].update(sdk_metadata)
-
-    # Submit run with merged metadata
-    return self._api.create_run(application_id=application_id, items=items, custom_metadata=custom_metadata)
-```
-
-**JSON Schema Generation:**
-
-The SDK provides versioned JSON Schemas for metadata validation:
-
-```bash
-# Via CLI
-aignostics sdk metadata-schema --pretty > schema.json
-
-# Schema location (in repository)
-docs/source/_static/sdk_metadata_schema_v0.0.1.json
-docs/source/_static/sdk_metadata_schema_latest.json
-
-# Public URL
-https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_latest.json
-```
-
-**Schema Generation (Noxfile Task):**
-
-```python
-# From noxfile.py
-def _generate_sdk_metadata_schema(session: nox.Session) -> None:
-    """Generate SDK metadata JSON schema with versioned filename."""
-
-    # Generate schema by calling CLI
-    session.run(
-        "aignostics",
-        "sdk",
-        "metadata-schema",
-        "--no-pretty",
-        stdout=output_file,
-        external=True,
-    )
-
-    # Extract version from schema $id
-    schema = json.load(output_file)
-    version = extract_version_from_id(schema["$id"])
-
-    # Write to both versioned and latest files
-    Path(f"docs/source/_static/sdk_metadata_schema_{version}.json").write(schema)
-    Path("docs/source/_static/sdk_metadata_schema_latest.json").write(schema)
-```
-
-**Validation Functions:**
-
-```python
-def validate_run_sdk_metadata(metadata: dict[str, Any]) -> bool:
-    """Validate Run SDK metadata and raise ValidationError if invalid."""
-    try:
-        RunSdkMetadata.model_validate(metadata)
-        return True
-    except ValidationError:
-        logger.exception("SDK metadata validation failed")
-        raise
-
-
-def validate_run_sdk_metadata_silent(metadata: dict[str, Any]) -> bool:
-    """Validate Run SDK metadata without raising exceptions."""
-    try:
-        RunSdkMetadata.model_validate(metadata)
-        return True
-    except ValidationError:
-        return False
-
-
-def get_run_sdk_metadata_json_schema() -> dict[str, Any]:
-    """Get JSON Schema for Run SDK metadata with $schema and $id fields."""
-    schema = RunSdkMetadata.model_json_schema()
-    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    schema["$id"] = (
-        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
-        f"docs/source/_static/sdk_run_custom_metadata_schema_v{SDK_METADATA_SCHEMA_VERSION}.json"
-    )
-    return schema
-
-
-def build_item_sdk_metadata(existing_metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build SDK metadata to attach to individual items - NEW"""
-    now = datetime.now(UTC).isoformat(timespec="seconds")
-    existing_sdk = existing_metadata or {}
-    created_at = existing_sdk.get("created_at", now)
-
-    return {
-        "schema_version": ITEM_SDK_METADATA_SCHEMA_VERSION,
-        "created_at": created_at,
-        "updated_at": now,
-    }
-
-
-def validate_item_sdk_metadata(metadata: dict[str, Any]) -> bool:
-    """Validate Item SDK metadata - NEW"""
-    try:
-        ItemSdkMetadata.model_validate(metadata)
-        return True
-    except ValidationError:
-        logger.exception("Item SDK metadata validation failed")
-        raise
-
-
-def get_item_sdk_metadata_json_schema() -> dict[str, Any]:
-    """Get JSON Schema for Item SDK metadata - NEW"""
-    schema = ItemSdkMetadata.model_json_schema()
-    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
-    schema["$id"] = (
-        f"https://raw.githubusercontent.com/aignostics/python-sdk/main/"
-        f"docs/source/_static/sdk_item_custom_metadata_schema_v{ITEM_SDK_METADATA_SCHEMA_VERSION}.json"
-    )
-    return schema
-```
-
-**Key Features:**
-
-1. **Automatic Attachment** - SDK metadata added to every run and item submission without user action
-2. **Environment Detection** - Automatically detects script/CLI/GUI, user/test/bridge contexts
-3. **CI/CD Integration** - Captures GitHub Actions workflow details and pytest test context
-4. **User Agent Integration** - Uses enhanced user_agent() from utils module
-5. **Strict Validation** - Pydantic models with `extra="forbid"` ensure data quality
-6. **Versioned Schema** - JSON Schema published with semantic versioning (Run: v0.0.4, Item: v0.0.3)
-7. **Silent Fallback** - User info and CI data are optional, won't fail if unavailable
-8. **Custom Metadata Support** - Users can add custom fields alongside SDK metadata
-9. **Tags Support** (NEW) - Associate runs and items with searchable tags (`set[str]`)
-10. **Timestamps** (NEW) - Track `created_at` (first submission) and `updated_at` (last modification)
-11. **Item Metadata** (NEW) - Separate schema for item-level metadata with platform bucket information
-12. **Metadata Updates** (NEW) - Update metadata via CLI (`aignostics application run custom-metadata update`)
-
-### Optimistic Concurrency Control & `enrich_sdk_metadata` Toggle (NEW)
+This module owns SDK-metadata generation. The SDK attaches structured metadata under the
+`sdk` key of `custom_metadata` on every run and item submission (see `Runs.submit` /
+`Run.update_custom_metadata` / `_amend_input_items_with_sdk_metadata` in `runs.py`).
+
+Schema versions live in `_sdk_metadata.py` as `SDK_METADATA_SCHEMA_VERSION` (run) and
+`ITEM_SDK_METADATA_SCHEMA_VERSION` (item). Do not hardcode the numbers here.
+
+**Pydantic models** (all with `extra="forbid"`; verify fields in `_sdk_metadata.py`):
+
+| Model | Purpose |
+|-------|---------|
+| `RunSdkMetadata` | Run-level: `schema_version`, `created_at`, `updated_at`, `tags`, `submission`, `user_agent`, `user`, `ci`, `note`, `workflow`, `scheduling`, `pipeline` |
+| `ItemSdkMetadata` | Item-level: `schema_version`, `created_at`, `updated_at`, `tags`, `platform_bucket` |
+| `SubmissionMetadata` | `date`, `interface` (`script`/`cli`/`launchpad`), `initiator` (`user`/`test`/`bridge`) |
+| `UserMetadata` | `organization_id`, `organization_name`, `user_email`, `user_id` |
+| `GitHubCIMetadata` / `PytestCIMetadata` / `CIMetadata` | CI context from `GITHUB_*` / `PYTEST_*` env |
+| `WorkflowMetadata` | `onboard_to_aignostics_portal` |
+| `SchedulingMetadata` | `due_date`, `deadline` (ISO 8601) |
+| `PlatformBucketMetadata` | `bucket_name`, `object_key`, `signed_download_url` |
+
+**Pipeline orchestration family** (also in `_sdk_metadata.py`, reachable via `RunSdkMetadata.pipeline`):
+`PipelineConfig`, `GPUConfig`, `CPUConfig` and the `GPUType` / `ProvisioningMode` / `ValidationCase`
+enums (defaults come from `_constants.py`). See the source for fields and validation rules.
+
+**Functions** (`_sdk_metadata.py`):
+
+- `build_run_sdk_metadata(existing_metadata=None)` / `build_item_sdk_metadata(existing_metadata=None)` → `dict`
+  — auto-detect interface/initiator, user (via `Client().me()`), GitHub + pytest CI; preserve
+  `created_at` / `submission.date` from `existing_metadata`, always refresh `updated_at`.
+- `validate_run_sdk_metadata` / `validate_item_sdk_metadata` — raise `ValidationError` on failure;
+  `*_silent` variants return `bool`.
+- `get_run_sdk_metadata_json_schema` / `get_item_sdk_metadata_json_schema` → JSON Schema with `$id`
+  filename `sdk_metadata_schema_v{ver}.json` (run) / `item_sdk_metadata_schema_v{ver}.json` (item).
+
+CLI: `aignostics sdk run-metadata-schema` / `sdk item-metadata-schema` (`--pretty`/`--no-pretty`).
+
+### Optimistic Concurrency Control & `enrich_sdk_metadata` Toggle
 
 **Checksum-based optimistic concurrency (`ConcurrencyConflictError`):**
 
@@ -686,184 +297,22 @@ Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`:
 
 ### Operation Caching System (`_operation_cache.py`)
 
-**NEW FEATURE (as of v1.0.0-beta.7):** The platform client now implements intelligent operation caching to reduce redundant API calls and improve performance.
+A module-global `dict[cache_key, (result, expiry)]` caches read results. The `@cached_operation(ttl, *,
+token_provider=None, instance_attrs=None)` decorator builds a key from the function qualified name,
+args and kwargs; when `token_provider` is given (the default for all resource classes) a `sha256`
+prefix of the token isolates entries per user, so a token refresh naturally starts a new namespace.
+`operation_cache_clear(func=None)` clears all entries, or only those matching the given function(s),
+and returns the count removed. See `_operation_cache.py` for the implementation.
 
-**Architecture:**
+Design: mutations clear the ENTIRE cache (no partial invalidation) for simplicity/consistency.
 
-```
-┌────────────────────────────────────────────────────┐
-│           Operation Caching System                 │
-├────────────────────────────────────────────────────┤
-│  Cache Storage: dict[cache_key, (result, expiry)]  │
-│  ├─ Token-aware caching (per-user isolation)       │
-│  ├─ TTL-based expiration                           │
-│  └─ Automatic invalidation on mutations            │
-├────────────────────────────────────────────────────┤
-│  Decorator: @cached_operation                      │
-│  ├─ ttl: Time-to-live in seconds                   │
-│  ├─ token_provider: Callable for per-user key      │
-│  └─ instance_attrs: Per-instance caching           │
-├────────────────────────────────────────────────────┤
-│  Cache Key Generation                              │
-│  ├─ cache_key(): func_name:args:kwargs             │
-│  └─ token_hash prefix when token_provider set      │
-├────────────────────────────────────────────────────┤
-│  Cache Invalidation                                │
-│  └─ operation_cache_clear(): Clear on mutations    │
-└────────────────────────────────────────────────────┘
-```
+**Cache TTLs** — defaults defined in `_settings.py`, each overridable via an `AIGNOSTICS_*` env var:
 
-**Core Implementation:**
-
-```python
-# From _operation_cache.py (actual implementation)
-
-# Global cache storage
-_operation_cache: dict[str, tuple[Any, float]] = {}
-
-
-def cached_operation(
-    ttl: int, *, token_provider: Callable[[], str] | None = None, instance_attrs: tuple[str, ...] | None = None
-) -> Callable:
-    """Decorator for caching function results with TTL.
-
-    Args:
-        ttl: Time-to-live for cache in seconds
-        token_provider: Callable that returns the current access token; when provided,
-            its result is hashed into the cache key for per-user isolation.
-            Pass None (default) for anonymous / token-independent caching.
-        instance_attrs: Instance attributes to include in key (e.g., 'run_id')
-
-    Behavior:
-        - Generates unique cache key from function name, args, kwargs, and optional token
-        - Returns cached result if present and not expired
-        - Deletes expired entries automatically
-        - Stores new results with expiry timestamp
-    """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            # Build cache key
-            func_qualified_name = func.__qualname__  # e.g., "Client.me"
-
-            if token_provider is not None:
-                token_hash = hashlib.sha256(token_provider().encode()).hexdigest()[:16]
-                key = f"{token_hash}:{func_qualified_name}:{args}:{sorted(kwargs.items())}"
-            else:
-                key = f"{func_qualified_name}:{args}:{sorted(kwargs.items())}"
-
-            # Check cache
-            if key in _operation_cache:
-                result, expiry = _operation_cache[key]
-                if time.time() < expiry:
-                    return result
-                del _operation_cache[key]
-
-            # Call function and cache result
-            result = func(*args, **kwargs)
-            _operation_cache[key] = (result, time.time() + ttl)
-            return result
-
-        return wrapper
-
-    return decorator
-
-
-def operation_cache_clear(func: Callable | list[Callable] | None = None) -> int:
-    """Clear operation cache, optionally filtering by function(s).
-
-    Args:
-        func: Function(s) to clear, or None to clear all entries
-
-    Returns:
-        Number of cache entries removed
-
-    Usage:
-        operation_cache_clear()  # Clear all
-        operation_cache_clear(Client.me)  # Clear specific function
-        operation_cache_clear([Client.me, Client.application])  # Clear multiple
-    """
-    if func is None:
-        removed_count = len(_operation_cache)
-        _operation_cache.clear()
-        return removed_count
-
-    # Filter by function qualified name(s)
-    func_list = func if isinstance(func, list) else [func]
-    func_qualified_names = [f.__qualname__ for f in func_list]
-
-    keys_to_remove = [key for key in _operation_cache if any(name in key for name in func_qualified_names)]
-
-    for key in keys_to_remove:
-        del _operation_cache[key]
-
-    return len(keys_to_remove)
-```
-
-**Cache TTL Configuration (from Settings):**
-
-```python
-# Default cache TTLs (from _settings.py)
-CACHE_TTL_DEFAULT = 60 * 5  # 5 minutes (most operations)
-RUN_CACHE_TTL_DEFAULT = 15  # 15 seconds (runs change frequently)
-AUTH_JWK_SET_CACHE_TTL_DEFAULT = 60 * 60 * 24  # 1 day (JWK sets rarely change)
-
-# Configurable per operation type
-me_cache_ttl: int = 300  # 5 minutes
-application_cache_ttl: int = 300  # 5 minutes
-application_version_cache_ttl: int = 300  # 5 minutes
-run_cache_ttl: int = 15  # 15 seconds
-auth_jwk_set_cache_ttl: int = 86400  # 1 day
-```
-
-**Usage in Client Methods:**
-
-```python
-# From _client.py
-@cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
-def me_with_retry() -> Me:
-    return Retrying(...)(lambda: self._api.get_me_v1_me_get(...))
-
-
-# From resources/runs.py
-@cached_operation(ttl=settings().run_cache_ttl, token_provider=self._api.token_provider)
-def details_with_retry(run_id: str) -> RunData:
-    return Retrying(...)(lambda: self._api.get_run_v1_runs_run_id_get(run_id, ...))
-```
-
-**Cache Invalidation Strategy:**
-
-**Automatic Invalidation on Mutations:**
-
-```python
-# From resources/runs.py - Submit operation
-def submit(...) -> Run:
-    # Clear ALL caches before mutation
-    operation_cache_clear()
-
-    # Perform mutation
-    res = self._api.create_run_v1_runs_post(...)
-    return Run(self._api, res.run_id)
-
-# Cancel operation
-def cancel(self) -> None:
-    operation_cache_clear()  # Clear all caches
-    self._api.cancel_run_v1_runs_run_id_cancel_post(...)
-
-# Delete operation
-def delete(self) -> None:
-    operation_cache_clear()  # Clear all caches
-    self._api.delete_run_items_v1_runs_run_id_artifacts_delete(...)
-```
-
-**Key Design Decisions:**
-
-1. **Global Cache Clearing**: All caches are cleared on ANY mutation to ensure consistency
-2. **Token-Aware**: Caching is per-user when `token_provider` is supplied (the default for all resource classes), preventing data leakage between users
-3. **No Partial Invalidation**: Simplicity over optimization - clear everything on write
-4. **TTL-Based Expiration**: Stale data automatically expires after configured TTL
-5. **Token Changes**: Cache keys include a hash of the token, so token refresh creates a new cache namespace automatically
+| Setting | Default constant | Value |
+|---------|------------------|-------|
+| `me_cache_ttl`, `application_cache_ttl`, `application_version_cache_ttl` | `CACHE_TTL_DEFAULT` | 5 min |
+| `run_cache_ttl` | `RUN_CACHE_TTL_DEFAULT` | 15 s |
+| `auth_jwk_set_cache_ttl` | `AUTH_JWK_SET_CACHE_TTL_DEFAULT` | 1 day |
 
 **Operations That Are Cached:**
 
@@ -876,395 +325,79 @@ def delete(self) -> None:
 - ✅ `Runs.results()` - Run results (15 sec TTL), supports `item_ids`, `external_ids`, `state`, `termination_reason`, and `custom_metadata` filters
 - ✅ `Runs.list()` - Run list (15 sec TTL)
 
-**Cache Bypass (NEW):**
+**Cache bypass:** every cached read accepts `nocache=True` to force a fresh API call (the result is
+still cached afterward), e.g. `client.me(nocache=True)`, `client.runs.list(nocache=True)`. Useful in
+tests and after mutations to avoid stale reads.
 
-All cached operations now support a `nocache=True` parameter to force fresh API calls:
-
-```python
-# Bypass cache for specific operations
-run = client.runs.details(run_id, nocache=True)  # Force API call
-applications = client.applications.list(nocache=True)  # Bypass cache
-me = client.me(nocache=True)  # Fresh user info
-
-
-# Useful in tests to avoid race conditions
-def test_run_update():
-    run = client.runs.details(run_id, nocache=True)  # Always fresh
-    assert run.output.state == RunState.PROCESSING
-```
-
-The `nocache` parameter is particularly useful in:
-
-- **Testing**: Avoid race conditions from stale cached data
-- **Real-time monitoring**: Ensure latest status in dashboards
-- **After mutations**: Get fresh data immediately after updates
-
-**Operations That Clear Cache:**
-
-- ❌ `Runs.submit()` - Creates new run
-- ❌ `Run.cancel()` - Changes run state
-- ❌ `Run.delete()` - Removes run data
-
-**Performance Impact:**
-
-- **Cache Hit**: ~0.1ms (dictionary lookup + expiry check)
-- **Cache Miss**: Full API roundtrip (~50-500ms depending on operation)
-- **Typical Benefit**: 100-1000x speedup for repeated reads within TTL
-- **Memory Usage**: Minimal (~1KB per cached operation result)
-
-**Configuration:**
-
-All cache TTLs are configurable via environment variables or `.env` file:
-
-```bash
-# Example .env configuration
-AIGNOSTICS_ME_CACHE_TTL=300  # 5 minutes
-AIGNOSTICS_APPLICATION_CACHE_TTL=300  # 5 minutes
-AIGNOSTICS_RUN_CACHE_TTL=15  # 15 seconds
-AIGNOSTICS_AUTH_JWK_SET_CACHE_TTL=86400  # 1 day
-```
-
-**Testing:**
-
-Comprehensive test suite in `tests/aignostics/platform/client_cache_test.py`:
-
-- Cache hit/miss scenarios
-- TTL expiration
-- Token-aware caching
-- Cache invalidation on mutations
-- Concurrent access patterns
+**Operations That Clear Cache** (call `operation_cache_clear()` on success): `Runs.submit()`,
+`Run.cancel()`, `Run.delete()`, `Run.update_custom_metadata()`, `Run.update_item_custom_metadata()`,
+`Run.grant_access()`.
 
 ### Retry Logic and Timeout System
 
-**NEW FEATURE (as of v1.0.0-beta.7):** All read operations now include intelligent retry logic with exponential backoff and configurable timeouts.
+Read operations wrap their API call in a Tenacity `Retrying` (constructed per-call, not via
+decorator, so settings can change at runtime) with exponential backoff + jitter, logging each attempt
+via `_log_retry_attempt`. The retryable set is `RETRYABLE_EXCEPTIONS` (defined in `_api.py`:
+`ServiceException` plus urllib3 transient errors — timeout, pool, incomplete-read, protocol, proxy).
 
-**Architecture:**
+Every operation has its own `*_retry_attempts`, `*_retry_wait_min`, `*_retry_wait_max`, `*_timeout`
+settings, but they all default to the same constants in `_settings.py`, overridable via `AIGNOSTICS_*`
+env vars:
 
-```
-┌────────────────────────────────────────────────────┐
-│         Retry and Timeout System (Tenacity)        │
-├────────────────────────────────────────────────────┤
-│  Retry Policy                                      │
-│  ├─ Exponential backoff with jitter                │
-│  ├─ Configurable max attempts (default: 4)         │
-│  ├─ Configurable wait times (0.1s - 60s)           │
-│  └─ Logs warnings before sleep                     │
-├────────────────────────────────────────────────────┤
-│  Retryable Exceptions                              │
-│  ├─ ServiceException (5xx errors)                  │
-│  ├─ Urllib3TimeoutError                            │
-│  ├─ PoolError                                      │
-│  ├─ IncompleteRead                                 │
-│  ├─ ProtocolError                                  │
-│  └─ ProxyError                                     │
-├────────────────────────────────────────────────────┤
-│  Timeout Configuration                             │
-│  ├─ Per-operation timeouts (default: 30s)          │
-│  ├─ Range: 0.1s - 300s                             │
-│  └─ Separate timeouts for mutating ops             │
-└────────────────────────────────────────────────────┘
-```
+| Constant | Default |
+|----------|---------|
+| `RETRY_ATTEMPTS_DEFAULT` | 4 |
+| `RETRY_WAIT_MIN_DEFAULT` / `RETRY_WAIT_MAX_DEFAULT` | 0.1 s / 60 s |
+| `TIMEOUT_DEFAULT` | 30 s |
 
-**Retryable Exceptions:**
+Retries cover read ops (`me`, `application`, `application_version`, `Runs.list`/`list_data`,
+`Run.details`, `Run.results`, grant listing) and `Run.grant_access`; mutations
+(`submit`/`cancel`/`delete`/metadata updates) are not retried. `Run.details` additionally retries
+`NotFoundException` for up to 5 s to absorb read-replica lag. See `_client.py` / `runs.py`.
 
-```python
-# From _client.py and resources/*.py
-RETRYABLE_EXCEPTIONS = (
-    ServiceException,  # 5xx server errors
-    Urllib3TimeoutError,  # Connection timeout
-    PoolError,  # Connection pool exhausted
-    IncompleteRead,  # Partial response received
-    ProtocolError,  # Protocol violation
-    ProxyError,  # Proxy connection failed
-)
-```
+### State Models
 
-**Retry Implementation Pattern:**
+Runs, items and artifacts each carry two orthogonal enums (all `str, Enum` in
+`codegen/out/aignx/codegen/models/`): a lifecycle **state** and, once `TERMINATED`, a
+**termination_reason**. Separately, an **output** enum reports what result data exists.
 
-```python
-# Standard retry pattern used throughout the codebase
-@cached_operation(ttl=settings().me_cache_ttl, token_provider=self._api.token_provider)
-def me_with_retry() -> Me:
-    return Retrying(
-        retry=retry_if_exception_type(exception_types=RETRYABLE_EXCEPTIONS),
-        stop=stop_after_attempt(settings().me_retry_attempts),  # Max 4 attempts
-        wait=wait_exponential_jitter(
-            initial=settings().me_retry_wait_min,  # 0.1s
-            max=settings().me_retry_wait_max,  # 60s
-        ),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
-        reraise=True,  # Re-raise after all attempts exhausted
-    )(
-        lambda: self._api.get_me_v1_me_get(
-            _request_timeout=settings().me_timeout,  # 30s
-            _headers={"User-Agent": user_agent()},
-        )
-    )
+- `RunState` / `ItemState`: `PENDING`, `PROCESSING`, `TERMINATED`.
+- `RunTerminationReason`: `ALL_ITEMS_PROCESSED`, `CANCELED_BY_SYSTEM`, `CANCELED_BY_USER`.
+- `ItemTerminationReason` / `ArtifactTerminationReason`: `SUCCEEDED`, `USER_ERROR`, `SYSTEM_ERROR`
+  (item also has `SKIPPED`).
+- **Output enums** (NOT models with sub-fields):
+  - `ItemOutput`: `NONE`, `FULL`
+  - `ArtifactOutput`: `NONE`, `AVAILABLE`, `DELETED_BY_USER`, `DELETED_BY_SYSTEM`
+  - `RunOutput`: `NONE`, `PARTIAL`, `FULL`
+
+`state` and `output` are independent axes — a `TERMINATED` run can still have
+`output == NONE` (nothing succeeded). Lifecycle (same for run, item, artifact):
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> PROCESSING
+    PROCESSING --> TERMINATED
+    TERMINATED --> [*]
+    note right of TERMINATED
+        carries termination_reason;
+        output (NONE/PARTIAL/FULL) is a separate axis
+    end note
 ```
 
-**Retry Configuration (from Settings):**
-
-```python
-# Defaults (from _settings.py)
-RETRY_ATTEMPTS_DEFAULT = 4
-RETRY_WAIT_MIN_DEFAULT = 0.1  # seconds
-RETRY_WAIT_MAX_DEFAULT = 60.0  # seconds
-TIMEOUT_DEFAULT = 30.0  # seconds
-
-# Per-operation configuration
-auth_retry_attempts: int = 4
-auth_retry_wait_min: float = 0.1
-auth_retry_wait_max: float = 60.0
-auth_timeout: float = 30.0
-
-me_retry_attempts: int = 4
-me_retry_wait_min: float = 0.1
-me_retry_wait_max: float = 60.0
-me_timeout: float = 30.0
-
-application_retry_attempts: int = 4
-application_retry_wait_min: float = 0.1
-application_retry_wait_max: float = 60.0
-application_timeout: float = 30.0
-
-run_retry_attempts: int = 4
-run_retry_wait_min: float = 0.1
-run_retry_wait_max: float = 60.0
-run_timeout: float = 30.0
-
-# Special timeouts for mutating operations
-run_submit_timeout: float = 30.0
-run_cancel_timeout: float = 30.0
-run_delete_timeout: float = 30.0
-```
-
-**Exponential Backoff with Jitter:**
-
-```
-Attempt 1: 0ms wait (first attempt)
-Attempt 2: ~100ms wait (initial)
-Attempt 3: ~200-400ms wait (exponential + jitter)
-Attempt 4: ~400-800ms wait (exponential + jitter)
-Max wait capped at: 60s (retry_wait_max)
-```
-
-**Environment Variable Configuration:**
-
-```bash
-# Example .env configuration
-AIGNOSTICS_ME_RETRY_ATTEMPTS=4
-AIGNOSTICS_ME_RETRY_WAIT_MIN=0.1
-AIGNOSTICS_ME_RETRY_WAIT_MAX=60.0
-AIGNOSTICS_ME_TIMEOUT=30.0
-
-AIGNOSTICS_RUN_RETRY_ATTEMPTS=4
-AIGNOSTICS_RUN_RETRY_WAIT_MIN=0.1
-AIGNOSTICS_RUN_RETRY_WAIT_MAX=60.0
-AIGNOSTICS_RUN_TIMEOUT=30.0
-```
-
-**Operations with Retry Logic:**
-
-**Read Operations (All have retry + cache):**
-
-- ✅ `Client.me()` - 4 retries, 30s timeout
-- ✅ `Client.application()` - 4 retries, 30s timeout
-- ✅ `Client.application_version()` - 4 retries, 30s timeout
-- ✅ `Applications.list()` - 4 retries, 30s timeout
-- ✅ `Runs.details()` - 4 retries, 30s timeout
-- ✅ `Runs.results()` - 4 retries, 30s timeout
-- ✅ `Runs.list()` - 4 retries, 30s timeout
-
-**Write Operations (No retry, no cache):**
-
-- ❌ `Runs.submit()` - No retry (idempotency concerns), 30s timeout
-- ❌ `Run.cancel()` - No retry, 30s timeout
-- ❌ `Run.delete()` - No retry, 30s timeout
-
-**Key Design Decisions:**
-
-1. **Read-Only Retries**: Only read operations retry (mutations could have side effects)
-2. **Exponential Backoff**: Reduces load on failing servers
-3. **Jitter**: Prevents thundering herd problem
-4. **Logging**: Warnings logged before retry sleeps for observability
-5. **Re-raise**: After exhausting retries, original exception is re-raised
-
-**Logging Output:**
-
-```
-WARNING - Retrying aignostics.platform._client.Client.me in 0.123 seconds
-          (attempt 1/4, ServiceException: 503 Service Unavailable)
-WARNING - Retrying aignostics.platform._client.Client.me in 0.456 seconds
-          (attempt 2/4, Urllib3TimeoutError)
-WARNING - Retrying aignostics.platform._client.Client.me in 1.234 seconds
-          (attempt 3/4, PoolError)
-ERROR - Failed after 4 attempts: ServiceException: 503 Service Unavailable
-```
-
-**Testing:**
-
-Comprehensive test suite in `tests/aignostics/platform/client_me_retry_test.py`:
-
-- Retry on transient errors
-- Exponential backoff timing
-- Max attempts enforcement
-- Timeout behavior
-- Exception re-raising
-
-### API v1.0.0-beta.7 State Models
-
-**MAJOR CHANGE (as of v1.0.0-beta.7):** Complete refactoring of run, item, and artifact state management with new enum-based state models.
-
-**New State Enums:**
-
-```python
-# From codegen/out/aignx/codegen/models/
-
-
-class RunState(str, Enum):
-    """Run lifecycle states."""
-
-    PENDING = "PENDING"  # Run created, waiting to start
-    PROCESSING = "PROCESSING"  # Run actively processing items
-    TERMINATED = "TERMINATED"  # Run completed (check termination_reason)
-
-
-class ItemState(str, Enum):
-    """Item (slide) processing states."""
-
-    PENDING = "PENDING"  # Item queued for processing
-    PROCESSING = "PROCESSING"  # Item being analyzed
-    TERMINATED = "TERMINATED"  # Item processing done (check termination_reason)
-
-
-class ArtifactState(str, Enum):
-    """Individual artifact processing states."""
-
-    PENDING = "PENDING"  # Artifact generation pending
-    PROCESSING = "PROCESSING"  # Artifact being created
-    TERMINATED = "TERMINATED"  # Artifact ready or failed
-```
-
-**New Termination Reason Enums:**
-
-```python
-class RunTerminationReason(str, Enum):
-    """Why a run terminated."""
-
-    ALL_ITEMS_PROCESSED = "ALL_ITEMS_PROCESSED"  # Normal completion
-    CANCELED_BY_SYSTEM = "CANCELED_BY_SYSTEM"  # System initiated cancellation
-    CANCELED_BY_USER = "CANCELED_BY_USER"  # User canceled the run
-
-
-class ItemTerminationReason(str, Enum):
-    """Why an item terminated."""
-
-    SUCCEEDED = "SUCCEEDED"  # Item processed successfully
-    USER_ERROR = "USER_ERROR"  # Input validation or user-caused error
-    SYSTEM_ERROR = "SYSTEM_ERROR"  # Infrastructure or application error
-    SKIPPED = "SKIPPED"  # Item skipped (e.g., duplicate)
-
-
-class ArtifactTerminationReason(str, Enum):
-    """Why an artifact terminated."""
-
-    SUCCEEDED = "SUCCEEDED"  # Artifact created successfully
-    USER_ERROR = "USER_ERROR"  # Input validation error
-    SYSTEM_ERROR = "SYSTEM_ERROR"  # Generation failed due to system issue
-```
-
-**State Machine Architecture:**
-
-```
-Run State Machine:
-PENDING → PROCESSING → TERMINATED
-                          ↓
-                    [termination_reason]
-                          ├─ ALL_ITEMS_PROCESSED (success)
-                          ├─ CANCELED_BY_USER
-                          └─ CANCELED_BY_SYSTEM
-
-Item State Machine (per slide):
-PENDING → PROCESSING → TERMINATED
-                          ↓
-                    [termination_reason]
-                          ├─ SUCCEEDED (normal)
-                          ├─ USER_ERROR (bad input)
-                          ├─ SYSTEM_ERROR (internal)
-                          └─ SKIPPED (duplicate, etc)
-
-Artifact State Machine (per output file):
-PENDING → PROCESSING → TERMINATED
-                          ↓
-                    [termination_reason]
-                          ├─ SUCCEEDED
-                          ├─ USER_ERROR
-                          └─ SYSTEM_ERROR
-```
-
-**New Output Models:**
-
-```python
-class RunOutput(BaseModel):
-    """Run execution results summary."""
-
-    state: RunState
-    termination_reason: RunTerminationReason | None
-    statistics: RunItemStatistics  # NEW: Aggregate item counts
-    # ... other fields
-
-
-class ItemOutput(BaseModel):
-    """Individual item processing results."""
-
-    state: ItemState
-    termination_reason: ItemTerminationReason | None
-    artifacts: list[ArtifactOutput]  # List of output artifacts
-    # ... other fields
-
-
-class ArtifactOutput(BaseModel):
-    """Individual artifact details."""
-
-    state: ArtifactState
-    termination_reason: ArtifactTerminationReason | None
-    output_artifact_id: str  # Used to resolve a fresh presigned URL via Run.get_artifact_download_url(...)
-    download_url: str | None  # DEPRECATED — populated for backwards compatibility but may stop being emitted by SAMIA
-    # at any time. Resolve a short-lived presigned URL on demand instead via
-    # Run.get_artifact_download_url(artifact.output_artifact_id).
-    # ... other fields
-
-
-class RunItemStatistics(BaseModel):
-    """NEW: Aggregate statistics for run."""
-
-    total: int  # Total items in run
-    succeeded: int  # Successfully processed
-    user_error: int  # Failed due to user errors
-    system_error: int  # Failed due to system errors
-    skipped: int  # Skipped items
-    pending: int  # Not yet started
-    processing: int  # Currently processing
-```
-
-**Model Migrations (Deleted Models):**
-
-**Deleted in v1.0.0-beta.7:**
-
-- ❌ `UserPayload` - Replaced with structured user/organization models
-- ❌ `PayloadItem` - Replaced with `ItemOutput`
-- ❌ `ApplicationVersionReadResponse` - Renamed to `ApplicationVersion`
-- ❌ `InputArtifactReadResponse` - Simplified artifact handling
-- ❌ `TransferUrls` - Merged into artifact models
-
-**New Models in v1.0.0-beta.7:**
-
-- ✅ `Auth0User` - Structured user information
-- ✅ `Auth0Organization` - Structured organization information
-- ✅ `ApplicationReadShortResponse` - Lightweight application summary
-- ✅ `ApplicationVersion` - Complete version details with metadata
-- ✅ `RunItemStatistics` - Aggregate item statistics
-- ✅ `CustomMetadataUpdateRequest` - Metadata update payload
+State/stats live directly on the response objects — there is no `details.output.state` wrapper.
+`RunData` (`RunReadResponse`) exposes `.state`, `.statistics`, `.application_id`, `.version_number`,
+`.error_message`, `.error_code`. Item results (`ItemResultReadResponse`) expose `.state`, `.output`
+(an `ItemOutput`), `.termination_reason`, `.output_artifacts` (each artifact has `.output` =
+`ArtifactOutput` and `.output_artifact_id`). `runs.py` reads them as `self.details(...).state` and
+`item.output == ItemOutput.FULL`.
+
+`RunItemStatistics` fields: `item_count`, `item_pending_count`, `item_processing_count`,
+`item_user_error_count`, `item_system_error_count`, `item_skipped_count`, `item_succeeded_count`.
+
+Artifact download: `AVAILABLE` artifacts are fetched by resolving a fresh presigned URL via
+`Run.get_artifact_download_url(output_artifact_id)` (the `/file` redirect endpoint). The legacy
+`download_url` field is deprecated and may stop being populated.
 
 **Usage Patterns:**
 
@@ -1274,76 +407,28 @@ class RunItemStatistics(BaseModel):
 run = client.run("run-123")
 details = run.details()
 
-# Check run state
-if details.output.state == RunState.TERMINATED:
-    # Check how it terminated
-    if details.output.termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
-        print("Run completed successfully!")
-        print(f"Items succeeded: {details.output.statistics.succeeded}")
-        print(f"Items failed: {details.output.statistics.user_error + details.output.statistics.system_error}")
-    elif details.output.termination_reason == RunTerminationReason.CANCELED_BY_USER:
-        print("Run was canceled")
-elif details.output.state == RunState.PROCESSING:
-    print(f"Run in progress: {details.output.statistics.processing} items processing")
+if details.state == RunState.TERMINATED:
+    print(f"Succeeded: {details.statistics.item_succeeded_count}")
+    print(f"Failed: {details.statistics.item_user_error_count + details.statistics.item_system_error_count}")
+elif details.state == RunState.PROCESSING:
+    print(f"In progress: {details.statistics.item_processing_count} items processing")
 ```
 
 **Checking Item Status:**
 
 ```python
 for item in run.results():
-    if item.output.state == ItemState.TERMINATED:
-        if item.output.termination_reason == ItemTerminationReason.SUCCEEDED:
-            print(f"Item {item.item_id} succeeded")
-            # Access artifacts — resolve a fresh presigned URL via the /file endpoint.
-            # The legacy `artifact.download_url` field is deprecated and may stop being
-            # populated by SAMIA at any time; use Run.get_artifact_download_url(...) so
-            # the URL is always fresh and the SDK retries the resolve on transient errors.
-            for artifact in item.output.artifacts:
-                if artifact.state == ArtifactState.TERMINATED:
-                    if artifact.termination_reason == ArtifactTerminationReason.SUCCEEDED:
-                        signed_url = run.get_artifact_download_url(artifact.output_artifact_id)
-                        print(f"  - Artifact ready: {signed_url}")
-        elif item.output.termination_reason == ItemTerminationReason.USER_ERROR:
-            print(f"Item {item.item_id} failed: user error")
-        elif item.output.termination_reason == ItemTerminationReason.SYSTEM_ERROR:
-            print(f"Item {item.item_id} failed: system error")
+    if item.state == ItemState.TERMINATED and item.termination_reason == ItemTerminationReason.SUCCEEDED:
+        # item.output == ItemOutput.FULL once results are available.
+        # Resolve a fresh presigned URL per artifact (legacy download_url is deprecated).
+        for artifact in item.output_artifacts:
+            if artifact.output == ArtifactOutput.AVAILABLE:
+                signed_url = run.get_artifact_download_url(artifact.output_artifact_id)
+    elif item.termination_reason == ItemTerminationReason.USER_ERROR:
+        ...  # bad input
+    elif item.termination_reason == ItemTerminationReason.SYSTEM_ERROR:
+        ...  # infrastructure/application error
 ```
-
-**Migration Guide (v1.0.0-beta.6 → v1.0.0-beta.7):**
-
-**Before (v1.0.0-beta.6):**
-
-```python
-# Old status checking (hypothetical old API)
-if run.status == "COMPLETED":
-    ...
-```
-
-**After (v1.0.0-beta.7):**
-
-```python
-# New state + termination reason pattern
-if run.output.state == RunState.TERMINATED:
-    if run.output.termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
-        ...
-```
-
-**Key Benefits of New State Models:**
-
-1. **Type Safety**: Enum-based states prevent typos and invalid states
-2. **Clear Semantics**: Separate state and termination_reason clarifies "what" vs "why"
-3. **Granular Error Handling**: Distinguish user errors from system errors
-4. **Consistent Pattern**: Same state machine pattern across runs, items, and artifacts
-5. **Better Observability**: RunItemStatistics provides aggregate view of run progress
-
-**Testing:**
-
-Updated test suite in `tests/aignostics/platform/e2e_test.py`:
-
-- State transitions
-- Termination reason validation
-- Statistics accuracy
-- Error scenarios (user_error vs system_error)
 
 ## Usage Patterns & Best Practices
 
@@ -1398,37 +483,25 @@ for run in runs:
 
 ```python
 from aignostics.platform import Client
-from aignostics.platform._sdk_metadata import build_sdk_metadata, validate_sdk_metadata, get_sdk_metadata_json_schema
+from aignostics.platform._sdk_metadata import (
+    build_run_sdk_metadata,
+    validate_run_sdk_metadata,
+    get_run_sdk_metadata_json_schema,
+)
 
-# SDK metadata is AUTOMATICALLY attached to every run submission
+# SDK metadata is AUTOMATICALLY attached under the "sdk" key on every submission
 client = Client()
-
-# Submit run - SDK metadata added automatically
 run = client.runs.submit(
     application_id="heta",
     items=[...],
-    custom_metadata={
-        "experiment_id": "exp-123",
-        "dataset_version": "v2.1",
-        # SDK metadata will be added under "sdk" key automatically
-    },
+    custom_metadata={"experiment_id": "exp-123"},
 )
 
-# Access SDK metadata from run
-sdk_metadata = run.payload.custom_metadata.get("sdk", {})
-print(f"Submitted via: {sdk_metadata['submission']['interface']}")  # cli, script, or launchpad
-print(f"Submitted by: {sdk_metadata['submission']['initiator']}")  # user, test, or bridge
-print(f"User: {sdk_metadata['user']['user_email']}")  # if authenticated
-if "ci" in sdk_metadata:
-    print(f"GitHub Run: {sdk_metadata['ci']['github']['run_url']}")  # if in CI
-
-# Manually build and validate metadata (for testing or inspection)
-metadata = build_sdk_metadata()
-assert validate_sdk_metadata(metadata)
-
-# Get JSON Schema for documentation or external validation
-schema = get_sdk_metadata_json_schema()
-print(f"Schema version: {schema['$id']}")
+# Manually build / validate / inspect (e.g. for tests)
+metadata = build_run_sdk_metadata()
+assert validate_run_sdk_metadata(metadata)
+schema = get_run_sdk_metadata_json_schema()
+# item variants: build_item_sdk_metadata / validate_item_sdk_metadata / get_item_sdk_metadata_json_schema
 ```
 
 ### Error Handling
@@ -1533,9 +606,9 @@ logger.warning("Application with ID '{}' not found.", application_id)
 
 **Token Storage:**
 
-- Stored in `~/.aignostics/token.json` (or configured path)
+- Stored in `Path(cache_dir)/".token"` — `cache_dir` is `platformdirs.user_cache_dir(...)` (see
+  `_settings.py` `token_file`)
 - Format: `token:expiry_timestamp`
-- File permissions should be restricted (user-only)
 - No refresh tokens stored
 
 **Network Configuration:**
@@ -1576,28 +649,6 @@ if time_remaining < timedelta(minutes=10):
 MAX_PAGE_SIZE = 100
 page_size = min(requested_size, MAX_PAGE_SIZE)
 runs = client.runs.list(page_size=page_size)
-```
-
-### Application Lookup Performance
-
-**Problem:** `client.application(id)` iterates all applications
-
-**Solution:**
-
-```python
-# Cache applications list if doing multiple lookups
-all_apps = list(client.applications.list())
-app_dict = {app.application_id: app for app in all_apps}
-# Now lookups are O(1)
-app = app_dict.get("app-id")
-
-# For version lookups, use direct API call
-version = client.application_version(
-    application_id="heta",
-    version_number="1.0.0",  # or None for latest
-)
-# Access version attributes
-print(f"App: {version.application_id}, Version: {version.version_number}")
 ```
 
 ## Module Dependencies
@@ -1654,22 +705,6 @@ logger.exception("Unexpected API error")
 # Raise meaningful errors
 raise ValueError(f"Invalid page_size: {page_size}, max is {MAX_PAGE_SIZE}")
 ```
-
-## Performance Notes
-
-### Current Limitations
-
-1. **No connection pooling configuration** visible in current implementation
-2. **No retry logic** in base client (may be in generated code)
-3. **Application lookup is O(n)** - iterates all applications
-4. **No caching** beyond token caching
-
-### Optimization Opportunities
-
-1. Add application caching layer
-2. Implement connection pooling configuration
-3. Add retry decorators for transient failures
-4. Consider cursor-based pagination for large datasets
 
 ---
 

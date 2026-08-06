@@ -83,3 +83,6 @@ Plugins register themselves via Python entry points; their tools are automatical
 ## What AI agents can do
 
 Once configured, AI agents can help with platform operations through natural language, using the tools exposed by the SDK and any installed plugins.
+
+```{include} ../partials/_invite_your_team.md
+```

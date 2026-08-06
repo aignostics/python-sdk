@@ -225,7 +225,7 @@ def audit(session: nox.Session) -> None:
     _format_json_with_jq(session, "reports/licenses_grouped.json")
 
     # SBOMs
-    session.run("cyclonedx-py", "environment", "-o", SBOM_CYCLONEDX_PATH)
+    session.run("cyclonedx-py", "environment", "--pyproject", "pyproject.toml", "-o", SBOM_CYCLONEDX_PATH)
     _format_json_with_jq(session, SBOM_CYCLONEDX_PATH)
 
     # Generates an SPDX SBOM including vulnerability scanning

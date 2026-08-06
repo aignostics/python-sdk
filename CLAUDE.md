@@ -52,6 +52,8 @@ Every module has detailed CLAUDE.md documentation. For module-specific guidance,
 * [src/aignostics/system/CLAUDE.md](src/aignostics/system/CLAUDE.md) - System diagnostics
 * [tests/CLAUDE.md](tests/CLAUDE.md) - Test suite documentation
 
+Modules without their own CLAUDE.md (see the source directory directly): `dicom/`, `idc/`, `marimo/`, `thumbnail/`, `tiff/`.
+
 ## Development Commands
 
 **Primary workflow commands (use these):**
@@ -74,19 +76,17 @@ make audit           # Security and license compliance checks
 
 **Testing:**
 
-* Pytest with 85% minimum coverage requirement
+* Coverage thresholds live in `codecov.yml` (project/patch targets). There is no local `--fail-under` gate.
 * Default timeout: 10 seconds (override with `@pytest.mark.timeout(timeout=N)`)
 * Use `uv run pytest tests/path/to/test.py::test_function` for single tests
 * See **Testing Workflow** section below for complete marker documentation
 * Special test commands: `make test_unit`, `make test_integration`, `make test_e2e`, `make test_long_running`, `make test_very_long_running`, `make test_sequential`, `make test_scheduled`
 
-**Type Checking (NEW in v1.0.0-beta.7 - Dual Type Checkers):**
+**Type Checking (dual type checkers):**
 
 * **MyPy**: Strict mode enforced (`make lint` runs MyPy)
 * **PyRight**: Basic mode with selective exclusions (`pyrightconfig.json`)
-  * Excludes: tests, codegen, third_party modules, notebook, dataset, wsi
-  * Mode: `basic` (less strict than MyPy for compatibility)
-  * Both type checkers must pass in CI/CD
+* Both type checkers must pass in CI/CD
 * All public APIs require type hints
 * Use `from __future__ import annotations` for forward references
 
@@ -124,7 +124,7 @@ Each module follows a consistent three-layer architecture:
 Module/
 ├── _service.py     # Business logic layer (core operations)
 ├── _cli.py         # CLI presentation layer (Typer commands)
-├── _gui.py         # GUI presentation layer (NiceGUI interface)
+├── _gui.py         # GUI presentation layer (NiceGUI interface; a package dir _gui/ when large, e.g. application/_gui/)
 ├── _settings.py    # Configuration (Pydantic models)
 └── CLAUDE.md       # Comprehensive documentation
 ```
@@ -203,13 +203,13 @@ Module/
 * QuPath installation and lifecycle
 * Project management
 * Script execution
-* *Dependencies*: `utils`, requires `ijson`
+* *Dependencies*: `utils` (uses `ijson`, a core dep)
 
 **notebook** - Interactive analysis:
 
 * Marimo notebook server
 * Process management
-* *Dependencies*: `utils`, requires `marimo`
+* *Dependencies*: `utils` (uses `marimo`, a core dep)
 
 ### System Modules
 
@@ -341,15 +341,16 @@ aignostics mcp list-tools
 
 ### GUI Launch
 
-```bash
-# Install with GUI support
-pip install "aignostics[gui]"
+The GUI (NiceGUI) ships in the core install — there is no `[gui]` extra. The
+launcher is gated on `find_spec("nicegui")`, `find_spec("webview")`, and not
+running in a container (see `src/aignostics/cli.py`).
 
-# Launch desktop interface
-aignostics gui
+```bash
+# Launch the desktop Launchpad
+aignostics launchpad
 
 # Or with uvx
-uvx --with "aignostics[gui]" aignostics gui
+uvx aignostics launchpad
 ```
 
 ## Code Standards
@@ -418,30 +419,14 @@ aignostics-python-sdk/
 └── CLAUDE.md           # This file
 ```
 
-**Build configuration:**
+**Build configuration** — all tool config is inlined in `pyproject.toml`; there
+are no standalone `ruff.toml`, `cliff.toml`, or `.coveragerc` files:
 
-* `pyproject.toml` - Package metadata and dependencies
-* `noxfile.py` - **Enhanced with SDK metadata schema generation task** (NEW)
-* `ruff.toml` - Linting and formatting rules
+* `pyproject.toml` - Package metadata, dependencies, and `[tool.ruff]`,
+  `[tool.git-cliff]`, `[tool.coverage.run]`, `[tool.pytest.ini_options]`
+* `noxfile.py` - Build sessions; also regenerates the versioned SDK metadata
+  JSON Schema into `docs/source/_static/` during doc builds
 * `.pre-commit-config.yaml` - Git hooks
-* `cliff.toml` - Changelog generation
-
-**Noxfile Enhancements:**
-
-The `noxfile.py` now includes automated SDK metadata schema generation:
-
-```python
-def _generate_sdk_metadata_schema(session: nox.Session) -> None:
-    """Generate versioned JSON Schema for SDK metadata.
-
-    - Calls `aignostics sdk metadata-schema` CLI command
-    - Extracts schema version from $id field
-    - Outputs both versioned (v0.0.1) and latest files
-    - Published to docs/source/_static/
-    """
-```
-
-This ensures the JSON Schema is automatically regenerated during documentation builds.
 
 ## Development Guidelines
 
@@ -493,7 +478,7 @@ def action_command(param: str):
 
 ### Testing Requirements
 
-* Minimum 85% code coverage
+* Coverage targets defined in `codecov.yml`
 * Unit tests for all public methods
 * Integration tests for CLI commands
 * Mock external dependencies
@@ -503,11 +488,10 @@ def action_command(param: str):
 
 ### Module Loading
 
-Some modules have conditional loading based on dependencies:
-
-* **qupath** requires `ijson` package
-* **gui** requires `nicegui` package
-* **notebook** requires `marimo` package
+`nicegui`, `marimo`, and `ijson` are core dependencies, so modules using them
+load unconditionally. The Launchpad CLI command is still gated at runtime on
+`find_spec("nicegui")`, `find_spec("webview")`, and not running in a container
+(see `src/aignostics/cli.py`).
 
 ### Platform Authentication
 
@@ -516,205 +500,41 @@ Some modules have conditional loading based on dependencies:
 * 5-minute refresh buffer before expiry
 * OAuth 2.0 device flow
 
-### SDK Metadata System (ENHANCED - Run v0.0.6, Item v0.0.3)
+### SDK Metadata System
 
-**Automatic Run & Item Tracking**: Every application run and item submitted through the SDK automatically includes comprehensive metadata about the execution context, with support for tags and timestamps.
+Every run and item submitted through the SDK gets custom metadata attached
+automatically: submission context (script/CLI/launchpad, initiator),
+CI/CD + pytest context, authenticated user/org, tags, and timestamps. Validated
+against versioned Pydantic-derived JSON Schemas published under
+`docs/source/_static/`.
 
-**Key Features:**
+* Implementation: `platform/_sdk_metadata.py` (`build_*`/`validate_*`/`get_*_json_schema` functions)
+* Schema version constants: `SDK_METADATA_SCHEMA_VERSION` / `ITEM_SDK_METADATA_SCHEMA_VERSION` in that file — do not hardcode the numbers here
+* Integration: automatic in run submit; user agent built by `utils.user_agent()`
+* CLI: `aignostics sdk metadata-schema`, `aignostics application run custom-metadata update|dump`
 
-* **Automatic Attachment**: SDK metadata added to every run and item without user action
-* **Environment Detection**: Automatically detects script/CLI/GUI and user/test/bridge contexts
-* **CI/CD Integration**: Captures GitHub Actions workflow information and pytest test context
-* **User Information**: Includes authenticated user and organization details
-* **Schema Validation**: Pydantic-based validation with JSON Schema (Run: v0.0.6, Item: v0.0.3)
-* **Versioned Schema**: Published JSON Schema at `docs/source/_static/sdk_{run|item}_custom_metadata_schema_*.json`
-* **Tags Support** (NEW): Associate runs and items with searchable tags
-* **Timestamps** (NEW): Track creation and update times (`created_at`, `updated_at`)
-* **Metadata Updates** (NEW): Update custom metadata via CLI and GUI
-* **Item Metadata** (NEW): Separate schema for item-level metadata including platform bucket information
+See `platform/CLAUDE.md` for the full field list and CLI details.
 
-**What's Tracked (Run Level):**
+### Operation Caching & Retry System
 
-* Submission metadata (date, interface, initiator)
-* Enhanced user agent with platform and CI/CD context
-* User and organization information (when authenticated)
-* GitHub Actions workflow details (repository, run URL, runner info)
-* Pytest test context (current test, markers)
-* Workflow control flag (onboard_to_portal)
-* Scheduling information (due dates, deadlines)
-* Optional user notes
-* **Tags** (NEW): Set of tags for filtering (`set[str]`)
-* **Timestamps** (NEW): `created_at`, `updated_at`
+`platform/_operation_cache.py` provides per-user (token-aware) caching of
+read operations with per-kind TTLs and full invalidation on mutations, plus
+tenacity-based retry with exponential backoff + jitter for transient errors
+(5xx, timeouts, pool/connection errors). Read calls accept `nocache=True` to
+bypass the cache. TTLs, retry attempts, and timeouts are configurable via
+`AIGNOSTICS_*` env vars.
 
-**What's Tracked (Item Level - NEW):**
+See `platform/CLAUDE.md` for cached-operation list, env var names, and patterns.
 
-* **Platform Bucket Metadata**: Cloud storage location (bucket name, object key, signed URL)
-* **Tags**: Item-level tags (`set[str]`)
-* **Timestamps**: `created_at`, `updated_at`
+### Run / Item / Artifact State Models
 
-**CLI Commands:**
+State is enum-based: `RunState` / `ItemState` / `ArtifactState`
+(PENDING → PROCESSING → TERMINATED), paired with termination-reason enums
+(`RunTerminationReason`, `ItemTerminationReason`, `ArtifactTerminationReason`)
+that separate "what happened" from "why". `RunItemStatistics` carries aggregate
+counts; `RunOutput`/`ItemOutput`/`ArtifactOutput` bundle state + reason.
 
-```bash
-# Export SDK run metadata JSON Schema
-aignostics sdk metadata-schema --pretty > run_schema.json
-
-# Update run custom metadata (including tags)
-aignostics application run custom-metadata update RUN_ID \
-  --custom-metadata '{"sdk": {"tags": ["experiment-1", "batch-A"]}}'
-
-# Dump run custom metadata as JSON
-aignostics application run custom-metadata dump RUN_ID --pretty
-
-# Find runs by tags
-aignostics application run list --tags experiment-1,batch-A
-```
-
-**Implementation:**
-
-* Module: `platform._sdk_metadata`
-* **Run Functions**: `build_run_sdk_metadata()`, `validate_run_sdk_metadata()`, `get_run_sdk_metadata_json_schema()`
-* **Item Functions** (NEW): `build_item_sdk_metadata()`, `validate_item_sdk_metadata()`, `get_item_sdk_metadata_json_schema()`
-* Integration: Automatic in `platform.resources.runs.submit()`
-* User Agent: Enhanced `utils.user_agent()` with CI/CD context
-* Tests: Comprehensive test suite in `tests/aignostics/platform/sdk_metadata_test.py`
-* **Schema Files**: `sdk_run_custom_metadata_schema_v0.0.6.json` and `sdk_item_custom_metadata_schema_v0.0.3.json`
-
-See `platform/CLAUDE.md` for detailed documentation.
-
-### Operation Caching & Retry System (NEW in v1.0.0-beta.7)
-
-**Enterprise-Grade Performance**: The SDK now implements intelligent operation caching and retry logic to ensure reliability and performance in production environments.
-
-**Operation Caching (`platform/_operation_cache.py`):**
-
-**Key Features:**
-
-* **Token-Aware Caching**: Per-user cache isolation prevents data leakage
-* **Configurable TTLs**: 5 minutes for stable data (apps/versions), 15 seconds for dynamic data (runs)
-* **Automatic Invalidation**: All caches cleared on mutations (submit/cancel/delete)
-* **Memory Efficient**: Dictionary-based storage with automatic expiration
-
-**Cached Operations:**
-
-* `Client.me()` - User information (5 min TTL)
-* `Client.application()` / `application_version()` - Application metadata (5 min TTL)
-* `Applications.list()` / `details()` - Application lists (5 min TTL)
-* `Runs.details()` / `results()` / `list()` - Run data (15 sec TTL)
-
-**Performance Impact:**
-
-* Cache Hit: ~0.1ms (1000x faster than API call)
-* Cache Miss: Standard API latency (50-500ms)
-* Typical Speedup: 100-1000x for repeated reads within TTL
-
-**Retry Logic with Exponential Backoff:**
-
-**Key Features:**
-
-* **Tenacity-Based**: Industry-standard retry library with exponential backoff
-* **Configurable**: Per-operation retry attempts (default: 4), wait times (0.1s-60s), timeouts (30s)
-* **Smart Exceptions**: Only retries transient errors (5xx, timeouts, connection issues)
-* **Jitter**: Randomized wait times prevent thundering herd problem
-
-**Retryable Exceptions:**
-
-* ServiceException (5xx server errors)
-* Urllib3TimeoutError
-* PoolError (connection pool exhausted)
-* IncompleteRead / ProtocolError / ProxyError
-
-**Retry Pattern:**
-
-```
-Attempt 1: Immediate
-Attempt 2: ~100ms wait
-Attempt 3: ~200-400ms wait (exponential + jitter)
-Attempt 4: ~400-800ms wait (capped at 60s max)
-```
-
-**Configuration:**
-
-```bash
-# Example .env configuration
-AIGNOSTICS_ME_RETRY_ATTEMPTS=4
-AIGNOSTICS_ME_RETRY_WAIT_MIN=0.1
-AIGNOSTICS_ME_RETRY_WAIT_MAX=60.0
-AIGNOSTICS_ME_TIMEOUT=30.0
-AIGNOSTICS_ME_CACHE_TTL=300
-
-AIGNOSTICS_RUN_RETRY_ATTEMPTS=4
-AIGNOSTICS_RUN_TIMEOUT=30.0
-AIGNOSTICS_RUN_CACHE_TTL=15
-```
-
-**Cache Control:**
-
-```python
-# Bypass cache for specific operations (useful in tests or when fresh data is required)
-run = client.runs.details(run_id, nocache=True)  # Force API call
-applications = client.applications.list(nocache=True)  # Bypass cache
-```
-
-**Design Decisions:**
-
-* ✅ **Read-Only Retries**: Only safe, idempotent read operations retry
-* ✅ **Global Cache Clearing**: Simple consistency model - clear everything on writes
-* ✅ **Cache Bypass** (NEW): `nocache=True` parameter forces fresh API calls
-* ✅ **Logging**: Warnings logged before retry sleeps for observability
-* ✅ **Re-raise**: Original exception re-raised after exhausting retries
-
-See `platform/CLAUDE.md` for implementation details and usage patterns.
-
-### API v1.0.0-beta.7 State Models (MAJOR CHANGE)
-
-**Breaking Change**: Complete refactoring of run, item, and artifact state management with enum-based models and termination reasons.
-
-**New State Enums:**
-
-* `RunState`: PENDING → PROCESSING → TERMINATED
-* `ItemState`: PENDING → PROCESSING → TERMINATED
-* `ArtifactState`: PENDING → PROCESSING → TERMINATED
-
-**New Termination Reason Enums:**
-
-* `RunTerminationReason`: ALL_ITEMS_PROCESSED, CANCELED_BY_USER, CANCELED_BY_SYSTEM
-* `ItemTerminationReason`: SUCCEEDED, USER_ERROR, SYSTEM_ERROR, SKIPPED
-* `ArtifactTerminationReason`: SUCCEEDED, USER_ERROR, SYSTEM_ERROR
-
-**New Models:**
-
-* `RunItemStatistics` - Aggregate counts (total, succeeded, user_error, system_error, skipped, pending, processing)
-* `RunOutput`, `ItemOutput`, `ArtifactOutput` - Structured output models with state + termination_reason
-
-**Deleted Models (Breaking Changes):**
-
-* ❌ `UserPayload` → Replaced with `Auth0User` and `Auth0Organization`
-* ❌ `PayloadItem` → Replaced with `ItemOutput`
-* ❌ `ApplicationVersionReadResponse` → Renamed to `ApplicationVersion`
-
-**Benefits:**
-
-1. **Type Safety**: Enum-based states prevent typos
-2. **Clear Semantics**: Separate "what happened" (state) from "why" (termination_reason)
-3. **Granular Errors**: Distinguish user errors from system errors for better debugging
-4. **Progress Tracking**: RunItemStatistics provides real-time aggregate view
-
-**Usage Example:**
-
-```python
-run = client.run("run-123")
-details = run.details()
-
-if details.output.state == RunState.TERMINATED:
-    if details.output.termination_reason == RunTerminationReason.ALL_ITEMS_PROCESSED:
-        print(f"✅ Run complete: {details.output.statistics.succeeded} items succeeded")
-        print(
-            f"❌ Failures: {details.output.statistics.user_error} user errors, "
-            f"{details.output.statistics.system_error} system errors"
-        )
-```
-
-See `platform/CLAUDE.md` for complete state machine diagrams and migration guide.
+See `platform/CLAUDE.md` for the state machine and model definitions.
 
 ## Testing Workflow
 
@@ -722,92 +542,26 @@ See `platform/CLAUDE.md` for complete state machine diagrams and migration guide
 
 The SDK has a comprehensive test suite organized by test type and execution strategy.
 
-**Pytest Configuration**:
+**Pytest Configuration**: default timeout 10s per test, async mode `auto`,
+coverage via pytest-cov, parallel execution via pytest-xdist. Full config is in
+`[tool.pytest.ini_options]` in `pyproject.toml`.
 
-* Default timeout: **10 seconds** per test
-* Coverage requirement: **85% minimum**
-* Async mode: `auto` (detects async tests automatically)
-* Parallel execution: Via pytest-xdist with work stealing
+**Test Markers**: the authoritative marker definitions (with their descriptions)
+live in the `markers = [...]` list under `[tool.pytest.ini_options]` in
+`pyproject.toml` — read them there rather than duplicating here.
 
-**Test Markers** (authoritative definitions from `pyproject.toml`):
+**IMPORTANT**: Every test **MUST** carry at least one of `unit`, `integration`,
+or `e2e` — CI only runs tests with these category markers, so an unmarked test
+silently never runs. See "Finding Unmarked Tests" below.
 
-**IMPORTANT**: Every test **MUST** have at least one of: `unit`, `integration`, or `e2e` marker, otherwise it will **NOT run in CI**. The CI pipeline explicitly runs tests with these markers only.
+The other markers gate execution: `long_running` / `very_long_running` (excluded
+from `make test`; run via `make test_long_running` etc.; skippable/enable-able via
+PR labels `skip:test:long_running` / `enable:test:very_long_running`),
+`scheduled` / `scheduled_only`, `stress` / `stress_only`, `sequential`,
+`docker`, `skip_with_act`, `no_extras`.
 
-**Test Categories** (Martin Fowler's Solitary vs Sociable distinction):
-
-* **`unit`** - Solitary unit tests
-  * Test a layer of a module in isolation with all dependencies mocked (except shared utils and systems module)
-  * Must pass **offline** (no external service calls)
-  * Timeout: ≤ 10s (default), must be < 5 min
-  * ~3 minutes total execution time
-
-* **`integration`** - Sociable integration tests
-  * Test interactions across architectural layers (CLI/GUI→Service, Service→Utils) or between modules (Application→Platform)
-  * Uses real SDK collaborators, real file I/O, real subprocesses, real Docker containers
-  * Must pass **offline** (mock external services: Aignostics Platform API, Auth0, S3/GCS, IDC)
-  * Timeout: ≤ 10s (default), must be < 5 min
-  * ~5 minutes total execution time
-
-* **`e2e`** - End-to-end tests
-  * Test complete workflows with **real external network services** (Aignostics Platform API, cloud storage, IDC, etc)
-  * If timeout ≥ 5 min and < 60 min, additionally mark as `long_running`
-  * If timeout ≥ 60 min, additionally mark as `very_long_running`
-  * ~7 minutes total execution time (regular tests only)
-
-**Test Execution Control Markers**:
-
-* **`long_running`** - Tests with timeout **≥ 5 min and < 60 min**
-  * CI/CD runs with **one Python version only** (3.14)
-  * Excluded by default in `make test` - use `make test_long_running`
-  * Can be skipped in PRs with `skip:test:long_running` label
-
-* **`very_long_running`** - Tests with timeout **≥ 60 min**
-  * CI/CD runs with **one Python version only** (3.14)
-  * Excluded by default in `make test` - use `make test_very_long_running`
-  * Only runs when explicitly enabled with `enable:test:very_long_running` label
-
-**Scheduling Markers**:
-
-* **`scheduled`** - Tests to run on a schedule
-  * Still part of non-scheduled test executions
-  * Run every 6h (staging) and 24h (production)
-
-* **`scheduled_only`** - Tests to run **on schedule only**
-  * Never run in regular CI/CD
-  * Only in scheduled test workflows
-
-**Infrastructure Markers**:
-
-* **`sequential`** - Exclude from parallel test execution
-  * Tests that must run in specific order or have interdependencies
-
-* **`docker`** - Tests that require Docker
-  * Docker daemon must be running
-
-* **`skip_with_act`** - Don't run with [Act](https://github.com/nektos/act)
-  * For local GitHub Actions testing
-
-* **`no_extras`** - Tests that require no extras installed
-  * Test behavior without optional dependencies
-
-**Test Structure:**
-
-```text
-tests/
-├── conftest.py           # Global fixtures and configuration
-├── aignostics/
-│   ├── platform/        # Platform module tests
-│   │   ├── sdk_metadata_test.py  (519 lines)
-│   │   ├── authentication_test.py
-│   │   ├── client_test.py
-│   │   └── resources/
-│   ├── application/     # Application module tests
-│   ├── wsi/             # WSI module tests
-│   ├── utils/           # Utils module tests
-│   │   └── user_agent_test.py    (258 lines)
-│   └── ...
-└── CLAUDE.md            # Test suite documentation
-```
+Tests live under `tests/aignostics/<module>/` mirroring the source layout; see
+`tests/CLAUDE.md`.
 
 ### Running Tests
 
@@ -898,25 +652,15 @@ uv run pytest -m sequential tests/
 
 ### Coverage Requirements
 
-**Minimum Coverage: 85%**
+Thresholds are enforced by Codecov (see `codecov.yml`), not a local
+`--fail-under`. Coverage settings — source paths, `omit` list, branch/parallel
+mode — live in `[tool.coverage.run]` in `pyproject.toml`.
 
 ```bash
-# Check coverage
-uv run coverage report
-
-# Generate HTML report
-uv run coverage html
-open htmlcov/index.html
-
-# Coverage enforced in CI
-uv run coverage report --fail-under=85
+# Coverage is collected automatically by `make test` (pytest-cov)
+uv run coverage report          # text summary
+uv run coverage html            # HTML report → reports/coverage_html/
 ```
-
-**Coverage Configuration (.coveragerc):**
-
-* Source: `src/aignostics`
-* Omits: `*/tests/*`, `*/__init__.py`, `*/codegen/*`
-* Reports: Terminal, XML (Codecov), HTML, Markdown
 
 ### E2E Test Setup
 
@@ -949,51 +693,18 @@ uv run pytest -m "e2e and not long_running" -v
 
 ### Pytest Configuration Details
 
-**From `pyproject.toml` `[tool.pytest.ini_options]`**:
+Full config is `[tool.pytest.ini_options]` in `pyproject.toml`. Non-obvious
+points worth knowing:
 
-**Test Discovery**:
-
-* Test paths: `tests/`
-* Python files: `*_test.py`, `test_*.py`
-* Main file: `tests/main.py`
-
-**CLI Options** (always applied):
-
-```bash
--p nicegui.testing.plugin  # NiceGUI testing support
--v                          # Verbose output
---strict-markers            # Error on unknown markers
---log-disable=aignostics    # Disable SDK logging during tests
---cov=aignostics            # Coverage for src/aignostics
---cov-report=term-missing   # Terminal report with missing lines
---cov-report=xml:reports/coverage.xml     # XML for Codecov
---cov-report=html:reports/coverage_html   # HTML report
-```
-
-**Timeouts**:
-
-* Default: **10 seconds** per test
-* Override in test: `@pytest.mark.timeout(timeout=60)`
-* Method: `signal` (can be configured)
-
-**Async Support**:
-
-* Mode: `auto` (automatically detects async tests)
-* Default fixture loop scope: `function`
-
-**Coverage**:
-
-* Environment: `COVERAGE_FILE=.coverage`, `COVERAGE_PROCESS_START=pyproject.toml`
-* Minimum: 85% (enforced in CI)
-* Branch coverage: Enabled
-* Parallel mode: Enabled (thread + multiprocessing concurrency)
-
-**Markdown Reports**:
-
-* Enabled: `md_report = true`
-* Output: `reports/pytest.md`
-* Flavor: GitHub-flavored markdown
-* Exclude outcomes: `passed`, `skipped` (only show failures/errors)
+* `--strict-markers` — an unregistered marker is an error, so add new markers to
+  the `markers` list in `pyproject.toml` first.
+* `-p nicegui.testing.plugin` is always loaded (GUI test support).
+* Coverage runs with subprocess collection via env vars `COVERAGE_FILE` and
+  `COVERAGE_PROCESS_START=pyproject.toml`; branch + parallel (thread +
+  multiprocessing) mode are on — so run `make test_coverage_reset` if `.coverage`
+  data gets stale/corrupted.
+* Markdown report (`md_report`) is written to `reports/pytest.md` showing only
+  failures/errors.
 
 ### Test Fixtures and Patterns
 
@@ -1267,14 +978,12 @@ uv add --group docs sphinx-rtd-theme
 **Optional dependency group:**
 
 ```bash
-# Edit pyproject.toml
-[project.optional-dependencies]
-gui = ["nicegui>=1.0.0"]
-qupath = ["ijson>=3.0.0"]
+# Edit pyproject.toml [project.optional-dependencies]
+# (current extras: pyinstaller, jupyter, marimo, qupath)
 
-# Install with extras
-uv sync --extra gui
-uv sync --all-extras  # Install all optional groups
+# Install with a single extra, or all of them
+uv sync --extra jupyter
+uv sync --all-extras
 ```
 
 ### Version Bumping and Releases
@@ -1398,452 +1107,29 @@ gh pr edit --add-label "skip:test:long_running"
 * Set up ruff as external tool
 * Configure mypy plugin for type checking
 
-## Tips and Tricks for Claude Code Efficiency
-
-### Quick Discovery Commands
-
-**Find files by pattern**:
-
-```bash
-# Find all test files
-find tests -name "*_test.py" -o -name "test_*.py"
-
-# Find Python files excluding tests
-find src -name "*.py" | grep -v __pycache__
-
-# Find configuration files
-find . -maxdepth 2 -name "*.toml" -o -name "*.yml" -o -name "*.yaml" | grep -v node_modules
-```
-
-**Search code effectively**:
-
-```bash
-# Find all imports of a module
-grep -r "from aignostics.platform import" --include="*.py"
-
-# Find all test markers
-grep -r "@pytest.mark." tests/ --include="*.py" | cut -d: -f2 | sort | uniq -c
-
-# Find all CLI commands
-grep -r "@cli.*\.command" src/ --include="*.py"
-
-# Find TODOs and FIXMEs
-grep -rn "TODO\|FIXME" src/ --include="*.py"
-```
-
-**Git exploration**:
-
-```bash
-# View commit history for a specific file
-git log --oneline --follow -- path/to/file.py
-
-# See what changed in recent commits
-git log --oneline --stat -10
-
-# Find who last modified a line
-git blame -L 100,110 path/to/file.py
-
-# Check current branch and recent commits
-git log --oneline --graph --decorate -20
-```
-
-### Testing Shortcuts
-
-**Run specific test categories**:
-
-```bash
-# Run only fast tests (unit + integration, no e2e)
-uv run pytest -m "unit or integration" -v
-
-# Run tests for a specific module
-uv run pytest tests/aignostics/platform/ -v
-
-# Run tests matching a pattern
-uv run pytest -k "metadata" -v
-
-# Run last failed tests
-uv run pytest --lf
-
-# Run tests that failed in last session, then continue with others
-uv run pytest --ff
-```
-
-**Test discovery and validation**:
-
-```bash
-# Collect tests without running (verify test discovery)
-uv run pytest --collect-only
-
-# Find tests without category markers (CRITICAL - they won't run in CI!)
-uv run pytest -m "not unit and not integration and not e2e" --collect-only
-
-# List all available markers
-uv run pytest --markers
-
-# Dry run with verbose output
-uv run pytest --collect-only -v | grep "<Function"
-```
-
-**Coverage shortcuts**:
-
-```bash
-# Quick coverage check without HTML
-uv run pytest --cov=aignostics --cov-report=term-missing --no-cov-on-fail
-
-# Coverage for specific module
-uv run pytest tests/aignostics/platform/ --cov=aignostics.platform --cov-report=term
-
-# View coverage report from last run
-uv run coverage report
-
-# Open HTML coverage report
-open reports/coverage_html/index.html
-```
-
-### Code Quality Checks
-
-**Incremental linting** (faster than full `make lint`):
-
-```bash
-# Format only changed files
-git diff --name-only --diff-filter=AM | grep "\.py$" | xargs ruff format
-
-# Lint only changed files
-git diff --name-only --diff-filter=AM | grep "\.py$" | xargs ruff check
-
-# Type check specific file
-uv run mypy src/aignostics/platform/_client.py
-
-# Check specific file with pyright
-uv run pyright src/aignostics/platform/_client.py
-```
-
-**Quick fixes**:
-
-```bash
-# Auto-fix ruff issues
-ruff check . --fix
-
-# Auto-fix unsafe issues too (use with caution)
-ruff check . --fix --unsafe-fixes
-
-# Format all Python files
-ruff format .
-```
-
-### Debugging Techniques
-
-**Pytest debugging**:
-
-```bash
-# Drop into pdb on first failure
-uv run pytest --pdb
-
-# Drop into pdb on any exception
-uv run pytest --pdb --pdbcls=IPython.terminal.debugger:TerminalPdb
-
-# Show local variables on failure
-uv run pytest --showlocals
-
-# Ultra-verbose output
-uv run pytest -vvv --tb=long
-
-# Capture output for debugging
-uv run pytest -s --log-cli-level=DEBUG
-```
-
-**Module import testing**:
-
-```bash
-# Test if module imports successfully
-python -c "from aignostics.platform import Client; print('OK')"
-
-# Check module version
-python -c "import aignostics; print(aignostics.__version__)"
-
-# List module contents
-python -c "from aignostics import platform; print(dir(platform))"
-```
-
-### Efficient File Exploration
-
-**Understanding module structure**:
-
-```bash
-# List all Python modules
-find src/aignostics -type d -name "[!_]*" | grep -v __pycache__
-
-# Count lines of code by module
-for dir in src/aignostics/*/; do
-  echo "$(find "$dir" -name '*.py' | xargs wc -l | tail -1 | awk '{print $1}') lines in $(basename $dir)"
-done | sort -rn
-
-# Find largest Python files
-find src -name "*.py" -exec wc -l {} \; | sort -rn | head -10
-
-# Count test files vs source files
-echo "Source: $(find src -name '*.py' | wc -l) files"
-echo "Tests: $(find tests -name '*test.py' | wc -l) files"
-```
-
-**Checking dependencies**:
-
-```bash
-# List all direct dependencies
-grep "dependencies = \[" pyproject.toml -A 50 | grep -E "^\s+\"" | head -20
-
-# Check installed packages
-uv pip list
-
-# Find unused imports (requires autoflake)
-uv run python -m autoflake --check --remove-all-unused-imports src/
-
-# Check for outdated dependencies
-uv pip list --outdated
-```
-
-### Working with Reports
-
-**Generated reports location**: `reports/`
-
-```bash
-# View pytest summary
-cat reports/pytest.md
-
-# Check coverage summary
-cat reports/coverage.md
-
-# View JUnit XML for specific marker
-ls reports/junit_*.xml
-
-# Quick coverage percentage
-grep "TOTAL" reports/coverage.md
-```
-
-### Nox Session Shortcuts
-
-```bash
-# List all available nox sessions
-uv run nox --list
-
-# Run specific session
-uv run nox -s lint
-
-# Run session with specific Python version
-uv run nox -s test-3.14.3
-
-# Run multiple sessions
-uv run nox -s lint audit
-
-# Pass arguments to pytest through nox
-uv run nox -s test -- -v -k "metadata"
-
-# Reuse existing virtualenvs (faster)
-uv run nox --reuse-existing-virtualenvs -s test
-```
-
-### Branch and Commit Hygiene
-
-**Before starting work**:
-
-```bash
-# Ensure clean state
-git status
-make lint
-make test_unit
-
-# Update from main
-git fetch origin
-git rebase origin/main
-```
-
-**During development**:
-
-```bash
-# Incremental validation (fast feedback)
-make lint                    # ~5 min
-make test_unit              # ~3 min
-
-# Full validation before commit
-make all                    # ~20 min (lint + test + docs + audit)
-```
-
-**Before creating PR**:
-
-```bash
-# Verify all tests pass
-make test
-
-# Check for unmarked tests
-uv run pytest -m "not unit and not integration and not e2e" --collect-only
-
-# Verify no lint issues
-make lint
-
-# Check coverage hasn't dropped
-uv run coverage report --fail-under=85
-
-# Review changes
-git diff origin/main..HEAD --stat
-```
-
-### Performance Profiling
-
-**Test execution time**:
-
-```bash
-# Show slowest tests
-uv run pytest --durations=10
-
-# Show slowest tests with setup/teardown
-uv run pytest --durations=10 --durations-min=1.0
-
-# Profile test execution
-uv run pytest --profile
-
-# Time a specific test
-time uv run pytest tests/aignostics/platform/sdk_metadata_test.py -v
-```
-
-**Memory profiling**:
-
-```bash
-# Run with memory profiler
-python -m memory_profiler script.py
-
-# Check memory usage during tests
-uv run pytest --memray tests/
-```
-
-### Documentation Generation
-
-```bash
-# Build docs locally
-make docs
-
-# Open generated docs
-open docs/build/html/index.html
-
-# Check for broken links in docs
-uv run sphinx-build -b linkcheck docs/source docs/build/linkcheck
-
-# Generate API documentation
-uv run sphinx-apidoc -o docs/source/api src/aignostics
-```
-
-### CLI Testing and Exploration
-
-```bash
-# Test CLI works
-uv run aignostics --help
-
-# Test specific command
-uv run aignostics user whoami --mask-secrets
-
-# Test with verbose output
-uv run aignostics system info --verbose
-
-# Check CLI completion
-uv run aignostics --install-completion
-
-# Test SDK metadata schema export
-uv run aignostics sdk metadata-schema --pretty | jq .
-```
-
-### Quick Fixes for Common Issues
-
-**"No module named" errors**:
-
-```bash
-uv sync --all-extras
-```
-
-**Test failures after merge**:
-
-```bash
-# Clean caches
-make clean
-rm -rf .pytest_cache .mypy_cache .ruff_cache
-
-# Reinstall
-uv sync --all-extras
-```
-
-**Coverage file issues**:
-
-```bash
-# Reset coverage
-make test_coverage_reset
-
-# Rerun tests
-make test
-```
-
-**Git conflicts in lockfiles**:
-
-```bash
-# Regenerate uv.lock
-uv lock --upgrade
-```
-
-**Type checking errors**:
-
-```bash
-# Check which type checker is failing
-uv run mypy src/aignostics/platform/
-uv run pyright src/aignostics/platform/
-
-# See pyrightconfig.json for exclusions
-cat pyrightconfig.json
-```
-
-### Efficient Code Review
-
-**Review checklist**:
-
-```bash
-# 1. Check what changed
-git diff --stat origin/main...HEAD
-
-# 2. Review code changes
-git diff origin/main...HEAD
-
-# 3. Check test coverage for changed files
-git diff --name-only origin/main...HEAD | grep "\.py$" | xargs uv run pytest --cov-report=term-missing --cov=
-
-# 4. Verify tests pass
-make test_unit
-
-# 5. Check for new TODOs
-git diff origin/main...HEAD | grep "+.*TODO"
-
-# 6. Verify lint passes
-make lint
-```
-
-**Finding related tests**:
-
-```bash
-# Given a source file, find its tests
-src_file="src/aignostics/platform/_client.py"
-test_file="tests/aignostics/platform/$(basename ${src_file%%.py}_test.py)"
-ls $test_file
-```
+## Repo-specific commands worth remembering
+
+* **Find unmarked tests** (they will NOT run in CI — every test needs a
+  `unit`/`integration`/`e2e` marker):
+  `uv run pytest -m "not unit and not integration and not e2e" --collect-only`
+  (expect "collected 0 items").
+* **Reset corrupted coverage data**: `make test_coverage_reset`, then re-run `make test`.
+* **Generated reports** land in `reports/`: `pytest.md` (failures only),
+  `coverage.xml`, `coverage_html/`.
+* **Type checkers** are split — check both when `make lint` fails:
+  `uv run mypy <path>` and `uv run pyright <path>` (exclusions in `pyrightconfig.json`).
 
 ### Performance Considerations
 
-* Chunked uploads/downloads (1MB/10MB chunks)
-* Streaming for large files
-* Process management for subprocesses
-* Memory-efficient WSI tile processing
+* Chunked uploads/downloads, streaming for large files
+* Memory-efficient WSI tile processing (process in tiles, not full image)
 
 ### Common Pitfalls
 
-1. **Import errors**: Check optional dependencies
-2. **Token expiry**: Force refresh with `remove_cached_token()`
-3. **Large files**: Use streaming and chunking
-4. **WSI memory**: Process in tiles, not full image
-5. **Platform differences**: Check Windows path lengths
+1. **Import errors**: run `uv sync --all-extras`
+2. **Token expiry**: force refresh with `remove_cached_token()`
+3. **WSI memory**: process in tiles, not full image
+4. **Platform differences**: watch Windows path lengths
 
 ---
 
