@@ -87,7 +87,8 @@ if any category failed.
 | e2e very long running | `test_very_long_running` | (opt-in, see below) |
 
 **Very long running** runs only when enabled: `enable:test:very_long_running`
-in commit message or PR label, or any push to a `release/v*` branch.
+in commit message or PR label, or any push or manual dispatch
+(`workflow_dispatch`) to a `release/v*` branch.
 
 **Parallelism** is set by `XDIST_WORKER_FACTOR` (worker count =
 `max(1, int(cpu_count * factor))`). CI runs the `*_matrix` targets — unit and
