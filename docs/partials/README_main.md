@@ -15,6 +15,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Running analyses on individual cases or small cohorts (1-20 slides) and exploring results interactively |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html">Get started with Launchpad</a> |
 
+### 🌐 Console (Web Interface)
+
+| | |
+|---|---|
+| **What it is** | Web interface at [platform.aignostics.com](https://platform.aignostics.com) for creating and monitoring analyses in your browser, combined with a single Python SDK command to upload your slides |
+| **Best for** | Pathologists and researchers who prefer working in a browser and want the least software to install |
+| **Use when** | Analyzing slides that are already on your computer or file server (1-100s of slides), without installing a desktop application |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_console.html">Get started with Console</a> |
+
 ### ⌨️ CLI (Command-Line Interface)
 
 | | |

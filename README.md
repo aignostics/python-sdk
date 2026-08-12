@@ -31,6 +31,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Running analyses on individual cases or small cohorts (1-20 slides) and exploring results interactively |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html">Get started with Launchpad</a> |
 
+### 🌐 Console (Web Interface)
+
+| | |
+|---|---|
+| **What it is** | Web interface at [platform.aignostics.com](https://platform.aignostics.com) for creating and monitoring analyses in your browser, combined with a single Python SDK command to upload your slides |
+| **Best for** | Pathologists and researchers who prefer working in a browser and want the least software to install |
+| **Use when** | Analyzing slides that are already on your computer or file server (1-100s of slides), without installing a desktop application |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_console.html">Get started with Console</a> |
+
 ### ⌨️ CLI (Command-Line Interface)
 
 | | |
@@ -140,18 +149,6 @@ manage your organization, applications, quotas, and users registered with the Ai
 1. The Console is available to users registered for your organisation to manage their profile and monitor usage of their quota.
 2. Administrators of your organization can invite additional users, manage the organisation and user specific quotas and monitor usage.
 3. Both roles can trigger application runs.
-
-#### Inviting and managing users
-
-If you have the Administrator role, you invite colleagues to your organization directly from the Console:
-
-1. Log in to the [Console](https://platform.aignostics.com) and select **Admin** in the sidebar, then open **Members**.
-2. At the bottom of the Members page, enter the colleague's email address and assign a role:
-   - **Member** — a regular user who can run applications and manage their own runs.
-   - **Admin** — everything a member can do, plus inviting and managing other users.
-3. Click **Send**. The colleague receives a signup email from `support@aignostics.com` inviting them to accept the invitation, set a password, and configure two-factor authentication.
-
-The email address must use your organization's official domain (see the registration requirements above). Return to the Members page at any time to review your organization's users and their roles.
 
 ### Applications
 An application is a fully automated advanced machine learning based workflow composed of one or more specific tasks (e.g. Tissue Quality Control, Tissue Segmentation, Cell Detection, Cell Classification and predictive analysis). Each application is designed for a particular analysis purpose (e.g. Tumor Micro Environment analysis or biomarker scoring). For each application we define input requirements, processing tasks and output formats.
@@ -304,6 +301,9 @@ The organization's Google Cloud Storage bucket stores uploaded files with automa
 - **Scalability**: Handles single exploratory slides through thousand-slide clinical studies with identical user experience
 - **Cost efficiency**: Pay-per-use GPU provisioning, automatic storage cleanup, no idle infrastructure costs
 - **Operational simplicity**: Python SDK abstracts all cloud complexity; IT teams manage access through existing identity systems
+
+```{include} ../partials/_invite_your_team.md
+```
 
 
 ## Further Reading

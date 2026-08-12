@@ -14,6 +14,7 @@
    :caption: Get started
 
    get_started_launchpad
+   get_started_console
    get_started_cli
    get_started_library
    get_started_api
