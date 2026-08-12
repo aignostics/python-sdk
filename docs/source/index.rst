@@ -18,7 +18,6 @@
    get_started_cli
    get_started_library
    get_started_api
-   get_started_mcp
 
 .. toctree::
    :maxdepth: 1
