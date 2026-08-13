@@ -1,5 +1,134 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [v1.5.0](https://github.com/aignostics/python-sdk/compare/v1.4.0..v1.5.0) - 2026-08-13
+
+### ⛰️  Features
+
+- *(application)* Read shared runs via --share-token ([#688](https://github.com/aignostics/python-sdk/pull/688)) - ([69122cc](https://github.com/aignostics/python-sdk/commit/69122cc71741751a3338766c66c30626a68ee04f))
+- *(platform)* Add enrich_sdk_metadata toggle to metadata updates [PYSDK-147] - ([18e1040](https://github.com/aignostics/python-sdk/commit/18e10407f34670885081be4339d46dd8c88f738d))
+- *(platform)* Add custom_metadata_checksum and ConcurrencyConflictError [PYSDK-130] - ([9891524](https://github.com/aignostics/python-sdk/commit/989152422897eb530fe9d7184c397950e2182e82))
+- *(platform)* Expose callback_context on Runs.submit() [PYSDK-143] - ([8139b34](https://github.com/aignostics/python-sdk/commit/8139b34e5b0ff57dc5ce9bdb61cc2d4f13316d18))
+- *(tests)* Add HETA 1.2.0 parquet size checks and GeoJSON parity validation - ([3a6c89a](https://github.com/aignostics/python-sdk/commit/3a6c89a4a8d480c040c32473b4ca6b589a16dae8))
+- Expose pancreatic, prostate & stomach cancer indications in run submission GUI [PYSDK-149] ([#700](https://github.com/aignostics/python-sdk/pull/700)) - ([0d008c0](https://github.com/aignostics/python-sdk/commit/0d008c091afc66bd861b7964f71a16bff67e62b4))
+- Expose resource_type, resource_id, created_by on AccessGrant - ([12a1da6](https://github.com/aignostics/python-sdk/commit/12a1da614207852be77ac00887491cf992c3a2c4))
+- Add expires_at to share token create and organization_id to org grants - ([698c7be](https://github.com/aignostics/python-sdk/commit/698c7be8199be971d106d2de66989f9c6bd03bdb))
+- Add retry logic to grant_access - ([bb2623f](https://github.com/aignostics/python-sdk/commit/bb2623f0089206eb6a548933116e69ce45ba5928))
+- Share runs via Python SDK - ([eef7815](https://github.com/aignostics/python-sdk/commit/eef781594913afcd7ba7f8cd523b48226074983c))
+
+### 🐛 Bug Fixes
+
+- *(application)* Share status shows only tokens with active grants - ([77e1eb8](https://github.com/aignostics/python-sdk/commit/77e1eb860f6d654e91ee38c4bd91cbb4a8361c1f))
+- *(ci)* Make coverage artifact download non-fatal in sonarcloud job - ([6542c0e](https://github.com/aignostics/python-sdk/commit/6542c0e0d49235c7dab31d19bec6e97885cd5382))
+- *(ci)* Wire SonarCloud to test coverage report - ([d38cf5b](https://github.com/aignostics/python-sdk/commit/d38cf5ba3ab7d31b9f3312021a36377f41e582c1))
+- *(deps)* Update dependency pyarrow to v25 - ([bb00651](https://github.com/aignostics/python-sdk/commit/bb00651c5acdecff026a1ab5b952f2b88949ebe9))
+- *(deps)* Set rangeStrategy widen for all pep621 packages - ([ee456ec](https://github.com/aignostics/python-sdk/commit/ee456ec64f528fff381a4edf65030da22736d4b7))
+- *(deps)* Update dependency pywin32 to v312 - ([215e9d3](https://github.com/aignostics/python-sdk/commit/215e9d3fc0f0c56f2e20d23dc7f59842af1e0a4a))
+- *(deps)* Update starlette to >=1.0.1 to fix PYSEC-2026-161 - ([9def2c5](https://github.com/aignostics/python-sdk/commit/9def2c5206899280532ae4b3149758dfb37d1b21))
+- *(deps)* Update dependency idc-index-data to v24 - ([ec6eee5](https://github.com/aignostics/python-sdk/commit/ec6eee598340b30393a19f6229c490efde04dfca))
+- *(test)* Update test_application_run_share_tokens_success for grant-based filtering - ([155eca9](https://github.com/aignostics/python-sdk/commit/155eca96c8237521fb61a00bdee6ca9cc3eb00b0))
+- *(test)* Correct e2e share token workflow — second-revoke instead of share-status check - ([29f427f](https://github.com/aignostics/python-sdk/commit/29f427f70ff8b9a4c419936b914966e5478b6999))
+- *(test)* Don't validate app descriptions - ([a155468](https://github.com/aignostics/python-sdk/commit/a1554682eb5923aa8ed50995a755e9a944d01773))
+- *(test)* Pin HETA version in E2E test - ([03ee9a1](https://github.com/aignostics/python-sdk/commit/03ee9a15b5f01aa23f85baee63b9295e7811130d))
+- *(tests)* Avoid client-side has_output pagination in show_more_button test - ([44982f2](https://github.com/aignostics/python-sdk/commit/44982f2a76bb299a5f2ebeec277156993e1eb10f))
+- *(tests)* Replace exact schemata count with range check (12–16) - ([8143311](https://github.com/aignostics/python-sdk/commit/8143311ccf3ac26f84f98d287b5e8eca08ae4e3d))
+- *(tests)* Update SPOT_1 expected file sizes from he-tme 1.2.0 run - ([8abb21a](https://github.com/aignostics/python-sdk/commit/8abb21a2a26e3f457ac13de440032ec35d85a193))
+- *(tests)* Update SPOT_0 expected file sizes from he-tme 1.2.0 run - ([7ad6745](https://github.com/aignostics/python-sdk/commit/7ad6745fb57d3bb2af02829b553e71a7c576d941))
+- *(tests)* Update stale assertions — 16 schemata files and SPOT_1 file size constant - ([a6ad9d6](https://github.com/aignostics/python-sdk/commit/a6ad9d6cbb3c2de032fe8e5f37cddb7aac9bea1b))
+- *(tests)* Add blank line after lazy pyarrow import for ruff format compliance - ([387709e](https://github.com/aignostics/python-sdk/commit/387709e250c963bee546deac190b98a135992c45))
+- *(tests)* Address PR review comments on parquet/GeoJSON parity checks - ([522075f](https://github.com/aignostics/python-sdk/commit/522075f1c7b7ff41a46718b67ede050a2f0ff255))
+- Remove duplicate @share_token_app.command("revoke") decorator - ([37ff9f5](https://github.com/aignostics/python-sdk/commit/37ff9f5b98da0cf75a1885afffc00173b7691519))
+- Revoke run-token grant instead of whole share token - ([8d0a320](https://github.com/aignostics/python-sdk/commit/8d0a3209489ca43f5af5894e275454b5ed0e3779))
+- Address PR review comments on share token error messaging - ([b9d82d7](https://github.com/aignostics/python-sdk/commit/b9d82d73c1c142e6efd64a55de36a87e77fab1b5))
+
+### 🚜 Refactor
+
+- *(tests)* Replace parquet row-count parity with area/count checks - ([8369f05](https://github.com/aignostics/python-sdk/commit/8369f05d0517aef7b2b659fcccd328d9ff37f5ae))
+
+### 📚 Documentation
+
+- *(qms)* Add SHR-APPLICATION-4, SWRs, TC-06, and update SPEC-PLATFORM-SERVICE for run sharing - ([f92cc2e](https://github.com/aignostics/python-sdk/commit/f92cc2e1e25d3dde273e1a83275ac012821bb531))
+- *(readme)* Fix platform diagram rendering in light mode - ([51ac0db](https://github.com/aignostics/python-sdk/commit/51ac0dbe7c45a99b638734ecacb0bf076b3bb84a))
+- *(requirements)* Simplify SWR-APPLICATION-4-1 and SWR-APPLICATION-4-2 to high-level statements - ([c2af478](https://github.com/aignostics/python-sdk/commit/c2af478e0627b9c37208c947a5263d8f65ef373a))
+- *(sdlc)* Add SWR + test case for custom metadata update, wire traceability [PYSDK-130][PYSDK-147] - ([9e78319](https://github.com/aignostics/python-sdk/commit/9e7831925a2eed5cad7e8e9b3a88590553e496cc))
+- *(specs)* Document custom_metadata checksum and enrich_sdk_metadata [PYSDK-130][PYSDK-147] - ([277d7e3](https://github.com/aignostics/python-sdk/commit/277d7e3aa8c1ef4fa3396c7a0272eeefd01e5de8))
+- Update the contribution guide to mention triggering github actions is a possibility - ([66dba00](https://github.com/aignostics/python-sdk/commit/66dba00f09a23ab63c6adaa34d3bdd6843b2ec62))
+- Update documentation for v1.5 ([#704](https://github.com/aignostics/python-sdk/pull/704)) - ([72dbbd2](https://github.com/aignostics/python-sdk/commit/72dbbd2cbc8b6a127e3a10bdd41aff3e43a3bdd9))
+- Condense utils and gui guides - ([847608b](https://github.com/aignostics/python-sdk/commit/847608b951965b038ec60b0c4a7c70f7d171a731))
+- Correct and condense tests and CI guides - ([0cfe1cd](https://github.com/aignostics/python-sdk/commit/0cfe1cd4ee7d51cae7901055503056417887e48b))
+- Correct and condense core SDK guides, add mermaid diagrams - ([0a2deca](https://github.com/aignostics/python-sdk/commit/0a2decae8ce51105011758a864955a3d6a663ec1))
+- Rewrite six fabricated module guides from source - ([dbf0532](https://github.com/aignostics/python-sdk/commit/dbf0532afdd40e2f97d3b4c46105a5b2b1b2db17))
+- Add "Invite your team" guidance to user guides [PYSDK-144] ([#693](https://github.com/aignostics/python-sdk/pull/693)) - ([2195165](https://github.com/aignostics/python-sdk/commit/21951652f62fa37278b999086ce03a8b5ad9e108))
+- Restructure into per-interface guides, refresh branding, fix stale content [PYSDK-144] ([#664](https://github.com/aignostics/python-sdk/pull/664)) - ([1c38faf](https://github.com/aignostics/python-sdk/commit/1c38fafee9f3197ee6dfa597fa124a2a10eab4d9))
+
+### ⚡ Performance
+
+- *(application)* Raise run prepare checksum read buffer to 8MB [PYSDK-148] ([#694](https://github.com/aignostics/python-sdk/pull/694)) - ([f7fa4db](https://github.com/aignostics/python-sdk/commit/f7fa4dbed1ab3c1a56d56a47a5331392d9247ac9))
+
+### 🎨 Styling
+
+- Fix line-length violations in test signatures - ([08e9c0e](https://github.com/aignostics/python-sdk/commit/08e9c0eb97666fbb8057c877e6e1f3ef69accf5c))
+
+### 🧪 Testing
+
+- *(application)* Link custom-metadata tests to TC-APPLICATION-CLI-07 scenarios [PYSDK-130][PYSDK-147] - ([bebc642](https://github.com/aignostics/python-sdk/commit/bebc64259faf7e439fa208ccfe09c34dc3731c7e))
+- *(e2e)* Implement TC-APPLICATION-CLI-06-07 end-to-end share token workflow - ([c03056c](https://github.com/aignostics/python-sdk/commit/c03056c88c359454821532daa5efdfa6f0253f3d))
+- *(qms)* Link share tests to Ketryx items via record_property - ([5424769](https://github.com/aignostics/python-sdk/commit/5424769ce8532af6f8b8051b506055fe28b22ee5))
+- Add tests for run sharing CLI commands and fix cache key bug - ([24a154b](https://github.com/aignostics/python-sdk/commit/24a154b77a01b126abb4685986cce20f99f92f71))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(codegen)* Regenerate from Platform API v1.6.0 - ([55579f5](https://github.com/aignostics/python-sdk/commit/55579f5e5c1f76407a80aac73eb1452f22aa729e))
+- *(deps)* Update dependency mypy to v2 - ([a68eb08](https://github.com/aignostics/python-sdk/commit/a68eb089a2485e6b8ad177b2b84e164db26f7783))
+- *(deps)* Update anthropics/claude-code-action action to v1.0.181 - ([581a9f1](https://github.com/aignostics/python-sdk/commit/581a9f17a54326faaa1e6139bf9f3395f11ce7d5))
+- *(deps)* Update github actions - ([dcce68e](https://github.com/aignostics/python-sdk/commit/dcce68e106231cff39f5e505078545efb89d98b3))
+- *(deps)* Upgrade packages for audit - ([92192e4](https://github.com/aignostics/python-sdk/commit/92192e422769a05d9cbfd191c97d38114d18c15a))
+- *(deps)* Lock file maintenance - ([fa332bb](https://github.com/aignostics/python-sdk/commit/fa332bb2896b5014ed13dae4eb8c4de809da6153))
+- *(deps)* Bump python-multipart from 0.0.27 to 0.0.31 - ([f068cb6](https://github.com/aignostics/python-sdk/commit/f068cb6442eccc9db17f651a27caee2b92952e2c))
+- *(deps)* Bump tornado from 6.5.5 to 6.5.6 - ([92bdcac](https://github.com/aignostics/python-sdk/commit/92bdcac35169bced156b84c9fbe27b6cc94423e2))
+- *(deps)* Bump idna from 3.13 to 3.15 - ([d42716f](https://github.com/aignostics/python-sdk/commit/d42716fad50770e121ee87cc32a8358915e74051))
+- *(deps)* Bump pymdown-extensions from 10.21.2 to 10.21.3 - ([4732fe2](https://github.com/aignostics/python-sdk/commit/4732fe2ee52ec8c87f3fbd9a35b86a9ea20f1547))
+- *(deps)* Bump nicegui from 3.11.1 to 3.12.0 - ([b1cfbf6](https://github.com/aignostics/python-sdk/commit/b1cfbf61a5d8ebd3c926c74aebe2ff8597079bf0))
+- *(tests)* Update SPOT_1 slide, add SPOT_4, bump app versions to he-tme 1.2.0 - ([75ce9b6](https://github.com/aignostics/python-sdk/commit/75ce9b6bd37fc15c60db129f9b84638dffa910f4))
+- *(tests)* Use None sentinel for SPECIAL_APPLICATION on staging - ([cecf2c6](https://github.com/aignostics/python-sdk/commit/cecf2c6975a58a5a3daaa102c2c4254636da16ea))
+- *(tests)* Skip special-app tests on staging; guard import - ([f81d33f](https://github.com/aignostics/python-sdk/commit/f81d33fd3e892978e2d4cbd9cabbde5fa0807d11))
+- *(tests)* Fix staging SPECIAL_APPLICATION constants and drop normalization artifact - ([6a48619](https://github.com/aignostics/python-sdk/commit/6a486195945f9067e0e3115bf1fc9f78e5ab6ef9))
+- *(tests)* Bump staging app versions and drop special-app constant - ([c5af396](https://github.com/aignostics/python-sdk/commit/c5af396905790a17345b8f879a8127112981a0c8))
+- *(tests)* Bump HETA_APPLICATION_VERSION to 1.1.1 - ([6fc0d7a](https://github.com/aignostics/python-sdk/commit/6fc0d7a28908b7c36bba8832a1b003f3a568fda1))
+- Run very-long-running e2e on manual dispatch to release branches - ([9439685](https://github.com/aignostics/python-sdk/commit/9439685540662a1b168adfcd7edead7421484926))
+- Link risk PYSDK-152 to SHR-APPLICATION-4 - ([fb881e8](https://github.com/aignostics/python-sdk/commit/fb881e8f82ac51eed1874ba6ba72ae3db1589484))
+- Test-app and he-tme are now available to run version 1.3.0 - ([d841062](https://github.com/aignostics/python-sdk/commit/d841062683d400843e8c555348ae07941d706ad2))
+- Suppress SonarCloud cognitive complexity and async findings - ([baa7e91](https://github.com/aignostics/python-sdk/commit/baa7e9188cd5032a146d3955c4176116c381fe50))
+- Fix linters after upgrade - ([ced11e7](https://github.com/aignostics/python-sdk/commit/ced11e7775a7067b4029868ba04bf337b74db7d5))
+- Bump pip and pyjwt - ([fcb2057](https://github.com/aignostics/python-sdk/commit/fcb205733fc4b8dba73e7a9f21bba2b483022b7b))
+- Prep branch for HETA 1.3.0 release - ([a8ca3e1](https://github.com/aignostics/python-sdk/commit/a8ca3e1093b14434c9df104277435de19825f23c))
+- Remove the sonar cloud duplication issue - ([109ebff](https://github.com/aignostics/python-sdk/commit/109ebff7e95e04bc7573c3a81ce18b32cd4231cb))
+- Add ml-eng-team-leads to CODEOWNERS - ([8bfc554](https://github.com/aignostics/python-sdk/commit/8bfc5544005fcc50ba504b800aa04618531eb37d))
+- Merge release/v1.4.0 into main - ([2158508](https://github.com/aignostics/python-sdk/commit/2158508d69396e4414e9f3b76aee9867fee174d0))
+- Trigger - ([c70fcfe](https://github.com/aignostics/python-sdk/commit/c70fcfe29326602a33556345ca45c67626d339ba))
+
+### 🛡️ Security
+
+- *(deps)* Update dependency cryptography to v50 [security] ([#707](https://github.com/aignostics/python-sdk/pull/707)) - ([97eed5b](https://github.com/aignostics/python-sdk/commit/97eed5bdee6d371a83df7161e4c217b0bd05d9fd))
+- *(deps)* Update dependency aiohttp to v3.14.2 [security] ([#706](https://github.com/aignostics/python-sdk/pull/706)) - ([736d205](https://github.com/aignostics/python-sdk/commit/736d205e7b8fdd5262d6be6661d2cb07b8128e88))
+- *(deps)* Update dependency jupyterlab to v4.5.9 [security] ([#686](https://github.com/aignostics/python-sdk/pull/686)) - ([3370c71](https://github.com/aignostics/python-sdk/commit/3370c71b2cbc07b07e85e17ff35f873b7a0fc901))
+- *(deps)* Update dependency pydantic-settings to v2.14.2 [security] ([#687](https://github.com/aignostics/python-sdk/pull/687)) - ([cb36ade](https://github.com/aignostics/python-sdk/commit/cb36ade254d23424fab977fa13d581fd97c2e0e0))
+- *(deps)* Update dependency marimo to v0.23.9 [security] ([#685](https://github.com/aignostics/python-sdk/pull/685)) - ([c37c8b2](https://github.com/aignostics/python-sdk/commit/c37c8b2203c87c7c6b5eb5c4252e2ad6cec3d62a))
+- *(deps)* Update dependency tornado to v6.5.7 [security] - ([c6f8f72](https://github.com/aignostics/python-sdk/commit/c6f8f72a7c6c49650fabbe738868e16b5de36833))
+- *(deps)* Update dependency aiohttp to v3.14.1 [security] ([#681](https://github.com/aignostics/python-sdk/pull/681)) - ([80a19dd](https://github.com/aignostics/python-sdk/commit/80a19dd5f0e2fbb2560b7e10a7bc9dd8c5a74068))
+- *(deps)* Update dependency cryptography to v48.0.1 [security] ([#682](https://github.com/aignostics/python-sdk/pull/682)) - ([925e457](https://github.com/aignostics/python-sdk/commit/925e4572c94bede9720c61d9af7d29aab0aa258a))
+- *(deps)* Update dependency starlette to v1.3.1 [security] ([#683](https://github.com/aignostics/python-sdk/pull/683)) - ([e26209f](https://github.com/aignostics/python-sdk/commit/e26209fa2ee1ce8a9c241cbf294132dc43fbc84e))
+- *(deps)* Update dependency aiohttp to v3.14.0 [security] ([#666](https://github.com/aignostics/python-sdk/pull/666)) - ([e18cf39](https://github.com/aignostics/python-sdk/commit/e18cf39c349823b3a7f2a2812d2bef22ad6734d0))
+- *(deps)* Update dependency uv to v0.11.15 [security] ([#663](https://github.com/aignostics/python-sdk/pull/663)) - ([90762a6](https://github.com/aignostics/python-sdk/commit/90762a63c6a3bd566decb4c4d520a7f1d929fdfd))
+- *(deps)* Update dependency urllib3 to v2.7.0 [security] ([#637](https://github.com/aignostics/python-sdk/pull/637)) - ([71ff4b0](https://github.com/aignostics/python-sdk/commit/71ff4b0c9f81531d7f2065447ed0ad29e26ff2fc))
+
+### Build
+
+- Add package maintainers - ([244afce](https://github.com/aignostics/python-sdk/commit/244afce5afd2a89886182df2b95308673412543b))
+
+
+
+* @dima-aignostics made their first contribution in [#688](https://github.com/aignostics/python-sdk/pull/688)
+
 # [v1.4.0](https://github.com/aignostics/python-sdk/compare/v1.3.0..v1.4.0) - 2026-05-13
 
 ### ⛰️  Features
