@@ -83,6 +83,70 @@ curl -s "$API/me" -H "Authorization: Bearer $TOKEN" | jq .
 
 `GET /v1/me` returns your user and your organization — including `aignostics_bucket_name`, the bucket used below.
 
+### Hello world, end to end
+
+Steps 1 to 3 and the check above, in one script. The only input is your client ID: it prints the link to open, waits while you approve it in the browser, and then confirms the API answers as you. It needs `curl` and `jq`.
+
+```shell
+#!/usr/bin/env bash
+# hello_aignostics.sh — log in, then confirm the API answers as you.
+# Usage: ./hello_aignostics.sh <client-id>
+set -euo pipefail
+
+CLIENT_ID="${1:?usage: $0 <client-id>}"
+AUTH0="https://aignostics-platform.eu.auth0.com"
+AUDIENCE="https://aignostics-platform-samia"
+API="https://platform.aignostics.com/api/v1"
+
+# 1. Ask Auth0 to start a login.
+device=$(curl -sS -X POST "$AUTH0/oauth/device/code" \
+  -d client_id="$CLIENT_ID" \
+  -d scope=offline_access \
+  -d audience="$AUDIENCE")
+
+device_code=$(jq -r .device_code <<<"$device")
+interval=$(jq -r .interval <<<"$device")
+
+echo "Open this link:        $(jq -r .verification_uri_complete <<<"$device")"
+echo "Confirm it shows code: $(jq -r .user_code <<<"$device")"
+
+# 2. Poll until you approve it in the browser.
+while :; do
+  sleep "$interval"
+  tokens=$(curl -sS -X POST "$AUTH0/oauth/token" \
+    -d grant_type=urn:ietf:params:oauth:grant-type:device_code \
+    -d device_code="$device_code" \
+    -d client_id="$CLIENT_ID")
+  case "$(jq -r '.error // "ok"' <<<"$tokens")" in
+    ok) break ;;
+    authorization_pending) ;;                        # not approved yet — keep waiting
+    slow_down) interval=$((interval + 5)) ;;         # polling too fast — back off
+    *) jq -r '"login failed: " + (.error_description // .error)' <<<"$tokens" >&2; exit 1 ;;
+  esac
+done
+
+ACCESS_TOKEN=$(jq -r .access_token <<<"$tokens")
+REFRESH_TOKEN=$(jq -r .refresh_token <<<"$tokens")
+echo "Got an access token, and a refresh token to store as a secret (${#REFRESH_TOKEN} chars)."
+
+# 3. Confirm the API answers as you.
+curl -sS "$API/me" -H "Authorization: Bearer $ACCESS_TOKEN" \
+  | jq '{user: .user.email, organization: .organization.display_name, bucket: .organization.aignostics_bucket_name}'
+```
+
+```text
+Open this link:        https://aignostics-platform.eu.auth0.com/activate?user_code=ABCD-EFGH
+Confirm it shows code: ABCD-EFGH
+Got an access token, and a refresh token to store as a secret (64 chars).
+{
+  "user": "you@your-organization.example",
+  "organization": "Your Organization",
+  "bucket": "your-aignostics-bucket"
+}
+```
+
+That is a working integration. Keep the refresh token in your secret manager and every later run skips the browser entirely — Step 3 above is the whole renewal.
+
 ## Find out what the application expects
 
 Two calls: one to see which applications your organization can run, one to read the contract of the version you intend to use.
@@ -100,11 +164,39 @@ The version response tells you exactly what to send in the next step:
 
 ## Give the platform access to your slides
 
-The platform fetches each slide from a URL you provide, so that URL has to work without your credentials and keep working while the analysis is queued. That means a **signed URL**: a link with a temporary key in it, granting access to one object for a limited time. Give it a generous expiry; seven days leaves room for queueing.
+The platform fetches each slide from a URL you provide, so that URL has to work without your credentials and keep working while the analysis is queued.
 
-Sign objects in your own cloud storage, or use the bucket that comes with your organization. That bucket works with any S3-compatible tooling: `GET /v1/me` returns `organization.aignostics_bucket_name`, `aignostics_bucket_protocol`, and an `aignostics_bucket_hmac_access_key_id` / `aignostics_bucket_hmac_secret_access_key` pair. Use those two as access key and secret against the storage provider's S3 endpoint, with SigV4, to upload objects and sign download URLs from `boto3`, the AWS CLI, or your language's S3 client. Treat the secret like any other credential: it grants access to your organization's slides.
+**The preferred method is to store the whole slide image in S3-compliant object storage** — AWS S3, Google Cloud Storage, or anything else speaking the S3 API — **and mint a signed URL for it**: a link with a temporary key in it, granting read access to that one object for a limited time. **Give it an expiry of at least seven days**, so the link outlives any queueing before your slide is picked up. Seven days is also the longest a SigV4 signature can live, so in practice that is the number to use.
+
+**For convenience, we provide such storage.** Every organization gets a bucket on the platform, plus the credentials to upload objects into it and to sign download URLs from it. `GET /v1/me` returns all four values under `organization`:
+
+| Field | What it is |
+| --- | --- |
+| `aignostics_bucket_name` | your organization's bucket |
+| `aignostics_bucket_protocol` | the storage backend behind it — `gs`, Google Cloud Storage |
+| `aignostics_bucket_hmac_access_key_id` | access key ID |
+| `aignostics_bucket_hmac_secret_access_key` | secret access key |
+
+The key pair is an ordinary S3 credential. Point any S3 client at the provider's S3-compatible endpoint — `https://storage.googleapis.com` for `gs` — sign with SigV4, and upload and sign as you would against AWS:
+
+```shell
+export AWS_ACCESS_KEY_ID=your-aignostics-bucket-hmac-access-key-id
+export AWS_SECRET_ACCESS_KEY=your-aignostics-bucket-hmac-secret-access-key
+export BUCKET=your-aignostics-bucket-name
+export GCS=https://storage.googleapis.com
+
+# upload the slide
+aws s3 --endpoint-url "$GCS" cp slide1.tiff "s3://$BUCKET/slide1.tiff"
+
+# mint the signed URL to hand to the platform (7 days)
+aws s3 --endpoint-url "$GCS" presign "s3://$BUCKET/slide1.tiff" --expires-in 604800
+```
+
+`boto3` and every other S3 client work the same way, given the endpoint and `s3v4` signing. Treat the secret like any other credential: it grants access to your organization's slides.
 
 ## Analyze your slides with Atlas H&E-TME
+
+> ⚠️ **This example is specific to Atlas H&E-TME `1.3.0`.** Artifact names, required metadata, and outputs differ from one application to the next, and can change when a new version of the same application is released. Read the version's own contract first — the *Find out what the application expects* section above — rather than copying this payload verbatim.
 
 One `POST` describes the whole analysis: which application, which version, and one entry per slide. The API calls those entries **items**, and the files attached to them **artifacts** — here a single input artifact, your slide. Give each item your own `external_id` so you can match results back to your records. Omit `version_number` to get the latest version, or pin it as below so a repeat analysis behaves identically.
 
