@@ -51,13 +51,18 @@ Only files of the supported formats (`.svs`, `.tif`, `.tiff`, `.dcm`) can be ana
 
 ### 4. (Optional) Get an example slide
 
-To try the workflow before using your own data, download a public example slide — a TCGA lung adenocarcinoma case from the NCI Image Data Commons. Paste this command and press `Enter`:
+To try the workflow before using your own data, download a public example slide — a TCGA lung adenocarcinoma case from the NCI Image Data Commons.
+
+The target folder has to exist before you download into it, so create it first. Paste these commands and press `Enter` after each:
 
 ```bash
-uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 data/
+mkdir my-slides
+uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 my-slides/
 ```
 
-This takes a few minutes and creates the folder `data/tcga_luad`. Use it in place of your own folder in the next step.
+Skip the first command if you already created `my-slides` in Step 3 — and if you named your folder something else, use that name in both commands. Downloading a folder that does not exist stops with `Invalid value for 'target': Directory 'my-slides/' does not exist`.
+
+The download takes a few minutes and puts the slide in `my-slides/tcga_luad`, ready for the next step.
 
 ### 5. Run the upload
 
@@ -69,7 +74,7 @@ Paste this command and press `Enter`, replacing `./my-slides` with the path to y
 uvx aignostics bucket upload ./my-slides
 ```
 
-A progress bar appears, and the message `All files uploaded successfully!` tells you the upload is done.
+The command first reports how many files it found and their total size, then names each slide as it goes up. When it is finished it lists what it uploaded and prints `All files uploaded successfully!`. A progress bar is part of that output, but it only shows up if your terminal window is wide enough — in a standard-width window there is no room for it, so you see the messages alone.
 
 **Keep the terminal open and your computer awake until then** — a single whole slide image is often 1–4 GB, so this can take a while. If the upload is interrupted, run the same command again.
 
@@ -87,13 +92,13 @@ uvx aignostics bucket find
 
 Open [platform.aignostics.com](https://platform.aignostics.com) and log in. Select **Analyze** → **My Application Runs** in the sidebar, then click **Create run** in the top right.
 
-![The My Application Runs page with the Create run button in the top right](_static/console/01-analyze-create-run.png)
+![The My Application Runs page with the Create run button in the top right](../source/_static/console/01-analyze-create-run.png)
 
 Fill in the **Create run** form:
 
 - **Slides.** You see the contents of your organization's bucket. Use the breadcrumb (**Bucket » …**) to open the folder named after your computer account, then tick the slides you want to analyze. Your selection is listed under the table, so you can check it before you continue.
 
-  ![The Create run form with the bucket contents listed and one slide ticked](_static/console/02-select-slides.png)
+  ![The Create run form with the bucket contents listed and one slide ticked](../source/_static/console/02-select-slides.png)
 
 - **Version.** Pick the entry starting with `he-tme` — that is Atlas H&E-TME. Unless you need to reproduce an earlier analysis, use the highest version number.
 - **Staining method.** Already fixed to `H&E` for Atlas H&E-TME, so there is nothing to choose.
@@ -103,7 +108,7 @@ Fill in the **Create run** form:
 
 Your entries apply to every slide you selected, so all slides you analyze together must share the same staining method, indication, and tissue. Click **Run now** to start the analysis.
 
-![The lower half of the Create run form with Version, Staining method, Indication, Tissue and Name filled in](_static/console/03-metadata.png)
+![The lower half of the Create run form with Version, Staining method, Indication, Tissue and Name filled in](../source/_static/console/03-metadata.png)
 
 Your analysis now appears at the top of **My Application Runs**.
 
@@ -117,13 +122,13 @@ Select your analysis in **My Application Runs** to open **Run Details**, then cl
 
 The **Overlays** panel on the right switches the results on and off on top of your slide: **Tissue Segmentation** colours the tissue regions that were found, **Cell Classification** colours the individual cells by type — with a legend of the cell types and a slider to make the colours more or less transparent — and **Tissue QC** shows areas flagged during quality control. Use the zoom buttons at the top right (`0.4×` to `40×`) to look at an area closely.
 
-![A slide in the viewer with tissue and cell overlays switched on and the Overlays panel open](_static/console/04-viewer-overlays.png)
+![A slide in the viewer with tissue and cell overlays switched on and the Overlays panel open](../source/_static/console/04-viewer-overlays.png)
 
 ### 9. Download your results
 
 On **Run Details**, click **Download Available Results** for all your slides, or use the download icon in the **Actions** column to get a single slide. For each slide you get the tissue regions that were found, the individual cells that were detected and classified by type, and a spreadsheet of measurements such as cell counts and densities.
 
-![The Run Details page with the Download Available Results button and per-slide download icons](_static/console/05-download-results.png)
+![The Run Details page with the Download Available Results button and per-slide download icons](../source/_static/console/05-download-results.png)
 
 > ⚠️ **Results are kept for 30 days**, counting from the day you started the analysis. After that they can no longer be viewed or downloaded, and the only way to get them back is to analyze the slides again — so download whatever you want to keep in time.
 
