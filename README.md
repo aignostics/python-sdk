@@ -49,6 +49,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building custom analysis pipeline in Python for repeated usage and processing large datasets (10s-1000s of slides) |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_library.html">Get started with the Python Library</a> |
 
+### 🔌 REST API (Direct HTTP)
+
+| | |
+|---|---|
+| **What it is** | The Platform's REST API at `https://platform.aignostics.com/api/v1`, called directly over HTTPS |
+| **Best for** | Developers integrating from another language or an existing pipeline, without depending on the Python SDK |
+| **Use when** | Building a service or workflow outside Python, or generating your own client from the OpenAPI document |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_api.html">Get started with the API</a> |
+
 ### 🤖 MCP Server (AI Agent Integration)
 
 | | |
