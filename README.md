@@ -31,6 +31,15 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Running analyses on individual cases or small cohorts (1-20 slides) and exploring results interactively |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html">Get started with Launchpad</a> |
 
+### 🌐 Console (Web Interface)
+
+| | |
+|---|---|
+| **What it is** | Web interface at [platform.aignostics.com](https://platform.aignostics.com) for creating and monitoring analyses in your browser, combined with a single Python SDK command to upload your slides |
+| **Best for** | Pathologists and researchers who prefer working in a browser and want the least software to install |
+| **Use when** | Analyzing slides that are already on your computer or file server (1-100s of slides), without installing a desktop application |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_console.html">Get started with Console</a> |
+
 ### ⌨️ CLI (Command-Line Interface)
 
 | | |
@@ -58,6 +67,9 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building a service or workflow outside Python, or generating your own client from the OpenAPI document |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_api.html">Get started with the API</a> |
 
+<!-- Hidden for now: the MCP server is not yet usable for customers. Restore this row
+     together with the guide's toctree entry and conf.py exclusion.
+
 ### 🤖 MCP Server (AI Agent Integration)
 
 | | |
@@ -66,6 +78,7 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Best for** | Users who want AI assistants to help with platform operations |
 | **Use when** | Working with Claude Desktop or other MCP-compatible AI tools to manage datasets, submit runs, or query results |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_mcp.html">Get started with the MCP Server</a> |
+-->
 
 > 💡 Each interface has its own step-by-step guide (linked above) that includes installation. Launchpad and the CLI handle authentication for you; the Python Library guide covers credential setup.
 
@@ -304,6 +317,9 @@ The organization's Google Cloud Storage bucket stores uploaded files with automa
 - **Scalability**: Handles single exploratory slides through thousand-slide clinical studies with identical user experience
 - **Cost efficiency**: Pay-per-use GPU provisioning, automatic storage cleanup, no idle infrastructure costs
 - **Operational simplicity**: Python SDK abstracts all cloud complexity; IT teams manage access through existing identity systems
+
+```{include} ../partials/_invite_your_team.md
+```
 
 
 ## Further Reading

@@ -88,7 +88,9 @@ linkcheck_ignore = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+# Hidden from the published documentation for now: the MCP server is not yet usable
+# for customers. The guide is kept in the repository, excluded only from the build.
+exclude_patterns = ["get_started_mcp.rst"]
 
 html_theme = "furo"
 html_static_path = ["_static"]
