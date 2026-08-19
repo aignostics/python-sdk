@@ -149,7 +149,7 @@ if find_spec("nicegui"):
         mock_register_pages_called = False
         mock_app_mount_called = False
 
-        def mock_ui_run(  # noqa: PLR0913
+        def mock_ui_run(  # noqa: PLR0913, PLR0917
             title="",
             favicon="",
             native=False,

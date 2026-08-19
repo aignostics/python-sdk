@@ -320,7 +320,7 @@ class Service(BaseService):
                 Service._process_key_value_pair(entry, key_value, external_id)
 
     @staticmethod
-    def generate_metadata_from_source_directory(  # noqa: PLR0913
+    def generate_metadata_from_source_directory(  # noqa: PLR0913, PLR0917
         source_directory: Path,
         application_id: str,
         application_version: str | None = None,
@@ -432,7 +432,7 @@ class Service(BaseService):
             raise RuntimeError(message) from e
 
     @staticmethod
-    def application_run_upload(  # noqa: PLR0913
+    def application_run_upload(  # noqa: PLR0913, PLR0917
         application_id: str,
         metadata: list[dict[str, Any]],
         application_version: str | None = None,
@@ -501,7 +501,7 @@ class Service(BaseService):
                 open(source_file_path, "rb") as f,
             ):
 
-                def read_in_chunks(  # noqa: PLR0913
+                def read_in_chunks(  # noqa: PLR0913, PLR0917
                     external_id: str,
                     file_size: int,
                     upload_progress_queue: Any | None = None,  # noqa: ANN401
@@ -535,7 +535,7 @@ class Service(BaseService):
         return True
 
     @staticmethod
-    def application_runs_static(  # noqa: PLR0913
+    def application_runs_static(  # noqa: PLR0913, PLR0917
         application_id: str | None = None,
         application_version: str | None = None,
         external_id: str | None = None,
@@ -606,7 +606,7 @@ class Service(BaseService):
             )
         ]
 
-    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0915
+    def application_runs(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -828,7 +828,7 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit_from_metadata(  # noqa: PLR0913
+    def application_run_submit_from_metadata(  # noqa: PLR0913, PLR0917
         self,
         application_id: str,
         metadata: list[dict[str, Any]],
@@ -996,7 +996,7 @@ class Service(BaseService):
             logger.exception(message)
             raise RuntimeError(message) from e
 
-    def application_run_submit(  # noqa: PLR0913, PLR0912, C901, PLR0915
+    def application_run_submit(  # noqa: PLR0913, PLR0912, C901, PLR0915, PLR0917
         self,
         application_id: str,
         items: list[InputItem],
@@ -1629,7 +1629,7 @@ class Service(BaseService):
             raise NotFoundException(message)
 
     @staticmethod
-    def application_run_download_static(  # noqa: PLR0913
+    def application_run_download_static(  # noqa: PLR0913, PLR0917
         run_id: str,
         destination_directory: Path,
         create_subdirectory_for_run: bool = True,
@@ -1674,7 +1674,7 @@ class Service(BaseService):
             download_progress_queue,
         )
 
-    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915
+    def application_run_download(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         self,
         run_id: str,
         destination_directory: Path,

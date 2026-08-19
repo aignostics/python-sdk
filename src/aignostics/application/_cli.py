@@ -427,7 +427,7 @@ def application_describe(  # noqa: C901, PLR0912
 
 
 @run_app.command(name="execute")
-def run_execute(  # noqa: PLR0913
+def run_execute(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
         str,
         typer.Argument(help="Id of application version to execute."),
@@ -641,7 +641,7 @@ def run_prepare(
 
 
 @run_app.command(name="upload")
-def run_upload(  # noqa: PLR0913
+def run_upload(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to upload data for. "),
@@ -754,7 +754,7 @@ def run_upload(  # noqa: PLR0913
 
 
 @run_app.command("submit")
-def run_submit(  # noqa: PLR0913
+def run_submit(  # noqa: PLR0913, PLR0917
     application_id: Annotated[
         str,
         typer.Argument(help="Id of the application to submit run for."),
@@ -889,7 +889,7 @@ def run_submit(  # noqa: PLR0913
 
 
 @run_app.command("list")
-def run_list(  # noqa: PLR0913
+def run_list(  # noqa: PLR0913, PLR0917
     verbose: Annotated[bool, typer.Option(help="Show application details")] = False,
     limit: Annotated[int | None, typer.Option(help="Maximum number of runs to display")] = None,
     tags: Annotated[
@@ -1642,7 +1642,7 @@ def run_share_token_revoke(
 
 
 @result_app.command("download")
-def result_download(  # noqa: C901, PLR0913, PLR0915
+def result_download(  # noqa: C901, PLR0913, PLR0915, PLR0917
     run_id: Annotated[str, typer.Argument(..., help="Id of the run to download results for")],
     destination_directory: Annotated[
         Path,

@@ -98,7 +98,7 @@ TEST_APP_STRESS_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS = 60 * 30  # 30 minutes
 TEST_APP_STRESS_FIND_AND_VALIDATE_TIMEOUT_SECONDS = 60 * 60  # 60 minutes
 
 
-def _build_wsi_input_item(  # noqa: PLR0913
+def _build_wsi_input_item(  # noqa: PLR0913, PLR0917
     gs_url: str,
     crc32c: str,
     width: int,
@@ -189,7 +189,7 @@ def _get_spots_payload_for_test_app(expires_seconds: int, count: int) -> list[pl
     ]
 
 
-def _submit_and_validate(  # noqa: PLR0913
+def _submit_and_validate(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],
@@ -276,7 +276,7 @@ def _submit_and_validate(  # noqa: PLR0913
     return run
 
 
-def _submit_and_wait(  # noqa: PLR0913
+def _submit_and_wait(  # noqa: PLR0913, PLR0917
     application_id: str,
     application_version: str,
     payload: list[platform.InputItem],

@@ -909,7 +909,7 @@ class Runs(_AuthenticatedResource):
         """
         return Run(self._api, run_id)
 
-    def submit(  # noqa: PLR0913
+    def submit(  # noqa: PLR0913, PLR0917
         self,
         application_id: str,
         items: list[ItemCreationRequest],
@@ -983,7 +983,7 @@ class Runs(_AuthenticatedResource):
         operation_cache_clear()  # Clear all caches since we added a new run
         return Run(self._api, str(res.run_id))
 
-    def list(  # noqa: PLR0913
+    def list(  # noqa: PLR0913, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
@@ -1031,7 +1031,7 @@ class Runs(_AuthenticatedResource):
             )
         )
 
-    def list_data(  # noqa: PLR0913
+    def list_data(  # noqa: PLR0913, PLR0917
         self,
         application_id: str | None = None,
         application_version: str | None = None,
