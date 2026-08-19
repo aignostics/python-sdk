@@ -428,7 +428,7 @@ class Service(BaseService):
         return Path(platformdirs.user_data_dir(__project_name__)).resolve()
 
     @staticmethod
-    def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915
+    def _download_qupath(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
         version: str,
         path: Path,
         platform_system: str | None = None,
@@ -759,7 +759,7 @@ class Service(BaseService):
         raise RuntimeError(message)
 
     @staticmethod
-    def install_qupath(  # noqa: PLR0913
+    def install_qupath(  # noqa: PLR0913, PLR0917
         version: str = QUPATH_VERSION,
         path: Path | None = None,
         reinstall: bool = True,

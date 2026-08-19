@@ -1307,7 +1307,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner, record_propert
     """Check run result delete command runs successfully."""
     record_property("tested-item-id", "SPEC-APPLICATION-SERVICE")
     result = runner.invoke(cli, ["application", "run", "result", "delete"])
-    assert "Missing argument 'RUN_ID'." in normalize_output(result.stderr)
+    assert "Missing argument 'run_id'." in normalize_output(result.stderr)
     assert result.exit_code == 2
 
 

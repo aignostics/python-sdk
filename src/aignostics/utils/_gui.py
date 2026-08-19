@@ -30,7 +30,7 @@ def gui_register_pages() -> None:
         page_builder.register_pages()
 
 
-def gui_run(  # noqa: PLR0913
+def gui_run(  # noqa: PLR0913, PLR0917
     native: bool = True,
     show: bool = False,
     host: str | None = None,

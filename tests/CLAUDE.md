@@ -80,9 +80,10 @@ The decorator intercepts `nocache` and does not pass it to the wrapped function.
 @cached_operation(ttl=60)
 def f() -> int: ...
 
-f()                 # populates cache
-f()                 # cache hit, f not re-run
-f(nocache=True)     # re-runs f, refreshes cache
+
+f()  # populates cache
+f()  # cache hit, f not re-run
+f(nocache=True)  # re-runs f, refreshes cache
 ```
 
 See `nocache_test.py` for the full decorator / client / edge-case coverage.
