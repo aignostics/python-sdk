@@ -2,7 +2,7 @@
 
 The Aignostics Platform API is a REST API over HTTPS, rooted at `https://platform.aignostics.com/api/v1`. Call it directly when you integrate the platform into another language or into an existing pipeline.
 
-This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), follow progress, download results. Examples use `curl` and `jq`. The complete contract is in the [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html).
+This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), follow progress, download results. Examples use `curl`, `jq`, and `openssl`. The complete contract is in the [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html).
 
 ```{include} ../partials/_get_started_signup.md
 ```
@@ -12,45 +12,73 @@ This guide covers one full workflow with plain HTTP calls — authenticate, anal
 Authentication is tied to a person, not to a machine: every call acts as a user in an organization, and each analysis records a `submitted_by`. There is no anonymous access and no organization-wide API key. You need two things:
 
 - **A platform account**, created by invitation from your organization's administrator (the section above). If your organization is not on the platform yet, talk to `support@aignostics.com`.
-- **A client ID**, the public identifier of your integration. Ask `support@aignostics.com`; you cannot mint one yourself. There is no matching client *secret*, because a program running on a user's machine cannot keep one safe.
+- **A client ID**, the public identifier of your integration, together with a **redirect URI** registered against it. Ask `support@aignostics.com`; you cannot mint one yourself. There is no matching client *secret*, because a program running on a user's machine cannot keep one safe.
 
 ### How it works
 
 The API never sees your password. It accepts a short-lived **access token** — issued by Auth0, the identity service behind the platform — which every call carries in an `Authorization: Bearer …` header. You log in once in a browser; from then on your program renews tokens itself with the long-lived **refresh token** it got alongside the first one. When a call returns `401`, renew and retry.
 
-This is the standard OAuth 2.0 Device Authorization Grant ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)), so most languages have a library for the three steps below — you supply the endpoints and client ID.
+This is the standard OAuth 2.0 Authorization Code flow with PKCE ([RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)), so most languages have a library for the steps below — you supply the endpoints, client ID, and redirect URI.
 
-### Step 1: start the login
+PKCE — Proof Key for Code Exchange — is what makes this safe without a client secret. You invent a random secret, send only its fingerprint when you start the login, and reveal the secret when you redeem the result. Anyone who intercepts the authorization code cannot use it, because they do not have the secret.
+
+### Step 1: create the PKCE pair
+
+The `code_verifier` is your random secret and never leaves your machine. The `code_challenge` is its SHA-256 fingerprint, sent to Auth0 in the next step.
 
 ```shell
 CLIENT_ID=your-client-id
+REDIRECT_URI=http://localhost:8989/
 
-curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/device/code \
-  -d client_id="$CLIENT_ID" \
-  -d scope=offline_access \
-  -d audience=https://aignostics-platform-samia | jq .
+CODE_VERIFIER=$(openssl rand -base64 60 | tr -d '\n=' | tr '+/' '-_')
+
+CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" \
+  | openssl dgst -binary -sha256 | openssl base64 | tr -d '\n=' | tr '+/' '-_')
+```
+
+Keep this shell open. Losing `CODE_VERIFIER` means starting again.
+
+### Step 2: start the login
+
+Print the authorization URL and open it in a browser.
+
+```shell
+echo "https://aignostics-platform.eu.auth0.com/authorize\
+?response_type=code\
+&client_id=$CLIENT_ID\
+&redirect_uri=http%3A%2F%2Flocalhost%3A8989%2F\
+&audience=https%3A%2F%2Faignostics-platform-samia\
+&scope=offline_access\
+&code_challenge=$CODE_CHALLENGE\
+&code_challenge_method=S256"
 ```
 
 - `client_id` — your integration's public identifier.
+- `redirect_uri` — where Auth0 sends the browser afterwards. It must match a value registered against your client exactly, trailing slash included.
 - `audience` — which API the token should be valid for. `https://aignostics-platform-samia` is the Aignostics Platform.
 - `scope=offline_access` — "also give me a refresh token". Leave it out and you get an access token that you cannot renew.
+- `code_challenge_method=S256` — the fingerprint is a SHA-256 hash, not the raw secret.
 
-The response carries `verification_uri_complete` (the link for you), `user_code` (the code to compare), `device_code` (your program's secret handle), and `interval` (seconds between polls).
+### Step 3: log in, and collect the tokens
 
-### Step 2: approve it, and collect the tokens
-
-Open `verification_uri_complete` in a browser, log in, and check the code shown matches the `user_code` your program printed — that comparison is what stops someone else's program from being approved with your account. Meanwhile, poll for the tokens every `interval` seconds while the response says `error: authorization_pending` (or `slow_down`, meaning you are asking too often):
+Log in in the browser. Auth0 then redirects to your redirect URI with `?code=…` appended. If nothing is listening on that address the browser shows a connection error, which is expected — the code you need is in the address bar.
 
 ```shell
+CODE=the-code-from-the-address-bar
+
 curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
-  -d grant_type=urn:ietf:params:oauth:grant-type:device_code \
-  -d device_code="$DEVICE_CODE" \
-  -d client_id="$CLIENT_ID" | jq .
+  -d grant_type=authorization_code \
+  -d client_id="$CLIENT_ID" \
+  -d code="$CODE" \
+  -d code_verifier="$CODE_VERIFIER" \
+  -d redirect_uri="$REDIRECT_URI" | jq .
 ```
 
-Once you approve, the same call returns `access_token` and `refresh_token`. Store the refresh token as a secret — it is what makes the next step possible — and never log or commit either token.
+The response carries `access_token` and `refresh_token`. Store the refresh token as a secret — it is what makes the next step possible — and never log or commit either token. The authorization code is single-use and short-lived, so redeem it promptly.
 
-### Step 3: renew without a browser
+A real integration listens on the redirect URI instead of asking a person to copy the code. That is the only part of this flow that needs more than `curl`, and it is why the flow cannot run on a machine with no browser.
+
+### Step 4: renew without a browser
 
 This is what CI and long-running services do whenever a call returns `401`:
 
@@ -76,7 +104,7 @@ curl -s "$API/me" -H "Authorization: Bearer $TOKEN" | jq .
 
 ### Hello world, end to end
 
-All of the above in one script, with your client ID as the only input. It needs `curl` and `jq`.
+All of the above in one script, with your client ID as the only input. It needs `curl`, `jq`, and `openssl`.
 
 ```shell
 #!/usr/bin/env bash
@@ -87,47 +115,55 @@ set -euo pipefail
 CLIENT_ID="${1:?usage: $0 <client-id>}"
 AUTH0="https://aignostics-platform.eu.auth0.com"
 AUDIENCE="https://aignostics-platform-samia"
+REDIRECT_URI="http://localhost:8989/"
 API="https://platform.aignostics.com/api/v1"
 
-# 1. Ask Auth0 to start a login.
-device=$(curl -sS -X POST "$AUTH0/oauth/device/code" \
+# 1. Invent a secret, and derive the fingerprint Auth0 will see.
+CODE_VERIFIER=$(openssl rand -base64 60 | tr -d '\n=' | tr '+/' '-_')
+CODE_CHALLENGE=$(printf '%s' "$CODE_VERIFIER" \
+  | openssl dgst -binary -sha256 | openssl base64 | tr -d '\n=' | tr '+/' '-_')
+
+# 2. Send the user to Auth0, carrying the fingerprint.
+authorize_url="$AUTH0/authorize?$(jq -rn \
+  --arg client_id "$CLIENT_ID" \
+  --arg redirect_uri "$REDIRECT_URI" \
+  --arg audience "$AUDIENCE" \
+  --arg challenge "$CODE_CHALLENGE" \
+  '{response_type:"code", client_id:$client_id, redirect_uri:$redirect_uri,
+    audience:$audience, scope:"offline_access",
+    code_challenge:$challenge, code_challenge_method:"S256"}
+   | to_entries | map("\(.key)=\(.value|@uri)") | join("&")')"
+
+echo "Open this link:  $authorize_url"
+echo "Your browser will fail to reach $REDIRECT_URI. That is expected."
+read -r -p "Paste the 'code' from the address bar: " CODE
+
+# 3. Redeem the code, revealing the secret.
+tokens=$(curl -sS -X POST "$AUTH0/oauth/token" \
+  -d grant_type=authorization_code \
   -d client_id="$CLIENT_ID" \
-  -d scope=offline_access \
-  -d audience="$AUDIENCE")
+  -d code="$CODE" \
+  -d code_verifier="$CODE_VERIFIER" \
+  -d redirect_uri="$REDIRECT_URI")
 
-device_code=$(jq -r .device_code <<<"$device")
-interval=$(jq -r .interval <<<"$device")
-
-echo "Open this link:        $(jq -r .verification_uri_complete <<<"$device")"
-echo "Confirm it shows code: $(jq -r .user_code <<<"$device")"
-
-# 2. Poll until you approve it in the browser.
-while :; do
-  sleep "$interval"
-  tokens=$(curl -sS -X POST "$AUTH0/oauth/token" \
-    -d grant_type=urn:ietf:params:oauth:grant-type:device_code \
-    -d device_code="$device_code" \
-    -d client_id="$CLIENT_ID")
-  case "$(jq -r '.error // "ok"' <<<"$tokens")" in
-    ok) break ;;
-    authorization_pending) ;;                        # not approved yet — keep waiting
-    slow_down) interval=$((interval + 5)) ;;         # polling too fast — back off
-    *) jq -r '"login failed: " + (.error_description // .error)' <<<"$tokens" >&2; exit 1 ;;
-  esac
-done
+if [ "$(jq -r '.error // "ok"' <<<"$tokens")" != "ok" ]; then
+  jq -r '"login failed: " + (.error_description // .error)' <<<"$tokens" >&2
+  exit 1
+fi
 
 ACCESS_TOKEN=$(jq -r .access_token <<<"$tokens")
 REFRESH_TOKEN=$(jq -r .refresh_token <<<"$tokens")
 echo "Got an access token, and a refresh token to store as a secret (${#REFRESH_TOKEN} chars)."
 
-# 3. Confirm the API answers as you.
+# 4. Confirm the API answers as you.
 curl -sS "$API/me" -H "Authorization: Bearer $ACCESS_TOKEN" \
   | jq '{user: .user.email, organization: .organization.display_name, bucket: .organization.aignostics_bucket_name}'
 ```
 
 ```text
-Open this link:        https://aignostics-platform.eu.auth0.com/activate?user_code=ABCD-EFGH
-Confirm it shows code: ABCD-EFGH
+Open this link:  https://aignostics-platform.eu.auth0.com/authorize?response_type=code&client_id=...
+Your browser will fail to reach http://localhost:8989/. That is expected.
+Paste the 'code' from the address bar: nB2f...
 Got an access token, and a refresh token to store as a secret (64 chars).
 {
   "user": "you@your-organization.example",
@@ -136,7 +172,7 @@ Got an access token, and a refresh token to store as a secret (64 chars).
 }
 ```
 
-Keep the refresh token in your secret manager and later runs skip the browser entirely — Step 3 is the whole renewal.
+Keep the refresh token in your secret manager and later runs skip the browser entirely — Step 4 is the whole renewal.
 
 ## Find out what the application expects
 
