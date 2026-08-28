@@ -21,11 +21,11 @@ workflows (`> …`, prefixed `_`) are called via `uses:`.
 | `claude-code-interactive.yml` | `@claude` mentions + workflow_dispatch | `_claude-code` (interactive) |
 | `claude-code-automation-pr-review.yml` | PR with `claude` label or `ready_for_review` | `_claude-code` (automation) |
 | `claude-code-automation-operational-excellence-weekly.yml` | schedule + workflow_dispatch | `_claude-code` (automation) |
-| `scheduled-testing-staging-hourly.yml` | cron `0 * * * *` | `_scheduled-test-hourly` (staging) |
-| `scheduled-testing-staging-daily.yml` | cron `0 12 * * *` | `_scheduled-test-daily` (staging) |
-| `scheduled-testing-production-hourly.yml` | cron `0 * * * *` | `_scheduled-test-hourly` (production) |
-| `scheduled-testing-production-daily.yml` | cron `0 12 * * *` | `_scheduled-test-daily` (production) |
-| `scheduled-audit-hourly.yml` | cron `0 * * * *` | `_scheduled-audit` |
+| `scheduled-testing-staging-hourly.yml` | cron `17 * * * *` | `_scheduled-test-hourly` (staging) |
+| `scheduled-testing-staging-daily.yml` | cron `31 12 * * *` | `_scheduled-test-daily` (staging) |
+| `scheduled-testing-production-hourly.yml` | cron `17 * * * *` | `_scheduled-test-hourly` (production) |
+| `scheduled-testing-production-daily.yml` | cron `31 12 * * *` | `_scheduled-test-daily` (production) |
+| `scheduled-audit-hourly.yml` | cron `43 * * * *` | `_scheduled-audit` |
 | `codeql-scheduled.yml` | cron `22 3 * * 2` (Tue 03:22) | `_codeql` |
 | `labels-sync.yml` | push to label config | — |
 
@@ -148,10 +148,11 @@ or GCP credentials.
 
 ## Scheduled jobs
 
-- **Testing** — staging and production each run **hourly** (`0 * * * *`, via
-  `_scheduled-test-hourly.yml`) and **daily at 12:00 UTC** (`0 12 * * *`, via
-  `_scheduled-test-daily.yml`). Run `make test_scheduled`, send a BetterStack
-  heartbeat. Staging → `https://platform-staging.aignostics.com`, production →
+- **Testing** — staging and production each run **hourly** (`17 * * * *`, via
+  `_scheduled-test-hourly.yml`) and **daily at 12:31 UTC** (`31 12 * * *`, via
+  `_scheduled-test-daily.yml`). The crons avoid minute 0: GitHub documents
+  that `schedule` events are delayed most at the start of every hour. Run
+  `make test_scheduled`, send a BetterStack heartbeat. Staging → `https://platform-staging.aignostics.com`, production →
   `https://platform.aignostics.com`.
 - **Audit** — hourly (`_scheduled-audit.yml`): `pip-audit`, `pip-licenses`,
   Trivy SBOM scan + BetterStack heartbeat.

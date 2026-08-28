@@ -2,7 +2,7 @@ name: "+ Scheduled Testing / Production (Hourly)"
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       branch:
