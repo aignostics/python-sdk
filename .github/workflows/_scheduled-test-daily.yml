@@ -260,7 +260,7 @@ jobs:
           FAILED_TESTS="${{ steps.test-status.outputs.failed_tests }}"
           
           # Send heartbeat to Sentry, defining the schedule on the fly
-          SENTRY_EXIT_CODE=$(sentry-cli monitors run -e CI --schedule "0 12 * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-daily --timezone "Europe/Berlin" -- sh -c "exit $EXIT_CODE")
+          SENTRY_EXIT_CODE=$(sentry-cli monitors run -e CI --schedule "31 12 * * *" --check-in-margin 60 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-daily --timezone "Europe/Berlin" -- sh -c "exit $EXIT_CODE")
 
           # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
           if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
