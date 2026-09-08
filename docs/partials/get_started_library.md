@@ -133,5 +133,7 @@ To make whole slide images available to the Aignostics Platform, you provide a s
 
 **You must provide the [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials) for the Google Cloud Storage bucket.**
 
-```{include} ../partials/_invite_your_team.md
-```
+## Where to go next
+
+- {doc}`Invite your team <invite_your_team>` — add colleagues so they can run analyses too.
+- {doc}`Library reference <lib_reference>` — all public classes and functions.

@@ -283,3 +283,8 @@ curl -s -X DELETE "$API/runs/$RUN_ID/artifacts" -H "Authorization: Bearer $TOKEN
 - **Status.** Live platform status is at [status.platform.aignostics.com](https://status.platform.aignostics.com).
 
 Questions about the API, or something behaving differently from this guide? Email `support@aignostics.com`.
+
+## Where to go next
+
+- {doc}`Invite your team <invite_your_team>` — add colleagues so they can run analyses too.
+- {doc}`API Explorer <api_explorer_v1>` — all operations and parameters.

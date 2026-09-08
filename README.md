@@ -322,8 +322,7 @@ The organization's Google Cloud Storage bucket stores uploaded files with automa
 - **Cost efficiency**: Pay-per-use GPU provisioning, automatic storage cleanup, no idle infrastructure costs
 - **Operational simplicity**: Python SDK abstracts all cloud complexity; IT teams manage access through existing identity systems
 
-```{include} ../partials/_invite_your_team.md
-```
+Administrators can [invite colleagues](https://aignostics.readthedocs.io/en/latest/invite_your_team.html) onto the Platform so they can run analyses too.
 
 
 ## Further Reading
