@@ -168,7 +168,6 @@ That's it: you have analyzed your first slides with Atlas H&E-TME and have the r
 ## Where to go next
 
 - {doc}`Invite your team <invite_your_team>` — add colleagues so they can run analyses too.
-- {doc}`Troubleshooting <troubleshooting>` — if something did not work as described.
 - **Clean up your bucket** — your slides stay in your bucket until you delete them, so analyzing them again needs no new upload. Deletion cannot be undone but does not affect results you have downloaded. It is a dry run by default; replace `jdoe` with the folder your slides are in:
 
   ```bash
