@@ -20,7 +20,7 @@ The API never sees your password. It accepts a short-lived **access token** — 
 
 This is the standard OAuth 2.0 Device Authorization Grant ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)), so most languages have a library for the three steps below — you supply the endpoints and client ID.
 
-### Step 1: start the login
+### Start the login
 
 ```shell
 CLIENT_ID=your-client-id
@@ -37,7 +37,7 @@ curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/device/code \
 
 The response carries `verification_uri_complete` (the link for you), `user_code` (the code to compare), `device_code` (your program's secret handle), and `interval` (seconds between polls).
 
-### Step 2: approve it, and collect the tokens
+### Approve it, and collect the tokens
 
 Open `verification_uri_complete` in a browser, log in, and check the code shown matches the `user_code` your program printed — that comparison is what stops someone else's program from being approved with your account. Meanwhile, poll for the tokens every `interval` seconds while the response says `error: authorization_pending` (or `slow_down`, meaning you are asking too often):
 
@@ -50,7 +50,7 @@ curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
 
 Once you approve, the same call returns `access_token` and `refresh_token`. Store the refresh token as a secret — it is what makes the next step possible — and never log or commit either token.
 
-### Step 3: renew without a browser
+### Renew without a browser
 
 This is what CI and long-running services do whenever a call returns `401`:
 
@@ -136,7 +136,7 @@ Got an access token, and a refresh token to store as a secret (64 chars).
 }
 ```
 
-Keep the refresh token in your secret manager and later runs skip the browser entirely — Step 3 is the whole renewal.
+Keep the refresh token in your secret manager and later runs skip the browser entirely — the renewal call above is all they need.
 
 ## Find out what the application expects
 

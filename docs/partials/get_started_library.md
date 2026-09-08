@@ -1,119 +1,117 @@
 # Get started with the Python Library
 
-The **Aignostics Python Library** lets you call the Aignostics Platform programmatically from your own scripts, notebooks, and applications. It is well suited to building custom analysis pipelines and processing large datasets in Python.
+The **Aignostics Python Library** lets you use the Aignostics Platform from your own scripts, notebooks, and pipelines. This guide takes you through the same first analysis as the Console guide — upload your slides, run [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on them, follow the analysis, and download the results — in Python.
 
 ```{include} ../partials/_get_started_signup.md
 ```
 
 ## Install the library
 
-Add the Aignostics Python SDK to your project.
-
-**With [uv](https://docs.astral.sh/uv/):**
+Add the Aignostics Python SDK to your project with [uv](https://docs.astral.sh/uv/) or [pip](https://pip.pypa.io/en/stable/):
 
 ```shell
 uv add aignostics
-```
-
-**With [pip](https://pip.pypa.io/en/stable/):**
-
-```shell
+# or
 pip install aignostics
 ```
 
-## Usage
+## Log in
 
-The following snippet shows how to use the client to submit an application run:
+Create a client. The first time, your browser opens for you to log in with your email, password, and the six-digit code from your authenticator app; the login is cached for future sessions.
 
 ```python
 from aignostics import platform
 
-# initialize the client
 client = platform.Client()
-# submit an application run
-application_run = client.runs.submit(
-    application_id="test-app",
-    items=[
-        platform.InputItem(
-            external_id="slide-1",
-            input_artifacts=[
-                platform.InputArtifact(
-                    name="whole_slide_image",
-                    download_url="<a signed url to download the data>",
-                    metadata={
-                        "checksum_base64_crc32c": "AAAAAA==",
-                        "resolution_mpp": 0.25,
-                        "width_px": 1000,
-                        "height_px": 1000,
-                    },
-                )
-            ],
-        ),
-    ],
-)
-# wait for the results and download incrementally as they become available
-application_run.download_to_folder("path/to/download/folder")
+print(client.me().user.email)
 ```
 
-See the [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html) for all classes and methods.
-
-## Example notebooks
-
-> [!IMPORTANT]
-> Before you start, set up your authentication credentials if you have not done so. Visit
-> [your personal dashboard on the Aignostics Platform website](https://platform.aignostics.com/getting-started/quick-start)
-> and follow the steps in the `Use in Python Notebooks` section.
-
-The SDK includes ready-to-use [Marimo](https://marimo.io/) notebooks that demonstrate platform interaction patterns — ideal for learning the API, prototyping workflows, and integrating with data science pipelines. They use the "Test Application" (free for all users):
+For scripts that run without a browser — on a server or in CI — set a refresh token instead. Get one from the `Use in Python Notebooks` section of [your quick-start page in Console](https://platform.aignostics.com/getting-started/quick-start) and put it in the environment or in `~/.aignostics/.env`:
 
 ```shell
-# clone the python-sdk repository
-git clone https://github.com/aignostics/python-sdk.git
-# within the cloned repository, install the SDK and all dependencies
-uv sync --all-extras
-# open the example notebook in your browser
-uv run marimo edit examples/notebook.py
+AIGNOSTICS_REFRESH_TOKEN=<your refresh token>
 ```
 
-> 💡 You can also run a notebook inside the Aignostics Launchpad: select the run you want to inspect in the left sidebar and click **Marimo**.
+## Upload your slides
 
-## Defining the input for an application run
-
-The following details apply to advanced use cases. These examples use the "Test Application" — a free application available to all users for testing and development.
-
-When creating a run, you specify the `application_id` and optionally the `application_version`. If you omit the version, the latest is used automatically. You then define the input items to process:
+The platform reads each slide from your organization's private bucket, together with its checksum, size, resolution, staining method, tissue, and disease. The library computes the technical values from the files; the medical ones you set per slide — here the same for all slides in the folder.
 
 ```python
-(
-    platform.InputItem(
-        external_id="1",
-        input_artifacts=[
-            platform.InputArtifact(
-                name="whole_slide_image",  # defined by the application version's input artifact schema
-                download_url="<a signed url to download the data>",
-                metadata={  # defined by the application version's input artifact schema
-                    "checksum_base64_crc32c": "N+LWCg==",
-                    "resolution_mpp": 0.46499982,
-                    "width_px": 3728,
-                    "height_px": 3640,
-                },
-            )
-        ],
-    ),
+from pathlib import Path
+
+from aignostics.application import Service as ApplicationService
+
+APPLICATION = "he-tme"
+slides = Path("my-slides")
+
+metadata = ApplicationService.generate_metadata_from_source_directory(
+    slides,
+    APPLICATION,
+    mappings=[".*:staining_method=H&E,tissue=LUNG,disease=LUNG_CANCER"],
 )
+
+
+def remember_bucket_url(_bytes_uploaded: int, source: Path, bucket_url: str) -> None:
+    for row in metadata:
+        if row["external_id"] == str(source):
+            row["platform_bucket_url"] = bucket_url
+
+
+ApplicationService.application_run_upload(APPLICATION, metadata, upload_progress_callable=remember_bucket_url)
 ```
 
-For each item you process, provide a unique `external_id` string — it is used to match results back to your inputs. The `input_artifacts` field is a list of `InputArtifact` objects defining the data and metadata for each item. The required artifacts depend on the application version; for the test application there is a single artifact, named `whole_slide_image`.
+`mappings` match slide paths by regular expression, so a folder with mixed cases takes one mapping per group, for example `"lung/.*:tissue=LUNG,disease=LUNG_CANCER"`. If your slides are already in a cloud bucket, you can skip the upload and hand the platform signed URLs instead — see {doc}`Give the platform access to your slides <get_started_api>` in the API guide.
 
-The `download_url` is a signed URL that allows the Aignostics Platform to download the image data during processing.
+## Start the analysis
 
-## Self-signed URLs for large files
+```python
+run = ApplicationService().application_run_submit_from_metadata(APPLICATION, metadata, note="My first analysis")
+print(run.run_id)
+```
 
-To make whole slide images available to the Aignostics Platform, you provide a signed URL the platform can download from. Signed URLs for files in Google Cloud Storage buckets can be generated with `generate_signed_url` ([code](https://github.com/aignostics/python-sdk/blob/main/src/aignostics/platform/_utils.py)).
+Keep the `run_id`: it is how you find the analysis again later, in Python and in Console.
 
-**You must provide the [required credentials](https://cloud.google.com/docs/authentication/application-default-credentials) for the Google Cloud Storage bucket.**
+## Follow the analysis
+
+The analysis runs on Aignostics servers, so your script can exit and pick it up later with `client.run(run_id)`. The run's state goes `PENDING` → `PROCESSING` → `TERMINATED`; each slide has its own state and outcome.
+
+```python
+details = run.details()
+print(details.state, details.termination_reason)
+
+s = details.statistics
+failed = s.item_user_error_count + s.item_system_error_count
+print(f"{s.item_succeeded_count} of {s.item_count} slides succeeded, {failed} failed")
+
+for item in run.results():
+    print(item.external_id, item.state, item.termination_reason)
+```
+
+The analysis also appears under **My Application Runs** in [Console](https://platform.aignostics.com), where you can review the results in the viewer.
+
+## Download results
+
+```python
+run.download_to_folder("results")
+```
+
+This waits for the analysis to finish and downloads each slide's results as soon as they are ready: the tissue regions, the classified cells, and a spreadsheet of measurements such as cell counts and densities. Results are kept for 30 days, so download what you want to keep.
+
+## List, cancel, or clean up
+
+```python
+for r in client.runs.list(application_id=APPLICATION):
+    print(r.run_id, r.details().state)
+
+run = client.run("<run_id>")
+run.cancel()  # stop an analysis that is still running
+run.delete()  # remove a finished analysis and its results
+```
+
+Your slides stay in your bucket until you delete them; see {doc}`Clean up your bucket <get_started_console>` in the Console guide.
 
 ## Where to go next
 
 - {doc}`Invite your team <invite_your_team>` — add colleagues so they can run analyses too.
 - {doc}`Library reference <lib_reference>` — all public classes and functions.
+- [Example notebooks](https://github.com/aignostics/python-sdk/tree/main/examples) — ready-to-use [Marimo](https://marimo.io/) and Jupyter notebooks in the repository.
