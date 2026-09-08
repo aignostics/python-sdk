@@ -17,19 +17,13 @@ pip install aignostics
 
 ## Log in
 
-Create a client. The first time, your browser opens for you to log in with your email, password, and the six-digit code from your authenticator app; the login is cached for future sessions.
+Create a client. The first time, your browser opens for you to log in with your email, password, and the six-digit code from your authenticator app. You stay logged in for future sessions.
 
 ```python
 from aignostics import platform
 
 client = platform.Client()
 print(client.me().user.email)
-```
-
-For scripts that run without a browser — on a server or in CI — set a refresh token instead. Get one from the `Use in Python Notebooks` section of [your quick-start page in Console](https://platform.aignostics.com/getting-started/quick-start) and put it in the environment or in `~/.aignostics/.env`:
-
-```shell
-AIGNOSTICS_REFRESH_TOKEN=<your refresh token>
 ```
 
 ## Upload your slides

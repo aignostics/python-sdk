@@ -1,6 +1,6 @@
 ## Troubleshooting
 
-Common problems when following the {doc}`Console guide <get_started_console>`, and what to do about them.
+Common problems when following the getting-started guides, and what to do about them.
 
 **I can't find my invitation email.** Check your spam folder. If it isn't there either, ask your organization's administrator to invite you, or email `support@aignostics.com`.
 
@@ -19,6 +19,8 @@ Common problems when following the {doc}`Console guide <get_started_console>`, a
 **`uvx aignostics user whoami` shows no bucket keys.** If the `aignostics_bucket_hmac_*` fields under `organization` are empty, your organization is not yet set up for direct bucket access, which copying slides from your own cloud bucket requires. Email `support@aignostics.com`.
 
 **A slide failed, or the whole analysis failed.** In Console, the **Status** column on **Run Details** shows the outcome per slide; results for slides that succeeded are unaffected. A single failed slide usually points at the file itself — unsupported or incomplete, or metadata that does not match the tissue. Check the file opens on your computer, then analyze it on its own. If the whole analysis failed, or a slide fails twice, email `support@aignostics.com` with the name or ID shown on **Run Details**.
+
+**My script runs on a server or in CI, where no browser can open.** Set a refresh token and the library logs in without one. Get it from the `Use in Python Notebooks` section of [your quick-start page in Console](https://platform.aignostics.com/getting-started/quick-start) and put it in the environment or in `~/.aignostics/.env` as `AIGNOSTICS_REFRESH_TOKEN=<your refresh token>`. It belongs to your user account, so treat it like a password.
 
 **I can't log in, or my six-digit code is rejected.** The code changes every 30 seconds — wait for a new one and enter it promptly. Make sure your phone's clock is set automatically; if it is off by a minute, the codes will not match. Use "Forgot password" on the login page if needed, and email `support@aignostics.com` if you still can't get in.
 
