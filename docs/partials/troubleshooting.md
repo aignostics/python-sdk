@@ -6,7 +6,7 @@ Common problems when following the getting-started guides, and what to do about 
 
 **Installing the Aignostics Python SDK failed.** Make sure you copied the whole install command from the guide, then paste it again. If `uvx aignostics --help` fails right after installing, close the terminal and try again in a new one — the install is only active in a fresh window, and the first run takes a minute to get ready. If it still fails, email the error message to `support@aignostics.com`.
 
-**What is a bucket, and who can see my slides?** Your bucket is your organization's private storage area on the Aignostics Platform. Only members of your organization can see what is in it. Uploading a slide does not start an analysis; it just puts the slide where Console can find it.
+**What is a bucket, and who can see my slides?** Your bucket is the storage area Aignostics provides for your organization on the Platform. Only members of your organization can see what is in it. Uploading a slide does not start an analysis; it just puts the slide where Console can find it.
 
 **Which folder in the bucket are my slides in?** `uvx aignostics bucket upload` puts them in a folder named after the user account on your computer — run `whoami` in the terminal if you are unsure. Subfolders inside the folder you uploaded are preserved. `uvx aignostics bucket find` lists everything in your bucket.
 

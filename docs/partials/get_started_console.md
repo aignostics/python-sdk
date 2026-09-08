@@ -59,7 +59,7 @@ You stay logged in for future sessions.
 
 3. Keep the terminal open until it prints `All files uploaded successfully!`. Slides are large, so this can take a while.
 
-Your slides are now in your organization's private bucket, in a folder named after your computer's user account, for example `jdoe`.
+Your slides are now in the bucket Aignostics provides for your organization, in a folder named after your computer's user account, for example `jdoe`.
 
 ### 4. (Optional) Copy slides from your own cloud bucket
 

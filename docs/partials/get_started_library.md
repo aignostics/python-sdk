@@ -28,7 +28,7 @@ print(client.me().user.email)
 
 ## Upload your slides
 
-The platform reads each slide from your organization's private bucket, together with its checksum, size, resolution, staining method, tissue, and disease. The library computes the technical values from the files; the medical ones you set per slide — here the same for all slides in the folder.
+The platform reads each slide from the bucket Aignostics provides for your organization, together with its checksum, size, resolution, staining method, tissue, and disease. The library computes the technical values from the files; the medical ones you set per slide — here the same for all slides in the folder.
 
 ```python
 from pathlib import Path
