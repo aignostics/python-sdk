@@ -137,13 +137,6 @@ Your slide appears in QuPath with the analysis annotations layered on top — ti
 ## Troubleshooting
 
 <details>
-<summary><strong>I can't find my invitation email</strong></summary>
-
-Check your spam folder. If it isn't there either, ask your organization's administrator to invite you, or email `support@aignostics.com`.
-
-</details>
-
-<details>
 <summary><strong>How do I find Terminal or PowerShell?</strong></summary>
 
 **macOS:** Press `Cmd` + `Space` to open Spotlight search, type `Terminal`, and press `Enter`.
