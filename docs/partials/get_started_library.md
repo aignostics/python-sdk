@@ -57,26 +57,6 @@ application_run.download_to_folder("path/to/download/folder")
 
 See the [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html) for all classes and methods.
 
-## System health checks
-
-The library does **not** perform automated health checks before operations. If you need health verification, implement it in your application logic:
-
-```python
-from aignostics import platform
-from aignostics.system import Service as SystemService
-
-# Check system health before submitting runs
-health = SystemService().health()
-if not health:
-    raise RuntimeError(f"System is unhealthy: {health.reason}")
-
-# Proceed with run submission
-client = platform.Client()
-run = client.runs.submit(...)
-```
-
-This gives you full control over health-check behavior — custom retry logic, logging, and graceful handling of unhealthy states.
-
 ## Example notebooks
 
 > [!IMPORTANT]
