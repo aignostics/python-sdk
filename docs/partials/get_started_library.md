@@ -5,7 +5,9 @@ The **Aignostics Python Library** lets you use the Aignostics Platform from your
 ```{include} ../partials/_get_started_signup.md
 ```
 
-## Install the library
+## Upload your slides
+
+### 1. Install the library
 
 Add the Aignostics Python SDK to your project with [uv](https://docs.astral.sh/uv/) or [pip](https://pip.pypa.io/en/stable/):
 
@@ -15,7 +17,7 @@ uv add aignostics
 pip install aignostics
 ```
 
-## Log in
+### 2. Log in
 
 Create a client. The first time, your browser opens for you to log in with your email, password, and the six-digit code from your authenticator app. You stay logged in for future sessions.
 
@@ -26,7 +28,7 @@ client = platform.Client()
 print(client.me().user.email)
 ```
 
-## Upload your slides
+### 3. Upload your slides
 
 The platform reads each slide from the bucket Aignostics provides for your organization, together with its checksum, size, resolution, staining method, tissue, and disease. The library computes the technical values from the files; the medical ones you set per slide — here the same for all slides in the folder.
 
@@ -56,7 +58,9 @@ ApplicationService.application_run_upload(APPLICATION, metadata, upload_progress
 
 `mappings` match slide paths by regular expression, so a folder with mixed cases takes one mapping per group, for example `"lung/.*:tissue=LUNG,disease=LUNG_CANCER"`. If your slides are already in a cloud bucket, you can skip the upload and hand the platform signed URLs instead — see {doc}`Give the platform access to your slides <get_started_api>` in the API guide.
 
-## Start the analysis
+## Analyze your slides with Atlas H&E-TME
+
+### 4. Start the analysis
 
 ```python
 run = ApplicationService().application_run_submit_from_metadata(APPLICATION, metadata, note="My first analysis")
@@ -65,7 +69,7 @@ print(run.run_id)
 
 Keep the `run_id`: it is how you find the analysis again later, in Python and in Console.
 
-## Follow the analysis
+### 5. Follow the analysis
 
 The analysis runs on Aignostics servers, so your script can exit and pick it up later with `client.run(run_id)`. The run's state goes `PENDING` → `PROCESSING` → `TERMINATED`; each slide has its own state and outcome.
 
@@ -83,7 +87,7 @@ for item in run.results():
 
 The analysis also appears under **My Application Runs** in [Console](https://platform.aignostics.com), where you can review the results in the viewer.
 
-## Download results
+### 6. Download results
 
 ```python
 run.download_to_folder("results")
@@ -91,7 +95,7 @@ run.download_to_folder("results")
 
 This waits for the analysis to finish and downloads each slide's results as soon as they are ready: the tissue regions, the classified cells, and a spreadsheet of measurements such as cell counts and densities. Results are kept for 30 days, so download what you want to keep.
 
-## List, cancel, or clean up
+### 7. List, cancel, or clean up
 
 ```python
 for r in client.runs.list(application_id=APPLICATION):

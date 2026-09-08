@@ -7,20 +7,22 @@ This guide covers one full workflow with plain HTTP calls — authenticate, anal
 ```{include} ../partials/_get_started_signup.md
 ```
 
-## Authenticate
+## Upload your slides
+
+### 1. Authenticate
 
 Authentication is tied to a person, not to a machine: every call acts as a user in an organization, and each analysis records a `submitted_by`. There is no anonymous access and no organization-wide API key. You need two things:
 
 - **A platform account**, created by invitation from your organization's administrator (the section above). If your organization is not on the platform yet, talk to `support@aignostics.com`.
 - **A client ID**, the public identifier of your integration. Ask `support@aignostics.com`; you cannot mint one yourself. There is no matching client *secret*, because a program running on a user's machine cannot keep one safe.
 
-### How it works
+#### How it works
 
 The API never sees your password. It accepts a short-lived **access token** — issued by Auth0, the identity service behind the platform — which every call carries in an `Authorization: Bearer …` header. You log in once in a browser; from then on your program renews tokens itself with the long-lived **refresh token** it got alongside the first one. When a call returns `401`, renew and retry.
 
 This is the standard OAuth 2.0 Device Authorization Grant ([RFC 8628](https://datatracker.ietf.org/doc/html/rfc8628)), so most languages have a library for the three steps below — you supply the endpoints and client ID.
 
-### Start the login
+#### Start the login
 
 ```shell
 CLIENT_ID=your-client-id
@@ -37,7 +39,7 @@ curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/device/code \
 
 The response carries `verification_uri_complete` (the link for you), `user_code` (the code to compare), `device_code` (your program's secret handle), and `interval` (seconds between polls).
 
-### Approve it, and collect the tokens
+#### Approve it, and collect the tokens
 
 Open `verification_uri_complete` in a browser, log in, and check the code shown matches the `user_code` your program printed — that comparison is what stops someone else's program from being approved with your account. Meanwhile, poll for the tokens every `interval` seconds while the response says `error: authorization_pending` (or `slow_down`, meaning you are asking too often):
 
@@ -50,7 +52,7 @@ curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
 
 Once you approve, the same call returns `access_token` and `refresh_token`. Store the refresh token as a secret — it is what makes the next step possible — and never log or commit either token.
 
-### Renew without a browser
+#### Renew without a browser
 
 This is what CI and long-running services do whenever a call returns `401`:
 
@@ -63,7 +65,7 @@ curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
 
 Because the refresh token belongs to the person who logged in, an unattended service acts as that user — and stops working if that account does. If you need a true machine identity, ask support; these flows are what the API supports today.
 
-### Check that it worked
+#### Check that it worked
 
 ```shell
 export TOKEN=your-access-token
@@ -74,7 +76,7 @@ curl -s "$API/me" -H "Authorization: Bearer $TOKEN" | jq .
 
 `GET /v1/me` returns your user and your organization — including `aignostics_bucket_name`, the bucket used below.
 
-### Hello world, end to end
+#### Hello world, end to end
 
 All of the above in one script, with your client ID as the only input. It needs `curl` and `jq`.
 
@@ -138,7 +140,7 @@ Got an access token, and a refresh token to store as a secret (64 chars).
 
 Keep the refresh token in your secret manager and later runs skip the browser entirely — the renewal call above is all they need.
 
-## Find out what the application expects
+### 2. Find out what the application expects
 
 Two calls: one to see which applications your organization can run, one to read the contract of the version you intend to use.
 
@@ -153,7 +155,7 @@ The version response tells you exactly what to send in the next step:
 - `input_artifacts[].metadata_schema` — a JSON Schema for the per-slide `metadata`. Validate against it locally instead of guessing; it is versioned with the application, so it is the source of truth for required fields.
 - `output_artifacts[]` — the result files a successful slide produces, with their MIME types.
 
-## Give the platform access to your slides
+### 3. Give the platform access to your slides
 
 The platform fetches each slide from a URL you provide, so that URL has to work without your credentials and keep working while the analysis is queued.
 
@@ -186,6 +188,8 @@ aws s3 --endpoint-url "$GCS" presign "s3://$BUCKET/slide1.tiff" --expires-in 604
 Treat the secret like any other credential: it grants access to your organization's slides.
 
 ## Analyze your slides with Atlas H&E-TME
+
+### 4. Start the analysis
 
 > ⚠️ **This example is specific to Atlas H&E-TME `1.3.0`.** Artifact names, metadata, and outputs differ per application and change between versions, so read the version's own contract — *Find out what the application expects*, above — instead of copying this payload.
 
@@ -225,7 +229,7 @@ A `201` returns `{"run_id": "..."}` — the handle you follow the analysis with,
 
 A `422` means nothing ran and `detail` names the offending field — usually metadata that fails `metadata_schema`, a download URL the platform cannot fetch, or two slides sharing an `external_id`.
 
-## Follow the analysis
+### 5. Follow the analysis
 
 Ask about the analysis as a whole:
 
@@ -248,7 +252,7 @@ curl -s "$API/runs/$RUN_ID/items?state=TERMINATED" -H "Authorization: Bearer $TO
 
 Per slide, `termination_reason` is `SUCCEEDED`, `USER_ERROR` (your input — bad file, wrong metadata), `SYSTEM_ERROR` (ours; `error_code` and `error_message` say more), or `SKIPPED`. Every 30 seconds is a plenty frequent poll for analyses taking minutes to hours.
 
-## Download results
+### 6. Download results
 
 Every succeeded slide lists its result files under `output_artifacts`, each with a `download_url` you can fetch directly. Those URLs expire; if one has gone stale, ask for a fresh one:
 
@@ -260,7 +264,7 @@ Since slides finish one by one, the efficient pattern is a loop: poll `/items`, 
 
 > ⚠️ **Results are kept for 30 days** from the day you started the analysis. After that, re-analyzing the slides is the only way to get them back.
 
-## List, cancel, or clean up
+### 7. List, cancel, or clean up
 
 ```shell
 # list your analyses, filtered and paginated
