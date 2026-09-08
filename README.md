@@ -20,16 +20,7 @@ The **Aignostics Platform** runs computational pathology applications — such a
 
 ## Choose your interface
 
-Choose your preferred interface for working with the Aignostics Platform. Each interface is designed for different user roles and use cases:
-
-### 🖥️ Launchpad (Desktop Application)
-
-| | |
-|---|---|
-| **What it is** | Graphical application for analyzing slides and viewing results in QuPath or Python notebooks |
-| **Best for** | Pathologists and researchers who want to analyze slides without writing code |
-| **Use when** | Running analyses on individual cases or small cohorts (1-20 slides) and exploring results interactively |
-| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html">Get started with Launchpad</a> |
+Choose your preferred interface for working with the Aignostics Platform: Console if you want to work in your browser, the Python Library or REST API if you want to integrate the Platform into your own code.
 
 ### 🌐 Console (Web Interface)
 
@@ -39,15 +30,6 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Best for** | Pathologists and researchers who prefer working in a browser and want the least software to install |
 | **Use when** | Analyzing slides that are already on your computer or file server (1-100s of slides), without installing a desktop application |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_console.html">Get started with Console</a> |
-
-### ⌨️ CLI (Command-Line Interface)
-
-| | |
-|---|---|
-| **What it is** | Terminal tool for scripting and automation |
-| **Best for** | Bioinformaticians and technical researchers who work with terminal-based workflows |
-| **Use when** | Processing large cohorts (10s-100s of slides), automating repetitive analyses, or integrating with computational pipelines |
-| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_cli.html">Get started with the CLI</a> |
 
 ### 📚 Python Library
 
@@ -67,6 +49,28 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Use when** | Building a service or workflow outside Python, or generating your own client from the OpenAPI document |
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_api.html">Get started with the API</a> |
 
+<!-- Hidden for now: Console is the single graphical interface, the Python Library and REST API the
+     programmatic ones. Restore together with the toctree entries in index.rst and the conf.py exclusions.
+
+### 🖥️ Launchpad (Desktop Application)
+
+| | |
+|---|---|
+| **What it is** | Graphical application for analyzing slides and viewing results in QuPath or Python notebooks |
+| **Best for** | Pathologists and researchers who want to analyze slides without writing code |
+| **Use when** | Running analyses on individual cases or small cohorts (1-20 slides) and exploring results interactively |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html">Get started with Launchpad</a> |
+
+### ⌨️ CLI (Command-Line Interface)
+
+| | |
+|---|---|
+| **What it is** | Terminal tool for scripting and automation |
+| **Best for** | Bioinformaticians and technical researchers who work with terminal-based workflows |
+| **Use when** | Processing large cohorts (10s-100s of slides), automating repetitive analyses, or integrating with computational pipelines |
+| **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_cli.html">Get started with the CLI</a> |
+-->
+
 <!-- Hidden for now: the MCP server is not yet usable for customers. Restore this row
      together with the guide's toctree entry and conf.py exclusion.
 
@@ -80,18 +84,18 @@ Choose your preferred interface for working with the Aignostics Platform. Each i
 | **Get started** | <a href="https://aignostics.readthedocs.io/en/latest/get_started_mcp.html">Get started with the MCP Server</a> |
 -->
 
-> 💡 Each interface has its own step-by-step guide (linked above) that includes installation. Launchpad and the CLI handle authentication for you; the Python Library guide covers credential setup.
+> 💡 Each interface has its own step-by-step guide (linked above) that includes installation. Console handles authentication for you; the Python Library and API guides cover credential setup.
 
 ## Next Steps
 
 The best next step is to **run your first analysis** end to end.
 
-New here? Start with the [Get started with Launchpad](https://aignostics.readthedocs.io/en/latest/get_started_launchpad.html) guide — it walks you through signing up, installing, and running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on a public example slide, then viewing the results in QuPath, with no coding required. Prefer the terminal or Python? Use the [Get started with the CLI](https://aignostics.readthedocs.io/en/latest/get_started_cli.html) or [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) guide instead.
+New here? Start with the [Get started with Console](https://aignostics.readthedocs.io/en/latest/get_started_console.html) guide — it walks you through signing up, uploading your slides, and running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on them in your browser, with no coding required. Prefer to work in code? Use the [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) or [Get started with the API](https://aignostics.readthedocs.io/en/latest/get_started_api.html) guide instead.
 
 Once you've run your first analysis:
 
 - **Understand the platform**: Read the [Aignostics Platform Overview](https://aignostics.readthedocs.io/en/latest/platform_overview.html) for architecture and core concepts.
-- **Go deeper**: See the [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html) and [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html).
+- **Go deeper**: See the [Python Library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html) and [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html).
 - **Get support**: Contact [support@aignostics.com](mailto:support@aignostics.com) or browse the [full documentation](https://aignostics.readthedocs.io/en/latest/).
 
 ## We take quality and security seriously
@@ -232,7 +236,7 @@ For integration with programming languages other than Python, you can use the RE
 
 Every WSI processed by the Platform generates a cost. Usage of the "Test Application" is free of charge for any registered user. The cost for other applications is defined in your business agreement with Aignostics. The cost is calculated based on the number of slides processed. When an application run is canceled, either by the system or by the user, only processed images incur a cost.
 
-**[Read the API reference documentation](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)** or use our **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** to dive into details of all operations and parameters.
+**[Browse the API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html)** to dive into details of all operations and parameters, or try them out in the **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** on the Platform.
 
 ### Platform workflow
 
@@ -331,16 +335,13 @@ The organization's Google Cloud Storage bucket stores uploaded files with automa
    [operational excellence](https://aignostics.readthedocs.io/en/latest/operational_excellence.html)
    with information on our modern toolchain and software architecture.
 2. Check out the
-   [CLI reference](https://aignostics.readthedocs.io/en/latest/cli_reference.html)
-   with detailed documentation of all CLI commands and options.
-3. Check out the
    [library reference](https://aignostics.readthedocs.io/en/latest/lib_reference.html)
    with detailed documentation of public classes and functions.
-4. Check out the
-   [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)
+3. Check out the
+   [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html)
    with detailed documentation of all API operations and parameters. See as well
-   the OpenAPI Specification in [JSON](https://github.com/aignostics/python-sdk/blob/main/docs/source/_static/openapi_v1.json) and [YAML](https://github.com/aignostics/python-sdk/blob/main/docs/source/_static/openapi_v1.yaml), and the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html).
-5. Our
+   the OpenAPI Specification in [JSON](https://github.com/aignostics/python-sdk/blob/main/docs/source/_static/openapi_v1.json) and [YAML](https://github.com/aignostics/python-sdk/blob/main/docs/source/_static/openapi_v1.yaml).
+4. Our
    [release notes](https://aignostics.readthedocs.io/en/latest/release-notes.html)
    provide a complete log of recent improvements and changes.
 6. We gratefully acknowledge the numerous

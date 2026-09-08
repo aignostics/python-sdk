@@ -115,7 +115,7 @@ For integration with programming languages other than Python, you can use the RE
 
 Every WSI processed by the Platform generates a cost. Usage of the "Test Application" is free of charge for any registered user. The cost for other applications is defined in your business agreement with Aignostics. The cost is calculated based on the number of slides processed. When an application run is canceled, either by the system or by the user, only processed images incur a cost.
 
-**[Read the API reference documentation](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html)** or use our **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** to dive into details of all operations and parameters.
+**[Browse the API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html)** to dive into details of all operations and parameters, or try them out in the **[Interactive API Explorer](https://platform.aignostics.com/explore-api)** on the Platform.
 
 ### Platform workflow
 

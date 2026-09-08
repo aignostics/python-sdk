@@ -13,11 +13,11 @@
    :hidden:
    :caption: Get started
 
-   get_started_launchpad
    get_started_console
-   get_started_cli
    get_started_library
    get_started_api
+   invite_your_team
+   troubleshooting
 
 .. toctree::
    :maxdepth: 1
@@ -25,10 +25,8 @@
    :caption: Reference
 
    platform_overview
-   cli_reference
    lib_reference
    api_explorer_v1
-   api_reference_v1
    operational_excellence
    security
    release-notes

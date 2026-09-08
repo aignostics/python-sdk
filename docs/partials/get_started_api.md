@@ -2,7 +2,7 @@
 
 The Aignostics Platform API is a REST API over HTTPS, rooted at `https://platform.aignostics.com/api/v1`. Call it directly when you integrate the platform into another language or into an existing pipeline.
 
-This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), follow progress, download results. Examples use `curl` and `jq`. The complete contract is in the [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html).
+This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), follow progress, download results. Examples use `curl` and `jq`. The complete contract is in the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html).
 
 ```{include} ../partials/_get_started_signup.md
 ```
@@ -221,7 +221,7 @@ curl -s -X POST "$API/runs" \
   }' | jq .
 ```
 
-A `201` returns `{"run_id": "..."}` — the handle you follow the analysis with, so keep it. `custom_metadata` and `scheduling` are optional; the [API reference](https://aignostics.readthedocs.io/en/latest/api_reference_v1.html) lists what your API version accepts.
+A `201` returns `{"run_id": "..."}` — the handle you follow the analysis with, so keep it. `custom_metadata` and `scheduling` are optional; the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html) lists what your API version accepts.
 
 A `422` means nothing ran and `detail` names the offending field — usually metadata that fails `metadata_schema`, a download URL the platform cannot fetch, or two slides sharing an `external_id`.
 

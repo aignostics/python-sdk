@@ -1,8 +1,8 @@
 # Get started with Console
 
-[Console](https://platform.aignostics.com) is the web interface of the Aignostics Platform. This guide walks you through running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) — which analyzes the tumor microenvironment in H&E-stained tissue — on your own slides: you upload the slides with one command, then analyze them, review the results, and download them in your browser. You do not need any programming experience, and the setup takes about 15 minutes plus the time your slides take to upload. Results stay available in Console for 30 days.
+[Console](https://platform.aignostics.com) is the web interface of the Aignostics Platform. This guide takes you through your first analysis with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), which profiles the tumor microenvironment on H&E slides: you upload your slides with one command, then start the analysis and download the results in your browser. It takes about 15 minutes plus upload time, and you don't need to know how to code.
 
-**What you need:** a Mac, Windows (Windows 10 or later), or Linux (Ubuntu) computer, a web browser, a mobile phone for the login security step, and your whole slide images in a supported format — `.svs`, `.tif`, `.tiff`, or DICOM (`.dcm`). No slides at hand? [Step 4](#optional-get-an-example-slide) downloads a public example slide for you.
+You need a Mac, Windows, or Linux computer, a phone for the login code, and your slides as `.svs`, `.tif`, `.tiff`, or DICOM `.dcm` files.
 
 ```{include} ../partials/_get_started_signup.md
 ```
@@ -11,206 +11,170 @@
 
 ### 1. Install the Aignostics Python SDK
 
-The SDK runs in a terminal — a text window where you type commands. You only need it for the upload; everything after that happens in your browser. If a command does not work, see [Troubleshooting](#troubleshooting).
+1. Open a terminal. On macOS, press `Cmd+Space`, type `Terminal`, and press `Enter`. On Windows, open the Start menu, type `PowerShell`, and press `Enter`.
 
-**On macOS or Linux:** open the **Terminal** app — on macOS, press `Cmd` + `Space`, type `Terminal`, and press `Enter`. Paste this command and press `Enter`:
+2. Paste the install command for your system into the terminal and press Enter:
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+   ```bash
+   # macOS or Linux
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
 
-**On Windows:** open **PowerShell** — click the Start menu, type `PowerShell`, and press `Enter`. Paste this command and press `Enter`:
+   ```powershell
+   # Windows
+   powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
 
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
+3. Close the terminal and open a new one.
 
-When it finishes, **close that window and open a new one.** Then check the install worked by pasting this command and pressing `Enter`:
+4. Check the install by running in your terminal:
 
-```bash
-uvx aignostics --help
-```
+   ```bash
+   uvx aignostics --help
+   ```
 
-The first run takes a minute to get ready. A list of command groups (`application`, `bucket`, `dataset`, and more) means the install worked. If you see an error instead, see [Troubleshooting](#troubleshooting).
+   You should see a list of commands.
 
 ### 2. Log in
 
-In the same window, paste this command and press `Enter`:
+1. Log in by running in your terminal:
 
-```bash
-uvx aignostics user login
-```
+   ```bash
+   uvx aignostics user login
+   ```
 
-A browser window opens at `platform.aignostics.com`. Enter your email and password, then the six-digit code from your authenticator app, and return to your terminal. You stay logged in for future sessions.
+2. In the browser window that opens, log in with your email, password, and the six-digit code from your authenticator app.
 
-### 3. Prepare your slides for upload
+You stay logged in for future sessions.
 
-Collect the slides you want to analyze in a single folder on your computer — for example a folder called `my-slides`. Subfolders are fine; they are preserved during upload.
+### 3. Upload your slides from your local disk
 
-Only files of the supported formats (`.svs`, `.tif`, `.tiff`, `.dcm`) can be analyzed. Other files in the folder are uploaded but will not appear as slides when you start the analysis.
+1. Put the slides you want to upload in one folder on your local disk.
 
-### 4. (Optional) Get an example slide
+2. Upload the folder by running the following, replacing `./my-slides` with its path:
 
-To try the workflow before using your own data, download a public example slide — a TCGA lung adenocarcinoma case from the NCI Image Data Commons.
+   ```bash
+   uvx aignostics bucket upload ./my-slides
+   ```
 
-The target folder has to exist before you download into it, so create it first. Paste these commands and press `Enter` after each:
+3. Keep the terminal open until it prints `All files uploaded successfully!`. Slides are large, so this can take a while.
 
-```bash
-mkdir my-slides
-uvx aignostics dataset idc download 1.3.6.1.4.1.5962.99.1.1069745200.1645485340.1637452317744.2.0 my-slides/
-```
+Your slides are now in your organization's private bucket, in a folder named after your computer's user account, for example `jdoe`.
 
-Skip the first command if you already created `my-slides` in Step 3 — and if you named your folder something else, use that name in both commands. Downloading a folder that does not exist stops with `Invalid value for 'target': Directory 'my-slides/' does not exist`.
+### 4. (Optional) Copy slides from your own cloud bucket
 
-The download takes a few minutes and puts the slide in `my-slides/tcga_luad`, ready for the next step.
+If your slides are already stored in AWS S3, Azure Blob Storage, or Google Cloud Storage, you can copy them directly from there into your Aignostics bucket.
 
-### 5. Run the upload
+1. Install rclone, a tool for managing cloud storage, by following the [rclone installation guide](https://rclone.org/install/).
 
-Your organization has a private storage area on the Aignostics Platform — your **bucket**. Only you and the other members of your organization can see what is in it. Uploading a slide does not start an analysis; it just puts the slide where Console can find it.
+2. Log in to your own cloud provider account (`aws sso login`, `az login`, or `gcloud auth application-default login`).
 
-Paste this command and press `Enter`, replacing `./my-slides` with the path to your folder:
+3. Log in to your Aignostics account if you haven't already and get the access keys for your Aignostics bucket by running:
 
-```bash
-uvx aignostics bucket upload ./my-slides
-```
+   ```bash
+   uvx aignostics user whoami --no-mask-secrets
+   ```
 
-The command first reports how many files it found and their total size, then names each slide as it goes up. When it is finished it lists what it uploaded and prints `All files uploaded successfully!`. A progress bar is part of that output, but it only shows up if your terminal window is wide enough — in a standard-width window there is no room for it, so you see the messages alone.
+   Note `aignostics_bucket_name`, `aignostics_bucket_hmac_access_key_id`, and `aignostics_bucket_hmac_secret_access_key` — these are your access credentials. Treat them like a password.
 
-**Keep the terminal open and your computer awake until then** — a single whole slide image is often 1–4 GB, so this can take a while. If the upload is interrupted, run the same command again.
+4. Use the access credentials from the previous step to register both your own cloud bucket and your Aignostics bucket with rclone by running:
 
-Your slides are filed in a folder named after the user account you are logged in with on your computer, so they stay separate from your colleagues' slides. If that account is `jdoe`, then `my-slides/slide1.svs` becomes `jdoe/slide1.svs`. Run `whoami` if you are unsure what your account is called — you will need the folder name in the next step.
+   ```bash
+   rclone config create aignx s3 provider=GCS endpoint=https://storage.googleapis.com \
+     access_key_id=<access key id> secret_access_key=<secret> no_check_bucket=true
 
-To list what arrived in your bucket:
+   # and one of these, depending on your cloud:
+   rclone config create mycloud s3 provider=AWS env_auth=true region=<your-region>
+   rclone config create mycloud azureblob env_auth=true account=<your-storage-account>
+   rclone config create mycloud "google cloud storage" env_auth=true
+   ```
 
-```bash
-uvx aignostics bucket find
-```
+5. Copy your slides from your own bucket into a folder in your Aignostics bucket (for example, `jdoe`), by running:
+
+   ```bash
+   rclone copy mycloud:<your-bucket>/<slides-folder> aignx:<aignostics-bucket>/jdoe/ --progress
+   ```
+
+   Keep the process running and your machine awake until the copy finishes.
 
 ## Analyze your slides with Atlas H&E-TME
 
-### 6. Start the analysis
+### 5. Start the analysis
 
-Open [platform.aignostics.com](https://platform.aignostics.com) and log in. Select **Analyze** → **My Application Runs** in the sidebar, then click **Create run** in the top right.
+1. Open [platform.aignostics.com](https://platform.aignostics.com) and select **Analyze** → **My Application Runs** in the sidebar.
 
-![The My Application Runs page with the Create run button in the top right](../source/_static/console/01-analyze-create-run.png)
+2. Click **Create run** in the top right.
 
-Fill in the **Create run** form:
+3. Under **Slides**, open your folder (**Bucket » jdoe**) and tick the slides to analyze.
 
-- **Slides.** You see the contents of your organization's bucket. Use the breadcrumb (**Bucket » …**) to open the folder named after your computer account, then tick the slides you want to analyze. Your selection is listed under the table, so you can check it before you continue.
+   ```{figure} ../source/_static/console/02-select-slides.png
+   :alt: The Create run form with the bucket contents listed and one slide ticked
+   :figclass: guide-screenshot
+   :target: ../source/_static/console/02-select-slides.png
 
-  ![The Create run form with the bucket contents listed and one slide ticked](../source/_static/console/02-select-slides.png)
+   Pick your slides from the bucket. Click to view full size.
+   ```
 
-- **Version.** Pick the entry starting with `he-tme` — that is Atlas H&E-TME. Unless you need to reproduce an earlier analysis, use the highest version number.
-- **Staining method.** Already fixed to `H&E` for Atlas H&E-TME, so there is nothing to choose.
-- **Indication.** The disease your slides relate to — for the example slide, `Lung cancer`.
-- **Tissue.** The tissue your slides were taken from — for the example slide, `Lung`.
-- **Name.** A name of your choice, which makes the analysis easier to recognise later.
+4. Under **Version**, pick the he-tme entry with the highest version number.
 
-Your entries apply to every slide you selected, so all slides you analyze together must share the same staining method, indication, and tissue. Click **Run now** to start the analysis.
+5. Under **Indication** and **Tissue**, pick what matches your slides, for example Lung cancer and Lung. They apply to all slides you selected.
 
-![The lower half of the Create run form with Version, Staining method, Indication, Tissue and Name filled in](../source/_static/console/03-metadata.png)
+6. Under **Name**, enter anything that helps you recognize the analysis later.
 
-Your analysis now appears at the top of **My Application Runs**.
+   ```{figure} ../source/_static/console/03-metadata.png
+   :alt: The lower half of the Create run form with Version, Staining method, Indication, Tissue and Name filled in
+   :figclass: guide-screenshot
+   :target: ../source/_static/console/03-metadata.png
 
-### 7. Wait for results
+   The rest of the form, filled in for a lung slide. Click to view full size.
+   ```
 
-The analysis runs on Aignostics servers, so you can close your browser and switch off your computer. How long it takes depends on the size and number of your slides — anywhere from a few minutes to several hours. Return to **My Application Runs** any time: the **Status** column shows how far the analysis has got, and **Completed** means it has finished.
+7. Click **Run now**.
 
-### 8. Review your results in the viewer
+Your analysis appears at the top of **My Application Runs**.
 
-Select your analysis in **My Application Runs** to open **Run Details**, then click a slide name to open it in the built-in viewer.
+### 6. Wait for results
 
-The **Overlays** panel on the right switches the results on and off on top of your slide: **Tissue Segmentation** colours the tissue regions that were found, **Cell Classification** colours the individual cells by type — with a legend of the cell types and a slider to make the colours more or less transparent — and **Tissue QC** shows areas flagged during quality control. Use the zoom buttons at the top right (`0.4×` to `40×`) to look at an area closely.
+The analysis runs on Aignostics servers, so you can close your browser. It takes anywhere from minutes to hours depending on the number and size of your slides. The **Status** column on **My Application Runs** shows **Completed** when it is done.
 
-![A slide in the viewer with tissue and cell overlays switched on and the Overlays panel open](../source/_static/console/04-viewer-overlays.png)
+### 7. Review your results in the viewer
 
-### 9. Download your results
+1. Open your analysis and click a slide name to open it in the viewer.
 
-On **Run Details**, click **Download Available Results** for all your slides, or use the download icon in the **Actions** column to get a single slide. For each slide you get the tissue regions that were found, the individual cells that were detected and classified by type, and a spreadsheet of measurements such as cell counts and densities.
+2. Use the **Overlays** panel on the right to show the tissue regions, classified cells, and quality-control flags on top of your slide.
 
-![The Run Details page with the Download Available Results button and per-slide download icons](../source/_static/console/05-download-results.png)
+```{figure} ../source/_static/console/04-viewer-overlays.png
+:alt: A slide in the viewer with tissue and cell overlays switched on and the Overlays panel open
+:figclass: guide-screenshot
+:target: ../source/_static/console/04-viewer-overlays.png
 
-> ⚠️ **Results are kept for 30 days**, counting from the day you started the analysis. After that they can no longer be viewed or downloaded, and the only way to get them back is to analyze the slides again — so download whatever you want to keep in time.
-
-**Congratulations** — you have run your first analysis, reviewed it in the viewer, and downloaded the results.
-
-### (Optional) Clean up your bucket
-
-Your slides stay in your bucket until you delete them, so analyzing the same slides again needs no new upload. Deletion works on patterns and is a dry run by default. Replace `jdoe` with your own folder name from step 5:
-
-```bash
-uvx aignostics bucket delete "jdoe/.*"              # shows how many objects would be deleted
-uvx aignostics bucket delete "jdoe/.*" --no-dry-run # actually deletes them
+The viewer with tissue and cell overlays on. Click to view full size.
 ```
 
-> ⚠️ Deleting objects from your bucket cannot be undone. It does not affect results you have already downloaded.
+### 8. Download your results
 
-```{include} ../partials/_invite_your_team.md
+On **Run Details**, click **Download Available Results**. For each slide you get the tissue regions, the classified cells, and a spreadsheet of measurements such as cell counts and densities. Results are kept for 30 days, so download what you want to keep.
+
+```{figure} ../source/_static/console/05-download-results.png
+:alt: The Run Details page with the Download Available Results button and per-slide download icons
+:figclass: guide-screenshot
+:target: ../source/_static/console/05-download-results.png
+
+**Run Details** — download everything at once, or one slide at a time. Click to view full size.
 ```
 
-## Troubleshooting
+That's it: you have analyzed your first slides with Atlas H&E-TME and have the results on your computer.
 
-<details>
-<summary><strong>The install command failed</strong></summary>
+## Where to go next
 
-First, make sure you copied the whole command, including everything from the start of the line to the end. Paste it again and press `Enter`.
+- {doc}`Invite your team <invite_your_team>` — add colleagues so they can run analyses too.
+- {doc}`Troubleshooting <troubleshooting>` — if something did not work as described.
+- **Clean up your bucket** — your slides stay in your bucket until you delete them, so analyzing them again needs no new upload. Deletion cannot be undone but does not affect results you have downloaded. It is a dry run by default; replace `jdoe` with the folder your slides are in:
 
-If `uvx aignostics --help` did not work right after installing, close that terminal window, open a new one, and try again. The install command is only fully active in a freshly opened window.
-
-If it still fails, copy the error message and email it to `support@aignostics.com`.
-
-</details>
-
-<details>
-<summary><strong>My upload was interrupted</strong></summary>
-
-Run the same `uvx aignostics bucket upload` command again. Files that were already uploaded are simply uploaded again and replace the earlier copy, so nothing is duplicated and nothing is lost.
-
-If uploads are interrupted repeatedly, check that your computer does not go to sleep while the upload runs, and that your network connection is stable.
-
-</details>
-
-<details>
-<summary><strong>My slides don't show up when I start an analysis</strong></summary>
-
-1. Confirm the upload arrived by running `uvx aignostics bucket find --detail` and looking for your files.
-2. Check that you are browsing the right folder in Console — the one named after your computer account, or the one you passed to `--destination-prefix`.
-3. Check the file format. Only `.svs`, `.tif`, `.tiff`, and `.dcm` files can be analyzed. For DICOM slides, the complete set of `.dcm` files belonging to the slide must be uploaded together, so upload the whole folder rather than individual files.
-
-If your slides are in the bucket, in the right format, and still not selectable, email `support@aignostics.com`.
-
-</details>
-
-<details>
-<summary><strong>A slide failed, or the whole analysis failed</strong></summary>
-
-Open the analysis on **My Application Runs** to see which slides failed — the **Status** column on **Run Details** shows the outcome per slide. Results for the slides that succeeded are unaffected — you can review and download them as usual.
-
-A single failed slide usually points at the slide itself: an unsupported or incomplete file, or metadata that does not match the tissue on the slide. Check the file opens on your computer, then analyze that slide on its own.
-
-If the whole analysis failed, or a slide fails again on a second attempt, email `support@aignostics.com` with the name or ID shown on **Run Details** and we will look into it.
-
-</details>
-
-<details>
-<summary><strong>I can't log in, or my six-digit code is rejected</strong></summary>
-
-The six-digit code from your authenticator app changes every 30 seconds. If yours was rejected, wait for the app to show a new code and enter that one promptly.
-
-Make sure your phone's clock is set to update automatically — if it is wrong by even a minute, the codes will not match.
-
-If you have forgotten your password, use the "Forgot password" link on the login page. If you still can't get in, email `support@aignostics.com`.
-
-</details>
-
-<details>
-<summary><strong>I want to upload and analyze hundreds of slides</strong></summary>
-
-The upload command handles large folders, but for larger cohorts you may prefer to script the whole workflow — including submission and result download — instead of clicking through Console for every batch. See [Get started with the CLI](https://aignostics.readthedocs.io/en/latest/get_started_cli.html) and [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html), or email `support@aignostics.com` and we will help you choose an approach.
-
-</details>
-
-Still stuck? Email `support@aignostics.com` and describe what you were doing and what you saw.
+  ```bash
+  uvx aignostics bucket delete "jdoe/.*"              # shows what would be deleted
+  uvx aignostics bucket delete "jdoe/.*" --no-dry-run # deletes it
+  ```
 
 <!-- Organizing uploads with --destination-prefix is deliberately left out of this guide: the default folder is enough
      for a first analysis, and the option is documented in the CLI reference. -->
