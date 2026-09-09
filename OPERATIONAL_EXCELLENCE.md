@@ -1,5 +1,21 @@
 # Operational Excellence
 
+We know you take **quality** and **security** as seriously as we do. That's why
+the Aignostics Python SDK is built following best practices and with full
+transparency. This includes (1) making the complete
+[source code of the SDK
+available on GitHub](https://github.com/aignostics/python-sdk/), maintaining a
+(2)
+[A-grade code quality](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
+with [high test coverage](https://app.codecov.io/gh/aignostics/python-sdk) in
+all releases, (3) achieving
+[A-grade security](https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk)
+with
+[active scanning of dependencies](https://github.com/aignostics/python-sdk/issues/4),
+and (4) providing
+[extensive documentation](https://aignostics.readthedocs.io/en/latest/). Read
+more about how we handle [security](https://aignostics.readthedocs.io/en/latest/security.html).
+
 > 🧠 This project was scaffolded using the template [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template) with [copier](https://copier.readthedocs.io/), thereby applying the following toolchain:
 >
 1. Linting with [Ruff](https://github.com/astral-sh/ruff)
