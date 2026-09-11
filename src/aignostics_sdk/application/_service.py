@@ -854,7 +854,7 @@ class Service(BaseService):
             application_version (str | None): The version of the application.
                 If not given latest version is used.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_type (str | None): The type of GPU to use (L4, A100 or RTX_PRO_6000).
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
                 (SPOT, ON_DEMAND, or FLEX_START).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
@@ -1023,7 +1023,7 @@ class Service(BaseService):
             deadline (str | None): An optional hard deadline for the run, ISO8601 format.
                 If processing exceeds this deadline, the run can be aborted.
             onboard_to_aignostics_portal (bool): True if the run should be onboarded to the Aignostics Portal.
-            gpu_type (str | None): The type of GPU to use (L4 or A100).
+            gpu_type (str | None): The type of GPU to use (L4, A100 or RTX_PRO_6000).
             gpu_provisioning_mode (str | None): The provisioning mode for GPU resources
                 (SPOT, ON_DEMAND, or FLEX_START).
             max_gpus_per_slide (int | None): The maximum number of GPUs to allocate per slide.
