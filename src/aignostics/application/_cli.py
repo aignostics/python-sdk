@@ -90,7 +90,7 @@ ForceOption = Annotated[
 
 GpuTypeOption = Annotated[
     str,
-    typer.Option(help="GPU type to use for processing (L4 or A100)."),
+    typer.Option(help="GPU type to use for processing (L4, A100 or RTX_PRO_6000)."),
 ]
 
 GpuProvisioningModeOption = Annotated[

@@ -24,7 +24,7 @@ from ._constants import (
     DEFAULT_NODE_ACQUISITION_TIMEOUT_MINUTES,
 )
 
-SDK_METADATA_SCHEMA_VERSION = "0.0.6"
+SDK_METADATA_SCHEMA_VERSION = "0.0.7"
 ITEM_SDK_METADATA_SCHEMA_VERSION = "0.0.3"
 VALIDATION_CASE_TAG_PREFIX = "__aignx_validation_case:"
 
@@ -34,6 +34,7 @@ class GPUType(StrEnum):
 
     L4 = "L4"
     A100 = "A100"
+    RTX_PRO_6000 = "RTX_PRO_6000"
 
 
 class ProvisioningMode(StrEnum):
@@ -68,7 +69,7 @@ class GPUConfig(BaseModel):
 
     gpu_type: GPUType = Field(
         default_factory=lambda: GPUType(DEFAULT_GPU_TYPE),
-        description="The type of GPU to use (L4 or A100)",
+        description="The type of GPU to use (L4, A100 or RTX_PRO_6000)",
     )
     provisioning_mode: ProvisioningMode = Field(
         default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),

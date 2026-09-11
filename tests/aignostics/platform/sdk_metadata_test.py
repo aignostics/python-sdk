@@ -1037,7 +1037,8 @@ class TestPipelineConfiguration:
 
         assert GPUType.L4.value == "L4"
         assert GPUType.A100.value == "A100"
-        assert len(GPUType) == 2
+        assert GPUType.RTX_PRO_6000.value == "RTX_PRO_6000"
+        assert len(GPUType) == 3
 
     @pytest.mark.unit
     @staticmethod
