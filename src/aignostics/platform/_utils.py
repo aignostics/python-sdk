@@ -81,6 +81,8 @@ def mime_type_to_file_ending(mime_type: str) -> str:
         return ".json"
     if mime_type == "text/csv":
         return ".csv"
+    if mime_type == "application/zip":
+        return ".zip"
     msg = f"Unknown mime type: {mime_type}"
     raise ValueError(msg)
 
