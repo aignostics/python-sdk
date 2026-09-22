@@ -1,5 +1,6 @@
 """Unit tests for SDK metadata generation."""
 
+import logging
 import sys
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -1037,7 +1038,33 @@ class TestPipelineConfiguration:
 
         assert GPUType.L4.value == "L4"
         assert GPUType.A100.value == "A100"
-        assert len(GPUType) == 2
+        assert GPUType.RTX_PRO_6000.value == "RTX_PRO_6000"
+        assert len(GPUType) == 3
+
+    @pytest.mark.unit
+    @staticmethod
+    @pytest.mark.parametrize(("gpu_type", "known"), [("RTX_PRO_6000", True), ("H200", False)])
+    def test_gpu_config_gpu_type(gpu_type: str, known: bool, caplog: pytest.LogCaptureFixture) -> None:
+        """A known GPU type resolves to the enum; an unknown one is kept verbatim and warns."""
+        from aignostics.platform._sdk_metadata import GPUConfig, GPUType
+
+        with caplog.at_level(logging.WARNING):
+            config = GPUConfig(gpu_type=gpu_type)
+
+        assert config.model_dump(mode="json")["gpu_type"] == gpu_type
+        assert isinstance(config.gpu_type, GPUType) is known
+        assert ("not known to this SDK release" in caplog.text) is not known
+
+    @pytest.mark.unit
+    @staticmethod
+    def test_run_sdk_metadata_accepts_unknown_gpu_type() -> None:
+        """A whole run payload carrying an unknown GPU type validates, not just the field."""
+        from aignostics.platform._sdk_metadata import PipelineConfig
+
+        metadata = build_run_sdk_metadata()
+        metadata["pipeline"] = PipelineConfig(gpu={"gpu_type": "H200"}).model_dump(exclude_none=True, mode="json")
+
+        assert validate_run_sdk_metadata(metadata) is True
 
     @pytest.mark.unit
     @staticmethod

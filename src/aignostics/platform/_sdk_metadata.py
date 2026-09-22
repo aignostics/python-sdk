@@ -30,10 +30,11 @@ VALIDATION_CASE_TAG_PREFIX = "__aignx_validation_case:"
 
 
 class GPUType(StrEnum):
-    """Type of GPU to use for processing."""
+    """GPU types known to this SDK release. Not an allow-list: `GPUConfig` accepts any value."""
 
     L4 = "L4"
     A100 = "A100"
+    RTX_PRO_6000 = "RTX_PRO_6000"
 
 
 class ProvisioningMode(StrEnum):
@@ -66,9 +67,9 @@ class CPUConfig(BaseModel):
 class GPUConfig(BaseModel):
     """Configuration for GPU resources."""
 
-    gpu_type: GPUType = Field(
+    gpu_type: GPUType | str = Field(
         default_factory=lambda: GPUType(DEFAULT_GPU_TYPE),
-        description="The type of GPU to use (L4 or A100)",
+        description="The type of GPU to use. Unknown values are forwarded for the platform to judge.",
     )
     provisioning_mode: ProvisioningMode = Field(
         default_factory=lambda: ProvisioningMode(DEFAULT_GPU_PROVISIONING_MODE),
@@ -87,6 +88,32 @@ class GPUConfig(BaseModel):
         description="Maximum run duration in minutes when using FLEX_START provisioning mode (1-3600). "
         "Required when provisioning_mode is FLEX_START, must be None otherwise.",
     )
+
+    @field_validator("gpu_type", mode="before")
+    @classmethod
+    def resolve_gpu_type(cls, gpu_type: GPUType | str) -> GPUType | str:
+        """Resolve a known GPU type to the enum; keep an unknown one verbatim with a warning.
+
+        The platform adds GPU types ahead of this enum, so rejecting one here would put every
+        new pool behind an SDK release. Coercing explicitly rather than leaving it to the
+        union matters: smart mode resolves a known name to ``str``, breaking ``.value``.
+
+        Args:
+            gpu_type: The GPU type to resolve.
+
+        Returns:
+            The matching ``GPUType`` member, or the value unchanged.
+        """
+        try:
+            return GPUType(gpu_type)
+        except ValueError:
+            logger.warning(
+                "GPU type '{}' is not known to this SDK release ({}); forwarding it for the "
+                "platform to accept or reject.",
+                gpu_type,
+                ", ".join(g.value for g in GPUType),
+            )
+            return gpu_type
 
     @model_validator(mode="after")
     def validate_flex_start_duration(self) -> "GPUConfig":
