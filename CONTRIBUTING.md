@@ -179,13 +179,16 @@ Merges the release branch into `main` with `--no-ff` and deletes the branch.
 
 The slim `aignostics-sdk` package is published manually to the internal Google Artifact Registry.
 
+> **Note:** the `python-packages` registry accepts uploads from CI only (via WIF), not from personal
+> gcloud accounts. The manual steps below will be rejected until a CI publish job replaces them.
+
 **Prerequisites:** `~/.config/uv/uv.toml` must contain a `publish-url` for the `aignx-private-registry` index (one-time setup):
 
 ```toml
 [[index]]
 name = "aignx-private-registry"
-url = "https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/simple/"
-publish-url = "https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/"
+url = "https://europe-python.pkg.dev/aignx-shared-registries-xyte/python-packages/simple/"
+publish-url = "https://europe-python.pkg.dev/aignx-shared-registries-xyte/python-packages/"
 authenticate = "always"
 default = true
 ```

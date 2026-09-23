@@ -1140,13 +1140,13 @@ gh pr edit --add-label "skip:test:long_running"
 **Internal registry (use for pre-release / integration builds on this branch):**
 
 ```
-https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/aignostics-sdk
+https://europe-python.pkg.dev/aignx-shared-registries-xyte/python-packages/aignostics-sdk
 ```
 
 To publish to the internal registry instead of PyPI:
 
 ```bash
-uv publish --index-url https://europe-python.pkg.dev/aignx-development/aignx-development-python-registry/ dist/aignostics_sdk-*
+uv publish --index-url https://europe-python.pkg.dev/aignx-shared-registries-xyte/python-packages/ dist/aignostics_sdk-*
 ```
 
 ## SDLC Configuration
