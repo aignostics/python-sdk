@@ -64,8 +64,11 @@ SPOT_4_HEIGHT = 3640
 
 # To update file sizes: the tests print every file's actual size before asserting. Run with
 # -s to see them, then paste the printed byte values as the second element of each tuple.
-# SPOT_0: uv run pytest tests/aignostics/application/gui_test.py::test_gui_run_download -s --no-cov
-# SPOT_1: uv run pytest tests/aignostics/application/cli_test.py::test_cli_run_execute -s --no-cov
+# Both are e2e tests and skip silently without their marker:
+# SPOT_0: uv run pytest tests/aignostics/application/gui_test.py::test_gui_run_download \
+#           -m "e2e and long_running" -s --no-cov
+# SPOT_1: uv run pytest tests/aignostics/application/cli_test.py::test_cli_run_execute \
+#           -m "e2e and very_long_running" -s --no-cov
 #
 # These defaults reflect the production he-tme run. If staging produces different output (e.g.
 # after deploying a new application version to staging before production), add an override inside
@@ -73,34 +76,36 @@ SPOT_4_HEIGHT = 3640
 # Note: defined here rather than inside each match arm to avoid SonarCloud flagging the
 # nearly-identical blocks as duplicated code (the 3% duplication threshold).
 SPOT_0_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_csv_class_information.csv", 285, 10),
-    ("tissue_qc_geojson_polygons.json", 100956, 10),
-    ("tissue_qc_parquet_polygons.parquet", 39384, 10),
-    ("tissue_qc_segmentation_map_image.tiff", 1645632, 10),
-    ("tissue_segmentation_csv_class_information.csv", 452, 10),
-    ("tissue_segmentation_geojson_polygons.json", 396960, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 145744, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 3078034, 10),
-    ("cell_classification_geojson_polygons.json", 6385805, 10),
-    ("cell_classification_parquet_polygons.parquet", 1998420, 10),
-    ("readout_generation_cell_readouts.csv", 1654453, 10),
-    ("readout_generation_slide_readouts.csv", 303708, 10),
+    ("tissue_qc_geojson_polygons.json", 112068, 10),
+    ("tissue_qc_parquet_polygons.parquet", 32364, 10),
+    ("tissue_qc_segmentation_map_image.tiff", 1670903, 10),
+    ("tissue_segmentation_geojson_polygons.json", 556273, 10),
+    ("tissue_segmentation_parquet_polygons.parquet", 102220, 10),
+    ("tissue_segmentation_segmentation_map_image.tiff", 3031723, 10),
+    ("cell_classification_geojson_polygons.json", 9841861, 10),
+    ("cell_classification_parquet_polygons.parquet", 2902904, 10),
+    ("whole_tumor_region_geojson_polygons.json", 69845, 10),
+    ("whole_tumor_region_parquet_polygons.parquet", 22684, 10),
+    ("tumor_cellularity_geojson_polygons.json", 476, 10),
+    ("tumor_cellularity_parquet_polygons.parquet", 4106, 10),
+    ("readout_generation_readouts_bundle.zip", 632626, 10),
 ]
-SPOT_0_EXPECTED_CELLS_CLASSIFIED = (39798, 10)
+SPOT_0_EXPECTED_CELLS_CLASSIFIED = (11447, 10)
 
 SPOT_1_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_csv_class_information.csv", 290, 10),
-    ("tissue_qc_geojson_polygons.json", 75281, 10),
-    ("tissue_qc_parquet_polygons.parquet", 29075, 10),
-    ("tissue_qc_segmentation_map_image.tiff", 1288632, 10),
-    ("tissue_segmentation_csv_class_information.csv", 444, 10),
-    ("tissue_segmentation_geojson_polygons.json", 163318, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 60980, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 1806464, 10),
-    ("cell_classification_geojson_polygons.json", 1727805, 10),
-    ("cell_classification_parquet_polygons.parquet", 562586, 10),
-    ("readout_generation_cell_readouts.csv", 465593, 10),
-    ("readout_generation_slide_readouts.csv", 299708, 10),
+    ("tissue_qc_geojson_polygons.json", 25621, 10),
+    ("tissue_qc_parquet_polygons.parquet", 10556, 10),
+    ("tissue_qc_segmentation_map_image.tiff", 1281477, 10),
+    ("tissue_segmentation_geojson_polygons.json", 73826, 10),
+    ("tissue_segmentation_parquet_polygons.parquet", 23318, 10),
+    ("tissue_segmentation_segmentation_map_image.tiff", 1783129, 10),
+    ("cell_classification_geojson_polygons.json", 2847846, 10),
+    ("cell_classification_parquet_polygons.parquet", 880714, 10),
+    ("whole_tumor_region_geojson_polygons.json", 16970, 10),
+    ("whole_tumor_region_parquet_polygons.parquet", 8187, 10),
+    ("tumor_cellularity_geojson_polygons.json", 1518, 10),
+    ("tumor_cellularity_parquet_polygons.parquet", 4377, 10),
+    ("readout_generation_readouts_bundle.zip", 278167, 10),
 ]
 
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
@@ -109,7 +114,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "1.3.0"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.3.0"
+        HETA_APPLICATION_VERSION = "2.0.0"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "A100"
@@ -124,7 +129,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "1.3.0"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "1.3.0"
+        HETA_APPLICATION_VERSION = "2.0.0"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "A100"

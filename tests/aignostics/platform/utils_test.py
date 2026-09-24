@@ -230,6 +230,17 @@ class TestMimeTypeToFileEnding:
 
     @pytest.mark.unit
     @staticmethod
+    def test_zip_mime_type(record_property) -> None:
+        """Test that application/zip MIME type returns .zip extension.
+
+        This test verifies that the mime_type_to_file_ending function correctly
+        maps the application/zip MIME type to the .zip file extension.
+        """
+        record_property("tested-item-id", "SPEC-PLATFORM-SERVICE")
+        assert mime_type_to_file_ending("application/zip") == ".zip"
+
+    @pytest.mark.unit
+    @staticmethod
     def test_unknown_mime_type_raises_error(record_property) -> None:
         """Test that an unknown MIME type raises a ValueError.
 
