@@ -2,7 +2,7 @@ name: "+ Scheduled Audit (Hourly)"
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '43 * * * *'
   workflow_dispatch:
     inputs:
       branch:

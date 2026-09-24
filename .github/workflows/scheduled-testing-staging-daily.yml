@@ -2,7 +2,7 @@ name: "+ Scheduled Testing / Staging (Daily)"
 
 on:
   schedule:
-    - cron: '0 12 * * *'
+    - cron: '31 12 * * *'
   workflow_dispatch:
     inputs:
       branch:
