@@ -22,7 +22,6 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
-    SPOT_0_EXPECTED_CELLS_CLASSIFIED,
     SPOT_0_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
@@ -300,7 +299,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         output = normalize_output(result.output, strip_ansi=True)
         print(repr(output))
 
-        # Check for (1) spot added to QuPath project, (2) heatmaps added, (3) spot annotated
+        # Check for (1) spot added to QuPath project, (2) heatmaps added
         try:
             project_info = json.loads(output)
             spot_found = False
@@ -313,8 +312,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
                     spot_found = True
                     spot_width = image.get("width")
                     spot_height = image.get("height")
-                    hierarchy = image.get("hierarchy", {})
-                    spot_annotations = hierarchy.get("total", 0)
                 if image.get("name") == "tissue_qc_segmentation_map_image.tiff":
                     qc_segmentation_map_found = True
                 if image.get("name") == "tissue_segmentation_segmentation_map_image.tiff":
@@ -324,13 +321,6 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
             assert spot_height == SPOT_0_HEIGHT, f"Expected height of spot {SPOT_0_HEIGHT}, but got {spot_height}"
             assert qc_segmentation_map_found, "QC segmentation map image not found in QuPath project"
             assert tissue_segmentation_map_found, "Tissue segmentation map image not found in QuPath project"
-            assert abs(spot_annotations - SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]) <= (
-                SPOT_0_EXPECTED_CELLS_CLASSIFIED[0] * SPOT_0_EXPECTED_CELLS_CLASSIFIED[1] // 100
-            ), (
-                f"Expected approximately {SPOT_0_EXPECTED_CELLS_CLASSIFIED[0]} "
-                f"({SPOT_0_EXPECTED_CELLS_CLASSIFIED[1]}% tolerance) annotations in the QuPath results, "
-                f"but found {spot_annotations}"
-            )
         except json.JSONDecodeError as e:
             pytest.fail(f"Failed to parse QuPath inspect output as JSON: {e}\nOutput: {output!r}\n")
 

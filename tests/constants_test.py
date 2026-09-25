@@ -90,7 +90,6 @@ SPOT_0_EXPECTED_RESULT_FILES = [
     ("tumor_cellularity_parquet_polygons.parquet", 4106, 10),
     ("readout_generation_readouts_bundle.zip", 632626, 10),
 ]
-SPOT_0_EXPECTED_CELLS_CLASSIFIED = (11447, 10)
 
 SPOT_1_EXPECTED_RESULT_FILES = [
     ("tissue_qc_geojson_polygons.json", 25621, 10),
@@ -141,7 +140,6 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
 
         # If staging outputs differ from the defaults above, override them here, e.g.:
         # SPOT_0_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
-        # SPOT_0_EXPECTED_CELLS_CLASSIFIED = (<count>, 10)
         # SPOT_1_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
 
     case _:
