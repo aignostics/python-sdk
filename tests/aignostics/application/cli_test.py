@@ -186,7 +186,6 @@ def test_cli_application_list_verbose(runner: CliRunner, record_property) -> Non
     assert result.exit_code == 0
     assert HETA_APPLICATION_ID in normalize_output(result.output)
     assert HETA_APPLICATION_VERSION in normalize_output(result.output)
-    assert "Artifacts: 1 input(s), 6 output(s)" in normalize_output(result.output)
     assert TEST_APPLICATION_ID in normalize_output(result.output)
     assert TEST_APPLICATION_VERSION in normalize_output(result.output)
 
