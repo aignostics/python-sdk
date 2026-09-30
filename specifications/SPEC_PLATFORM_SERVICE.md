@@ -783,7 +783,7 @@ The Platform module provides foundational services but does not directly expose 
 | -------------------- | ------- | ------------------------------------ | ----------------- |
 | aignx.codegen        | ^X.X.X  | Auto-generated API client and models | Required          |
 | requests             | ^2.31.0 | HTTP client for authentication flows | Required          |
-| requests-oauthlib    | ^1.3.0  | OAuth 2.0 flow implementation        | Required          |
+| requests-oauthlib    | ^2.0.0  | OAuth 2.0 flow implementation        | Required          |
 | PyJWT                | ^2.8.0  | JWT token validation and decoding    | Required          |
 | crc32c               | ^2.7.0  | File integrity verification          | Required          |
 | pydantic             | ^2.5.0  | Settings validation and data models  | Required          |
