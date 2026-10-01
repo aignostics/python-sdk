@@ -14,8 +14,8 @@ from tests.constants_test import HETA_APPLICATION_ID
 
 @pytest.mark.integration
 @pytest.mark.timeout(timeout=60)
-def test_cli_run_submit_fails_on_invalid_gpu_type(runner: CliRunner, tmp_path: Path) -> None:
-    """Check run submit command fails when gpu_type is invalid."""
+def test_cli_run_submit_does_not_reject_unknown_gpu_type(runner: CliRunner, tmp_path: Path) -> None:
+    """Check run submit does not reject a GPU type this SDK release does not know."""
     csv_content = "external_id;checksum_base64_crc32c;resolution_mpp;width_px;height_px;staining_method;tissue;disease;"
     csv_content += "platform_bucket_url\n"
     csv_content += "test.svs;5onqtA==;0.26268186053789266;7447;7196;H&E;LUNG;LUNG_CANCER;gs://bucket/test.svs"
@@ -35,15 +35,13 @@ def test_cli_run_submit_fails_on_invalid_gpu_type(runner: CliRunner, tmp_path: P
             "--gpu-type",
             "INVALID_GPU",
             "--tags",
-            "test_cli_run_submit_fails_on_invalid_gpu_type",
+            "test_cli_run_submit_does_not_reject_unknown_gpu_type",
             "--force",
         ],
     )
 
-    assert result.exit_code == 2
-    output = normalize_output(result.output)
-    # Pydantic validation error for invalid enum value
-    assert "validation error" in output.lower() or "invalid" in output.lower()
+    output = normalize_output(result.output).lower()
+    assert "gpu_type" not in output, f"gpu_type was rejected locally: {output}"
 
 
 @pytest.mark.integration
