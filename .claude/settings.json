@@ -22,7 +22,6 @@
       "Bash(gh search *)"
     ]
   },
-  "enabledMcpjsonServers": ["playwright"],
   "extraKnownMarketplaces": {
     "aignostics-claude-plugins": {
       "source": {
