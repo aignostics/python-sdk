@@ -22,8 +22,7 @@
       "Bash(gh search *)"
     ]
   },
-  "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [],
+  "enabledMcpjsonServers": ["playwright"],
   "extraKnownMarketplaces": {
     "aignostics-claude-plugins": {
       "source": {
