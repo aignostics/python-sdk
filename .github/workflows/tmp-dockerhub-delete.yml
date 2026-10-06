@@ -1,0 +1,110 @@
+name: "tmp: Docker Hub deletion (PYSDK-156)"
+
+on:
+  push:
+    branches: [chore/pysdk-156-dockerhub-delete]
+
+permissions: {}
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    env:
+      MODE: dry-run # dry-run | canary | all
+      NAMESPACE: helmuthva
+      REPOS: aignostics-python-sdk aignostics-python-sdk-slim
+      CANARY_TAG: "0.2.96"
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    steps:
+      - name: Delete Docker Hub tags
+        shell: python
+        run: |
+          import json, os, sys, time, urllib.error, urllib.request
+
+          HUB = "https://hub.docker.com"
+          MODE = os.environ["MODE"]
+          NS = os.environ["NAMESPACE"]
+          OK = (200, 202, 204)
+
+          def call(method, url, token=None, body=None):
+              data = json.dumps(body).encode() if body is not None else None
+              for _ in range(5):
+                  req = urllib.request.Request(url, data=data, method=method)
+                  req.add_header("Content-Type", "application/json")
+                  if token:
+                      req.add_header("Authorization", f"Bearer {token}")
+                  try:
+                      with urllib.request.urlopen(req) as r:
+                          raw = r.read()
+                          return r.status, (json.loads(raw) if raw else None)
+                  except urllib.error.HTTPError as e:
+                      if e.code == 429:
+                          time.sleep(int(e.headers.get("Retry-After", "30")))
+                          continue
+                      return e.code, None
+              return 429, None
+
+          user, secret = os.environ["DOCKER_USERNAME"], os.environ["DOCKER_PASSWORD"]
+          status, body = call("POST", f"{HUB}/v2/auth/token", body={"identifier": user, "secret": secret})
+          token = (body or {}).get("access_token")
+          if not token:
+              status, body = call("POST", f"{HUB}/v2/users/login", body={"username": user, "password": secret})
+              token = (body or {}).get("token")
+          if not token:
+              sys.exit(f"::error::Docker Hub login failed ({status})")
+          print("Docker Hub login OK")
+
+          def list_tags(repo):
+              url, names = f"{HUB}/v2/namespaces/{NS}/repositories/{repo}/tags?page_size=100", []
+              while url:
+                  status, body = call("GET", url, token)
+                  if status == 404:
+                      return []
+                  if status != 200:
+                      sys.exit(f"::error::list {repo} failed ({status})")
+                  names += [t["name"] for t in body["results"]]
+                  url = body.get("next")
+              return names
+
+          def delete(paths):
+              # Current endpoint first, legacy endpoint second.
+              for path in paths:
+                  status, _ = call("DELETE", HUB + path, token)
+                  if status not in (404, 405):
+                      return status
+              return status
+
+          for repo in os.environ["REPOS"].split():
+              names = list_tags(repo)
+              print(f"{repo}: {len(names)} tags")
+              if MODE == "dry-run":
+                  continue
+              targets = [os.environ["CANARY_TAG"]] if MODE == "canary" else names
+              for tag in targets:
+                  status = delete([
+                      f"/v2/namespaces/{NS}/repositories/{repo}/tags/{tag}",
+                      f"/v2/repositories/{NS}/{repo}/tags/{tag}/",
+                  ])
+                  print(f"DELETE {repo}:{tag} -> {status}")
+                  if status not in OK:
+                      sys.exit(f"::error::DELETE {repo}:{tag} failed ({status}). Stop.")
+              if MODE == "all":
+                  status = delete([
+                      f"/v2/namespaces/{NS}/repositories/{repo}",
+                      f"/v2/repositories/{NS}/{repo}/",
+                  ])
+                  level = "notice" if status in OK else "warning"
+                  print(f"::{level}::DELETE repository {repo} -> {status}")
+
+      - name: Verify anonymously
+        if: env.MODE == 'all'
+        run: |
+          for repo in $REPOS; do
+            code=$(curl -s -o body.json -w "%{http_code}" \
+              "https://hub.docker.com/v2/namespaces/$NAMESPACE/repositories/$repo/tags?page_size=1")
+            if [ "$code" = "404" ]; then echo "$repo: repository gone"; continue; fi
+            count=$(jq .count body.json)
+            echo "$repo: $count tags"
+            [ "$count" = "0" ] || { echo "::error::$repo still has tags"; exit 1; }
+          done
