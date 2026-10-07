@@ -10,7 +10,7 @@ jobs:
   delete:
     runs-on: ubuntu-latest
     env:
-      MODE: dry-run # dry-run | canary | all
+      MODE: canary # dry-run | canary | all
       NAMESPACE: helmuthva
       REPOS: aignostics-python-sdk aignostics-python-sdk-slim
       CANARY_TAG: "0.2.96"
