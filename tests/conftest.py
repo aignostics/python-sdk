@@ -282,43 +282,6 @@ def silent_logging(caplog) -> Generator[None, None, None]:
         yield
 
 
-@pytest.fixture(scope="session")
-def docker_compose_file(pytestconfig) -> str:
-    """Get the path to the docker compose file.
-
-    Args:
-        pytestconfig: The pytest configuration object.
-
-    Returns:
-        str: The path to the docker compose file.
-    """
-    # We want to test the compose.yaml file in the root of the project.
-    return str(Path(pytestconfig.rootdir) / "compose.yaml")
-
-
-@pytest.fixture(scope="session")
-def docker_setup() -> list[str] | str:
-    """Commands to run when spinning up services.
-
-    Returns:
-        list[str] | str: The commands to run.
-    """
-    # You can consider to return an empty list so you can decide on the
-    # commands to run in the test itself
-    return ["up --build -d"]
-
-
-def docker_compose_project_name() -> str:
-    """Generate a project name using the current process PID.
-
-    Returns:
-        str: The project name.
-    """
-    # You can consider to override this with a project name to reuse the stack
-    # across test executions.
-    return f"aignostics-pytest-{os.getpid()}"
-
-
 def pytest_sessionfinish(session, exitstatus) -> None:
     """Run after the test session ends.
 

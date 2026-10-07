@@ -861,25 +861,6 @@ def _generate_coverage_report(session: nox.Session) -> None:
         _inject_headline("# Coverage report", coverage_report_file_name)
 
 
-def _cleanup_test_execution(session: nox.Session) -> None:
-    """Clean up post test execution.
-
-    - Docker containers created by pytest-docker removed
-
-    Args:
-        session: The nox session instance
-    """
-    session.run(
-        "bash",
-        "-c",
-        (
-            "docker compose ls --format json | jq -r '.[].Name' | "
-            "grep ^pytest | xargs -I {} docker compose -p {} down --remove-orphans"
-        ),
-        external=True,
-    )
-
-
 def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = False) -> None:
     """Run test suite with specified marker.
 
@@ -916,8 +897,8 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
     # Determine report type from python version and custom marker
     report_type = _get_report_type(session, custom_marker)
 
-    # Run parallel and sequential tests, collecting failures so that coverage and cleanup
-    # always execute even when some tests fail. This ensures Codecov always receives a
+    # Run parallel and sequential tests, collecting failures so that coverage always
+    # executes even when some tests fail. This ensures Codecov always receives a
     # complete report (all JUnit XML files, full accumulated coverage) regardless of
     # individual test failures.
     failure: CommandFailed | None = None
@@ -939,9 +920,6 @@ def _run_test_suite(session: nox.Session, marker: str = "", cov_append: bool = F
     # are up-to-date for the Codecov upload step even when tests fail.
     # Note: This will be called multiple times, which is fine as it updates the same report
     _generate_coverage_report(session)
-
-    # Clean up post test execution
-    _cleanup_test_execution(session)
 
     # Re-raise to propagate the failure to nox / make / CI
     if failure is not None:

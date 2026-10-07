@@ -558,7 +558,7 @@ The other markers gate execution: `long_running` / `very_long_running` (excluded
 from `make test`; run via `make test_long_running` etc.; skippable/enable-able via
 PR labels `skip:test:long_running` / `enable:test:very_long_running`),
 `scheduled` / `scheduled_only`, `stress` / `stress_only`, `sequential`,
-`docker`, `skip_with_act`, `no_extras`.
+`skip_with_act`, `no_extras`.
 
 Tests live under `tests/aignostics/<module>/` mirroring the source layout; see
 `tests/CLAUDE.md`.

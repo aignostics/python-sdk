@@ -86,9 +86,8 @@ make lint            # Ruff formatting + MyPy type checking
 - Add dependencies: `uv add <package>`
 
 **Testing:**
-- Pytest with markers: `sequential`, `long_running`, `scheduled`, `docker`, `skip_with_act`
+- Pytest with markers: `sequential`, `long_running`, `scheduled`, `skip_with_act`
 - Run specific tests: `uv run pytest tests/path/test.py::test_function`
-- Docker integration: `make test-docker`
 
 ## Code Patterns & Standards
 
