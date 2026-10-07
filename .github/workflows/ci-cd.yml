@@ -134,7 +134,7 @@ jobs:
       attestations: write
       contents: read
       id-token: write
-      packages: write
+      packages: read
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
@@ -195,7 +195,7 @@ jobs:
       attestations: write
       contents: write
       id-token: write
-      packages: write
+      packages: read
     secrets:
       KETRYX_PROJECT: ${{ secrets.KETRYX_PROJECT }}
       KETRYX_API_KEY: ${{ secrets.KETRYX_API_KEY }}
@@ -214,7 +214,7 @@ jobs:
       attestations: write
       contents: write
       id-token: write
-      packages: write
+      packages: read
     secrets:
       UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
       SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}

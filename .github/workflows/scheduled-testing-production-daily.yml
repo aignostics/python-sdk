@@ -21,7 +21,7 @@ jobs:
       attestations: write
       contents: read
       id-token: write
-      packages: write
+      packages: read
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}

@@ -35,7 +35,7 @@ jobs:
       attestations: write
       contents: read
       id-token: write
-      packages: write
+      packages: read
 
     steps:
       - name: Checkout

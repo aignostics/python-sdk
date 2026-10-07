@@ -256,9 +256,9 @@ uv run nox -s dist    # Package building
 | Workflow               | Method          | Purpose                 | Permissions Required               | Secrets Used       |
 | ---------------------- | --------------- | ----------------------- | ---------------------------------- | ------------------ |
 | `_lint.yml`            | `workflow_call` | Code quality validation | `contents: read`                   | None               |
-| `_test.yml`            | `workflow_call` | Multi-platform testing  | `contents: read, packages: write`  | Test credentials   |
+| `_test.yml`            | `workflow_call` | Multi-platform testing  | `contents: read, packages: read`   | Test credentials   |
 | `_audit.yml`           | `workflow_call` | Security scanning       | `contents: read`                   | None               |
-| `_package-publish.yml` | `workflow_call` | PyPI publishing         | `contents: write, packages: write` | `UV_PUBLISH_TOKEN` |
+| `_package-publish.yml` | `workflow_call` | PyPI publishing         | `contents: write, packages: read`  | `UV_PUBLISH_TOKEN` |
 
 **Environment Variables**:
 
