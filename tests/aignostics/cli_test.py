@@ -1,18 +1,19 @@
 """Tests to verify the CLI functionality of OE Python Template."""
 
+import json
 import os
 import platform
 import subprocess
 import sys
 from importlib.util import find_spec
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastmcp import FastMCP
-from typer.testing import CliRunner
+from typer.testing import CliRunner, Result
 
 from aignostics.cli import cli
-from aignostics.constants import WINDOW_TITLE
+from aignostics.constants import DEPRECATION_NOTICE, WINDOW_TITLE
 from aignostics.utils import (
     __python_version__,
     __version__,
@@ -21,6 +22,8 @@ from tests.conftest import normalize_output
 
 BUILT_WITH_LOVE = "built with love in Berlin"
 THE_VALUE = "THE_VALUE"
+APPLICATION_CLI_CLIENT_PATCH_TARGET = "aignostics.application._cli.Client"
+DOCUMENT_LIST_FAILURE_MESSAGE = "kaboom"
 
 
 @pytest.mark.integration
@@ -52,6 +55,73 @@ def test_cli_python_version_format(runner) -> None:
     unwanted_patterns = ["(main,", "[Clang", "[GCC", "[MSC"]
     for pattern in unwanted_patterns:
         assert pattern not in normalized_output, f"Epilog should not contain '{pattern}'"
+
+
+@pytest.mark.integration
+def test_cli_help_starts_with_deprecation_notice(runner: CliRunner) -> None:
+    """Check that the root help text shows the deprecation notice before the CLI description."""
+    result = runner.invoke(cli, ["--help"])
+    assert result.exit_code == 0
+
+    # Rich wraps the help text, so collapse all whitespace before the assertion
+    normalized_output = " ".join(normalize_output(result.output).split())
+    notice_position = normalized_output.find(DEPRECATION_NOTICE)
+    assert notice_position != -1
+    assert notice_position < normalized_output.find("Command Line Interface")
+
+
+@pytest.mark.integration
+def test_cli_command_prints_deprecation_notice_to_stderr(runner: CliRunner) -> None:
+    """Check that a command prints the deprecation notice to stderr and keeps stdout free of it."""
+    with patch(PATCH_MCP_LOCATE_IMPLEMENTATIONS, return_value=[]):
+        result = runner.invoke(cli, ["mcp", "list-tools"])
+    assert result.exit_code == 0
+    assert DEPRECATION_NOTICE in normalize_output(result.stderr)
+    assert DEPRECATION_NOTICE not in normalize_output(result.stdout)
+
+
+@pytest.mark.integration
+def test_cli_subcommand_help_prints_deprecation_notice(runner: CliRunner) -> None:
+    """Check that help of a subcommand also prints the deprecation notice to stderr."""
+    result = runner.invoke(cli, ["application", "--help"])
+    assert result.exit_code == 0
+    assert DEPRECATION_NOTICE in normalize_output(result.stderr)
+
+
+def _invoke_failing_document_list(runner: CliRunner, format_args: list[str]) -> Result:
+    """Invoke `application version document list` offline, with a client that fails to list documents.
+
+    Args:
+        runner (CliRunner): CLI test runner.
+        format_args (list[str]): Arguments that select the output format.
+
+    Returns:
+        Result: Result of the CLI invocation.
+    """
+    fake_documents = MagicMock()
+    fake_documents.list.side_effect = RuntimeError(DOCUMENT_LIST_FAILURE_MESSAGE)
+    fake_client = MagicMock()
+    fake_client.applications.versions.documents.return_value = fake_documents
+    with patch(APPLICATION_CLI_CLIENT_PATCH_TARGET, return_value=fake_client):
+        return runner.invoke(cli, ["application", "version", "document", "list", "heta", *format_args])
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("format_args", [["--format", "json"], ["--format=json"]])
+def test_cli_json_format_skips_deprecation_notice(runner: CliRunner, format_args: list[str]) -> None:
+    """Check that a command with JSON output prints no deprecation notice, so stderr stays parseable JSON."""
+    result = _invoke_failing_document_list(runner, format_args)
+    assert result.exit_code == 1
+    assert DEPRECATION_NOTICE not in normalize_output(result.stderr)
+    assert json.loads(result.stderr)["message"] == DOCUMENT_LIST_FAILURE_MESSAGE
+
+
+@pytest.mark.integration
+def test_cli_text_format_prints_deprecation_notice(runner: CliRunner) -> None:
+    """Check that the same command with text output prints the deprecation notice to stderr."""
+    result = _invoke_failing_document_list(runner, ["--format", "text"])
+    assert result.exit_code == 1
+    assert DEPRECATION_NOTICE in normalize_output(result.stderr)
 
 
 @pytest.mark.integration

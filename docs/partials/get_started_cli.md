@@ -56,6 +56,8 @@ uvx aignostics --help
 
 You should see the list of available command groups (`application`, `dataset`, `bucket`, `system`, and more). If the command isn't found, open a new terminal and try again.
 
+Each command prints a deprecation notice to stderr. Stdout does not change, so scripts that read the output of a command continue to work.
+
 ## Run Atlas H&E-TME from the command line
 
 This example downloads a public lung cancer dataset, submits an [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) run, and downloads the results:
