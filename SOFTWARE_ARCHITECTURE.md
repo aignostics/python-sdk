@@ -270,13 +270,11 @@ flowchart TD
 
     subgraph "Build & Package"
         BUILD[📦 Build Package<br/><small>Python wheel</small>]
-        DOCKER[🐳 Docker Images<br/><small>Slim + Full variants</small>]
         DOCS[📚 Documentation<br/><small>Sphinx + API docs</small>]
     end
 
     subgraph "Release & Deploy"
         PYPI[🐍 PyPI Release]
-        REGISTRY[🗂️ Container Registry]
         RTD[📖 Read the Docs]
         MONITOR[📊 Monitoring<br/><small>Sentry + Logfire</small>]
     end
@@ -293,11 +291,9 @@ flowchart TD
     TEST --> BUILD
     SEC --> BUILD
 
-    BUILD --> DOCKER
     BUILD --> DOCS
     BUILD --> PYPI
 
-    DOCKER --> REGISTRY
     DOCS --> RTD
     PYPI --> MONITOR
 
@@ -305,7 +301,6 @@ flowchart TD
     PRECOMMIT -.->|"Runs automatically<br/>on git commit"| LINT
     TEST -.->|"85% coverage<br/>requirement"| BUILD
     SEC -.->|"Scans dependencies<br/>& secrets"| BUILD
-    DOCKER -.->|"Multi-arch builds<br/>ARM64 + AMD64"| REGISTRY
 
     classDef dev fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
     classDef quality fill:#fff3e0,stroke:#f57c00,stroke-width:2px
@@ -314,8 +309,8 @@ flowchart TD
 
     class DEV,CODE,PRECOMMIT dev
     class LINT,TYPE,TEST,SEC quality
-    class BUILD,DOCKER,DOCS build
-    class PYPI,REGISTRY,RTD,MONITOR deploy
+    class BUILD,DOCS build
+    class PYPI,RTD,MONITOR deploy
 ```
 
 **Key Pipeline Features:**
@@ -325,7 +320,6 @@ flowchart TD
 - **Multi-environment Testing**: Matrix testing across Python versions and operating systems
 - **Security Scanning**: `pip-audit` dependency vulnerability scanning and secret detection
 - **Documentation Generation**: Automated API docs and user guides using Sphinx
-- **Multi-platform Builds**: Docker images for both ARM64 and AMD64 architectures
 - **Compliance Integration**: Automated reporting to compliance platforms
 
 **Code Quality & Analysis:**
@@ -355,20 +349,13 @@ flowchart TD
 - **API Documentation**: Interactive OpenAPI specification with Swagger UI
 - **Version Management**: `bump-my-version` for semantic versioning
 - **Changelog Generation**: `git-cliff` for automated release notes
-- **Multi-format Publishing**: PyPI packages, Docker images, and Read The Docs
+- **Multi-format Publishing**: PyPI packages and Read The Docs
 
 **Monitoring & Observability:**
 
 - **Error Monitoring**: Sentry integration for production error tracking
 - **Logging & Metrics**: Logfire integration for structured logging
 - **Uptime Monitoring**: Prepared integration with monitoring services
-
-**Deployment & Distribution:**
-
-- **Multi-stage Docker Builds**: Fat (all extras) and slim (core only) variants
-- **Multi-architecture Support**: ARM64 and AMD64 container images
-- **Container Security**: Non-root execution within immutable containers
-- **Registry Publishing**: Docker.io and GitHub Container Registry with attestations
 
 **Development Environment:**
 
@@ -843,7 +830,6 @@ Comprehensive documentation requirements:
 Multiple distribution methods:
 
 - **PyPI Package**: Standard Python package installation via pip/uv
-- **Docker Images**: Containerized deployment with multiple variants
 - **Source Installation**: Direct installation from GitHub repository
 - **Development Setup**: One-click development environment setup
 

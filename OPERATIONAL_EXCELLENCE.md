@@ -41,12 +41,10 @@ more about how we handle [security](https://aignostics.readthedocs.io/en/latest/
 21. Documentation including dynamic badges, setup instructions, contribution guide and security policy
 22. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
 23. Python package published to [PyPI](https://pypi.org/)
-24. Multi-stage build of fat (all extras) and slim (no extras) multi-arch (arm64 and amd64) Docker images, running non-root within immutable container
-25. Docker images published to [Docker.io](https://hub.docker.com/) and [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) with [artifact attestations](https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds)
-26. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
-27. Settings for use with [VSCode](https://code.visualstudio.com/)
-28. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
-29. Automated Pull Request Reviews with [Claude Code](https://docs.claude.com/en/docs/claude-code/github-actions)
-30. ISO compliant Application Lifecycle Management (ALM) with [Ketryx](https://ketryx.com/)
+24. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
+25. Settings for use with [VSCode](https://code.visualstudio.com/)
+26. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+27. Automated Pull Request Reviews with [Claude Code](https://docs.claude.com/en/docs/claude-code/github-actions)
+28. ISO compliant Application Lifecycle Management (ALM) with [Ketryx](https://ketryx.com/)
 
 See [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template?tab=readme-ov-file#multi-head-application-features) for how to bootstrap multi-headed applications with the template. Example code generated applies the modulith software architecture pattern with dependency injection, enabling auto-discovery of domain services, CLI commands, API operations and GUI pages.
