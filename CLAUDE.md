@@ -486,6 +486,20 @@ def action_command(param: str):
 
 ## Important Notes
 
+### Deprecation notice
+
+The SDK is deprecated. `aignostics.constants.DEPRECATION_NOTICE` is the single
+source of the notice text. In code, use the constant. Do not copy the text.
+These surfaces show it:
+
+* **Log** — in library mode, import of `aignostics` writes it as a `WARNING` log line
+  and emits a `FutureWarning`. Child processes do not repeat it. The CLI does not log it.
+* **CLI** — the root help text and stderr before each command.
+* **Launchpad** — a banner below the header of each page.
+* **Docs site** — a Furo announcement banner.
+
+`README.md` (and so the PyPI page) also shows the notice and a migration table.
+
 ### Module Loading
 
 `nicegui`, `marimo`, and `ijson` are core dependencies, so modules using them
