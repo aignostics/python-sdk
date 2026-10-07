@@ -1,5 +1,7 @@
 # CLI Reference
 
+The Aignostics Python SDK is deprecated and gets only bug fixes and security fixes until April 30, 2027. After that date, the repository and the PyPI project are archived. Use the Aignostics Platform REST API (https://platform.aignostics.com/api/v1/docs) or the Console (https://platform.aignostics.com).
+
 Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.
 
 **Usage**:

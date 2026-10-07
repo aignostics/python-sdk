@@ -2,12 +2,15 @@
 
 import sys
 from importlib.util import find_spec
+from itertools import pairwise
 from pathlib import Path
+from typing import Any
 
 import typer
 from loguru import logger
+from typer.core import TyperGroup
 
-from aignostics.constants import NOTEBOOK_DEFAULT, WINDOW_TITLE
+from aignostics.constants import DEPRECATION_NOTICE, NOTEBOOK_DEFAULT, WINDOW_TITLE
 from aignostics.utils import (
     __is_running_in_container__,
     __python_version__,
@@ -16,9 +19,62 @@ from aignostics.utils import (
     prepare_cli,
 )
 
+_JSON_OUTPUT_REQUESTED = "aignostics.json_output_requested"
+
+
+def _requests_json_output(args: list[str]) -> bool:
+    """Check if the command arguments request JSON output.
+
+    Args:
+        args (list[str]): Command line arguments.
+
+    Returns:
+        bool: True if the arguments contain ``--format json`` or ``--format=json``.
+    """
+    return "--format=json" in args or any(arg == "--format" and value == "json" for arg, value in pairwise(args))
+
+
+class _RootGroup(TyperGroup):
+    """Root command group that records if the command arguments request JSON output.
+
+    Click empties ``ctx.args`` before it calls the root callback. So the group records the
+    decision in ``ctx.meta`` while it parses the arguments.
+    """
+
+    def parse_args(self, ctx: Any, args: list[str]) -> list[str]:  # noqa: ANN401
+        """Record if the arguments request JSON output, then parse them.
+
+        Args:
+            ctx (Any): Click context of the root command group.
+            args (list[str]): Command line arguments.
+
+        Returns:
+            list[str]: The remaining arguments.
+        """
+        ctx.meta[_JSON_OUTPUT_REQUESTED] = _requests_json_output(args)
+        return super().parse_args(ctx, args)
+
+
 cli = typer.Typer(
-    help="Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",
+    cls=_RootGroup,
+    help=f"{DEPRECATION_NOTICE}\n\n"
+    "Command Line Interface (CLI) of Aignostics Python SDK providing access to Aignostics Platform.",
 )
+
+
+def _print_deprecation_notice(ctx: typer.Context) -> None:
+    """Print the deprecation notice to stderr, so that stdout of each command does not change.
+
+    Commands that write JSON (``--format json``) get no notice, because they can write a JSON error object
+    to stderr that consumers parse.
+
+    Args:
+        ctx (typer.Context): Typer context of the root command.
+    """
+    if ctx.meta.get(_JSON_OUTPUT_REQUESTED, False):
+        return
+    typer.secho(DEPRECATION_NOTICE, err=True, fg=typer.colors.YELLOW)
+
 
 if find_spec("nicegui") and find_spec("webview") and not __is_running_in_container__:
 
@@ -120,7 +176,9 @@ def mcp_list_tools() -> None:
 cli.add_typer(mcp_cli)
 
 prepare_cli(
-    cli, f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}"
+    cli,
+    f"🔬 Aignostics Python SDK v{__version__} - built with love in Berlin 🐻 // Python v{__python_version__}",
+    root_callback=_print_deprecation_notice,
 )
 
 

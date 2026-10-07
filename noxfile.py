@@ -437,7 +437,7 @@ def _generate_openapi_schemas(session: nox.Session) -> None:
                     f"--api-version={version}",
                     *format_info["args"],
                 ]
-                session.run(*cmd_args, stdout=f, external=True)
+                session.run(*cmd_args, stdout=f, stderr=None, external=True)
             session.log(f"Generated API {version} OpenAPI schema in {format_name} format")
 
 
@@ -459,6 +459,7 @@ def _generate_sdk_metadata_schema(session: nox.Session, schema_type: str) -> Non
             "--env",
             LOG_STDERR_DISABLED,
             stdout=f,
+            stderr=None,
             external=True,
         )
 
