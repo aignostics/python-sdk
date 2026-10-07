@@ -114,10 +114,9 @@ We use [pytest](https://docs.pytest.org/en/stable/) for testing Python code.
 3. We leverage several pytest plugins:
    1. `pytest-asyncio` for testing async code
    2. `pytest-cov` for coverage reporting
-   3. `pytest-docker` for integration tests with containers
-   4. `pytest-env` for environment variable management
-   5. `pytest-regressions` for regression testing
-   6. `pytest-xdist` for parallel test execution
+   3. `pytest-env` for environment variable management
+   4. `pytest-regressions` for regression testing
+   5. `pytest-xdist` for parallel test execution
 4. Test execution is automated through the nox test session which runs across the
    Python versions indicated in the `pyproject.toml`.
 
@@ -132,7 +131,6 @@ Apart from unit tests we provide integration tests and end-to-end tests:
 
 1. We smoke test as part of the CI/CD pipeline.
 2. We facilitate exploratory testing to ensure comprehensive coverage.
-3. We use `pytest-docker` for integration tests with containers.
 
 ## Error Handling
 

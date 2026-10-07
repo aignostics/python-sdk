@@ -29,7 +29,7 @@ Real fixtures live here, not in `fixtures/`:
 Every test needs at least one of `unit`, `integration`, `e2e` or it will not run
 in CI. The authoritative marker list and descriptions live in `pyproject.toml`
 `[tool.pytest.ini_options]` (also `long_running`, `very_long_running`,
-`scheduled`, `scheduled_only`, `sequential`, `stress`, `stress_only`, `docker`,
+`scheduled`, `scheduled_only`, `sequential`, `stress`, `stress_only`,
 `no_extras`, `skip_with_act`). See `.github/CLAUDE.md` for how CI selects them
 and the `Makefile` for the `test_*` targets.
 
