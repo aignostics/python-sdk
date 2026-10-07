@@ -39,5 +39,14 @@ WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}
 WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP = {".tiff"}
 
 WINDOW_TITLE = "Aignostics Launchpad"
+
+# Deprecation of the Aignostics Python SDK
+PLATFORM_API_DOCS_URL = "https://platform.aignostics.com/api/v1/docs"
+CONSOLE_URL = "https://platform.aignostics.com"
+DEPRECATION_NOTICE = (
+    "The Aignostics Python SDK is deprecated and gets only bug fixes and security fixes until April 30, 2027. "
+    "After that date, the repository and the PyPI project are archived. "
+    f"Use the Aignostics Platform REST API ({PLATFORM_API_DOCS_URL}) or the Console ({CONSOLE_URL})."
+)
 # Organizations with internal/advanced access (e.g., platform-wide queue visibility, GPU config)
 INTERNAL_ORGS = {"aignostics", "pre-alpha-org", "lmu", "charite"}

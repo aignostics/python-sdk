@@ -14,7 +14,7 @@ from html_sanitizer import Sanitizer
 from humanize import naturaldelta
 from loguru import logger
 
-from aignostics.constants import WINDOW_TITLE
+from aignostics.constants import CONSOLE_URL, WINDOW_TITLE
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -337,7 +337,7 @@ def frame(  # noqa: C901, PLR0915
                 with ui.item_section().props("avatar"):
                     ui.icon("domain", color="primary")
                 with ui.item_section():
-                    ui.link("Go to Console", "https://platform.aignostics.com", new_tab=True).mark("LINK_PLATFORM")
+                    ui.link("Go to Console", CONSOLE_URL, new_tab=True).mark("LINK_PLATFORM")
             with ui.item().props("clickable"):
                 with ui.item_section().props("avatar"):
                     ui.icon("local_library", color="primary")
