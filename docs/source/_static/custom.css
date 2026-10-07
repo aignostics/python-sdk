@@ -34,3 +34,13 @@
     width: 100% !important;
     height: auto !important;
 }
+
+/* Deprecation announcement: wrap the long notice so that both links stay
+   visible. Furo's default is one line with a fixed height and a horizontal scroll. */
+.announcement {
+    height: auto;
+    min-height: var(--header-height);
+}
+.announcement-content {
+    white-space: normal;
+}
