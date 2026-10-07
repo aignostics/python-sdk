@@ -31,7 +31,6 @@ keywords = [
     "cyclonedx",
     "devcontainer",
     "detect-secrets",
-    "docker",
     "git-cliff",
     "jupyter",
     "marimo",
