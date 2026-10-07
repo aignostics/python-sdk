@@ -19,6 +19,14 @@ The gui module provides common GUI framework components and theming for the Aign
 - `_frame.py` - Common layout components and health updates
 - `_error.py` - Error page handling (in-file class `PageBuilder`, imported as `ErrorPageBuilder`)
 
+**Deprecation Banner (`_frame.py`):**
+
+- `frame()` renders a full-width banner directly below the header, before the page content (and the left drawer), so every page that uses `frame()` shows it
+- Content: a `warning` icon, `aignostics.constants.DEPRECATION_NOTICE` as a label, and two links that open in a new tab: "Open REST API docs" (`PLATFORM_API_DOCS_URL`) and "Open Console" (`CONSOLE_URL`)
+- Marker: `DEPRECATION_BANNER` (used by `tests/aignostics/gui/frame_test.py`)
+- The banner is not closable: it has no close button and no state to hide it
+- Do not render the notice with `ui.html`; use `ui.label` and `ui.link`
+
 **Usage Pattern:**
 
 - Provides shared `PageBuilder` class for module auto-discovery

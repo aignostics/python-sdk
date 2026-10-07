@@ -49,6 +49,8 @@ uvx aignostics launchpad
 
 The first time you run this, it takes a minute or two to get ready. Then the **Launchpad window opens** — that means everything installed correctly.
 
+Each page of the window shows a deprecation banner below the header. The banner has links to the alternatives: the Aignostics Platform REST API docs and the Console.
+
 ![The Launchpad window when it first opens](_static/launchpad/01-launchpad-window.png)
 
 If you see an error instead of the window, see [Troubleshooting](#troubleshooting).

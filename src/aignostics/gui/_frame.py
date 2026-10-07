@@ -14,7 +14,7 @@ from html_sanitizer import Sanitizer
 from humanize import naturaldelta
 from loguru import logger
 
-from aignostics.constants import CONSOLE_URL, WINDOW_TITLE
+from aignostics.constants import CONSOLE_URL, DEPRECATION_NOTICE, PLATFORM_API_DOCS_URL, WINDOW_TITLE
 from aignostics.utils import __version__, open_user_data_directory
 
 from ._theme import theme
@@ -28,6 +28,7 @@ PROPS_AVATAR = "avatar"
 CLASSES_FULL_WIDTH = "w-full"
 CLASSES_FULL_HEIGHT = "h-full"
 CLASSES_FULL_SIZE = f"{CLASSES_FULL_WIDTH} {CLASSES_FULL_HEIGHT}"
+CLASSES_BANNER_LINK = "text-black underline whitespace-nowrap"
 
 
 @contextmanager
@@ -271,6 +272,16 @@ def frame(  # noqa: C901, PLR0915
 
         with ui.button(on_click=lambda _: right_drawer.toggle(), icon="menu").props(FLAT_COLOR_WHITE):
             ui.tooltip("Open menu")
+
+    with (
+        ui.row()
+        .classes(f"{CLASSES_FULL_WIDTH} items-center no-wrap gap-3 px-4 py-2 bg-amber-100 text-black")
+        .mark("DEPRECATION_BANNER")
+    ):
+        ui.icon("warning", color="warning").classes("text-2xl")
+        ui.label(DEPRECATION_NOTICE).classes("grow")
+        ui.link("Open REST API docs", PLATFORM_API_DOCS_URL, new_tab=True).classes(CLASSES_BANNER_LINK)
+        ui.link("Open Console", CONSOLE_URL, new_tab=True).classes(CLASSES_BANNER_LINK)
 
     if left_sidebar:
         with ui.left_drawer(top_corner=True, bottom_corner=True, elevated=True).props("breakpoint=0"):
