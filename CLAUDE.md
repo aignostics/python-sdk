@@ -34,6 +34,20 @@ If you you are creating a pull request yourself:
 
 * Add a label skip:test:long_running, to skip running long running tests. This is important because some tests in this repository are marked as long_running and can take a significant amount of time to complete. By adding this label, you help ensure that the CI pipeline runs efficiently and avoids unnecessary delays.
 
+## Maintenance mode
+
+The Aignostics Python SDK is deprecated. Support ends on April 30, 2027.
+Until that date, the SDK is in maintenance mode.
+
+Use these rules for each change:
+
+1. Accept anomaly fixes through PR-SOP-01.
+2. Accept dependency updates that fix vulnerabilities.
+3. Reject new features.
+4. Keep the deprecation warning in each release.
+
+For the notice text and the surfaces that show it, refer to [Deprecation notice](#deprecation-notice).
+
 ## Module Documentation Index
 
 Every module has detailed CLAUDE.md documentation. For module-specific guidance, see:

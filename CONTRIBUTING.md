@@ -2,6 +2,18 @@
 
 Thank you for considering contributing to Aignostics Python SDK!
 
+## Maintenance mode
+
+The Aignostics Python SDK is deprecated. Support ends on April 30, 2027.
+Until that date, the SDK is in maintenance mode.
+
+Use these rules for each change:
+
+1. Accept anomaly fixes through PR-SOP-01.
+2. Accept dependency updates that fix vulnerabilities.
+3. Reject new features.
+4. Keep the deprecation warning in each release.
+
 ## Setup
 
 [Create a fork](https://github.com/aignostics/python-sdk/fork) and clone your fork using ```git clone URL_OF_YOUR_CLONE```. Then change into the directory of your local Aignostics Python SDK repository with ```cd python-sdk```.
