@@ -1,9 +1,12 @@
 """Sphinx configuration."""
 
+import html
 import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
+from aignostics.constants import DEPRECATION_NOTICE
 
 # Add _ext directory to sys.path for custom extensions
 sys.path.insert(0, str(Path(__file__).parent / "_ext"))
@@ -98,6 +101,14 @@ exclude_patterns = [
     "api_reference_v1.rst",
 ]
 
+# Deprecation banner on each page: the notice with each URL as a clickable link.
+# The closing parenthesis after a URL in the notice is not part of the link.
+DEPRECATION_ANNOUNCEMENT = re.sub(
+    r"https://[^\s)]+",
+    lambda match: f'<a href="{match.group(0)}">{match.group(0)}</a>',
+    html.escape(DEPRECATION_NOTICE),
+)
+
 html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
@@ -120,6 +131,7 @@ html_theme_options = {
         "color-brand-primary": "#9b95ec",
         "color-brand-content": "#9b95ec",
     },
+    "announcement": DEPRECATION_ANNOUNCEMENT,
 }
 
 
