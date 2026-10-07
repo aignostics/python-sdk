@@ -39,7 +39,5 @@
    :github:
    :pypi: aignostics
 
-   Docker <https://hub.docker.com/r/helmuthva/aignostics-python-sdk/tags>
-   ghcr.io <https://github.com/aignostics/python-sdk/pkgs/container/python-sdk>
    SonarQube <https://sonarcloud.io/summary/new_code?id=aignostics_python-sdk>
    Codecov <https://app.codecov.io/gh/aignostics/python-sdk>
