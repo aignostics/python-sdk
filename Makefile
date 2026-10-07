@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit clean codegen dist dist_native docs docker_build gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
+.PHONY: act all audit clean codegen dist dist_native docs gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -150,11 +150,6 @@ clean:
 	rm -rf reports && mkdir -p reports && touch reports/.keep
 	uv run make -C docs clean
 
-## Build Docker image
-docker_build:
-	docker build -t aignostics --target all .
-	docker build -t aignostics --target slim .
-
 pre_commit_run_all:
 	uv run pre-commit run --all-files
 
@@ -234,7 +229,6 @@ help:
 	@echo "  dist                  - Build wheel and sdist into dist/"
 	@echo "  dist_native		   - Build native app variant of Aignostics Launchpad into dist/native/"
 	@echo "  docs [pdf]            - Build documentation (add pdf for PDF format)"
-	@echo "  docker_build          - Build Docker image aignostics"
 	@echo "  gui_watch             - Open GUI in browser and update on changes in source code"
 	@echo "  install               - Install or update development dependencies inc. pre-commit hooks"
 	@echo "  lint                  - Run linting and formatting checks"
