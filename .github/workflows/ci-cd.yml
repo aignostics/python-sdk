@@ -220,20 +220,3 @@ jobs:
       SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}
       SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
-  docker_publish:
-    needs: [get-commit-message, ketryx_report_and_check]
-    if: |
-      (startsWith(github.ref, 'refs/tags/v') && (!contains(needs.get-commit-message.outputs.commit_message, 'skip:ci'))) &&
-      (!contains(needs.get-commit-message.outputs.commit_message, 'build:native:only')) &&
-      (!contains(github.event.pull_request.labels.*.name, 'skip:ci')) &&
-      (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
-    uses: ./.github/workflows/_docker-publish.yml
-    permissions:
-      attestations: write
-      contents: read
-      id-token: write
-      packages: write
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

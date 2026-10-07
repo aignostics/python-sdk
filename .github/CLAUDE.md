@@ -13,7 +13,7 @@ workflows (`> …`, prefixed `_`) are called via `uses:`.
 
 | Entry point | Trigger | Calls |
 |-------------|---------|-------|
-| `ci-cd.yml` | push (main, release/v*, tag v*.*.*), PR (main, release/v*), release created, workflow_dispatch | `_lint`, `_docs`, `_audit`, `_test`, `_codeql`, `_ketryx_report_and_check`, `_package-publish`, `_docker-publish` |
+| `ci-cd.yml` | push (main, release/v*, tag v*.*.*), PR (main, release/v*), release created, workflow_dispatch | `_lint`, `_docs`, `_audit`, `_test`, `_codeql`, `_ketryx_report_and_check`, `_package-publish` |
 | `prepare-release.yml` | workflow_dispatch | — |
 | `publish-release.yml` | workflow_dispatch | — |
 | `merge-release.yml` | workflow_dispatch | — |
@@ -30,9 +30,9 @@ workflows (`> …`, prefixed `_`) are called via `uses:`.
 | `labels-sync.yml` | push to label config | — |
 
 Reusable: `_lint`, `_docs`, `_audit`, `_test`, `_codeql`,
-`_ketryx_report_and_check`, `_package-publish`, `_docker-publish`,
-`_build-native-only`, `_claude-code`, `_scheduled-audit`,
-`_scheduled-test-hourly`, `_scheduled-test-daily`, `_scheduled-test-stress`.
+`_ketryx_report_and_check`, `_package-publish`, `_build-native-only`,
+`_claude-code`, `_scheduled-audit`, `_scheduled-test-hourly`,
+`_scheduled-test-daily`, `_scheduled-test-stress`.
 (`stress-testing-staging.yml.paused` is currently disabled.)
 
 ## Main pipeline (`ci-cd.yml`)
@@ -46,7 +46,7 @@ Reusable: `_lint`, `_docs`, `_audit`, `_test`, `_codeql`,
 
 **Jobs**: `get-commit-message` (extracts commit message + release version from
 branch), `lint`, `docs`, `audit`, `test`, `codeql`, `sonarcloud`,
-`ketryx_report_and_check`, `package_publish`, `docker_publish`.
+`ketryx_report_and_check`, `package_publish`.
 
 **Dependency graph**:
 
@@ -54,11 +54,10 @@ branch), `lint`, `docs`, `audit`, `test`, `codeql`, `sonarcloud`,
 get-commit-message ──> lint, docs, audit, test, codeql
                        test ──> sonarcloud
 lint, audit, test, codeql, sonarcloud, docs ──> ketryx_report_and_check
-                                                 ├──> package_publish (tags only)
-                                                 └──> docker_publish  (tags only)
+                                                 └──> package_publish (tags only)
 ```
 
-`package_publish`/`docker_publish` run only on `refs/tags/v*`.
+`package_publish` runs only on `refs/tags/v*`.
 `ketryx_report_and_check` is skipped for `dependabot[bot]`.
 
 ## Test execution (`_test.yml`)
@@ -177,8 +176,7 @@ GitHub secrets: `ANTHROPIC_API_KEY`,
 `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`,
 `GCP_CREDENTIALS_{STAGING,PRODUCTION}` (base64 JSON), the BetterStack URLs above,
 `CODECOV_TOKEN`, `SONAR_TOKEN`, `SENTRY_DSN`/`SENTRY_AUTH_TOKEN`,
-`UV_PUBLISH_TOKEN`, `DOCKER_USERNAME`/`DOCKER_PASSWORD`,
-`KETRYX_PROJECT`/`KETRYX_API_KEY`, `SLACK_*_RELEASE_ANNOUNCEMENT`.
+`UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`/`KETRYX_API_KEY`, `SLACK_*_RELEASE_ANNOUNCEMENT`.
 
 Local `.env` for E2E:
 

@@ -165,7 +165,7 @@ Point the Ketryx release to the `release/vX.Y.Z` branch and collect required app
 make publish-release
 ```
 
-Generates `CHANGELOG.md`, creates the `vX.Y.Z` tag, and pushes — triggering CI/CD which publishes to PyPI, Docker registries, and creates a GitHub release (Ketryx check must pass first).
+Generates `CHANGELOG.md`, creates the `vX.Y.Z` tag, and pushes — triggering CI/CD which publishes to PyPI and creates a GitHub release (Ketryx check must pass first).
 
 **Phase 4 — Merge back to main:**
 
