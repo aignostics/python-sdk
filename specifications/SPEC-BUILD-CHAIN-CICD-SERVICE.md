@@ -5,7 +5,7 @@ itemType: Software Item Spec
 itemFulfills: TBD _(System service requirements to be defined)_
 Layer: Infrastructure Service
 Version: 0.2.140
-Date: 2025-09-11
+Date: 2026-10-07
 ---
 
 ## 1. Description
@@ -22,16 +22,15 @@ The Build Chain and CI/CD Module shall:
 - **[FR-02]** Run comprehensive test suites across multiple Python versions and operating systems with coverage reporting
 - **[FR-03]** Generate and publish documentation automatically including API references and user guides
 - **[FR-04]** Build and distribute Python packages to PyPI with semantic versioning
-- **[FR-05]** Create and publish multi-architecture Docker images for both slim and full variants
 - **[FR-06]** Generate compliance artifacts including SBOM, license reports, and vulnerability assessments
 - **[FR-07]** Provide local development environment consistency through pre-commit hooks and development tools
-- **[FR-08]** Support multiple distribution channels including PyPI, Docker registries, and GitHub releases
+- **[FR-08]** Support multiple distribution channels including PyPI and GitHub releases
 - **[FR-09]** Enable local CI/CD testing through Act integration for GitHub Actions workflows
 - **[FR-10]** Implement automated dependency monitoring and security vulnerability detection
 
 ### 1.3 Non-Functional Requirements
 
-- **Performance**: Build pipeline optimized for fast feedback with parallel execution across multiple platforms, efficient caching strategies for dependencies and Docker layers
+- **Performance**: Build pipeline optimized for fast feedback with parallel execution across multiple platforms, efficient caching strategies for dependencies
 - **Security**: Secrets managed through GitHub secrets, vulnerability scanning integrated, OIDC token-based authentication for secure service communication
 - **Reliability**: Manual retry capabilities through GitHub Actions UI, comprehensive error reporting through job summaries and artifacts
 - **Usability**: Clear feedback through GitHub status checks, detailed test reports in job summaries, one-command local development setup
@@ -40,7 +39,6 @@ The Build Chain and CI/CD Module shall:
 ### 1.4 Constraints and Limitations
 
 - GitHub Actions runner limitations for concurrent jobs and execution time
-- Docker registry rate limits requiring authenticated access for heavy usage
 - Platform-specific testing constraints (e.g., macOS GitHub Actions limitations)
 - Secret management restricted to repository administrators and configured environments
 
@@ -58,7 +56,6 @@ The Build Chain and CI/CD Module shall:
 │   ├── _test.yml       # Multi-platform testing pipeline
 │   ├── _audit.yml      # Security and compliance scanning
 │   ├── _package-publish.yml # PyPI package publishing
-│   ├── _docker-publish.yml  # Container image publishing
 │   ├── _codeql.yml     # GitHub CodeQL security analysis
 │   └── _ketryx_report_and_check.yml # Compliance reporting
 └── copilot-instructions.md # AI pair programming guidelines
@@ -78,7 +75,6 @@ pyproject.toml         # Project configuration and dependencies
 | `_test.yml`            | Workflow     | Multi-platform testing with coverage      | Pytest execution across matrix | UV, test dependencies  |
 | `_audit.yml`           | Workflow     | Security and license compliance scanning  | pip-audit, pip-licenses        | Python environment     |
 | `_package-publish.yml` | Workflow     | PyPI package building and publishing      | UV build tools, PyPI API       | GitHub release tags    |
-| `_docker-publish.yml`  | Workflow     | Container image building and publishing   | Docker Buildx, registries      | Docker Hub, GHCR       |
 | `Makefile`             | Build System | Local development task orchestration      | Command-line interface         | Nox, UV, system tools  |
 | `noxfile.py`           | Task Runner  | Python environment and session management | Python API and CLI             | UV, pytest, ruff, mypy |
 
@@ -109,7 +105,6 @@ pyproject.toml         # Project configuration and dependencies
 | Output Type      | Destination      | Data Type/Format                   | Success Criteria              | Error Conditions                        |
 | ---------------- | ---------------- | ---------------------------------- | ----------------------------- | --------------------------------------- |
 | Python Package   | PyPI             | Wheel and source distribution      | Successful upload             | Authentication/validation failures      |
-| Docker Images    | Docker Hub, GHCR | Multi-arch container images        | Multi-platform build success  | Registry authentication failures        |
 | Documentation    | Read The Docs    | HTML/PDF documentation             | Successful deployment         | Build/rendering failures                |
 | Test Reports     | GitHub Actions   | JUnit XML, coverage reports        | All tests pass, coverage >85% | Test failures, coverage below threshold |
 | Security Reports | Artifacts        | JSON vulnerability/license reports | Clean vulnerability scan      | Critical vulnerabilities detected       |
@@ -159,9 +154,6 @@ release_assets:
   - type: python_package
     format: [wheel, sdist]
     platform: any
-  - type: docker_image
-    variants: [slim, full]
-    architectures: [amd64, arm64]
   - type: documentation
     formats: [html, pdf]
   - type: compliance_reports
@@ -183,7 +175,6 @@ graph LR
     D --> I[Documentation Generation]
 
     F --> J[PyPI]
-    F --> K[Docker Registries]
     F --> L[GitHub Releases]
 ```
 
@@ -206,7 +197,6 @@ graph LR
   - `codeql`: GitHub CodeQL security analysis
   - `ketryx_report_and_check`: Compliance reporting and validation
   - `package_publish`: PyPI package publishing (tags only)
-  - `docker_publish`: Container image publishing (tags only)
 
 **Input/Output Contracts**:
 
@@ -250,7 +240,6 @@ uv run nox -s dist    # Package building
 | `make test`         | Execute test suite          | Optional: Python version | JUnit XML, coverage reports  |
 | `make lint`         | Code quality checks         | None                     | Console output, exit codes   |
 | `make audit`        | Security/compliance scan    | None                     | JSON reports, console output |
-| `make docker_build` | Build container images      | None                     | Docker images (local)        |
 | `make dist`         | Build Python packages       | None                     | Wheel/sdist in dist/         |
 
 **Common Options**:
@@ -270,7 +259,6 @@ uv run nox -s dist    # Package building
 | `_test.yml`            | `workflow_call` | Multi-platform testing  | `contents: read, packages: write`  | Test credentials   |
 | `_audit.yml`           | `workflow_call` | Security scanning       | `contents: read`                   | None               |
 | `_package-publish.yml` | `workflow_call` | PyPI publishing         | `contents: write, packages: write` | `UV_PUBLISH_TOKEN` |
-| `_docker-publish.yml`  | `workflow_call` | Container publishing    | `packages: write`                  | Docker credentials |
 
 **Environment Variables**:
 
@@ -297,7 +285,6 @@ uv run nox -s dist    # Package building
 | ------------------ | ----------- | ----------------------------- | ----------------- | ---------------------- |
 | GitHub Actions     | N/A         | CI/CD execution platform      | Required          | Local testing with Act |
 | UV Package Manager | Latest      | Python environment management | Required          | Fallback to pip/venv   |
-| Docker             | 20.10+      | Container image building      | Required          | Skip container builds  |
 | Ruff               | 0.1.0+      | Code formatting and linting   | Required          | Pipeline failure       |
 | MyPy               | 1.0+        | Static type checking          | Required          | Pipeline failure       |
 | pytest             | 7.0+        | Test execution framework      | Required          | Pipeline failure       |
@@ -307,7 +294,6 @@ uv run nox -s dist    # Package building
 
 - **Aignostics Platform API**: Authentication and service integration for E2E tests
 - **PyPI**: Package publishing and distribution
-- **Docker Hub/GHCR**: Container image registry publication
 - **Read The Docs**: Automated documentation deployment
 - **Codecov**: Test coverage reporting and analysis
 - **SonarQube**: Code quality and security analysis
@@ -334,8 +320,6 @@ uv run nox -s dist    # Package building
 | ----------------------------- | ------------------------------ | --------------------- |
 | `GITHUB_TOKEN`                | GitHub API authentication      | `ghp_xxxxxxxxxxxx`    |
 | `UV_PUBLISH_TOKEN`            | PyPI publishing authentication | `pypi-xxxxxxx`        |
-| `DOCKER_USERNAME`             | Docker Hub authentication      | `username`            |
-| `DOCKER_PASSWORD`             | Docker Hub token               | `dckr_pat_xxxxx`      |
 | `CODECOV_TOKEN`               | Coverage reporting             | `xxxxxxxx-xxxx-xxxx`  |
 | `SONAR_TOKEN`                 | SonarQube authentication       | `squ_xxxxxxxx`        |
 | `AIGNOSTICS_CLIENT_ID_DEVICE` | Platform API testing           | `client_id_value`     |
@@ -362,7 +346,6 @@ uv run nox -s dist    # Package building
 - **Commit Messages**: Validated for conventional commits format
 - **Environment Variables**: Presence and format validation for required secrets
 - **Python Code**: Syntax validation through AST parsing before execution
-- **Docker Configuration**: Dockerfile and compose file validation
 
 ### 7.3 Graceful Degradation
 
@@ -387,7 +370,6 @@ uv run nox -s dist    # Package building
 - **Input Sanitization**: All external inputs validated and sanitized before use
 - **Dependency Scanning**: pip-audit integration for vulnerability detection in dependencies
 - **Secret Detection**: detect-secrets pre-commit hook prevents credential leakage
-- **Container Security**: Multi-stage docker builds with minimal base images, non-root execution
 - **Supply Chain Security**: SBOM generation in CycloneDX and SPDX formats, dependency vulnerability tracking
 - **Code Analysis**: GitHub CodeQL and SonarQube integration for security analysis
 
@@ -407,14 +389,14 @@ uv run nox -s dist    # Package building
 - **State Type**: Stateless pipelines with artifact-based state passing between jobs
 - **Data Persistence**: Artifacts stored in GitHub Actions with configurable retention
 - **Session Management**: Isolated environments per job with clean setup/teardown
-- **Cache Strategy**: Multi-level caching (UV dependencies, Docker layers, build artifacts)
+- **Cache Strategy**: Multi-level caching (UV dependencies, build artifacts)
 
 ### 9.3 Performance and Scalability Considerations
 
 - **Performance Characteristics**:
   - Matrix testing: Parallel execution across 6+ platforms
-  - Caching: UV dependency and Docker layer caching implemented
-  - Optimization: Efficient resource usage through UV package manager and container builds
+  - Caching: UV dependency caching implemented
+  - Optimization: Efficient resource usage through UV package manager
 - **Scalability Patterns**: Horizontal scaling through GitHub Actions matrix builds
 - **Resource Management**: Memory and CPU optimization through UV and container limits
 - **Concurrency Model**: Parallel job execution with dependency-based ordering
