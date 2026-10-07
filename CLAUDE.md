@@ -1053,7 +1053,7 @@ This triggers `merge-release.yml`, which:
 
 ```
 make prepare-release  → push to release/vX.Y.Z  → lint + test + audit + Ketryx
-make publish-release  → push vX.Y.Z tag          → full CI + PyPI + Docker + GitHub release
+make publish-release  → push vX.Y.Z tag          → full CI + PyPI + GitHub release
 make merge-release    → push to main              → full CI pipeline
 ```
 
