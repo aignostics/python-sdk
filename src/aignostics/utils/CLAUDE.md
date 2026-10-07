@@ -24,6 +24,7 @@ The utils module provides core infrastructure and shared utilities used across a
 - `_health.py` - Health check framework
 - `_user_agent.py` - Enhanced user agent generation with CI/CD context
 - `boot.py` - Application bootstrap and initialization
+- `_cli.py` - `prepare_cli(cli, epilog, *, root_callback=None)` registers discovered subcommand typers, sets the epilog, and applies the no-args-is-help workaround to every typer. The optional `root_callback(ctx)` runs in the root callback only (not in subcommand callbacks), before the workaround. A Typer instance has only one callback, so use `root_callback` instead of `cli.callback(...)` in the root CLI.
 
 **System Utilities:**
 

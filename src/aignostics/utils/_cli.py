@@ -1,6 +1,7 @@
 """Command-line interface utilities."""
 
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import typer
@@ -8,13 +9,22 @@ import typer
 from ._di import locate_implementations
 
 
-def prepare_cli(cli: typer.Typer, epilog: str) -> None:
+def prepare_cli(
+    cli: typer.Typer,
+    epilog: str,
+    *,
+    root_callback: Callable[[typer.Context], None] | None = None,
+) -> None:
     """
     Dynamically locate, register and prepare subcommands.
 
     Args:
         cli (typer.Typer): Typer instance
         epilog (str): Epilog to add
+        root_callback (Callable[[typer.Context], None] | None): Optional function that the root
+            callback of ``cli`` calls with the Typer context before the no-args-is-help workaround.
+            Subcommand callbacks do not call it. If ``None``, the root callback only applies the
+            workaround.
     """
     for subcli in locate_implementations(typer.Typer):
         if subcli != cli:
@@ -29,6 +39,10 @@ def prepare_cli(cli: typer.Typer, epilog: str) -> None:
     if not any(arg.endswith("typer") for arg in Path(sys.argv[0]).parts):
         _add_epilog_recursively(cli, epilog)
 
+    # add root callback, which also applies the no_args_is_help workaround
+    if root_callback is not None and not hasattr(cli, "no_args_callback_added"):
+        _add_root_callback(cli, root_callback)
+
     # add no_args_is_help for all subcommands
     _no_args_is_help_recursively(cli)
 
@@ -42,6 +56,23 @@ def no_args_is_help_workaround(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is None:
         print(ctx.get_help())
         raise typer.Exit
+
+
+def _add_root_callback(cli: typer.Typer, root_callback: Callable[[typer.Context], None]) -> None:
+    """
+    Register a root callback that calls root_callback, then the no-args-is-help workaround.
+
+    Args:
+        cli (typer.Typer): Root Typer instance
+        root_callback (Callable[[typer.Context], None]): Function to call first with the Typer context
+    """
+
+    def _root_callback(ctx: typer.Context) -> None:
+        root_callback(ctx)
+        no_args_is_help_workaround(ctx)
+
+    cli.callback(invoke_without_command=True)(_root_callback)
+    cli.no_args_callback_added = True  # type: ignore[attr-defined]
 
 
 def _add_epilog_recursively(cli: typer.Typer, epilog: str) -> None:
