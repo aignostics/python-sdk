@@ -396,15 +396,15 @@ def test_cli_http_proxy(runner: CliRunner, silent_logging, tmp_path: Path, recor
 
         result = runner.invoke(cli, ["system", "config", "get", "SSL_CERT_FILE"])
         assert result.exit_code == 0
-        assert result.output == "\n"
+        assert result.stdout == "\n"
 
         result = runner.invoke(cli, ["system", "config", "get", "REQUESTS_CA_BUNDLE"])
         assert result.exit_code == 0
-        assert result.output == "\n"
+        assert result.stdout == "\n"
 
         result = runner.invoke(cli, ["system", "config", "get", "CURL_CA_BUNDLE"])
         assert result.exit_code == 0
-        assert result.output == "\n"
+        assert result.stdout == "\n"
 
         # Enable with no verify and ssl cert file conclicts
 
