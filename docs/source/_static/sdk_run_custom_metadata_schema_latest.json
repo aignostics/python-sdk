@@ -46,8 +46,16 @@
       "description": "Configuration for GPU resources.",
       "properties": {
         "gpu_type": {
-          "$ref": "#/$defs/GPUType",
-          "description": "The type of GPU to use (L4 or A100)"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GPUType"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The type of GPU to use. Unknown values are forwarded for the platform to judge.",
+          "title": "Gpu Type"
         },
         "provisioning_mode": {
           "$ref": "#/$defs/ProvisioningMode",
@@ -81,10 +89,11 @@
       "type": "object"
     },
     "GPUType": {
-      "description": "Type of GPU to use for processing.",
+      "description": "GPU types known to this SDK release. Not an allow-list: `GPUConfig` accepts any value.",
       "enum": [
         "L4",
-        "A100"
+        "A100",
+        "RTX_PRO_6000"
       ],
       "title": "GPUType",
       "type": "string"
@@ -582,5 +591,5 @@
   "title": "RunSdkMetadata",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.6.json"
+  "$id": "https://raw.githubusercontent.com/aignostics/python-sdk/main/docs/source/_static/sdk_metadata_schema_v0.0.7.json"
 }
