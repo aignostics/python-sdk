@@ -5,6 +5,7 @@ import re
 import pytest
 
 from aignostics.utils import __python_version__, __version__
+from aignostics.utils._constants import _is_cli_mode
 
 
 @pytest.mark.unit
@@ -57,3 +58,45 @@ def test_version_is_string(record_property) -> None:
 
     assert isinstance(__version__, str), f"__version__ should be a string, got {type(__version__)}"
     assert isinstance(__python_version__, str), f"__python_version__ should be a string, got {type(__python_version__)}"
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["/home/user/.venv/bin/aignostics", "system", "info"],
+        ["/home/user/.cache/uv/archive-v0/abc/bin/aignostics", "launchpad"],
+        [r"D:\a\python-sdk\.venv\Scripts\aignostics.exe", "system", "--help"],
+        [r"C:\Program Files\Aignostics\AIGNOSTICS.EXE"],
+        ["/Applications/aignostics.app/Contents/MacOS/aignostics"],
+        ["/usr/bin/python3", "aignostics", "system", "info"],
+        ["/home/user/sdk/gui_watch.py"],
+        ["/usr/bin/python3", "gui_watch.py"],
+    ],
+)
+def test_is_cli_mode_detects_cli(argv: list[str], record_property) -> None:
+    """The CLI, the Windows console script, the native app and the GUI watcher run in CLI mode."""
+    record_property("tested-item-id", "SPEC-UTILS-CONSTANTS")
+
+    assert _is_cli_mode(argv)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "argv",
+    [
+        [],
+        [""],
+        ["-c"],
+        ["/home/user/notebook.py"],
+        [r"C:\Users\user\analysis.py"],
+        ["/usr/bin/python3", "my_aignostics_script.py"],
+        ["/home/user/.venv/bin/pytest", "tests"],
+        ["/home/user/my-aignostics"],
+    ],
+)
+def test_is_cli_mode_rejects_library_use(argv: list[str], record_property) -> None:
+    """Scripts, notebooks and other tools that import the SDK do not run in CLI mode."""
+    record_property("tested-item-id", "SPEC-UTILS-CONSTANTS")
+
+    assert not _is_cli_mode(argv)
