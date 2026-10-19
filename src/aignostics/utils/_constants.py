@@ -4,7 +4,7 @@ import os
 import platform
 import sys
 from importlib import metadata
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 
 from dotenv import load_dotenv
 
@@ -21,12 +21,30 @@ __python_version__ = platform.python_version()
 __is_development_mode__ = "uvx" not in sys.argv[0].lower()
 __is_running_in_container__ = os.getenv(f"{__project_name__.upper()}_RUNNING_IN_CONTAINER")
 
-__is_cli_mode__ = (
-    sys.argv[0].endswith(__project_name__)
-    or (len(sys.argv) > 1 and sys.argv[1] == __project_name__)
-    or sys.argv[0].endswith("gui_watch.py")
-    or (len(sys.argv) > 1 and sys.argv[1] == "gui_watch.py")
-)
+
+def _is_cli_mode(argv: list[str]) -> bool:
+    """Detect if the process runs the CLI or the GUI watcher, not a library import.
+
+    The executable name is compared without extension and case, as on Windows
+    the console script is `aignostics.exe`. PureWindowsPath splits on both slash and backslash.
+
+    Args:
+        argv: The command line arguments of the process, usually `sys.argv`.
+
+    Returns:
+        bool: True if the process runs the CLI or the GUI watcher.
+    """
+    executable = argv[0] if argv else ""
+    first_arg = argv[1] if len(argv) > 1 else ""
+    return (
+        PureWindowsPath(executable).stem.lower() == __project_name__
+        or first_arg == __project_name__
+        or executable.endswith("gui_watch.py")
+        or first_arg == "gui_watch.py"
+    )
+
+
+__is_cli_mode__ = _is_cli_mode(sys.argv)
 __is_library_mode__ = not __is_cli_mode__ and not os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
 __is_test_mode__ = "pytest" in sys.modules and os.getenv(f"PYTEST_RUNNING_{__project_name__.upper()}")
 
