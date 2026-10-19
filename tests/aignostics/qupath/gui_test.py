@@ -296,7 +296,7 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
 
         # Step 7: Inspect QuPath results
         result = runner.invoke(cli, ["qupath", "inspect", str(qupath_dir)])
-        output = normalize_output(result.output, strip_ansi=True)
+        output = normalize_output(result.stdout, strip_ansi=True)
         print(repr(output))
 
         # Check for (1) spot added to QuPath project, (2) heatmaps added
