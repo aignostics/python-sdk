@@ -1,5 +1,61 @@
 [🔬 Aignostics Python SDK](https://aignostics.readthedocs.io/en/latest/)
 
+# [v1.6.0](https://github.com/aignostics/python-sdk/compare/v1.5.0..v1.6.0) - 2026-10-19
+
+### ⛰️  Features
+
+- *(cli)* Show deprecation notice - ([abb3b45](https://github.com/aignostics/python-sdk/commit/abb3b459c46994a78e87f332c61169006ac6ca46))
+- *(gui)* Show deprecation banner in Launchpad - ([3a5e2cf](https://github.com/aignostics/python-sdk/commit/3a5e2cffd2ce5bb09a52ef9c563a366b7dd5cdd2))
+- Log deprecation notice on import - ([1e3c4f8](https://github.com/aignostics/python-sdk/commit/1e3c4f8bc9ec5e012c74d86de91f454df7931730))
+
+### 🐛 Bug Fixes
+
+- *(deps)* Adapt lint and tests to ruff 0.16 and typer 0.27 - ([7c23819](https://github.com/aignostics/python-sdk/commit/7c23819828b06718255508bac4e40e097e73b66b))
+- *(utils)* Detect CLI mode for the Windows console script - ([6dcd177](https://github.com/aignostics/python-sdk/commit/6dcd1779cb166bf72a63e90e9e6075f88d520acf))
+
+### 🚜 Refactor
+
+- *(utils)* Add root callback to prepare_cli - ([48e03a6](https://github.com/aignostics/python-sdk/commit/48e03a6e32792fb7c3dc43ba3f3bc94fd955e262))
+
+### 📚 Documentation
+
+- *(spec)* Remove Docker from build chain SPEC - ([61b7878](https://github.com/aignostics/python-sdk/commit/61b7878a02034a64921489cd9306ecd561fab6fa))
+- State maintenance-only policy - ([e85ec25](https://github.com/aignostics/python-sdk/commit/e85ec25eb132de6d1af335b41f8c004a6da2bbf4))
+- Add deprecation banner to docs site - ([52d2113](https://github.com/aignostics/python-sdk/commit/52d21134384bd864c3950ff3aee205a96ebffc10))
+- Add deprecation notice to README - ([b86c479](https://github.com/aignostics/python-sdk/commit/b86c4794f4280d5630272b6eb0e1e023ffe8880e))
+- Remove Docker distribution channel - ([57eced2](https://github.com/aignostics/python-sdk/commit/57eced2f01782641a7b0ea56001036aa4607779f))
+- Add "Get started with Console" user guide ([#712](https://github.com/aignostics/python-sdk/pull/712)) - ([e59e8a3](https://github.com/aignostics/python-sdk/commit/e59e8a39a1006976a9e9d323be30fe7cd6bccd89))
+- Add "Get started with the API" developer guide ([#713](https://github.com/aignostics/python-sdk/pull/713)) - ([220f30c](https://github.com/aignostics/python-sdk/commit/220f30c67b58e5e06240845dc6c2b86d36db480f))
+
+### 🧪 Testing
+
+- *(application)* Drop artifact count assertion from verbose list test - ([9e0e6f1](https://github.com/aignostics/python-sdk/commit/9e0e6f1e2b05f80e05f53492dc63ea57cd1e5b68))
+- *(qupath)* Parse stdout in QuPath inspect test - ([08a9552](https://github.com/aignostics/python-sdk/commit/08a9552e88550047ea00dea624f472397302a7e7))
+- *(qupath)* Drop annotation count assertion from GUI e2e test - ([b52c648](https://github.com/aignostics/python-sdk/commit/b52c6482180eb7326179ef130fa91630653510a7))
+- *(system)* Compare stdout in proxy config test - ([8284373](https://github.com/aignostics/python-sdk/commit/82843733f1e7a6bd191f03fa2001e2c9b4ce7f74))
+- Remove Docker e2e test and pytest-docker - ([074c686](https://github.com/aignostics/python-sdk/commit/074c68643c028556f264bfa6f8dfe2e8178843dc))
+- Increase deadline for submit_and_find E2E test - ([5f89328](https://github.com/aignostics/python-sdk/commit/5f89328035a432d90521eae389b8025fff6f3a4e))
+
+### ⚙️ Miscellaneous Tasks
+
+- *(claude)* Remove project .claude directory and .mcp.json ([#729](https://github.com/aignostics/python-sdk/pull/729)) - ([e5269bd](https://github.com/aignostics/python-sdk/commit/e5269bd0e2d9dcf3c1957c73fad651f0f6806c6e))
+- *(deps)* Bump oauthlib to 4.0.0 and update ATTRIBUTIONS.md - ([4bc4304](https://github.com/aignostics/python-sdk/commit/4bc4304f7e354b633d27bc6868ee94107a066830))
+- *(deps)* Lock file maintenance - ([09ff7b1](https://github.com/aignostics/python-sdk/commit/09ff7b16b3904096345e9bb61f744d6551f2a76e))
+- *(deps)* Update github actions - ([17cf615](https://github.com/aignostics/python-sdk/commit/17cf6153626784954ec3ea1e1d5edd07d515f887))
+- *(tests)* Bump he-tme to 2.0.0 and refresh expected results ([#722](https://github.com/aignostics/python-sdk/pull/722)) - ([761205f](https://github.com/aignostics/python-sdk/commit/761205f936300008e842db43c3876b051d21c510))
+- Downgrade packages permission to read - ([9200416](https://github.com/aignostics/python-sdk/commit/9200416114e4c0024b13e74b5d0d6cd7db5b922f))
+- Stop publishing Docker images - ([64b7317](https://github.com/aignostics/python-sdk/commit/64b7317299da8a17457f82ef0269e2352c79a30f))
+- Merge release/v1.5.0 into main - ([312061b](https://github.com/aignostics/python-sdk/commit/312061bdbe1f9c5ff81cad5df4696486b3afff63))
+
+### 🛡️ Security
+
+- Simplify Console guide and focus docs on Console, Library and API ([#718](https://github.com/aignostics/python-sdk/pull/718)) - ([e3633c7](https://github.com/aignostics/python-sdk/commit/e3633c78a7c04c1d33948c45c4dc9d46943fffdc))
+
+### Build
+
+- Remove Docker image build files - ([ea6d3b2](https://github.com/aignostics/python-sdk/commit/ea6d3b26db85f236fb6b9c99825b001d47b9784c))
+
+
 # [v1.5.0](https://github.com/aignostics/python-sdk/compare/v1.4.0..v1.5.0) - 2026-08-13
 
 ### ⛰️  Features
