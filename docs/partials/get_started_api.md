@@ -14,7 +14,7 @@ This guide covers one full workflow with plain HTTP calls — authenticate, anal
 Authentication is tied to a person, not to a machine: every call acts as a user in an organization, and each analysis records a `submitted_by`. There is no anonymous access and no organization-wide API key. You need two things:
 
 - **A platform account**, created by invitation from your organization's administrator (the section above). If your organization is not on the platform yet, talk to `support@aignostics.com`.
-- **A client ID**, the public identifier of your integration. Ask `support@aignostics.com`; you cannot mint one yourself. There is no matching client *secret*, because a program running on a user's machine cannot keep one safe.
+- **A client ID**, the public identifier of your organization's API access — one per organization, shared by all its users. You receive it with your platform invitation; if you did not, ask `support@aignostics.com`. There is no matching client *secret*, because a program running on a user's machine cannot keep one safe.
 
 #### How it works
 
