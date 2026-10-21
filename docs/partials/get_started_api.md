@@ -57,18 +57,19 @@ Once you approve, the same call returns `access_token` and `refresh_token`. Stor
 This is what CI and long-running services do whenever a call returns `401`:
 
 ```shell
-curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
+export TOKEN=$(curl -s -X POST https://aignostics-platform.eu.auth0.com/oauth/token \
   -d grant_type=refresh_token \
   -d client_id="$CLIENT_ID" \
-  -d refresh_token="$REFRESH_TOKEN" | jq -r .access_token
+  -d refresh_token="$REFRESH_TOKEN" | jq -r .access_token)
 ```
+
+An access token lasts about an hour. When it expires, calls return `401` with the plain-text body `Jwt is expired` — so a command that pipes into `jq` fails with `parse error: Invalid numeric literal` instead. Either way, run the renewal above and retry.
 
 Because the refresh token belongs to the person who logged in, an unattended service acts as that user — and stops working if that account does. If you need a true machine identity, ask support; these flows are what the API supports today.
 
 #### Check that it worked
 
 ```shell
-export TOKEN=your-access-token
 export API=https://platform.aignostics.com/api/v1
 
 curl -s "$API/me" -H "Authorization: Bearer $TOKEN" | jq .
@@ -78,7 +79,12 @@ curl -s "$API/me" -H "Authorization: Bearer $TOKEN" | jq .
 
 #### Hello world, end to end
 
-All of the above in one script, with your client ID as the only input. It needs `curl` and `jq`.
+All of the above in one script, with your client ID as the only input. It needs `curl` and `jq`. Save it as `hello_aignostics.sh`, then run it:
+
+```shell
+chmod +x hello_aignostics.sh
+./hello_aignostics.sh your-client-id
+```
 
 ```shell
 #!/usr/bin/env bash
@@ -96,6 +102,10 @@ device=$(curl -sS -X POST "$AUTH0/oauth/device/code" \
   -d client_id="$CLIENT_ID" \
   -d scope=offline_access \
   -d audience="$AUDIENCE")
+
+if jq -e .error <<<"$device" >/dev/null; then             # e.g. a mistyped client ID
+  jq -r '"login failed: " + (.error_description // .error)' <<<"$device" >&2; exit 1
+fi
 
 device_code=$(jq -r .device_code <<<"$device")
 interval=$(jq -r .interval <<<"$device")
@@ -122,7 +132,11 @@ ACCESS_TOKEN=$(jq -r .access_token <<<"$tokens")
 REFRESH_TOKEN=$(jq -r .refresh_token <<<"$tokens")
 echo "Got an access token, and a refresh token to store as a secret (${#REFRESH_TOKEN} chars)."
 
-# 3. Confirm the API answers as you.
+# 3. Keep the refresh token, readable only by you, for the renewal call above.
+(umask 077; printf '%s' "$REFRESH_TOKEN" > "$HOME/.aignostics_refresh_token")
+echo "Saved it to ~/.aignostics_refresh_token."
+
+# 4. Confirm the API answers as you.
 curl -sS "$API/me" -H "Authorization: Bearer $ACCESS_TOKEN" \
   | jq '{user: .user.email, organization: .organization.display_name, bucket: .organization.aignostics_bucket_name}'
 ```
@@ -131,6 +145,7 @@ curl -sS "$API/me" -H "Authorization: Bearer $ACCESS_TOKEN" \
 Open this link:        https://aignostics-platform.eu.auth0.com/activate?user_code=ABCD-EFGH
 Confirm it shows code: ABCD-EFGH
 Got an access token, and a refresh token to store as a secret (64 chars).
+Saved it to ~/.aignostics_refresh_token.
 {
   "user": "you@your-organization.example",
   "organization": "Your Organization",
@@ -138,7 +153,15 @@ Got an access token, and a refresh token to store as a secret (64 chars).
 }
 ```
 
-Keep the refresh token in your secret manager and later runs skip the browser entirely — the renewal call above is all they need.
+Later sessions skip the browser entirely — load the saved token and run the renewal call above:
+
+```shell
+export CLIENT_ID=your-client-id
+export API=https://platform.aignostics.com/api/v1
+REFRESH_TOKEN=$(cat ~/.aignostics_refresh_token)
+```
+
+On a shared machine or in CI, keep the refresh token in your secret manager instead of a file.
 
 ### 2. Find out what the application expects
 
@@ -146,14 +169,24 @@ Two calls: one to see which applications your organization can run, one to read 
 
 ```shell
 curl -s "$API/applications" -H "Authorization: Bearer $TOKEN" | jq .
-curl -s "$API/applications/he-tme/versions/1.3.0" -H "Authorization: Bearer $TOKEN" | jq .
+curl -s "$API/applications/he-tme/versions/2.0.1" -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
-The version response tells you exactly what to send in the next step:
+The first call shows each application's `latest_version`; use that number in the second.
 
-- `input_artifacts[].name` — the name to give the file you submit for each slide (`input_slide` for Atlas H&E-TME).
+The version response tells you exactly what to send in step 4:
+
+- `input_artifacts[].name` — the name to give the file you submit for each slide (`whole_slide_image` for Atlas H&E-TME).
 - `input_artifacts[].metadata_schema` — a JSON Schema for the per-slide `metadata`. Validate against it locally instead of guessing; it is versioned with the application, so it is the source of truth for required fields.
 - `output_artifacts[]` — the result files a successful slide produces, with their MIME types.
+
+For Atlas H&E-TME, only three metadata fields are required — the rest (`width_px`, `height_px`, `resolution_mpp`, `media_type`) are optional:
+
+| Field | Value |
+| --- | --- |
+| `checksum_base64_crc32c` | the slide file's CRC32C checksum, base64-encoded — step 3 shows how to get it |
+| `staining_method` | `H&E` |
+| `specimen` | a tissue and disease pair, for example `{"tissue": "BLADDER", "disease": "BLADDER_CANCER"}`. The schema's `$defs` list the valid pairs. |
 
 ### 3. Give the platform access to your slides
 
@@ -161,7 +194,9 @@ The platform fetches each slide from a URL you provide, so that URL has to work 
 
 **The preferred method is to store the slide in S3-compliant object storage** — AWS S3, Google Cloud Storage, anything speaking the S3 API — **and mint a signed URL for it**: a link with a temporary key in it, granting read access to that one object for a limited time. **Give it at least seven days**, so it outlives any queueing. Seven days is also the longest a SigV4 signature can live, so that is the number to use.
 
-**For convenience we provide that storage.** Every organization gets a bucket, plus credentials to upload objects into it and sign download URLs from it. `GET /v1/me` returns all four under `organization`:
+**If your slides are already in your own S3 or Google Cloud Storage bucket**, mint the signed URLs there with your own credentials and skip the upload below.
+
+**If your slides are on your own disk, upload them to the bucket we provide.** Every organization gets a bucket, plus credentials to upload objects into it and sign download URLs from it. `GET /v1/me` returns all four under `organization`:
 
 | Field | What it is |
 | --- | --- |
@@ -170,19 +205,47 @@ The platform fetches each slide from a URL you provide, so that URL has to work 
 | `aignostics_bucket_hmac_access_key_id` | access key ID |
 | `aignostics_bucket_hmac_secret_access_key` | secret access key |
 
-The key pair is an ordinary S3 credential: point any S3 client at the provider's S3-compatible endpoint — `https://storage.googleapis.com` for `gs` — and sign with SigV4.
+The key pair is an ordinary S3 credential: point any S3 client at the provider's S3-compatible endpoint — `https://storage.googleapis.com` for `gs` — and sign with SigV4. The examples use the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). Load the credentials straight from `GET /v1/me`:
 
 ```shell
-export AWS_ACCESS_KEY_ID=your-aignostics-bucket-hmac-access-key-id
-export AWS_SECRET_ACCESS_KEY=your-aignostics-bucket-hmac-secret-access-key
-export BUCKET=your-aignostics-bucket-name
+ME=$(curl -s "$API/me" -H "Authorization: Bearer $TOKEN")
+export BUCKET=$(jq -r .organization.aignostics_bucket_name <<<"$ME")
+export AWS_ACCESS_KEY_ID=$(jq -r .organization.aignostics_bucket_hmac_access_key_id <<<"$ME")
+export AWS_SECRET_ACCESS_KEY=$(jq -r .organization.aignostics_bucket_hmac_secret_access_key <<<"$ME")
+unset ME
+export AWS_DEFAULT_REGION=auto
 export GCS=https://storage.googleapis.com
 
+# AWS CLI 2.23 and later add checksums that Google Cloud Storage rejects on large uploads
+# ("SignatureDoesNotMatch"); send them only where required.
+export AWS_REQUEST_CHECKSUM_CALCULATION=when_required
+export AWS_RESPONSE_CHECKSUM_VALIDATION=when_required
+```
+
+Then, for each slide:
+
+```shell
 # upload the slide
 aws s3 --endpoint-url "$GCS" cp slide1.tiff "s3://$BUCKET/slide1.tiff"
 
 # mint the signed URL to hand to the platform (7 days)
-aws s3 --endpoint-url "$GCS" presign "s3://$BUCKET/slide1.tiff" --expires-in 604800
+URL=$(aws s3 --endpoint-url "$GCS" presign "s3://$BUCKET/slide1.tiff" --expires-in 604800)
+
+# read the checksum Google Cloud Storage computed on upload; this also proves the URL works
+CHECKSUM=$(curl -sI -r 0-0 "$URL" | tr -d '\r' | grep -i '^x-goog-hash: crc32c=' | cut -d= -f2-)
+echo "$CHECKSUM"
+```
+
+`CHECKSUM` is the `checksum_base64_crc32c` for step 4, for example `O5m1XA==`. If it comes back empty, the URL does not work — check the bucket path.
+
+If your own storage does not report a CRC32C checksum, compute it locally (`pip install google-crc32c`):
+
+```shell
+python3 -c 'import sys, base64, google_crc32c
+c = google_crc32c.Checksum()
+with open(sys.argv[1], "rb") as f:
+    for block in iter(lambda: f.read(8 << 20), b""): c.update(block)
+print(base64.b64encode(c.digest()).decode())' slide1.tiff
 ```
 
 Treat the secret like any other credential: it grants access to your organization's slides.
@@ -191,39 +254,37 @@ Treat the secret like any other credential: it grants access to your organizatio
 
 ### 4. Start the analysis
 
-> ⚠️ **This example is specific to Atlas H&E-TME `1.3.0`.** Artifact names, metadata, and outputs differ per application and change between versions, so read the version's own contract — *Find out what the application expects*, above — instead of copying this payload.
+> ⚠️ **This example is specific to Atlas H&E-TME `2.0.1`.** Artifact names, metadata, and outputs differ per application and change between versions, so read the version's own contract — *Find out what the application expects*, above — instead of copying this payload.
 
 One `POST` describes the whole analysis: which application, which version, and one entry per slide. The API calls those entries **items**, and the files attached to them **artifacts** — here a single input artifact, your slide. Give each item your own `external_id` so you can match results back to your records. Omit `version_number` for the latest version, or pin it as below so a repeat analysis behaves identically.
 
+`jq` builds the request from the `URL` and `CHECKSUM` of step 3, so the signed URL's special characters need no escaping:
+
 ```shell
+BODY=$(jq -n --arg url "$URL" --arg checksum "$CHECKSUM" '{
+  application_id: "he-tme",
+  version_number: "2.0.1",
+  items: [{
+    external_id: "slide_1",
+    input_artifacts: [{
+      name: "whole_slide_image",
+      download_url: $url,
+      metadata: {
+        checksum_base64_crc32c: $checksum,
+        staining_method: "H&E",
+        specimen: {tissue: "LUNG", disease: "LUNG_CANCER"}
+      }
+    }]
+  }]
+}')
+
 curl -s -X POST "$API/runs" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{
-    "application_id": "he-tme",
-    "version_number": "1.3.0",
-    "items": [
-      {
-        "external_id": "slide_1",
-        "input_artifacts": [
-          {
-            "name": "input_slide",
-            "download_url": "https://example-bucket.storage.example.com/slide1.tiff?signature=...",
-            "metadata": {
-              "checksum_base64_crc32c": "64RKKA==",
-              "media-type": "image/tiff",
-              "width_px": 136223,
-              "height_px": 87761,
-              "resolution_mpp": 0.2628238,
-              "staining_method": "H&E",
-              "specimen": {"tissue": "LUNG", "disease": "LUNG_CANCER"}
-            }
-          }
-        ]
-      }
-    ]
-  }' | jq .
+  -d "$BODY" | jq .
 ```
+
+**One analysis can hold all your slides:** add one entry to `items` per slide, each with its own `external_id`, `download_url`, and checksum.
 
 A `201` returns `{"run_id": "..."}` — the handle you follow the analysis with, so keep it. `custom_metadata` and `scheduling` are optional; the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html) lists what your API version accepts.
 
@@ -254,11 +315,22 @@ Per slide, `termination_reason` is `SUCCEEDED`, `USER_ERROR` (your input — bad
 
 ### 6. Download results
 
-Every succeeded slide lists its result files under `output_artifacts`, each with a `download_url` you can fetch directly. Those URLs expire; if one has gone stale, ask for a fresh one:
+Every succeeded slide lists its result files under `output_artifacts`. Fetch each one through `GET /v1/runs/{run_id}/artifacts/{output_artifact_id}/file`: it answers with a redirect to a short-lived signed link, so let `curl` follow it with `-L`.
+
+Artifact names look like `readout_generation:cell_readouts` — a processing step and a file name, with no file extension. This loop downloads every result of every succeeded slide into `results/<external_id>/<step>/<file>`:
 
 ```shell
-curl -s "$API/runs/$RUN_ID/artifacts/$ARTIFACT_ID/file" -H "Authorization: Bearer $TOKEN"
+curl -s "$API/runs/$RUN_ID/items?state=TERMINATED" -H "Authorization: Bearer $TOKEN" \
+  | jq -r '.[] | select(.termination_reason == "SUCCEEDED") | .external_id as $slide
+           | .output_artifacts[] | [$slide, .output_artifact_id, .name] | @tsv' \
+  | while IFS=$'\t' read -r slide id name; do
+      curl -sSL --create-dirs -o "results/$slide/${name//://}" \
+        "$API/runs/$RUN_ID/artifacts/$id/file" -H "Authorization: Bearer $TOKEN" \
+        && echo "downloaded $slide/${name//://}"
+    done
 ```
+
+The version's `output_artifacts[]` from step 2 gives each name's `mime_type` — CSV, GeoJSON, Parquet, or TIFF for Atlas H&E-TME — so you know which extension to add.
 
 Since slides finish one by one, the efficient pattern is a loop: poll `/items`, download whatever is newly `SUCCEEDED`, and track what you already have.
 
