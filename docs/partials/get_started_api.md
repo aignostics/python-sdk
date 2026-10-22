@@ -2,7 +2,7 @@
 
 The Aignostics Platform API is a REST API over HTTPS, rooted at `https://platform.aignostics.com/api/v1`. Call it directly when you integrate the platform into another language or into an existing pipeline.
 
-This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), follow progress, download results. Examples use `curl` and `jq`. The complete contract is in the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html).
+This guide covers one full workflow with plain HTTP calls — authenticate, analyze slides with [HETA](https://www.aignostics.com/life-sciences/heta), follow progress, download results. Examples use `curl` and `jq`. The complete contract is in the [API Explorer](https://aignostics.readthedocs.io/en/latest/api_explorer_v1.html).
 
 ```{include} ../partials/_get_started_signup.md
 ```
@@ -172,15 +172,15 @@ curl -s "$API/applications" -H "Authorization: Bearer $TOKEN" | jq .
 curl -s "$API/applications/he-tme/versions/2.0.1" -H "Authorization: Bearer $TOKEN" | jq .
 ```
 
-The first call shows each application's `latest_version`; use that number in the second.
+The first call shows each application's `latest_version`; use that number in the second. HETA's `application_id` is `he-tme`.
 
 The version response tells you exactly what to send in step 4:
 
-- `input_artifacts[].name` — the name to give the file you submit for each slide (`whole_slide_image` for Atlas H&E-TME).
+- `input_artifacts[].name` — the name to give the file you submit for each slide (`whole_slide_image` for HETA).
 - `input_artifacts[].metadata_schema` — a JSON Schema for the per-slide `metadata`. Validate against it locally instead of guessing; it is versioned with the application, so it is the source of truth for required fields.
 - `output_artifacts[]` — the result files a successful slide produces, with their MIME types.
 
-For Atlas H&E-TME, only three metadata fields are required — the rest (`width_px`, `height_px`, `resolution_mpp`, `media_type`) are optional:
+For HETA, only three metadata fields are required — the rest (`width_px`, `height_px`, `resolution_mpp`, `media_type`) are optional:
 
 | Field | Value |
 | --- | --- |
@@ -250,11 +250,11 @@ print(base64.b64encode(c.digest()).decode())' slide1.tiff
 
 Treat the secret like any other credential: it grants access to your organization's slides.
 
-## Analyze your slides with Atlas H&E-TME
+## Analyze your slides with HETA
 
 ### 4. Start the analysis
 
-> ⚠️ **This example is specific to Atlas H&E-TME `2.0.1`.** Artifact names, metadata, and outputs differ per application and change between versions, so read the version's own contract — *Find out what the application expects*, above — instead of copying this payload.
+> ⚠️ **This example is specific to HETA `2.0.1`.** Artifact names, metadata, and outputs differ per application and change between versions, so read the version's own contract — *Find out what the application expects*, above — instead of copying this payload.
 
 One `POST` describes the whole analysis: which application, which version, and one entry per slide. The API calls those entries **items**, and the files attached to them **artifacts** — here a single input artifact, your slide. Give each item your own `external_id` so you can match results back to your records. Omit `version_number` for the latest version, or pin it as below so a repeat analysis behaves identically.
 
@@ -330,7 +330,7 @@ curl -s "$API/runs/$RUN_ID/items?state=TERMINATED" -H "Authorization: Bearer $TO
     done
 ```
 
-The version's `output_artifacts[]` from step 2 gives each name's `mime_type` — CSV, GeoJSON, Parquet, or TIFF for Atlas H&E-TME — so you know which extension to add.
+The version's `output_artifacts[]` from step 2 gives each name's `mime_type` — CSV, GeoJSON, Parquet, or TIFF for HETA — so you know which extension to add.
 
 Since slides finish one by one, the efficient pattern is a loop: poll `/items`, download whatever is newly `SUCCEEDED`, and track what you already have.
 

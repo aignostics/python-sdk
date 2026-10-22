@@ -1,6 +1,6 @@
 # Get started with Launchpad
 
-Launchpad is a desktop application for running Aignostics applications on your whole slide images. This guide walks you through running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) — which analyzes the tumor microenvironment in H&E-stained tissue — on an example slide, from signing up to viewing results in QuPath.
+Launchpad is a desktop application for running Aignostics applications on your whole slide images. This guide walks you through running [HETA](https://www.aignostics.com/life-sciences/heta) — which analyzes the tumor microenvironment in H&E-stained tissue — on an example slide, from signing up to viewing results in QuPath.
 
 You do not need any programming experience. You will copy and paste a few commands, but everything else happens in a normal point-and-click window. The hands-on setup takes about 15 minutes. After you submit your analysis, it runs on its own — you can close Launchpad and come back to your results later.
 
@@ -57,7 +57,7 @@ If you see an error instead of the window, see [Troubleshooting](#troubleshootin
 
 ## Run your first analysis
 
-This walkthrough runs Atlas H&E-TME on a public lung cancer slide so you can see the whole flow end to end. Launchpad should already be open from the previous step. If you closed it, start it again by pasting `uvx aignostics launchpad` into a terminal.
+This walkthrough runs HETA on a public lung cancer slide so you can see the whole flow end to end. Launchpad should already be open from the previous step. If you closed it, start it again by pasting `uvx aignostics launchpad` into a terminal.
 
 ### 1. Log in
 
@@ -75,15 +75,15 @@ You need a slide to analyze. Launchpad can download a public example slide for y
 3. Click **EXAMPLE DATASET**. Launchpad fills in the details of the example slide for you.
 4. Click **DOWNLOAD**. A progress bar appears at the bottom of the window. The download takes a few minutes. Wait until it finishes.
 
-### 3. Open Run Applications and select Atlas H&E-TME
+### 3. Open Run Applications and select HETA
 
 1. Click the menu icon (☰) again and choose **Run Applications**.
-2. In the list on the left, click **Atlas H&E-TME**. The analysis workflow opens on the right.
+2. In the list on the left, click HETA. It may still be listed under its former name, **Atlas H&E-TME**. The analysis workflow opens on the right.
 3. Click **NEXT** to continue with the latest version.
 
 ### 4. Select slides and provide metadata
 
-This is the step where most people get stuck, so take it slowly. Atlas H&E-TME needs to know two things about each slide before it can run: what kind of tissue it is, and what disease it relates to. You fill these in by hand.
+This is the step where most people get stuck, so take it slowly. HETA needs to know two things about each slide before it can run: what kind of tissue it is, and what disease it relates to. You fill these in by hand.
 
 1. Click **DATA** and select the folder you just downloaded. Launchpad scans the folder and shows a table with one row per slide. Each row has a small preview image and some details that were read automatically from the file.
 

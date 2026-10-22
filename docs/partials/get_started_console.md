@@ -1,6 +1,6 @@
 # Get started with Console
 
-[Console](https://platform.aignostics.com) is the web interface of the Aignostics Platform. This guide takes you through your first analysis with [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), which profiles the tumor microenvironment on H&E slides: you upload your slides with one command, then start the analysis and download the results in your browser. It takes about 15 minutes plus upload time, and you don't need to know how to code.
+[Console](https://platform.aignostics.com) is the web interface of the Aignostics Platform. This guide takes you through your first analysis with [HETA](https://www.aignostics.com/life-sciences/heta), which profiles the tumor microenvironment on H&E slides: you upload your slides with one command, then start the analysis and download the results in your browser. It takes about 15 minutes plus upload time, and you don't need to know how to code.
 
 You need a Mac, Windows, or Linux computer, a phone for the login code, and your slides as `.svs`, `.tif`, `.tiff`, or DICOM `.dcm` files.
 
@@ -97,7 +97,7 @@ If your slides are already stored in AWS S3, Azure Blob Storage, or Google Cloud
 
    Keep the process running and your machine awake until the copy finishes.
 
-## Analyze your slides with Atlas H&E-TME
+## Analyze your slides with HETA
 
 ### 5. Start the analysis
 
@@ -115,7 +115,7 @@ If your slides are already stored in AWS S3, Azure Blob Storage, or Google Cloud
    Pick your slides from the bucket. Click to view full size.
    ```
 
-4. Under **Version**, pick the he-tme entry with the highest version number.
+4. Under **Version**, pick the he-tme entry with the highest version number. `he-tme` is HETA's application ID.
 
 5. Under **Indication** and **Tissue**, pick what matches your slides, for example Lung cancer and Lung. They apply to all slides you selected.
 
@@ -163,7 +163,7 @@ On **Run Details**, click **Download Available Results**. For each slide you get
 **Run Details** — download everything at once, or one slide at a time. Click to view full size.
 ```
 
-That's it: you have analyzed your first slides with Atlas H&E-TME and have the results on your computer.
+That's it: you have analyzed your first slides with HETA and have the results on your computer.
 
 ## Where to go next
 
