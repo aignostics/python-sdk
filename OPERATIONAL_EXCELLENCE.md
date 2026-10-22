@@ -41,10 +41,9 @@ more about how we handle [security](https://aignostics.readthedocs.io/en/latest/
 21. Documentation including dynamic badges, setup instructions, contribution guide and security policy
 22. Interactive OpenAPI specification with [Swagger](https://swagger.io/)
 23. Python package published to [PyPI](https://pypi.org/)
-24. One-click development environments with [Dev Containers](https://code.visualstudio.com/docs/devcontainers/containers) and [GitHub Codespaces](https://github.com/features/codespaces)
-25. Settings for use with [VSCode](https://code.visualstudio.com/)
-26. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
-27. Automated Pull Request Reviews with [Claude Code](https://docs.claude.com/en/docs/claude-code/github-actions)
-28. ISO compliant Application Lifecycle Management (ALM) with [Ketryx](https://ketryx.com/)
+24. Settings for use with [VSCode](https://code.visualstudio.com/)
+25. Settings and custom instructions for use with [GitHub Copilot](https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot)
+26. Automated Pull Request Reviews with [Claude Code](https://docs.claude.com/en/docs/claude-code/github-actions)
+27. ISO compliant Application Lifecycle Management (ALM) with [Ketryx](https://ketryx.com/)
 
 See [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template?tab=readme-ov-file#multi-head-application-features) for how to bootstrap multi-headed applications with the template. Example code generated applies the modulith software architecture pattern with dependency injection, enabling auto-discovery of domain services, CLI commands, API operations and GUI pages.
