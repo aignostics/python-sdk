@@ -359,7 +359,6 @@ flowchart TD
 
 **Development Environment:**
 
-- **Dev Containers**: One-click development environments with GitHub Codespaces
 - **VSCode Integration**: Optimized settings and extensions for development all found under ./vscode directory
 - **GitHub Copilot**: Custom instructions and prompts for AI-assisted development
 - **Local CI/CD**: Act integration for running GitHub Actions locally

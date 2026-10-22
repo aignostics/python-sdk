@@ -29,7 +29,6 @@ keywords = [
     "codecov",
     "copier",
     "cyclonedx",
-    "devcontainer",
     "detect-secrets",
     "git-cliff",
     "jupyter",
