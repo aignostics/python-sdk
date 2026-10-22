@@ -191,7 +191,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13.4" },
     { name = "boto3", specifier = ">=1.42.4,<2" },
-    { name = "certifi", specifier = ">=2025.11.12" },
+    { name = "certifi", specifier = ">=2026.10.19" },
     { name = "cloudpathlib", marker = "extra == 'marimo'", specifier = ">=0.23.0,<1" },
     { name = "crc32c", specifier = ">=2.8,<3" },
     { name = "cryptography", specifier = ">=46.0.7" },

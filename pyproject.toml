@@ -92,7 +92,7 @@ dependencies = [
     "typer>=0.20.0,<1",
     # Custom
     "boto3>=1.42.4,<2",
-    "certifi>=2025.11.12",
+    "certifi>=2026.10.19", # IIM-96 eMudhra CA (CVE-2026-111943); older releases trust compromised roots
     "defusedxml>=0.7.1",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
