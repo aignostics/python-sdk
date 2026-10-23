@@ -29,7 +29,6 @@ keywords = [
     "codecov",
     "copier",
     "cyclonedx",
-    "devcontainer",
     "detect-secrets",
     "git-cliff",
     "jupyter",
@@ -92,7 +91,7 @@ dependencies = [
     "typer>=0.20.0,<1",
     # Custom
     "boto3>=1.42.4,<2",
-    "certifi>=2025.11.12",
+    "certifi>=2026.10.19", # IIM-96 eMudhra CA (CVE-2026-111943); older releases trust compromised roots
     "defusedxml>=0.7.1",
     "dicom-validator>=0.7.3,<1",
     "dicomweb-client[gcp]>=0.59.3,<1",
@@ -148,6 +147,7 @@ dependencies = [
     "lxml-html-clean>=0.4.4",           # CVE-2026-28348, CVE-2026-28350 (>=0.4.4); transitive via html-sanitizer
     "python-multipart>=0.0.26",         # CVE-2026-24486 (>=0.0.22), CVE-2026-40347 (>=0.0.26); transitive via fastapi/starlette
     "protobuf>=6.33.5",                 # CVE-2026-0994 (>=6.33.5); transitive via google-cloud-storage/sentry-sdk
+    "opentelemetry-api>=1.45.1",        # CVE-2026-114603 (>=1.45.1); transitive via google-api-core/fastmcp
 ]
 
 [project.optional-dependencies]
@@ -220,14 +220,14 @@ dev = [
     "watchdog>=6.0.0,<7",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
-    "pip>=26.1.2",                        # CVE-2025-8869 (Medium, >=25.3); CVE-2026-3219 (Medium, >=26.1, released 2026-04-26 via pypa/pip#13870)
-    "uv>=0.11.6",                       # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64 (>=0.9.7); GHSA-pjjw-68hj-v9mw (>=0.11.6, Renovate #536)
+    "pip>=26.2.2",                        # CVE-2025-8869 (Medium, >=25.3); CVE-2026-3219 (Medium, >=26.1, released 2026-04-26 via pypa/pip#13870); IIM-96 eMudhra CA (>=26.2.2)
+    "uv>=0.13.4",                       # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64 (>=0.9.7); GHSA-pjjw-68hj-v9mw (>=0.11.6, Renovate #536); IIM-96 eMudhra CA (>=0.13.4)
     "fonttools>=4.60.2",                # CVE-2025-66034 (GHSA-768j-98cg-p3fv), dep of matplotlib
-    "virtualenv>=20.36.1",              # pypa/virtualenv#3013 TOCTOU in app_data/lock dir; bundles filelock>=3.20.1 for CVE-2025-68146; transitive via nox/pre-commit
+    "virtualenv>=21.14.9",              # pypa/virtualenv#3013 TOCTOU, bundles filelock>=3.20.1 for CVE-2025-68146 (>=20.36.1); CVE-2026-113722, CVE-2026-113725, CVE-2026-113726, CVE-2026-113732, CVE-2026-113776 (>=21.14.9); transitive via nox/pre-commit
 ]
 
 [tool.uv]
-required-version = ">=0.11.6" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64, GHSA-pjjw-68hj-v9mw
+required-version = ">=0.13.4" # CVE-2025-54368, GHSA-w476-p2h3-79g9, GHSA-pqhf-p39g-3x64, GHSA-pjjw-68hj-v9mw; IIM-96 eMudhra CA
 # WARNING: override-dependencies is *not* respected by uvx
 override-dependencies = [ # https://github.com/astral-sh/uv/issues/4422
     "pytest>=9.0.1",    # pytest-md-report depends on pytest<9 unnecessarily
