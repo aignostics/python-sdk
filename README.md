@@ -29,7 +29,7 @@
 
 ## Introduction
 
-The **Aignostics Platform** runs computational pathology applications — such as [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), which analyzes the tumor microenvironment in H&E-stained tissue — on your whole slide images. The **Aignostics Python SDK** is how you work with it, through the interfaces below.
+The **Aignostics Platform** runs computational pathology applications — such as [HETA](https://www.aignostics.com/life-sciences/heta), which analyzes the tumor microenvironment in H&E-stained tissue — on your whole slide images. The **Aignostics Python SDK** is how you work with it, through the interfaces below.
 
 ## Choose your interface
 
@@ -103,7 +103,7 @@ Choose your preferred interface for working with the Aignostics Platform: Consol
 
 The best next step is to **run your first analysis** end to end.
 
-New here? Start with the [Get started with Console](https://aignostics.readthedocs.io/en/latest/get_started_console.html) guide — it walks you through signing up, uploading your slides, and running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on them in your browser, with no coding required. Prefer to work in code? Use the [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) or [Get started with the API](https://aignostics.readthedocs.io/en/latest/get_started_api.html) guide instead.
+New here? Start with the [Get started with Console](https://aignostics.readthedocs.io/en/latest/get_started_console.html) guide — it walks you through signing up, uploading your slides, and running [HETA](https://www.aignostics.com/life-sciences/heta) on them in your browser, with no coding required. Prefer to work in code? Use the [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) or [Get started with the API](https://aignostics.readthedocs.io/en/latest/get_started_api.html) guide instead.
 
 Once you've run your first analysis:
 
@@ -123,7 +123,7 @@ The **Aignostics Platform** is a comprehensive cloud-based service that allows o
 ### Key Features
 Aignostics Platform offers key features designed to maximize value for its users:
 
-1. **Run Aignostics applications:** Run Aignostics advanced computational pathology applications like [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on your whole slide images (WSIs) and receive results in a easy to inspect formats.
+1. **Run Aignostics applications:** Run Aignostics advanced computational pathology applications like [HETA](https://www.aignostics.com/life-sciences/heta) on your whole slide images (WSIs) and receive results in a easy to inspect formats.
 2. **Multiple Access Points:** Interact with the platform via various pathways, from **Aignostics Launchpad** (desktop application for MacOS, Windows and Linux), **Aignostics CLI** (command-line interface for your terminal or shell scripts), **Example Notebooks** (we support Jupyter and Marimo), **Aignostics Client Library** (for integration with your Python codebase), or directly through the **API of the Aignostics Platform** (for integration with any programming language). Contact your business partner at Aignostics if you are interested to discuss a direct integration with your Imaging Management Systems (IMS) and Laboratory Information Management Systems (LIMS).
 3. **Secure Data Handling:** Maintain control of your slide data through secure self-signed URLs. Results are automatically deleted after 30 days, and can be deleted earlier by the user.
 4. **High-throughput processing with incremental results delivery:** Submit up to 500 whole slide images (WSI) in one batch request. Access results for individual slides as they completed processing, without having to wait for the entire batch to finish.
@@ -378,9 +378,6 @@ The execution instance of an application on submitted whole slide images. A run 
 **Application Version**  
 Specific version of an application with defined input requirements, processing tasks, and output formats. Each application can have multiple versions.
 
-**Atlas H&E-TME**  
-Advanced computational pathology application for Hematoxylin and Eosin-stained Tumor Microenvironment analysis.
-
 ### B
 
 **Base MPP (Microns Per Pixel)**  
@@ -422,7 +419,10 @@ Cloud storage service where users can store whole slide images and generate sign
 ### H
 
 **H&E (Hematoxylin and Eosin)**  
-Common histological staining method for tissue visualization, used in Atlas H&E-TME application.
+Common histological staining method for tissue visualization, used in the HETA application.
+
+**HETA (H&E Tissue Analysis)**  
+Advanced computational pathology application that analyzes the tumor microenvironment in Hematoxylin and Eosin-stained tissue. Formerly named Atlas H&E-TME; its application ID is `he-tme`.
 
 **Heatmaps**  
 Visual representations of analysis results provided in TIFF format showing spatial distribution of measurements.
@@ -528,7 +528,7 @@ Standard image format supported for both input whole slide images and output hea
 Computational process of identifying and delineating different tissue regions within histopathology slides.
 
 **TME (Tumor Microenvironment)**  
-The cellular environment surrounding tumor cells, analyzed by the Atlas H&E-TME application.
+The cellular environment surrounding tumor cells, analyzed by the HETA application.
 
 **Two-Factor Authentication (2FA)**  
 Mandatory security requirement for all user accounts on the Aignostics Platform.

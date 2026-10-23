@@ -1,6 +1,6 @@
 ## Introduction
 
-The **Aignostics Platform** runs computational pathology applications — such as [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product), which analyzes the tumor microenvironment in H&E-stained tissue — on your whole slide images. The **Aignostics Python SDK** is how you work with it, through the interfaces below.
+The **Aignostics Platform** runs computational pathology applications — such as [HETA](https://www.aignostics.com/life-sciences/heta), which analyzes the tumor microenvironment in H&E-stained tissue — on your whole slide images. The **Aignostics Python SDK** is how you work with it, through the interfaces below.
 
 ## Choose your interface
 
@@ -74,7 +74,7 @@ Choose your preferred interface for working with the Aignostics Platform: Consol
 
 The best next step is to **run your first analysis** end to end.
 
-New here? Start with the [Get started with Console](https://aignostics.readthedocs.io/en/latest/get_started_console.html) guide — it walks you through signing up, uploading your slides, and running [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on them in your browser, with no coding required. Prefer to work in code? Use the [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) or [Get started with the API](https://aignostics.readthedocs.io/en/latest/get_started_api.html) guide instead.
+New here? Start with the [Get started with Console](https://aignostics.readthedocs.io/en/latest/get_started_console.html) guide — it walks you through signing up, uploading your slides, and running [HETA](https://www.aignostics.com/life-sciences/heta) on them in your browser, with no coding required. Prefer to work in code? Use the [Get started with the Python Library](https://aignostics.readthedocs.io/en/latest/get_started_library.html) or [Get started with the API](https://aignostics.readthedocs.io/en/latest/get_started_api.html) guide instead.
 
 Once you've run your first analysis:
 

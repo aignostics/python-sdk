@@ -35,9 +35,6 @@ The execution instance of an application on submitted whole slide images. A run 
 **Application Version**  
 Specific version of an application with defined input requirements, processing tasks, and output formats. Each application can have multiple versions.
 
-**Atlas H&E-TME**  
-Advanced computational pathology application for Hematoxylin and Eosin-stained Tumor Microenvironment analysis.
-
 ### B
 
 **Base MPP (Microns Per Pixel)**  
@@ -79,7 +76,10 @@ Cloud storage service where users can store whole slide images and generate sign
 ### H
 
 **H&E (Hematoxylin and Eosin)**  
-Common histological staining method for tissue visualization, used in Atlas H&E-TME application.
+Common histological staining method for tissue visualization, used in the HETA application.
+
+**HETA (H&E Tissue Analysis)**  
+Advanced computational pathology application that analyzes the tumor microenvironment in Hematoxylin and Eosin-stained tissue. Formerly named Atlas H&E-TME; its application ID is `he-tme`.
 
 **Heatmaps**  
 Visual representations of analysis results provided in TIFF format showing spatial distribution of measurements.
@@ -185,7 +185,7 @@ Standard image format supported for both input whole slide images and output hea
 Computational process of identifying and delineating different tissue regions within histopathology slides.
 
 **TME (Tumor Microenvironment)**  
-The cellular environment surrounding tumor cells, analyzed by the Atlas H&E-TME application.
+The cellular environment surrounding tumor cells, analyzed by the HETA application.
 
 **Two-Factor Authentication (2FA)**  
 Mandatory security requirement for all user accounts on the Aignostics Platform.

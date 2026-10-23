@@ -58,9 +58,9 @@ You should see the list of available command groups (`application`, `dataset`, `
 
 Each command prints a deprecation notice to stderr. Stdout does not change, so scripts that read the output of a command continue to work.
 
-## Run Atlas H&E-TME from the command line
+## Run HETA from the command line
 
-This example downloads a public lung cancer dataset, submits an [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) run, and downloads the results:
+This example downloads a public lung cancer dataset, submits a [HETA](https://www.aignostics.com/life-sciences/heta) run, and downloads the results:
 
 ```shell
 # Download a sample dataset from the NCI Image Data Commons (IDC) portal.

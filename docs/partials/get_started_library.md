@@ -1,6 +1,6 @@
 # Get started with the Python Library
 
-The **Aignostics Python Library** lets you use the Aignostics Platform from your own scripts, notebooks, and pipelines. This guide takes you through the same first analysis as the Console guide — upload your slides, run [Atlas H&E-TME](https://www.aignostics.com/products/he-tme-profiling-product) on them, follow the analysis, and download the results — in Python.
+The **Aignostics Python Library** lets you use the Aignostics Platform from your own scripts, notebooks, and pipelines. This guide takes you through the same first analysis as the Console guide — upload your slides, run [HETA](https://www.aignostics.com/life-sciences/heta) on them, follow the analysis, and download the results — in Python.
 
 ```{include} ../partials/_get_started_signup.md
 ```
@@ -58,7 +58,7 @@ ApplicationService.application_run_upload(APPLICATION, metadata, upload_progress
 
 `mappings` match slide paths by regular expression, so a folder with mixed cases takes one mapping per group, for example `"lung/.*:tissue=LUNG,disease=LUNG_CANCER"`. If your slides are already in a cloud bucket, you can skip the upload and hand the platform signed URLs instead — see {doc}`Give the platform access to your slides <get_started_api>` in the API guide.
 
-## Analyze your slides with Atlas H&E-TME
+## Analyze your slides with HETA
 
 ### 4. Start the analysis
 
