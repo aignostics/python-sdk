@@ -316,7 +316,7 @@ dev = [
     { name = "sphinx-toolbox", specifier = ">=4.1.0,<5" },
     { name = "sphinxcontrib-mermaid" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1,<1" },
-    { name = "swagger-plugin-for-sphinx", specifier = ">=7,<8" },
+    { name = "swagger-plugin-for-sphinx", specifier = ">=7,<9" },
     { name = "tomli", specifier = ">=2.3.0,<3" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250915,<7" },
     { name = "types-requests", specifier = ">=2.32.4.20250913,<3" },
