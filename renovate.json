@@ -13,8 +13,7 @@
     "skip:codecov"
   ],
   "vulnerabilityAlerts": {
-    "enabled": true,
-    "automerge": true
+    "enabled": true
   },
   "lockFileMaintenance": {
     "enabled": true,
