@@ -53,20 +53,6 @@
       "groupName": "GitHub Actions",
       "matchManagers": ["github-actions"],
       "separateMajorMinor": false
-    },
-    {
-      "description": "Bypass delay for security tools",
-      "matchPackageNames": [
-        "trivy",
-        "pip-audit",
-        "aquasecurity/trivy-action",
-        "pypa/pip-audit"
-      ],
-      "minimumReleaseAge": null,
-      "automerge": true,
-      "automergeType": "pr",
-      "schedule": ["at any time"],
-      "groupName": "security-tool-updates"
     }
   ]
 }
