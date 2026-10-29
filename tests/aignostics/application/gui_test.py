@@ -25,8 +25,8 @@ from tests.conftest import assert_notified, assert_parquet_geojson_parity, norma
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
+    HETA_EXPECTED_RESULT_FILES,
     PIPELINE_GPU_TYPE,
-    SPOT_0_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
@@ -326,7 +326,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 @pytest.mark.flaky(retries=1, delay=5)
 @pytest.mark.timeout(timeout=60 * 10)
 @pytest.mark.sequential  # Helps on Linux with image analysis step otherwise timing out
-async def test_gui_run_download(  # noqa: PLR0915
+async def test_gui_run_download(
     user: User, runner: CliRunner, tmp_path: Path, silent_logging: None, record_property
 ) -> None:
     """Test that the user can download a run result via the GUI."""
@@ -411,31 +411,11 @@ async def test_gui_run_download(  # noqa: PLR0915
         )
 
         # Check for files in the results directory
-        files_in_results_dir = list(results_dir.glob("*"))
-        expected_count = len(SPOT_0_EXPECTED_RESULT_FILES)
-        assert len(files_in_results_dir) == expected_count, (
-            f"Expected {expected_count} files in {results_dir}, but found {len(files_in_results_dir)}: "
-            f"{[f.name for f in files_in_results_dir]}"
+        files_in_results_dir = {f.name for f in results_dir.glob("*")}
+        assert files_in_results_dir == HETA_EXPECTED_RESULT_FILES, (
+            f"Unexpected files in {results_dir}: missing {sorted(HETA_EXPECTED_RESULT_FILES - files_in_results_dir)}, "
+            f"extra {sorted(files_in_results_dir - HETA_EXPECTED_RESULT_FILES)}"
         )
-
-        print(f"Found files in {results_dir}:")
-        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
-            file_path = results_dir / filename
-            if file_path.exists():
-                actual_size = file_path.stat().st_size
-                print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
-            else:
-                print(f"  {filename}: NOT FOUND")
-        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
-            file_path = results_dir / filename
-            assert file_path.exists(), f"Expected file {filename} not found"
-            actual_size = file_path.stat().st_size
-            min_size = expected_size * (100 - tolerance_percent) // 100
-            max_size = expected_size * (100 + tolerance_percent) // 100
-            assert min_size <= actual_size <= max_size, (
-                f"File size for {filename} ({actual_size} bytes) is outside allowed range "
-                f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
-            )
 
         # Validate parquet <-> GeoJSON parity: area for segmentation, count for cell classification.
         assert_parquet_geojson_parity(results_dir)

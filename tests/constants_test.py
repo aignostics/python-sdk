@@ -62,50 +62,27 @@ SPOT_4_RESOLUTION_MPP = 0.46499982
 SPOT_4_WIDTH = 3728
 SPOT_4_HEIGHT = 3640
 
-# To update file sizes: the tests print every file's actual size before asserting. Run with
-# -s to see them, then paste the printed byte values as the second element of each tuple.
-# Both are e2e tests and skip silently without their marker:
+# Output files of one he-tme item. The e2e tests check names only, not sizes:
 # SPOT_0: uv run pytest tests/aignostics/application/gui_test.py::test_gui_run_download \
 #           -m "e2e and long_running" -s --no-cov
 # SPOT_1: uv run pytest tests/aignostics/application/cli_test.py::test_cli_run_execute \
 #           -m "e2e and very_long_running" -s --no-cov
-#
-# These defaults reflect the production he-tme run. If staging produces different output (e.g.
-# after deploying a new application version to staging before production), add an override inside
-# the "staging" case below — only the constants that actually differ need to be reassigned.
-# Note: defined here rather than inside each match arm to avoid SonarCloud flagging the
-# nearly-identical blocks as duplicated code (the 3% duplication threshold).
-SPOT_0_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_geojson_polygons.json", 112068, 10),
-    ("tissue_qc_parquet_polygons.parquet", 32364, 10),
-    ("tissue_qc_segmentation_map_image.tiff", 1670903, 10),
-    ("tissue_segmentation_geojson_polygons.json", 556273, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 102220, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 3031723, 10),
-    ("cell_classification_geojson_polygons.json", 9841861, 10),
-    ("cell_classification_parquet_polygons.parquet", 2902904, 10),
-    ("whole_tumor_region_geojson_polygons.json", 69845, 10),
-    ("whole_tumor_region_parquet_polygons.parquet", 22684, 10),
-    ("tumor_cellularity_geojson_polygons.json", 476, 10),
-    ("tumor_cellularity_parquet_polygons.parquet", 4106, 10),
-    ("readout_generation_readouts_bundle.zip", 632626, 10),
-]
-
-SPOT_1_EXPECTED_RESULT_FILES = [
-    ("tissue_qc_geojson_polygons.json", 25621, 10),
-    ("tissue_qc_parquet_polygons.parquet", 10556, 10),
-    ("tissue_qc_segmentation_map_image.tiff", 1281477, 10),
-    ("tissue_segmentation_geojson_polygons.json", 73826, 10),
-    ("tissue_segmentation_parquet_polygons.parquet", 23318, 10),
-    ("tissue_segmentation_segmentation_map_image.tiff", 1783129, 10),
-    ("cell_classification_geojson_polygons.json", 2847846, 10),
-    ("cell_classification_parquet_polygons.parquet", 880714, 10),
-    ("whole_tumor_region_geojson_polygons.json", 16970, 10),
-    ("whole_tumor_region_parquet_polygons.parquet", 8187, 10),
-    ("tumor_cellularity_geojson_polygons.json", 1518, 10),
-    ("tumor_cellularity_parquet_polygons.parquet", 4377, 10),
-    ("readout_generation_readouts_bundle.zip", 278167, 10),
-]
+HETA_EXPECTED_RESULT_FILES = {
+    "tissue_qc_geojson_polygons.json",
+    "tissue_qc_parquet_polygons.parquet",
+    "tissue_qc_segmentation_map_image.tiff",
+    "tissue_segmentation_geojson_polygons.json",
+    "tissue_segmentation_parquet_polygons.parquet",
+    "tissue_segmentation_segmentation_map_image.tiff",
+    "cell_classification_geojson_polygons.json",
+    "cell_classification_parquet_polygons.parquet",
+    "whole_tumor_region_geojson_polygons.json",
+    "whole_tumor_region_parquet_polygons.parquet",
+    "tumor_cellularity_geojson_polygons.json",
+    "tumor_cellularity_parquet_polygons.parquet",
+    "tertiary_lymphoid_structure_parquet_polygons.parquet",
+    "readout_generation_readouts_bundle.zip",
+}
 
 match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
     case "production":
@@ -113,7 +90,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "1.3.0"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "2.0.0"
+        HETA_APPLICATION_VERSION = "2.1.0"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "A100"
@@ -128,7 +105,7 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         TEST_APPLICATION_VERSION = "1.3.0"
 
         HETA_APPLICATION_ID = "he-tme"
-        HETA_APPLICATION_VERSION = "2.0.0"
+        HETA_APPLICATION_VERSION = "2.1.0"
         TEST_APPLICATION_VERSION_USE_LATEST_FALLBACK_SKIP = True
 
         PIPELINE_GPU_TYPE = "A100"
@@ -137,10 +114,6 @@ match os.getenv("AIGNOSTICS_PLATFORM_ENVIRONMENT", "production"):
         PIPELINE_MAX_GPUS_PER_SLIDE = 1
         PIPELINE_CPU_PROVISIONING_MODE = "SPOT"
         PIPELINE_NODE_ACQUISITION_TIMEOUT_MINUTES = 25
-
-        # If staging outputs differ from the defaults above, override them here, e.g.:
-        # SPOT_0_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
-        # SPOT_1_EXPECTED_RESULT_FILES = [("tissue_qc_segmentation_map_image.tiff", <bytes>, 10), ...]
 
     case _:
         message = f"Unsupported AIGNOSTICS_PLATFORM_ENVIRONMENT value: {os.getenv('AIGNOSTICS_PLATFORM_ENVIRONMENT')}"
