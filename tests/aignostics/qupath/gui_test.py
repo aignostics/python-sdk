@@ -22,7 +22,7 @@ from tests.conftest import assert_notified, normalize_output, print_directory_st
 from tests.constants_test import (
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
-    SPOT_0_EXPECTED_RESULT_FILES,
+    HETA_EXPECTED_RESULT_FILES,
     SPOT_0_FILENAME,
     SPOT_0_FILESIZE,
     SPOT_0_GS_URL,
@@ -142,7 +142,7 @@ async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
 )
 @pytest.mark.timeout(timeout=60 * 15)
 @pytest.mark.sequential
-async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR0913, PLR0915, PLR0917
+async def test_gui_run_qupath_install_to_inspect(  # noqa: PLR0913, PLR0915, PLR0917
     user: User,
     runner: CliRunner,
     tmp_path: Path,
@@ -255,31 +255,11 @@ async def test_gui_run_qupath_install_to_inspect(  # noqa: C901, PLR0912, PLR091
         )
 
         # Check for files in the results directory
-        files_in_results_dir = list(results_dir.glob("*"))
-        expected_count = len(SPOT_0_EXPECTED_RESULT_FILES)
-        assert len(files_in_results_dir) == expected_count, (
-            f"Expected {expected_count} files in {results_dir}, but found {len(files_in_results_dir)}: "
-            f"{[f.name for f in files_in_results_dir]}"
+        files_in_results_dir = {f.name for f in results_dir.glob("*")}
+        assert files_in_results_dir == HETA_EXPECTED_RESULT_FILES, (
+            f"Unexpected files in {results_dir}: missing {sorted(HETA_EXPECTED_RESULT_FILES - files_in_results_dir)}, "
+            f"extra {sorted(files_in_results_dir - HETA_EXPECTED_RESULT_FILES)}"
         )
-
-        print(f"Found files in {results_dir}:")
-        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
-            file_path = results_dir / filename
-            if file_path.exists():
-                actual_size = file_path.stat().st_size
-                print(f"  {filename}: {actual_size} bytes (expected: {expected_size} ±{tolerance_percent}%)")
-            else:
-                print(f"  {filename}: NOT FOUND")
-        for filename, expected_size, tolerance_percent in SPOT_0_EXPECTED_RESULT_FILES:
-            file_path = results_dir / filename
-            assert file_path.exists(), f"Expected file {filename} not found"
-            actual_size = file_path.stat().st_size
-            min_size = expected_size * (100 - tolerance_percent) // 100
-            max_size = expected_size * (100 + tolerance_percent) // 100
-            assert min_size <= actual_size <= max_size, (
-                f"File size for {filename} ({actual_size} bytes) is outside allowed range "
-                f"({min_size} to {max_size} bytes, ±{tolerance_percent}% of {expected_size})"
-            )
 
         # Check QuPath is running
         notification = await assert_notified(user, "QuPath opened successfully", 30)
