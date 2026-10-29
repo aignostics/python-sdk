@@ -106,7 +106,7 @@ dependencies = [
     "jsf>=0.11.2,<1",
     "jsonschema[format-nongpl]>=4.25.1,<5",
     "loguru>=0.7.3,<1",
-    "msgpack>=1.2.1", # GHSA-6v7p-g79w-8964
+    "msgpack>=1.2.3", # GHSA-6v7p-g79w-8964 (>=1.2.1); CVE-2026-114613 (>=1.2.3)
     "openslide-bin>=4.0.0.10,<5",
     "openslide-python>=1.4.3,<2",
     "pandas>=2.3.3,<4",
@@ -132,7 +132,7 @@ dependencies = [
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "rfc3987; sys_platform == 'never'", # GPLv3
     "h11>=0.16.0",                      # CVE-2025-43859
-    "tornado>=6.5.5",                   # CVE-2025-47287 (>=6.5.0); GHSA-78cv-mqj4-43f7 (>=6.5.5, Renovate #472)
+    "tornado>=6.6",                     # CVE-2025-47287 (>=6.5.0); GHSA-78cv-mqj4-43f7 (>=6.5.5, Renovate #472); CVE-2026-115927, CVE-2026-116577, CVE-2026-116578 (>=6.6)
     "urllib3>=2.5.0",                   # CVE-2025-50181, CVE-2025-50182
     "pillow>=12.2.0",                   # CVE-2025-48379 (>=11.3.0); CVE-2026-25990 (>=12.1.1, Renovate #428); CVE-2026-40192 (>=12.2.0, Renovate #539)
     "aiohttp>=3.13.4",                  # CVE-2025-53643, CVE-2025-69223..9 (>=3.13.3); CVE-2026-22815 (>=3.13.4, Renovate #527)
@@ -148,6 +148,8 @@ dependencies = [
     "python-multipart>=0.0.26",         # CVE-2026-24486 (>=0.0.22), CVE-2026-40347 (>=0.0.26); transitive via fastapi/starlette
     "protobuf>=6.33.5",                 # CVE-2026-0994 (>=6.33.5); transitive via google-cloud-storage/sentry-sdk
     "opentelemetry-api>=1.45.1",        # CVE-2026-114603 (>=1.45.1); transitive via google-api-core/fastmcp
+    "authlib>=1.9.1",                   # CVE-2026-96760, CVE-2026-114615, CVE-2026-114617, CVE-2026-114618, CVE-2026-114620 (>=1.9.0); CVE-2026-114616 (>=1.9.1); transitive via fastmcp
+    "dnspython>=2.9.0",                 # CVE-2026-114605; transitive via email-validator
 ]
 
 [project.optional-dependencies]
