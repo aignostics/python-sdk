@@ -23,6 +23,7 @@ from aignostics.application._gui._page_application_run_describe import (
 from aignostics.cli import cli
 from tests.conftest import assert_notified, assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
+    GCS_TEST_SLIDES_REMOVED_REASON,
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     HETA_EXPECTED_RESULT_FILES,
@@ -153,6 +154,7 @@ async def test_gui_cli_submit_to_run_result_delete(
         await user.should_see("Welcome", retries=500)
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)
@@ -321,6 +323,7 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
             user.should_see(marker=f"SIDEBAR_RUN_ITEM:0:{run_id}")
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=1, delay=5)

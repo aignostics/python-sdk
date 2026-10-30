@@ -35,6 +35,7 @@ from aignostics.platform import LIST_APPLICATION_RUNS_MAX_PAGE_SIZE, Concurrency
 from aignostics.utils import Health, sanitize_path
 from tests.conftest import assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
+    GCS_TEST_SLIDES_REMOVED_REASON,
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     HETA_EXPECTED_RESULT_FILES,
@@ -344,6 +345,7 @@ def test_cli_run_submit_fails_when_system_unhealthy_and_no_force(
         _cancel_run_if_submitted(runner, result.stdout)
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=60)
 @patch("aignostics.application._cli.SystemService.health_static")
@@ -517,6 +519,7 @@ def test_cli_run_submit_fails_on_missing_url(runner: CliRunner, tmp_path: Path, 
         _cancel_run_if_submitted(runner, result.stdout)
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.flaky(retries=3, delay=5)
@@ -1311,6 +1314,7 @@ def test_cli_run_result_delete_fails_on_no_arg(runner: CliRunner, record_propert
 
 
 # TODO (Helmut): Run this test on a schedule when the GPU ressourcing situation and PAPI pipeline reliabilty improved
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.timeout(timeout=HETA_APPLICATION_DEADLINE_SECONDS + 60 * 30)
@@ -1666,6 +1670,7 @@ def test_cli_run_update_item_metadata_not_dict(runner: CliRunner) -> None:
     assert "Metadata must be a JSON object" in result.output
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
 @pytest.mark.sequential
@@ -1756,6 +1761,7 @@ def test_cli_run_dump_and_update_custom_metadata(runner: CliRunner, tmp_path: Pa
         assert isinstance(final_metadata, dict), "Final metadata should be a dictionary"
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=240)
 @pytest.mark.sequential
@@ -1892,6 +1898,7 @@ def list_runs_by_tag(tag: str, runner: CliRunner, expected_count: int = 1) -> li
     return runs_data
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.timeout(timeout=180)
 def test_cli_json_format_and_cancel_by_filter_with_dry_run(  # noqa: PLR0915
@@ -3152,6 +3159,7 @@ def test_cli_run_share_token_revoke_error(runner: CliRunner, record_property: ob
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.scheduled
 @pytest.mark.timeout(timeout=120)
