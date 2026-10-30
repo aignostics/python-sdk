@@ -20,6 +20,7 @@ from aignostics.qupath import QUPATH_LAUNCH_MAX_WAIT_TIME, QUPATH_VERSION
 from aignostics.utils import __project_name__
 from tests.conftest import assert_notified, normalize_output, print_directory_structure
 from tests.constants_test import (
+    GCS_TEST_SLIDES_REMOVED_REASON,
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     HETA_EXPECTED_RESULT_FILES,
@@ -134,6 +135,7 @@ async def test_gui_qupath_install_and_launch(  # noqa: PLR0913, PLR0917
         pytest.fail(f"Failed to kill QuPath process: {e}")
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.long_running
 @pytest.mark.skipif(

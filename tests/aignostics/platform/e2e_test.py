@@ -28,6 +28,7 @@ from sentry_sdk import metrics
 from aignostics import platform
 from aignostics.platform import Run, RunSdkMetadata
 from tests.constants_test import (
+    GCS_TEST_SLIDES_REMOVED_REASON,
     HETA_APPLICATION_ID,
     HETA_APPLICATION_VERSION,
     PIPELINE_CPU_PROVISIONING_MODE,
@@ -435,6 +436,7 @@ def _find_and_validate(
             _validate_output(run, Path(temp_dir), checksum_attribute_key)
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.very_long_running
 @pytest.mark.scheduled_only
@@ -534,6 +536,7 @@ def test_platform_test_app_find_and_validate() -> None:
     )
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.scheduled_only
 @pytest.mark.timeout(timeout=HETA_APPLICATION_SUBMIT_AND_FIND_SUBMIT_TIMEOUT_SECONDS)
@@ -576,6 +579,7 @@ def test_platform_heta_app_find_and_validate() -> None:
     )
 
 
+@pytest.mark.skip(reason=GCS_TEST_SLIDES_REMOVED_REASON)
 @pytest.mark.e2e
 @pytest.mark.stress_only
 @pytest.mark.long_running

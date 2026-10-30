@@ -8,6 +8,11 @@ import os
 
 TEST_SUITE = "AIGNOSTICS"
 
+# The SPOT_*_GS_URL slides were removed from storage. Tests that read them are skipped.
+GCS_TEST_SLIDES_REMOVED_REASON = (
+    "Test slides in gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/ were removed from storage."
+)
+
 SPOT_0_GS_URL = (
     "gs://aignostics-platform-ext-a4f7e9/python-sdk-tests/he-tme/slides/8fafc17d-a5cc-4e9d-a982-030b1486ca88.tiff"
 )
