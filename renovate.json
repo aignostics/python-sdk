@@ -16,7 +16,6 @@
     "enabled": true,
     "automerge": true
   },
-  "enabledManagers": ["pep621", "github-actions"],
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 5am on monday"]
