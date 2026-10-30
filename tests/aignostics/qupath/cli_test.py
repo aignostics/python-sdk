@@ -13,24 +13,16 @@ from aignostics.cli import cli
 from aignostics.qupath import QUPATH_VERSION
 from tests.conftest import normalize_output
 
-_SKIP_IF_WINDOWS = pytest.mark.skipif(platform.system() == "Windows", reason="not supported on Windows")
+
+def _skip_unless_on(system: str) -> pytest.MarkDecorator:
+    return pytest.mark.skipif(platform.system() != system, reason=f"installs the {system} package on {system} only")
+
+
 _INSTALL_UNINSTALL_PLATFORM_CONFIGS = [
-    pytest.param({"system": "Windows"}, id="windows"),
-    pytest.param(
-        {"system": "Linux"},
-        id="linux",
-        marks=_SKIP_IF_WINDOWS,
-    ),
-    pytest.param(
-        {"system": "Darwin", "machine": "amd64"},
-        id="darwin-amd64",
-        marks=_SKIP_IF_WINDOWS,
-    ),
-    pytest.param(
-        {"system": "Darwin", "machine": "arm64"},
-        id="darwin-arm64",
-        marks=_SKIP_IF_WINDOWS,
-    ),
+    pytest.param({"system": "Windows"}, id="windows", marks=_skip_unless_on("Windows")),
+    pytest.param({"system": "Linux"}, id="linux", marks=_skip_unless_on("Linux")),
+    pytest.param({"system": "Darwin", "machine": "amd64"}, id="darwin-amd64", marks=_skip_unless_on("Darwin")),
+    pytest.param({"system": "Darwin", "machine": "arm64"}, id="darwin-arm64", marks=_skip_unless_on("Darwin")),
 ]
 
 
@@ -45,7 +37,7 @@ _INSTALL_UNINSTALL_PLATFORM_CONFIGS = [
 @pytest.mark.sequential
 @pytest.mark.parametrize("platform_config", _INSTALL_UNINSTALL_PLATFORM_CONFIGS)
 def test_cli_install_and_uninstall(runner: CliRunner, qupath_save_restore: None, platform_config: dict) -> None:
-    """Check (un)install works for Windows, Mac and Linux package."""
+    """Check (un)install works for the QuPath package of the current OS."""
     install_args = ["qupath", "install", "--platform-system", platform_config["system"]]
     uninstall_args = ["qupath", "uninstall", "--platform-system", platform_config["system"]]
     if "machine" in platform_config:
