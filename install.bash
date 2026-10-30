@@ -35,7 +35,7 @@ echo "Environment: $ENV"
 # Defaul environment is "local"
 LINUX_APT_TOOLS=(
     "curl;curl;https://curl.se/;"
-    "7z;p7zip-rar;https://www.7-zip.org/;"
+    "7z;7zip;https://www.7-zip.org/;"
 )
 
 BREW_TOOLS=(
