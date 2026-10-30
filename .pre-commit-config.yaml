@@ -7,7 +7,7 @@ repos:
     hooks:
       - id: check-useless-excludes
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
+    rev: 3a6eb0fadf60b3cccfd80bad9dbb6fae7e47b316  # frozen: v1.10.0
     hooks:
       - id: python-check-mock-methods
       - id: python-no-eval
@@ -20,7 +20,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
     hooks:
       - id: check-added-large-files
         exclude: "ATTRIBUTIONS.md|resources|assets|platform.png"
@@ -46,13 +46,14 @@ repos:
       - id: trailing-whitespace
         exclude: "docs/source/_static|ATTRIBUTIONS.md||API_REFEREENCE"
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
+    rev: 01886c8a910c64595c47f186ca1ffc0b77fa5458  # frozen: v1.5.0
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
         additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.4                       # GHSA-pjjw-68hj-v9mw, IIM-96; matches [tool.uv] required-version
+    # GHSA-pjjw-68hj-v9mw, IIM-96; matches [tool.uv] required-version
+    rev: dd409d04a3fa4a50f918dddb3ad3c6d8f46ab2cd  # frozen: 0.13.4
     hooks:
       - id: uv-lock
   - repo: local
