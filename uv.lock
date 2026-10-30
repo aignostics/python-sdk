@@ -214,7 +214,7 @@ requires-dist = [
     { name = "html-sanitizer", specifier = ">=2.6.0,<3" },
     { name = "httpx", specifier = ">=0.28.1,<1" },
     { name = "humanize", specifier = ">=4.14.0,<5" },
-    { name = "idc-index-data", specifier = "==24.0.3" },
+    { name = "idc-index-data", specifier = "==25.0.1" },
     { name = "ijson", specifier = ">=3.4.0.post0,<4" },
     { name = "ipython", marker = "extra == 'marimo'", specifier = ">=9.8.0,<10" },
     { name = "jsf", specifier = ">=0.11.2,<1" },
@@ -2955,11 +2955,11 @@ wheels = [
 
 [[package]]
 name = "idc-index-data"
-version = "24.0.3"
+version = "25.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cb/7c/86badc07206fdf3b4a71121a561476efc1a0929c23e9196d0b8e7f8e463e/idc_index_data-24.0.3.tar.gz", hash = "sha256:44b53d347a724af9d2b2c28651a76fa102411bd942ecf1f577932b4b52755d78", size = 76892938, upload-time = "2026-05-06T20:10:06.313Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/cc/b5f16660de5795cbb56ac2d869150919b398a94d74ef0de3034806f9e023/idc_index_data-25.0.1.tar.gz", hash = "sha256:0652ae006f7ab7df440d269ca7fb63dc25816f6ae897e7b13f958e46427f3eb7", size = 79281989, upload-time = "2026-10-15T22:17:14.544Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/44/27/1152558879c1cbd023f49af9cf837e433d8ccca23aa2101b69ee5add27c4/idc_index_data-24.0.3-py3-none-any.whl", hash = "sha256:4d313e867812d2c6de074287b57e527a4e041895093abcf308338281ebf8897d", size = 76868202, upload-time = "2026-05-06T20:10:02.105Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/1f/292e3aecd5b35e26268091a64ae2245b54ca62b38a698eb19d183a4a237c/idc_index_data-25.0.1-py3-none-any.whl", hash = "sha256:493b49d3d5ed760da06ae9ccc68124e83631daadd6ca10c2611a1af1eab6c3ea", size = 79243310, upload-time = "2026-10-15T22:17:09.845Z" },
 ]
 
 [[package]]
