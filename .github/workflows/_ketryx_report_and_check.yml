@@ -41,7 +41,7 @@ jobs:
         if: |
           !contains(inputs.commit_message, 'skip:ketryx') &&
           !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: test-results-ubuntu-latest
           path: test-results
@@ -50,7 +50,7 @@ jobs:
         if: |
           !contains(inputs.commit_message, 'skip:ketryx') &&
           !contains(github.event.pull_request.labels.*.name, 'skip:ketryx')
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: audit-results
           path: audit-results
@@ -77,7 +77,7 @@ jobs:
         # Safety net: a Ketryx-side 500 must not block PR CI (the build still
         # lands in Ketryx). On push/tag runs (releases) the gate is enforced.
         continue-on-error: ${{ github.event_name == 'pull_request' }}
-        uses: Ketryx/ketryx-github-action@719ef26488ed7f9d36a45a6d67d649726d5ece6a # v1.5.0
+        uses: Ketryx/ketryx-github-action@e7ad6ff71022a4e8158477c4458778bf4d93353b # v2.0.0
         with:
           project: ${{ secrets.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
