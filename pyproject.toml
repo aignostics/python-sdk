@@ -220,7 +220,7 @@ dev = [
     "tomli>=2.3.0,<3",
     "types-pyyaml>=6.0.12.20250915,<7",
     "types-requests>=2.32.4.20250913,<3",
-    "watchdog>=6.0.0,<7",
+    "watchdog>=6.0.0,<8",
     # Transitive overrides
     # WARNING: one cannot negate or downgrade a dependency required here. use override-dependencies for that.
     "pip>=26.2.2",                        # CVE-2025-8869 (Medium, >=25.3); CVE-2026-3219 (Medium, >=26.1, released 2026-04-26 via pypa/pip#13870); IIM-96 eMudhra CA (>=26.2.2)
