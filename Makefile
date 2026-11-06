@@ -26,24 +26,24 @@ endif
 
 # Main target i.e. default sessions defined in noxfile.py
 all:
-	uv run --all-extras nox
+	uv run --locked --all-extras nox
 
 # Nox targets
 
 ## Call nox sessions passing parameters
 nox-cmd = @if [ "$@" = "test" ]; then \
 	if [ -n "$(filter 3.%,$(MAKECMDGOALS))" ]; then \
-		uv run --all-extras nox -s test -p $(filter 3.%,$(MAKECMDGOALS)); \
+		uv run --locked --all-extras nox -s test -p $(filter 3.%,$(MAKECMDGOALS)); \
 	elif [ -n "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
 		echo $(filter-out $@,$(MAKECMDGOALS)); \
-		uv run --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
+		uv run --locked --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
 	else \
-		uv run --all-extras nox -s $@; \
+		uv run --locked --all-extras nox -s $@; \
 	fi; \
 elif [ -n "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
-	uv run --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
+	uv run --locked --all-extras nox -s $@ -- $(filter-out $@,$(MAKECMDGOALS)); \
 else \
-	uv run --all-extras nox -s $@; \
+	uv run --locked --all-extras nox -s $@; \
 fi
 
 ## Individual Nox sessions
@@ -55,48 +55,48 @@ act audit dist docs lint lint_fix setup test:
 ## Install development dependencies and pre-commit hooks
 install:
 	bash install.bash
-	uv run pre-commit install
+	uv run --locked pre-commit install
 
 ## Run default tests, i.e. unit, then integration, then e2e tests, no (very_)long_running tests, single Python version
 test_default:
-	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test_default
+	XDIST_WORKER_FACTOR=0.5 uv run --locked --all-extras nox -s test_default
 
 ## Run unit tests (non-sociable tests)
 test_unit:
-	XDIST_WORKER_FACTOR=0.0 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "unit and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=0.0 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "unit and not long_running and not very_long_running and not stress_only" --cov-append
 
 test_unit_matrix:
-	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "unit and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=0.5 uv run --locked --all-extras nox -s test -- -m "unit and not long_running and not very_long_running and not stress_only" --cov-append
 
 ## Run integration tests (test real layer/module interactions with mocked external services)
 test_integration:
-	XDIST_WORKER_FACTOR=0.2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "integration and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=0.2 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "integration and not long_running and not very_long_running and not stress_only" --cov-append
 test_integration_matrix:
-	XDIST_WORKER_FACTOR=0.5 uv run --all-extras nox -s test -- -m "integration and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=0.5 uv run --locked --all-extras nox -s test -- -m "integration and not long_running and not very_long_running and not stress_only" --cov-append
 
 ## Run e2e tests (test complete workflows with real external services)
 test_e2e:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "e2e and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=1 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "e2e and not long_running and not very_long_running and not stress_only" --cov-append
 test_e2e_matrix:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -- -m "e2e and not long_running and not very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=1 uv run --locked --all-extras nox -s test -- -m "e2e and not long_running and not very_long_running and not stress_only" --cov-append
 
 ## Run tests marked as long_running
 test_long_running:
-	XDIST_WORKER_FACTOR=2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=2 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "long_running and not stress_only" --cov-append
 ## Run tests marked as very_long_running
 test_very_long_running:
-	XDIST_WORKER_FACTOR=2 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "very_long_running and not stress_only" --cov-append
+	XDIST_WORKER_FACTOR=2 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "very_long_running and not stress_only" --cov-append
 
 ## Run tests marked as scheduled or scheduled_only
 test_scheduled:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "(scheduled or scheduled_only) and not stress_only"
+	XDIST_WORKER_FACTOR=1 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "(scheduled or scheduled_only) and not stress_only"
 ## Run tests marked as sequential
 test_sequential:
-	uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "sequential and not stress_only"
+	uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "sequential and not stress_only"
 
 ## Run stress tests marked as such
 test_stress:
-	XDIST_WORKER_FACTOR=1 uv run --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "(stress or stress_only)"
+	XDIST_WORKER_FACTOR=1 uv run --locked --all-extras nox -s test -p $(PYTHON_VERSION) -- -m "(stress or stress_only)"
 
 ## Reset test coverage data
 test_coverage_reset:
@@ -148,22 +148,22 @@ clean:
 	rm -rf dist_native && mkdir -p dist_native && touch dist_native/.keep
 	rm -rf .coverage
 	rm -rf reports && mkdir -p reports && touch reports/.keep
-	uv run make -C docs clean
+	uv run --locked make -C docs clean
 
 pre_commit_run_all:
-	uv run pre-commit run --all-files
+	uv run --locked pre-commit run --all-files
 
 gui_watch:
-	uv run runner/gui_watch.py
+	uv run --locked runner/gui_watch.py
 
 profile:
 	mkdir -p tmp
-	uv run --all-extras python -m scalene run runner/scalene.py --outfile tmp/scalene-profile.json && uv run --all-extras python -m scalene view tmp/scalene-profile.json
+	uv run --locked --all-extras python -m scalene run runner/scalene.py --outfile tmp/scalene-profile.json && uv run --locked --all-extras python -m scalene view tmp/scalene-profile.json
 
 # Signing: https://gist.github.com/bpteague/750906b9a02094e7389427d308ba1002
 dist_native:
 	# Build
-	uv run --python $(PYTHON_VERSION) --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
+	uv run --locked --python $(PYTHON_VERSION) --no-dev --extra pyinstaller --extra qupath --extra marimo pyinstaller --distpath dist_native --clean --noconfirm aignostics.spec
 	# Create 7z archive preserving symlinks
 	@if command -v 7z >/dev/null 2>&1; then \
 		cd dist_native; \
