@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Python, venv and dependencies
         shell: bash
-        run: uv sync --all-extras --frozen --link-mode=copy
+        run: uv sync --all-extras --locked --link-mode=copy
 
       - name: Audit
         shell: bash

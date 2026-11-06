@@ -63,7 +63,7 @@ jobs:
         
       - name: Install Python, venv and dependencies
         shell: bash
-        run: uv sync --all-extras --frozen --link-mode=copy
+        run: uv sync --all-extras --locked --link-mode=copy
 
       - name: Setup display
         uses: pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4 # v5.2
@@ -72,7 +72,7 @@ jobs:
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         shell: bash
         run: |
-          TOML_VERSION=$(uv run --frozen python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          TOML_VERSION=$(uv run --locked python -c "import tomli; print(tomli.load(open('pyproject.toml', 'rb'))['project']['version'])")
           echo "Development build - Current version in pyproject.toml: $TOML_VERSION"
 
       - name: Run Claude Code (Interactive Mode)

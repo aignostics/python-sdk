@@ -82,7 +82,7 @@ jobs:
           cache-dependency-glob: uv.lock
 
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --locked
 
       - name: Read version info
         id: version
@@ -105,9 +105,9 @@ jobs:
           PREV_TAG="${{ steps.version.outputs.prev_tag }}"
           TAG_NAME="${{ steps.version.outputs.tag_name }}"
           if [ -n "$PREV_TAG" ]; then
-            uv run --frozen git-cliff --tag "$TAG_NAME" --prepend CHANGELOG.md "${PREV_TAG}..HEAD"
+            uv run --locked git-cliff --tag "$TAG_NAME" --prepend CHANGELOG.md "${PREV_TAG}..HEAD"
           else
-            uv run --frozen git-cliff --tag "$TAG_NAME" --output CHANGELOG.md
+            uv run --locked git-cliff --tag "$TAG_NAME" --output CHANGELOG.md
           fi
 
       - name: Commit changelog

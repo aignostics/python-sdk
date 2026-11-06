@@ -81,7 +81,7 @@ jobs:
         run: git checkout -b "${{ steps.version.outputs.branch_name }}"
 
       - name: Bump version
-        run: uv run --frozen bump-my-version bump --new-version "${{ steps.version.outputs.new_version }}"
+        run: uv run --locked bump-my-version bump --new-version "${{ steps.version.outputs.new_version }}"
 
       - name: Push release branch
         run: git push -u origin "${{ steps.version.outputs.branch_name }}"
