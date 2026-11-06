@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 
 import nox
-import tomli
 from nox.command import CommandFailed
 
 nox.options.reuse_existing_virtualenvs = True
@@ -960,28 +959,6 @@ def setup(session: nox.Session) -> None:
         except Exception:
             session.log("pre-commit run failed, continuing anyway")
         session.run("git", "add", ".", external=True)
-
-
-@nox.session(default=False)
-def update_from_template(session: nox.Session) -> None:
-    """Update from copier template."""
-    if Path("copier.yaml").is_file() or Path("copier.yml").is_file():
-        # Read the current version from pyproject.toml
-        with Path("pyproject.toml").open("rb") as f:
-            pyproject = tomli.load(f)
-            current_version = pyproject["tool"]["bumpversion"]["current_version"]
-            # In this case the project itself is the template
-            session.run("copier", "copy", "-r", "HEAD", ".", ".", "--force", "--trust", "--skip-tasks", external=True)
-            # Bump the version using the current version from pyproject.toml
-            session.run("bump-my-version", "replace", "--new-version", current_version, "--allow-dirty", external=True)
-    else:
-        # In this case the template has been generated from a template
-        session.run("copier", "update", "--trust", "--skip-answered", "--skip-tasks", external=True)
-
-        # Schedule the lint session to run after this session completes
-        session.notify("audit")
-        session.notify("docs")
-        session.notify("lint")
 
 
 @nox.session(default=False)

@@ -214,14 +214,6 @@ Notes:
 pinact run  # See https://dev.to/suzukishunsuke/pin-github-actions-to-a-full-length-commit-sha-for-security-2n7p
 ```
 
-## Update from Template
-
-Update project to latest version of [oe-python-template](https://github.com/helmut-hoffer-von-ankershoffen/oe-python-template) template.
-
-```shell
-make update_from_template
-```
-
 ## Custom Metadata
 
 When submitting application runs to the Aignostics Platform, you can attach custom metadata to provide additional context, tracking information, or control flags. The SDK itself automatically attaches structured metadata to every run, which includes:

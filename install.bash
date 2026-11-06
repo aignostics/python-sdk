@@ -68,7 +68,7 @@ LINUX_BREW_TOOLS=(
 )
 
 UV_TOOLS=(
-    "copier;copier;https://copier.readthedocs.io/;local"
+    # uv tools will be added here
 )
 
 PNPM_TOOLS=(
