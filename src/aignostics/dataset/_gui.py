@@ -176,7 +176,7 @@ class PageBuilder(BasePageBuilder):
                 try:
                     await run.io_bound(
                         Service.download_with_queue,  # type: ignore[arg-type]
-                        download_message_queue,  # type: ignore[unused-ignore] # type: ignore
+                        download_message_queue,  # pyright: ignore[reportArgumentType]
                         source,
                         str(download_form.destination),
                         TARGET_LAYOUT_DEFAULT,
