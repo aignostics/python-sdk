@@ -10,7 +10,7 @@ interactions to support the main client functionality.
 
 import base64
 import contextlib
-import datetime
+import datetime as dt
 import re
 import tempfile
 import typing as t
@@ -168,7 +168,7 @@ def generate_signed_url(url: str, expires_seconds: int = SIGNED_DOWNLOAD_URL_EXP
 
     url = t.cast(
         "str",
-        blob.generate_signed_url(expiration=datetime.timedelta(seconds=expires_seconds), method="GET", version="v4"),
+        blob.generate_signed_url(expiration=dt.timedelta(seconds=expires_seconds), method="GET", version="v4"),
     )
     logger.debug(f"Generated signed URL for {url} valid for {expires_seconds} seconds")
     return url

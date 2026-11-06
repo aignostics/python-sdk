@@ -500,7 +500,7 @@ async def test_info_uptime_seconds_positive() -> None:
 @pytest.mark.asyncio
 async def test_info_uptime_boottime_is_iso_string() -> None:
     """info() uptime boottime is a non-empty ISO 8601 string."""
-    import datetime
+    import datetime as dt
 
     with _patch_info_dependencies():
         result = await Service.info()
@@ -509,5 +509,5 @@ async def test_info_uptime_boottime_is_iso_string() -> None:
     assert isinstance(boottime_str, str)
     assert len(boottime_str) > 0
     # Must be parseable as an ISO 8601 datetime
-    parsed = datetime.datetime.fromisoformat(boottime_str)
+    parsed = dt.datetime.fromisoformat(boottime_str)
     assert parsed.tzinfo is not None  # timezone-aware (UTC)

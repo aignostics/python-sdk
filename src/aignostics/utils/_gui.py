@@ -179,7 +179,7 @@ class GUILocalFilePicker:
 
             def add_drives_toggle(self) -> None:
                 if platform.system() == "Windows":
-                    import win32api  # type: ignore[unused-ignore] # type: ignore # noqa: PLC0415
+                    import win32api  # noqa: PLC0415  # pyright: ignore[reportMissingModuleSource]
 
                     drives = win32api.GetLogicalDriveStrings().split("\000")[:-1]
                     self.drives_toggle = ui.toggle(drives, value=drives[0], on_change=self.update_drive)

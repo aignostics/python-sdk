@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import json
 import sys
 from pathlib import Path  # noqa: TC003
@@ -78,7 +78,7 @@ def upload(  # noqa: C901
         console.print(f"Found {files_count} files with total size of {humanize.naturalsize(total_bytes)}")
 
         username = psutil.Process().username().replace("\\", "_")
-        timestamp = datetime.datetime.now(tz=datetime.UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = dt.datetime.now(tz=dt.UTC).strftime("%Y%m%d_%H%M%S")
         base_prefix = destination_prefix.format(username=username, timestamp=timestamp)
         base_prefix = base_prefix.strip("/")
 

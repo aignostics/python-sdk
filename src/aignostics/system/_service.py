@@ -1,7 +1,7 @@
 """System service."""
 
 import asyncio
-import datetime
+import datetime as dt
 import json
 import os
 import platform
@@ -313,7 +313,7 @@ class Service(BaseService):
         import psutil  # noqa: PLC0415
 
         boot_ts = psutil.boot_time()
-        bootdatetime = datetime.datetime.fromtimestamp(boot_ts, tz=datetime.UTC)
+        bootdatetime = dt.datetime.fromtimestamp(boot_ts, tz=dt.UTC)
         vmem = psutil.virtual_memory()
         swap = psutil.swap_memory()
         psutil.cpu_percent(interval=None)  # prime the counter

@@ -306,8 +306,10 @@ class Service(BaseService):
         """
         re_meta = re.compile(r"[.+*?^${}()\[\]|\\]")
 
+        # S3 prefixes are plain string prefixes, so the character-wise match of commonprefix is intended.
+
         if what_is_key:
-            prefix = os.path.commonprefix(what)
+            prefix = os.path.commonprefix(what)  # noqa: RUF071
         else:
             literal_prefixes: list[str] = []
             for pattern in what:
@@ -316,7 +318,7 @@ class Service(BaseService):
                 if not literal_prefix:
                     return None
                 literal_prefixes.append(literal_prefix)
-            prefix = os.path.commonprefix(literal_prefixes)
+            prefix = os.path.commonprefix(literal_prefixes)  # noqa: RUF071
 
         return prefix or None
 
