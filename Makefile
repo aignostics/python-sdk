@@ -21,7 +21,7 @@ $(error Python version validation failed. See error message above.)
 endif
 
 # Define all PHONY targets
-.PHONY: act all audit clean codegen dist dist_native docs gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running update_from_template
+.PHONY: act all audit clean codegen dist dist_native docs gui_watch install lint lint_fix merge-release pre_commit_run_all prepare-release profile publish-release setup test test_coverage_reset test_default test_e2e test_e2e_matrix test_integration test_integration_matrix test_long_running test_scheduled test_stress test_sequential test_unit test_unit_matrix test_very_long_running
 
 
 # Main target i.e. default sessions defined in noxfile.py
@@ -47,7 +47,7 @@ else \
 fi
 
 ## Individual Nox sessions
-act audit dist docs lint lint_fix setup test update_from_template:
+act audit dist docs lint lint_fix setup test:
 	$(nox-cmd)
 
 # Standalone targets
@@ -247,6 +247,5 @@ help:
 	@echo "  test_sequential       - Run tests marked as sequential (python version defined in .python-version)"
 	@echo "  test_scheduled        - Run tests marked as scheduled (python version defined in .python-version)"
 	@echo "  test_coverage_reset   - Reset test coverage data"
-	@echo "  update_from_template  - Update from template using copier"
 	@echo ""
 	@echo "Built with love in Berlin 🐻"

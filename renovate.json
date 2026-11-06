@@ -107,12 +107,6 @@
 
   // ---- Repo rules: they deviate from the org config ----
 
-  // The template source uses the gh: form, which Renovate looks up as git-tags without release
-  // dates. The SDK takes no template updates, so the copier manager is off.
-  "copier": {
-    "enabled": false
-  },
-
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": ["before 5am on monday"]
