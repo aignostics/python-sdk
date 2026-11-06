@@ -141,7 +141,7 @@ than copying), `track_progress`, `use_sticky_comment`. Model is
 `claude-sonnet-4-5-20250929`.
 
 **Setup**: installs `uv`, dev tools (`_install_dev_tools.bash`),
-`uv sync --all-extras --frozen`, headless display. Only secret available is
+`uv sync --all-extras --locked`, headless display. Only secret available is
 `ANTHROPIC_API_KEY` — Claude Code workflows intentionally have **no** platform
 or GCP credentials.
 
