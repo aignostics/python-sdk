@@ -324,7 +324,6 @@ uv run nox -s dist    # Package building
 | `SONAR_TOKEN`                 | SonarQube authentication       | `squ_xxxxxxxx`        |
 | `AIGNOSTICS_CLIENT_ID_DEVICE` | Platform API testing           | `client_id_value`     |
 | `AIGNOSTICS_REFRESH_TOKEN`    | Platform API testing           | `refresh_token_value` |
-| `GCP_CREDENTIALS`             | Google Cloud authentication    | `base64_encoded_json` |
 
 ---
 

@@ -18,15 +18,11 @@ on:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_STAGING:
         required: true
-      GCP_CREDENTIALS_STAGING:
-        required: true
       BETTERSTACK_HEARTBEAT_URL_STAGING:
         required: true
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-        required: true
-      GCP_CREDENTIALS_PRODUCTION:
         required: true
       BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: true
@@ -81,14 +77,6 @@ jobs:
           envkey_AIGNOSTICS_SENTRY_TRACES_SAMPLE_RATE: 0
           envkey_AIGNOSTICS_SENTRY_PROFILES_SAMPLE_RATE: 0
           fail_on_empty: false
-
-      - name: Set up GCP credentials for bucket access
-        shell: bash
-        env:
-          GCP_CREDENTIALS: ${{ inputs.platform_environment == 'staging' && secrets.GCP_CREDENTIALS_STAGING || secrets.GCP_CREDENTIALS_PRODUCTION }}
-        run: |
-          echo "$GCP_CREDENTIALS" | base64 -d > credentials.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
 
       - name: Test / scheduled
         env:

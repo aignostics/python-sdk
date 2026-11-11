@@ -707,7 +707,6 @@ AIGNOSTICS_REFRESH_TOKEN=your-staging-refresh-token
 
 * GitHub Actions secrets automatically populate .env
 * Uses `AIGNOSTICS_CLIENT_ID_DEVICE_STAGING` and `AIGNOSTICS_REFRESH_TOKEN_STAGING`
-* GCP credentials for bucket access also configured
 
 **Running E2E locally:**
 
