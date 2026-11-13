@@ -16,5 +16,3 @@ jobs:
     uses: ./.github/workflows/_scheduled-audit.yml
     permissions:
       contents: read
-    secrets:
-      BETTERSTACK_AUDIT_HEARTBEAT_URL: ${{ secrets.BETTERSTACK_AUDIT_HEARTBEAT_URL }}

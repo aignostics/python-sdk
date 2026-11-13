@@ -2,9 +2,6 @@ name: "> Scheduled Audit (Hourly)"
 
 on:
   workflow_call:
-    secrets:
-      BETTERSTACK_AUDIT_HEARTBEAT_URL:
-        required: false
 
 jobs:
   audit-scheduled:
@@ -34,56 +31,7 @@ jobs:
 
       - name: Audit
         shell: bash
-        env:
-          BETTERSTACK_AUDIT_HEARTBEAT_URL: "${{ secrets.BETTERSTACK_AUDIT_HEARTBEAT_URL }}"
-        run: |
-          set +e
-          make audit
-          EXIT_CODE=$?
-          # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
-          if [ -n "$BETTERSTACK_AUDIT_HEARTBEAT_URL" ]; then
-            BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
-              --arg github_workflow "${{ github.workflow }}" \
-              --arg github_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg github_run_id "${{ github.run_id }}" \
-              --arg github_job "${{ github.job }}" \
-              --arg github_sha "${{ github.sha }}" \
-              --arg github_actor "${{ github.actor }}" \
-              --arg github_repository "${{ github.repository }}" \
-              --arg github_ref "${{ github.ref }}" \
-              --arg job_status "${{ job.status }}" \
-              --arg github_event_name "${{ github.event_name }}" \
-              --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-              '{
-                github: {
-                  workflow: $github_workflow,
-                  run_url: $github_run_url,
-                  run_id: $github_run_id,
-                  job: $github_job,
-                  sha: $github_sha,
-                  actor: $github_actor,
-                  repository: $github_repository,
-                  ref: $github_ref,
-                  event_name: $github_event_name
-                },
-                job: {
-                  status: $job_status,
-                },
-                timestamp: $timestamp,
-              }'
-            )
-            curl \
-              --fail-with-body \
-              --silent \
-              --request POST \
-              --header "Content-Type: application/json" \
-              --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
-              "${BETTERSTACK_AUDIT_HEARTBEAT_URL}/${EXIT_CODE}"
-            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
-          else
-            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
-          fi
-          exit $EXIT_CODE
+        run: make audit
 
       - name: Upload test results
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
