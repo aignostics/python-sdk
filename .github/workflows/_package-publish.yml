@@ -10,10 +10,6 @@ on:
     secrets:
       UV_PUBLISH_TOKEN:
         required: true
-      SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT:
-        required: true
-      SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT:
-        required: true
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -219,38 +215,6 @@ jobs:
           rm -rf ./test-results/coverage_html
           gh release create "$GH_REF_NAME" ./dist/* ./dist_native_zipped/* ./audit-results/*   \
             --notes-file "$GIT_CLIFF_CHANGELOG"
-
-      - name: Convert release notes from Markdown to Slack mrkdwn
-        shell: bash
-        env:
-          GIT_CLIFF_CONTENT: ${{ steps.git-cliff.outputs.content }}
-        run: |
-          # Convert Markdown links [text](url) to Slack mrkdwn <url|text>
-          # Convert bold **text** to *text*
-          NOTES_CONVERTED=$(printf '%s\n' "$GIT_CLIFF_CONTENT" | \
-            sed -E 's/\[([^]]+)\]\(([^)]+)\)/<\2|\1>/g' | \
-            sed -E 's/\*\*([^*]+)\*\*/*\1*/g')
-          RELEASE_URL="${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
-          if [ "$(printf '%s' "$NOTES_CONVERTED" | wc -c)" -gt 2700 ]; then
-            NOTES_TRUNCATED=$(printf '%s' "$NOTES_CONVERTED" | head -c 2700)
-            NOTES_CONVERTED="${NOTES_TRUNCATED}"$'\n'"...<${RELEASE_URL}|Read full release notes>"
-          fi
-          # JSON-escape: backslashes first, then double quotes, then collapse newlines to \n
-          NOTES=$(printf '%s' "$NOTES_CONVERTED" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
-          echo "SLACK_RELEASE_NOTES=$NOTES" >> "$GITHUB_ENV"
-
-      - name: Release Announcement
-        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
-        with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}
-          webhook-type: webhook-trigger
-          payload: |
-            {
-              "repository": "${{ github.repository }}",
-              "version": "${{ steps.git-cliff.outputs.version }}",
-              "release_notes": "${{ env.SLACK_RELEASE_NOTES }}",
-              "channel_id": "${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}"
-            }
 
       - name: Allow other workflows to trigger on release
         env:
