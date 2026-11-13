@@ -14,8 +14,6 @@ on:
         required: true
       SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT:
         required: true
-      SENTRY_AUTH_TOKEN:
-        required: true
 
 env:
   # https://gist.github.com/NodeJSmith/e7e37f2d3f162456869f015f842bcf15
@@ -221,16 +219,6 @@ jobs:
           rm -rf ./test-results/coverage_html
           gh release create "$GH_REF_NAME" ./dist/* ./dist_native_zipped/* ./audit-results/*   \
             --notes-file "$GIT_CLIFF_CHANGELOG"
-
-      - name: Inform Sentry about release
-        uses: getsentry/action-release@6fb9aeade7061441cf3864e34fbe11a1457ad7dc # v3.7.1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
-        with:
-          environment: production
-          release: ${{ github.ref_name }}
 
       - name: Convert release notes from Markdown to Slack mrkdwn
         shell: bash
