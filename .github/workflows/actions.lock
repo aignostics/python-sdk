@@ -29,7 +29,6 @@ workflows:
         - 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333'
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         - 'astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884'
-        - 'getsentry/action-release@6fb9aeade7061441cf3864e34fbe11a1457ad7dc'
         - 'orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff'
         - 'slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d'
     '.github/workflows/_scheduled-audit.yml':
@@ -108,11 +107,6 @@ dependencies:
         commit: 'sha1-ed597411d8f924073f98dfc5c65a23a2325f34cd'
         owner_id: 44036562
         repo_id: 205262760
-    'actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f':
-        ref: 'v6.3.0'
-        commit: 'sha1-53b83947a5a98c8d113130e565377fae1a50d02f'
-        owner_id: 44036562
-        repo_id: 189476904
     'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9':
         ref: 'v7.0.2'
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
@@ -140,13 +134,6 @@ dependencies:
         commit: 'sha1-548a7c3603594ec17c819e1239f281a3b801ab4d'
         owner_id: 1951866
         repo_id: 216050313
-    'getsentry/action-release@6fb9aeade7061441cf3864e34fbe11a1457ad7dc':
-        ref: 'v3.7.1'
-        commit: 'sha1-6fb9aeade7061441cf3864e34fbe11a1457ad7dc'
-        owner_id: 1396951
-        repo_id: 273043452
-        uses:
-            - 'actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f'
     'github/codeql-action@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee':
         ref: 'v4.39.0'
         commit: 'sha1-6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee'
