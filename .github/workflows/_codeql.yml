@@ -13,14 +13,8 @@ jobs:
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     permissions:
-      # only required for workflows in private repositories
-      actions: read
-      # Obvious
       contents: read
-      # required to fetch internal or private CodeQL packs
-      packages: read
-      # required for all workflows
-      security-events: write
+      security-events: write # github/codeql-action/analyze uploads the results
 
     strategy:
       fail-fast: false

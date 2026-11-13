@@ -8,8 +8,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}
@@ -18,6 +17,8 @@ concurrency:
 jobs:
   prepare-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Generate GitHub App token
         id: app-token
