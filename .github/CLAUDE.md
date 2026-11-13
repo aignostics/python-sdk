@@ -133,7 +133,7 @@ Output: `aignostics.7z` per platform. Local: `make dist_native`.
 E2E. **Production** (`platform.aignostics.com`) is used only by scheduled jobs
 and release validation — never in PR CI.
 
-GitHub secrets: `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, `CODECOV_TOKEN`,
+GitHub secrets: `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`,
 `SONAR_TOKEN`, `UV_PUBLISH_TOKEN`, `KETRYX_API_KEY`.
 
 GitHub variables: `KETRYX_PROJECT`.

@@ -13,8 +13,6 @@ on:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
         required: true
-      CODECOV_TOKEN:
-        required: true
       SONAR_TOKEN:
         required: true
   
@@ -29,6 +27,7 @@ jobs:
     runs-on: "ubuntu-latest"
     permissions:
       contents: read
+      id-token: write # Codecov OIDC upload
     steps:
 
       - name: Checkout
@@ -220,14 +219,15 @@ jobs:
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT')}}
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           slug: aignostics/python-sdk
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
+          report_type: test_results
 
       - name: SonarQube Scan
         if: ${{ !cancelled() && (env.GITHUB_WORKFLOW_RUNTIME != 'ACT') }}

@@ -126,11 +126,11 @@ jobs:
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
       contents: read
+      id-token: write # Codecov OIDC upload
     secrets:
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   codeql:
     needs: [get-commit-message]
