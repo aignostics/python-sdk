@@ -18,9 +18,6 @@ workflows (`> …`, prefixed `_`) are called via `uses:`.
 | `publish-release.yml` | workflow_dispatch | — |
 | `merge-release.yml` | workflow_dispatch | — |
 | `build-native-only.yml` | push/PR/release when msg/label has `build:native:only` | `_build-native-only` |
-| `claude-code-interactive.yml` | `@claude` mentions + workflow_dispatch | `_claude-code` (interactive) |
-| `claude-code-automation-pr-review.yml` | PR with `claude` label or `ready_for_review` | `_claude-code` (automation) |
-| `claude-code-automation-operational-excellence-weekly.yml` | schedule + workflow_dispatch | `_claude-code` (automation) |
 | `scheduled-testing-staging-hourly.yml` | cron `0 * * * *` | `_scheduled-test-hourly` (staging) |
 | `scheduled-testing-staging-daily.yml` | cron `0 12 * * *` | `_scheduled-test-daily` (staging) |
 | `scheduled-testing-production-hourly.yml` | cron `0 * * * *` | `_scheduled-test-hourly` (production) |
@@ -31,7 +28,7 @@ workflows (`> …`, prefixed `_`) are called via `uses:`.
 
 Reusable: `_lint`, `_docs`, `_audit`, `_test`, `_codeql`,
 `_ketryx_report_and_check`, `_package-publish`, `_build-native-only`,
-`_claude-code`, `_scheduled-audit`, `_scheduled-test-hourly`,
+`_scheduled-audit`, `_scheduled-test-hourly`,
 `_scheduled-test-daily`, `_scheduled-test-stress`.
 (`stress-testing-staging.yml.paused` is currently disabled.)
 
@@ -119,32 +116,6 @@ Runners: `ubuntu-latest` (stable) plus experimental `ubuntu-24.04-arm`,
 `macos-latest`, `macos-15-intel`, `windows-latest` (UPX), `windows-11-arm`.
 Output: `aignostics.7z` per platform. Local: `make dist_native`.
 
-## Claude Code (`_claude-code.yml`)
-
-One reusable workflow, two modes via the `mode` input:
-
-- **interactive** — full git history (`fetch-depth: 0`).
-  `claude-code-interactive.yml` triggers it on `@claude` mentions
-  (issue/PR comments, reviews, issues, PRs) and `workflow_dispatch`. It passes
-  only `mode` and `track_progress` — there are **no** `prompt`/`max_turns`/
-  `environment` inputs to fill in.
-- **automation** — shallow history (`fetch-depth: 1`), runs a fixed `prompt`.
-  `claude-code-automation-pr-review.yml` triggers it when a PR carries the
-  `claude` label or becomes `ready_for_review`. `max_turns` is not set, so it
-  uses the `_claude-code.yml` default (200). Review tools include
-  `mcp__github_inline_comment__create_inline_comment` and posts a
-  `claude:review:passed` / `claude:review:failed` verdict label.
-
-`_claude-code.yml` inputs: `mode` (required), `prompt`, `max_turns` (default
-`200`), `allowed_tools` (default defined in the workflow — read it there rather
-than copying), `track_progress`, `use_sticky_comment`. Model is
-`claude-sonnet-4-5-20250929`.
-
-**Setup**: installs `uv`, dev tools (`_install_dev_tools.bash`),
-`uv sync --all-extras --locked`, headless display. Only secret available is
-`ANTHROPIC_API_KEY` — Claude Code workflows intentionally have **no** platform
-or GCP credentials.
-
 ## Scheduled jobs
 
 - **Testing** — staging and production each run **hourly** (`0 * * * *`, via
@@ -171,8 +142,7 @@ Secrets: `BETTERSTACK_AUDIT_HEARTBEAT_URL`,
 E2E. **Production** (`platform.aignostics.com`) is used only by scheduled jobs
 and release validation — never in PR CI.
 
-GitHub secrets: `ANTHROPIC_API_KEY`,
-`AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
+GitHub secrets: `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
 `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, the BetterStack URLs above,
 `CODECOV_TOKEN`, `SONAR_TOKEN`, `SENTRY_DSN`/`SENTRY_AUTH_TOKEN`,
 `UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`/`KETRYX_API_KEY`, `SLACK_*_RELEASE_ANNOUNCEMENT`.
