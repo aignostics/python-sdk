@@ -39,7 +39,6 @@ workflows:
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         - 'astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884'
         - 'codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5'
-        - 'codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3'
         - 'pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4'
         - 'sonarsource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9'
         - 'spicypizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f'
@@ -57,7 +56,6 @@ workflows:
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         - 'astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884'
         - 'codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5'
-        - 'codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3'
         - 'pyvista/setup-headless-display-action@10e6efb97af3cd1523828f0e22c39f0e4567f3e4'
         - 'sonarsource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9'
         - 'spicypizza/create-envfile@ace6d4f5d7802b600276c23ca417e669f1a06f6f'
@@ -123,11 +121,6 @@ dependencies:
         repo_id: 200299178
         uses:
             - 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd'
-    'codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3':
-        ref: 'v1.2.1'
-        commit: 'sha1-0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3'
-        owner_id: 8226205
-        repo_id: 761956558
     'crazy-max/ghaction-github-labeler@548a7c3603594ec17c819e1239f281a3b801ab4d':
         ref: 'v6.0.0'
         commit: 'sha1-548a7c3603594ec17c819e1239f281a3b801ab4d'
