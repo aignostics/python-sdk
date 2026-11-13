@@ -157,7 +157,7 @@ jobs:
         id: unit
         continue-on-error: true
         if: ${{ !cancelled() }}
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: unit
           make-target: test_unit_matrix
@@ -169,7 +169,7 @@ jobs:
         id: integration
         continue-on-error: true
         if: ${{ !cancelled() }}
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: integration
           make-target: test_integration_matrix
@@ -181,7 +181,7 @@ jobs:
         id: e2e_regular
         continue-on-error: true
         if: ${{ !cancelled() }}
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: e2e
           make-target: test_e2e_matrix
@@ -193,7 +193,7 @@ jobs:
         id: e2e_long_running
         continue-on-error: true
         if: ${{ !cancelled() }}
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: long-running
           make-target: test_long_running
@@ -210,7 +210,7 @@ jobs:
             contains(github.event.pull_request.labels.*.name, 'enable:test:very_long_running') ||
             ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/heads/release/v'))
           )
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: very-long-running
           make-target: test_very_long_running

@@ -117,7 +117,7 @@ jobs:
       - name: Test / Unit (multiple Python versions)
         id: unit
         continue-on-error: true
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: unit
           make-target: test_unit_matrix
@@ -128,7 +128,7 @@ jobs:
       - name: Test / Integration (multiple Python versions)
         id: integration
         continue-on-error: true
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: integration
           make-target: test_integration_matrix
@@ -139,7 +139,7 @@ jobs:
       - name: Test / E2E / regular (multiple Python versions)
         id: e2e-regular
         continue-on-error: true
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: e2e
           make-target: test_e2e_matrix
@@ -152,7 +152,7 @@ jobs:
         continue-on-error: true
         if: |
           !github.event.pull_request.draft
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: long-running
           make-target: test_long_running
@@ -163,7 +163,7 @@ jobs:
       - name: Test / E2E / very long running (single Python version)
         id: e2e-very-long-running
         continue-on-error: true
-        uses: ./.github/actions/run-tests
+        uses: $/.github/actions/run-tests
         with:
           test-type: very-long-running
           make-target: test_very_long_running
