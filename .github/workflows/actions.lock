@@ -30,7 +30,6 @@ workflows:
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         - 'astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884'
         - 'orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff'
-        - 'slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d'
     '.github/workflows/_scheduled-audit.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9'
@@ -154,11 +153,6 @@ dependencies:
         commit: 'sha1-10e6efb97af3cd1523828f0e22c39f0e4567f3e4'
         owner_id: 50384771
         repo_id: 453513731
-    'slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d':
-        ref: 'v4.0.0'
-        commit: 'sha1-dcb1066f776dd043e64d0e8ba94ca15cc7e1875d'
-        owner_id: 6962987
-        repo_id: 306439799
     'sonarsource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9':
         ref: 'v8.3.0'
         commit: 'sha1-d209202bc7d53ff1cc128f7f907dac145c9d6ae9'

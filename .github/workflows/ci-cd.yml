@@ -195,5 +195,3 @@ jobs:
       contents: write # gh release create, gh api repos/.../dispatches in _package-publish.yml
     secrets:
       UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-      SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}
-      SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_CHANNEL_ID_RELEASE_ANNOUNCEMENT }}
