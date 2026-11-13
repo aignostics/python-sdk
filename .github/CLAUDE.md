@@ -120,9 +120,9 @@ Output: `aignostics.7z` per platform. Local: `make dist_native`.
 
 - **Testing** — staging and production each run **hourly** (`0 * * * *`, via
   `_scheduled-test-hourly.yml`) and **daily at 12:00 UTC** (`0 12 * * *`, via
-  `_scheduled-test-daily.yml`). Run `make test_scheduled`, send a Sentry cron
-  monitor check-in. Staging → `https://platform-staging.aignostics.com`,
-  production → `https://platform.aignostics.com`.
+  `_scheduled-test-daily.yml`) and run `make test_scheduled`. Staging →
+  `https://platform-staging.aignostics.com`, production →
+  `https://platform.aignostics.com`.
 - **Audit** — hourly (`_scheduled-audit.yml`): `pip-audit`, `pip-licenses`,
   Trivy SBOM scan.
 - **CodeQL** — weekly Tue 03:22 (`_codeql.yml`).
@@ -135,8 +135,8 @@ and release validation — never in PR CI.
 
 GitHub secrets: `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
 `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, `CODECOV_TOKEN`, `SONAR_TOKEN`,
-`SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`,
-`KETRYX_API_KEY`, `SLACK_*_RELEASE_ANNOUNCEMENT`.
+`SENTRY_AUTH_TOKEN`, `UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`, `KETRYX_API_KEY`,
+`SLACK_*_RELEASE_ANNOUNCEMENT`.
 
 Local `.env` for E2E:
 
@@ -167,9 +167,9 @@ can push.
 Reproduce locally with the same make targets CI uses: `make lint`,
 `make test_unit` / `test_integration` / `test_e2e` (E2E needs `.env`),
 `make dist_native`, `uv run pip-audit`. Coverage minimum is enforced via
-Codecov (see `codecov.yml`). For scheduled-job failures, check the Sentry cron
-monitors and the workflow run logs (usual causes: API changes in the target
-environment, expired credentials).
+Codecov (see `codecov.yml`). For scheduled-job failures, check the workflow run
+logs (usual causes: API changes in the target environment, expired
+credentials).
 
 Run scheduled workflows manually:
 

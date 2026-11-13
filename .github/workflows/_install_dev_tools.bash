@@ -26,11 +26,11 @@ TRIVY_VERSION=v0.76.1
 case "$(uname -m)" in
     x86_64)
         trivy_arch="64bit"
-        TRIVY_SHA256="c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0" # trivy_0.76.1_Linux-64bit.tar.gz
+        TRIVY_SHA256="c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0" # trivy_0.76.1_Linux-64bit.tar.gz  # pragma: allowlist secret
         ;;
     aarch64 | arm64)
         trivy_arch="ARM64"
-        TRIVY_SHA256="e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f" # trivy_0.76.1_Linux-ARM64.tar.gz
+        TRIVY_SHA256="e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f" # trivy_0.76.1_Linux-ARM64.tar.gz  # pragma: allowlist secret
         ;;
     *)
         echo "No Trivy checksum for architecture $(uname -m)" >&2
@@ -46,10 +46,6 @@ tar -xzf "${trivy_tmp}/${trivy_tar}" -C "${trivy_tmp}" trivy
 sudo install -m 0755 "${trivy_tmp}/trivy" /usr/local/bin/trivy
 rm -rf "${trivy_tmp}"
 trivy --version
-
-# Install further tools not project specific
-# Download Sentry CLI securely: enforce HTTPS, disable redirects
-wget --secure-protocol=TLSv1_2 --max-redirect=0 -qO - https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="2.57.0" sh
 
 # Install project specific tools
 .github/workflows/_install_dev_tools_project.bash

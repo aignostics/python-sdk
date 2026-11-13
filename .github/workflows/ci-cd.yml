@@ -133,7 +133,6 @@ jobs:
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # For metrics
 
   codeql:
     needs: [get-commit-message]
