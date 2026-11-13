@@ -18,13 +18,9 @@ on:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_STAGING:
         required: true
-      BETTERSTACK_HEARTBEAT_URL_STAGING:
-        required: true
       AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
-        required: true
-      BETTERSTACK_HEARTBEAT_URL_PRODUCTION:
         required: true
       SENTRY_DSN:
         required: true
@@ -79,7 +75,6 @@ jobs:
 
       - name: Test / scheduled
         env:
-          BETTERSTACK_HEARTBEAT_URL: "${{ inputs.platform_environment == 'staging' && secrets.BETTERSTACK_HEARTBEAT_URL_STAGING || secrets.BETTERSTACK_HEARTBEAT_URL_PRODUCTION }}"
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         shell: bash
         run: |
@@ -111,49 +106,6 @@ jobs:
           # Send heartbeat to Sentry, defining the schedule on the fly
           SENTRY_EXIT_CODE=$(sentry-cli monitors run -e CI --schedule "0 * * * *" --check-in-margin 30 --max-runtime 1 scheduled-testing-${{ inputs.platform_environment }}-hourly --timezone "Europe/Berlin" -- sh -c "exit $EXIT_CODE")
 
-          # Provide heartbeat to BetterStack for monitoring/alerting if heartbeat url is configured as secret
-          if [ -n "$BETTERSTACK_HEARTBEAT_URL" ]; then
-            BETTERSTACK_METADATA_PAYLOAD=$(jq -n \
-              --arg github_workflow "${{ github.workflow }}" \
-              --arg github_run_url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-              --arg github_run_id "${{ github.run_id }}" \
-              --arg github_job "${{ github.job }}" \
-              --arg github_sha "${{ github.sha }}" \
-              --arg github_actor "${{ github.actor }}" \
-              --arg github_repository "${{ github.repository }}" \
-              --arg github_ref "${{ github.ref }}" \
-              --arg job_status "${{ job.status }}" \
-              --arg github_event_name "${{ github.event_name }}" \
-              --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-              '{
-                github: {
-                  workflow: $github_workflow,
-                  run_url: $github_run_url,
-                  run_id: $github_run_id,
-                  job: $github_job,
-                  sha: $github_sha,
-                  actor: $github_actor,
-                  repository: $github_repository,
-                  ref: $github_ref,
-                  event_name: $github_event_name
-                },
-                job: {
-                  status: $job_status,
-                },
-                timestamp: $timestamp,
-              }'
-            )
-            curl \
-              --fail-with-body \
-              --silent \
-              --request POST \
-              --header "Content-Type: application/json" \
-              --data-binary "${BETTERSTACK_METADATA_PAYLOAD}" \
-              "${BETTERSTACK_HEARTBEAT_URL}/${EXIT_CODE}"
-            echo "INFO: Sent heartbeat to betterstack with exit code '${EXIT_CODE}'"
-          else
-            echo "WARNING: No BetterStack heartbeat URL configured, skipped heartbeat notification."
-          fi
           exit $EXIT_CODE
 
       - name: Upload test results
