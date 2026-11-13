@@ -16,8 +16,6 @@ on:
         required: false
         type: string
     secrets:
-      KETRYX_PROJECT:
-        required: false
       KETRYX_API_KEY:
         required: false
 
@@ -78,7 +76,7 @@ jobs:
         continue-on-error: ${{ github.event_name == 'pull_request' }}
         uses: Ketryx/ketryx-github-action@e7ad6ff71022a4e8158477c4458778bf4d93353b # v2.0.0
         with:
-          project: ${{ secrets.KETRYX_PROJECT }}
+          project: ${{ vars.KETRYX_PROJECT }}
           api-key: ${{ secrets.KETRYX_API_KEY }}
           commit-sha: ${{ inputs.version == '' && inputs.commit-sha || '' }}
           version: ${{ inputs.version }}
