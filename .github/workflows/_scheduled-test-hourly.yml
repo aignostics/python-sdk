@@ -14,11 +14,7 @@ on:
         default: ''
         type: string
     secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING:
-        required: true
       AIGNOSTICS_REFRESH_TOKEN_STAGING:
-        required: true
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION:
         required: true
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION:
         required: true
@@ -60,7 +56,6 @@ jobs:
         with:
           # The following 3 lines are correct even if vscode complains
           envkey_AIGNOSTICS_API_ROOT: ${{ inputs.platform_environment == 'staging' && 'https://platform-staging.aignostics.com' || 'https://platform.aignostics.com' }}
-          envkey_AIGNOSTICS_CLIENT_ID_DEVICE: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING || secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
           envkey_AIGNOSTICS_REFRESH_TOKEN: ${{ inputs.platform_environment == 'staging' && secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING || secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
           fail_on_empty: false
 

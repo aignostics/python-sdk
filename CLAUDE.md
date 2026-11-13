@@ -706,7 +706,7 @@ AIGNOSTICS_REFRESH_TOKEN=your-staging-refresh-token
 **In CI/CD:**
 
 * GitHub Actions secrets automatically populate .env
-* Uses `AIGNOSTICS_CLIENT_ID_DEVICE_STAGING` and `AIGNOSTICS_REFRESH_TOKEN_STAGING`
+* Uses `AIGNOSTICS_REFRESH_TOKEN_STAGING`. The refresh token flow does not need `AIGNOSTICS_CLIENT_ID_DEVICE`
 
 **Running E2E locally:**
 

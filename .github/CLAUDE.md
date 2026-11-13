@@ -133,9 +133,14 @@ Output: `aignostics.7z` per platform. Local: `make dist_native`.
 E2E. **Production** (`platform.aignostics.com`) is used only by scheduled jobs
 and release validation — never in PR CI.
 
-GitHub secrets: `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
-`AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, `CODECOV_TOKEN`, `SONAR_TOKEN`,
-`UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`, `KETRYX_API_KEY`.
+GitHub secrets: `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, `CODECOV_TOKEN`,
+`SONAR_TOKEN`, `UV_PUBLISH_TOKEN`, `KETRYX_API_KEY`.
+
+GitHub variables: `KETRYX_PROJECT`.
+
+CI logs in with the refresh token, which uses the public interactive client ID
+from `src/aignostics/platform/_constants.py`. Only the device flow reads
+`AIGNOSTICS_CLIENT_ID_DEVICE`, so CI does not set it.
 
 Local `.env` for E2E:
 

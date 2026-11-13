@@ -127,9 +127,7 @@ jobs:
     permissions:
       contents: read
     secrets:
-      AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
-      AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_PRODUCTION }}
       AIGNOSTICS_REFRESH_TOKEN_PRODUCTION: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_PRODUCTION }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -178,7 +176,6 @@ jobs:
     permissions:
       contents: read
     secrets:
-      KETRYX_PROJECT: ${{ secrets.KETRYX_PROJECT }}
       KETRYX_API_KEY: ${{ secrets.KETRYX_API_KEY }}
 
   package_publish:
