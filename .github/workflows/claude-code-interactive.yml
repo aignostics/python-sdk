@@ -26,10 +26,8 @@ jobs:
     permissions:
       actions: read # github_ci MCP server of claude-code-action in _claude-code.yml reads workflow runs and job logs
       contents: read
-      id-token: write # anthropics/claude-code-action in _claude-code.yml exchanges the OIDC token for the Claude App token
+      id-token: write # anthropics/claude-code-action in _claude-code.yml exchanges the OIDC token for the Claude App token and the Anthropic API token
       pull-requests: read # github_ci MCP server of claude-code-action in _claude-code.yml reads the pull request (pulls.get)
     with:
       mode: 'interactive'
       track_progress: ${{ github.event_name != 'workflow_dispatch' && true || false }}
-    secrets:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

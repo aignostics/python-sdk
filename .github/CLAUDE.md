@@ -141,9 +141,10 @@ than copying), `track_progress`, `use_sticky_comment`. Model is
 `claude-sonnet-4-5-20250929`.
 
 **Setup**: installs `uv`, dev tools (`_install_dev_tools.bash`),
-`uv sync --all-extras --locked`, headless display. Only secret available is
-`ANTHROPIC_API_KEY` — Claude Code workflows intentionally have **no** platform
-or GCP credentials.
+`uv sync --all-extras --locked`, headless display. Claude authenticates with
+workload identity federation through the repository-level `ANTHROPIC_*` Actions
+variables; no secret is passed. Claude Code workflows intentionally have **no**
+platform or GCP credentials.
 
 ## Scheduled jobs
 
@@ -171,8 +172,7 @@ Secrets: `BETTERSTACK_AUDIT_HEARTBEAT_URL`,
 E2E. **Production** (`platform.aignostics.com`) is used only by scheduled jobs
 and release validation — never in PR CI.
 
-GitHub secrets: `ANTHROPIC_API_KEY`,
-`AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
+GitHub secrets: `AIGNOSTICS_CLIENT_ID_DEVICE_{STAGING,PRODUCTION}`,
 `AIGNOSTICS_REFRESH_TOKEN_{STAGING,PRODUCTION}`, the BetterStack URLs above,
 `CODECOV_TOKEN`, `SONAR_TOKEN`, `SENTRY_DSN`/`SENTRY_AUTH_TOKEN`,
 `UV_PUBLISH_TOKEN`, `KETRYX_PROJECT`/`KETRYX_API_KEY`, `SLACK_*_RELEASE_ANNOUNCEMENT`.

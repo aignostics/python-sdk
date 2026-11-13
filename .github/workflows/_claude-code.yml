@@ -31,9 +31,6 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      ANTHROPIC_API_KEY:
-        required: true
 
 jobs:
   claude-code:
@@ -41,7 +38,7 @@ jobs:
     permissions:
       actions: read # github_ci MCP server of claude-code-action reads workflow runs and job logs
       contents: read
-      id-token: write # anthropics/claude-code-action exchanges the OIDC token for the Claude App token
+      id-token: write # anthropics/claude-code-action exchanges the OIDC token for the Claude App token and the Anthropic API token
       pull-requests: read # github_ci MCP server of claude-code-action reads the pull request (pulls.get)
     steps:
       - name: Checkout repository
@@ -78,7 +75,15 @@ jobs:
         if: inputs.mode == 'interactive'
         uses: anthropics/claude-code-action@db77d4d3c98f3f6380e7cd45ffba2342a3dbde3c # v1.0.254
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Workload identity federation: the job's GitHub OIDC token is exchanged
+          # for a short-lived Anthropic token. Values are repository-level Actions
+          # variables (identifiers, not secrets): a public repository cannot see the
+          # org-level ones. Do not also set anthropic_api_key: a static key takes
+          # precedence and federation is silently skipped.
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           track_progress: ${{ inputs.track_progress }}
           additional_permissions: |
             actions: read
@@ -93,7 +98,15 @@ jobs:
         if: inputs.mode == 'automation'
         uses: anthropics/claude-code-action@db77d4d3c98f3f6380e7cd45ffba2342a3dbde3c # v1.0.254
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Workload identity federation: the job's GitHub OIDC token is exchanged
+          # for a short-lived Anthropic token. Values are repository-level Actions
+          # variables (identifiers, not secrets): a public repository cannot see the
+          # org-level ones. Do not also set anthropic_api_key: a static key takes
+          # precedence and federation is silently skipped.
+          anthropic_federation_rule_id: ${{ vars.ANTHROPIC_FEDERATION_RULE_ID }}
+          anthropic_organization_id: ${{ vars.ANTHROPIC_ORGANIZATION_ID }}
+          anthropic_service_account_id: ${{ vars.ANTHROPIC_SERVICE_ACCOUNT_ID }}
+          anthropic_workspace_id: ${{ vars.ANTHROPIC_WORKSPACE_ID }}
           track_progress: ${{ inputs.track_progress }}
           use_sticky_comment: ${{ inputs.use_sticky_comment }}
           additional_permissions: |
