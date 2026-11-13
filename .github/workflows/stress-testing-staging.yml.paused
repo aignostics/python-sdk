@@ -18,7 +18,6 @@ jobs:
       platform_environment: "staging"
     permissions:
       contents: read
-      id-token: write
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}

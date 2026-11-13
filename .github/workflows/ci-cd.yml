@@ -90,8 +90,6 @@ jobs:
     uses: ./.github/workflows/_lint.yml
     permissions:
       contents: read
-      id-token: write
-      packages: read
 
   docs:
     needs: [get-commit-message]
@@ -103,8 +101,6 @@ jobs:
     uses: ./.github/workflows/_docs.yml
     permissions:
       contents: read
-      id-token: write
-      packages: read
 
   audit:
     needs: [get-commit-message]
@@ -116,8 +112,6 @@ jobs:
     uses: ./.github/workflows/_audit.yml
     permissions:
       contents: read
-      id-token: write
-      packages: read
 
   test:
     needs: [get-commit-message]
@@ -131,10 +125,7 @@ jobs:
       platform_environment: ${{ inputs.platform_environment || 'staging' }}
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
-      attestations: write
       contents: read
-      id-token: write
-      packages: read
     secrets:
       AIGNOSTICS_CLIENT_ID_DEVICE_STAGING: ${{ secrets.AIGNOSTICS_CLIENT_ID_DEVICE_STAGING }}
       AIGNOSTICS_REFRESH_TOKEN_STAGING: ${{ secrets.AIGNOSTICS_REFRESH_TOKEN_STAGING }}
@@ -153,10 +144,8 @@ jobs:
       (!contains(github.event.pull_request.labels.*.name, 'build:native:only'))
     uses: ./.github/workflows/_codeql.yml
     permissions:
-      actions: read
       contents: read
-      packages: read
-      security-events: write
+      security-events: write # github/codeql-action/analyze in _codeql.yml
 
   sonarcloud:
     needs: [get-commit-message, test]
@@ -168,8 +157,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      statuses: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -190,10 +177,7 @@ jobs:
       version: ${{ needs.get-commit-message.outputs.release_version }}
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
-      attestations: write
-      contents: write
-      id-token: write
-      packages: read
+      contents: read
     secrets:
       KETRYX_PROJECT: ${{ secrets.KETRYX_PROJECT }}
       KETRYX_API_KEY: ${{ secrets.KETRYX_API_KEY }}
@@ -209,10 +193,7 @@ jobs:
     with:
       commit_message: ${{ needs.get-commit-message.outputs.commit_message }}
     permissions:
-      attestations: write
-      contents: write
-      id-token: write
-      packages: read
+      contents: write # gh release create, gh api repos/.../dispatches in _package-publish.yml
     secrets:
       UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
       SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT: ${{ secrets.SLACK_WEBHOOK_URL_RELEASE_ANNOUNCEMENT }}

@@ -8,7 +8,5 @@ jobs:
   codeql:
     uses: ./.github/workflows/_codeql.yml
     permissions:
-      actions: read
       contents: read
-      packages: read
-      security-events: write
+      security-events: write # github/codeql-action/analyze in _codeql.yml

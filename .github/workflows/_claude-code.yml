@@ -39,11 +39,10 @@ jobs:
   claude-code:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-      id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read # github_ci MCP server of claude-code-action reads workflow runs and job logs
+      contents: read
+      id-token: write # anthropics/claude-code-action exchanges the OIDC token for the Claude App token
+      pull-requests: read # github_ci MCP server of claude-code-action reads the pull request (pulls.get)
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

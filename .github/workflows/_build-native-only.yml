@@ -32,10 +32,7 @@ jobs:
             experimental: true
 
     permissions:
-      attestations: write
       contents: read
-      id-token: write
-      packages: read
 
     steps:
       - name: Checkout
