@@ -130,18 +130,6 @@
   color: "1d76db"
 
 # AI Assistant Labels
-- name: claude
-  description: Trigger Claude Code automation
-  color: "b41d8f"
-
-- name: claude:review:passed
-  description: Automated Claude PR review found no blocking issues on the current head commit
-  color: "0e8a16"
-
-- name: claude:review:failed
-  description: Automated Claude PR review found blocking issues on the current head commit
-  color: "b60205"
-
 - name: copilot
   description: GitHub Copilot related
   color: "e6dac6"

@@ -912,7 +912,6 @@ gh pr edit --add-label "skip:test:long_running"
 * Security audit (~3 min)
 * Test matrix on Python 3.11, 3.12, 3.13, 3.14 (~15 min)
 * CodeQL security scanning (~10 min)
-* Claude Code automated review (~10 min)
 * Ketryx compliance reporting
 
 **6. Address Review Feedback**
@@ -1089,7 +1088,6 @@ make merge-release    → push to main              → full CI pipeline
 See [.github/CLAUDE.md](.github/CLAUDE.md) for comprehensive CI/CD documentation including:
 
 * Complete workflow architecture
-* Claude Code automation (PR reviews, interactive sessions)
 * Environment configuration (staging/production)
 * Scheduled testing (6h staging, 24h production)
 * Debugging failed CI runs
