@@ -24,7 +24,9 @@
   "addLabels": ["renovate", "{{{manager}}}"],
 
   "osvVulnerabilityAlerts": true,
-  "dependencyDashboardOSVVulnerabilitySummary": "all",
+  "dependencyDashboard": {
+    "osvVulnerabilitySummary": "all"
+  },
 
   // enabled: true forces fix PRs through the last package rule. A fix skips the 5-day wait, so a
   // person checks it before the merge.
