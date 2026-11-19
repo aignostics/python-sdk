@@ -16,6 +16,19 @@
 | Launchpad | Console: [https://platform.aignostics.com](https://platform.aignostics.com) |
 | SDK upload command for the Console | Console: [https://platform.aignostics.com](https://platform.aignostics.com) |
 
+#### Sharing runs
+
+In the Console, open the run and select **Share**. Only the run's owners see the button: the user who submitted the run and the admins of its organization. Every share gives read-only access.
+
+| You use | Use this instead |
+| --- | --- |
+| `aignostics application run share organization grant RUN_ID` | **Share**, then **Share with my organization** |
+| `aignostics application run share organization grant RUN_ID ORG_ID` | **Share**, then paste the ID under **Another organization** |
+| `aignostics application run share token create RUN_ID` | **Share**, then **Create link** under **Link**. The link expires after 1, 7, 30 or 90 days, or never. The Console shows it once. |
+| `aignostics application run share status RUN_ID`, `share organization list`, `share token list` | **Share** lists who can open the run: its owners, the organizations and the links |
+| `aignostics application run share organization revoke`, `share token revoke` | **Revoke** next to the organization or link in that list |
+| `--share-token` on `run describe`, `run dump-metadata`, `run dump-item-metadata` and `run result download` | Open the link in a browser. After login it shows the run, its items and metadata, with the results to download and the slides in the viewer. |
+
 [![License](https://img.shields.io/github/license/aignostics/python-sdk?logo=opensourceinitiative&logoColor=3DA639&labelColor=414042&color=A41831)](https://github.com/aignostics/python-sdk/blob/main/LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/aignostics.svg?logo=python&color=204361&labelColor=1E2933)](https://pypi.org/project/aignostics/)
 [![CI/CD](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/aignostics/python-sdk/actions/workflows/ci-cd.yml)
