@@ -163,8 +163,7 @@ def test_get_supported_extensions_for_heta_application() -> None:
     extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID)
 
     assert extensions == WSI_SUPPORTED_FILE_EXTENSIONS
-    assert isinstance(extensions, set)
-    assert len(extensions) > 0
+    assert extensions == {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}
 
 
 @pytest.mark.unit

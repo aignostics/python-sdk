@@ -480,3 +480,25 @@ def test_get_wsi_files_to_process_non_dicom_passthrough(tmp_path: Path) -> None:
     assert len(files) == 2
     assert tiff1 in files
     assert tiff2 in files
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("suffix", [".bif", ".ndpi", ".BIF", ".NDPI"])
+def test_get_metadata_accepts_bif_and_ndpi_extensions(tmp_path: Path, suffix: str) -> None:
+    """Test BIF and NDPI files pass the extension check and reach OpenSlide."""
+    slide = tmp_path / f"slide{suffix}"
+    slide.write_bytes(b"not a slide")
+
+    # RuntimeError means OpenSlide rejected the content, so the extension was accepted.
+    with pytest.raises(RuntimeError, match="Error processing file"):
+        WSIService.get_metadata(slide)
+
+
+@pytest.mark.unit
+def test_get_metadata_rejects_czi_extension(tmp_path: Path) -> None:
+    """Test CZI files are rejected before OpenSlide is called."""
+    slide = tmp_path / "slide.czi"
+    slide.write_bytes(b"not a slide")
+
+    with pytest.raises(ValueError, match=r"Unsupported file type: \.czi"):
+        WSIService.get_metadata(slide)

@@ -414,7 +414,7 @@ This is a computational pathology SDK working with:
 
 **WSI Processing:**
 
-* OpenSlide for standard formats (.svs, .tiff, .ndpi)
+* OpenSlide for standard formats (.svs, .tiff, .bif, .ndpi)
 * PyDICOM for DICOM files
 * Support for multi-resolution pyramidal images
 * Tile-based processing for memory efficiency

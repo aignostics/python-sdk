@@ -41,7 +41,7 @@ The Application Module shall:
 ### 1.4 Constraints and Limitations
 
 - Platform API compatibility requirements with auto-generated client integration
-- File format support limited to major medical imaging formats (DICOM, TIFF, SVS)
+- File format support limited to major medical imaging formats (DICOM, TIFF, SVS, BIF, NDPI)
 - Memory management constraints for large file processing with configurable chunk sizes
 - Optional QuPath integration requiring ijson dependency for full functionality
 

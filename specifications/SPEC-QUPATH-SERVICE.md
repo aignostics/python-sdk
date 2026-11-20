@@ -25,7 +25,7 @@ The QuPath Module shall:
 
 - **[FR-01]** Automatically download, verify, and install QuPath from GitHub releases with cross-platform support (Linux x64, macOS x64/ARM64, Windows x64)
 - **[FR-02]** Maintain version-specific QuPath installations with health monitoring and compatibility validation
-- **[FR-03]** Create QuPath projects automatically when adding images, with support for WSI files from various formats (DICOM, SVS, TIFF) and metadata synchronization
+- **[FR-03]** Create QuPath projects automatically when adding images, with support for WSI files from various formats (DICOM, SVS, TIFF, BIF, NDPI) and metadata synchronization
 - **[FR-04]** Import and process large-scale annotation datasets with batch processing, progress tracking, and error recovery
 - **[FR-05]** Convert between Aignostics Platform annotation formats and QuPath-compatible GeoJSON with coordinate system validation
 - **[FR-06]** Provide CLI, GUI, and notebook interfaces for scripted workflows, management service, and exploratory analysis
@@ -97,14 +97,14 @@ qupath/
 
 ### 3.1 Inputs
 
-| Input Type        | Source      | Format/Type     | Validation Rules                                                  |
-| ----------------- | ----------- | --------------- | ----------------------------------------------------------------- |
-| QuPath Version    | CLI/GUI/API | String (semver) | Must match available GitHub releases, defaults to 0.6.0-rc5       |
-| Installation Path | CLI/GUI     | Path            | Must be writable directory, defaults to user data directory       |
-| Platform Override | CLI         | String          | Must be valid platform identifier (Windows/Linux/Darwin)          |
-| WSI File Paths    | CLI/API     | List[Path]      | Files must exist and be readable, supports DICOM/SVS/TIFF formats |
-| Annotation Data   | CLI/API     | GeoJSON/JSON    | Must contain valid coordinate data and classification schemas     |
-| Project Metadata  | API         | Dict            | Key-value pairs for QuPath project properties                     |
+| Input Type        | Source      | Format/Type     | Validation Rules                                                           |
+| ----------------- | ----------- | --------------- | -------------------------------------------------------------------------- |
+| QuPath Version    | CLI/GUI/API | String (semver) | Must match available GitHub releases, defaults to 0.6.0-rc5                |
+| Installation Path | CLI/GUI     | Path            | Must be writable directory, defaults to user data directory                |
+| Platform Override | CLI         | String          | Must be valid platform identifier (Windows/Linux/Darwin)                   |
+| WSI File Paths    | CLI/API     | List[Path]      | Files must exist and be readable, supports DICOM/SVS/TIFF/BIF/NDPI formats |
+| Annotation Data   | CLI/API     | GeoJSON/JSON    | Must contain valid coordinate data and classification schemas              |
+| Project Metadata  | API         | Dict            | Key-value pairs for QuPath project properties                              |
 
 ### 3.2 Outputs
 
@@ -362,7 +362,7 @@ uvx aignostics qupath terminate
 
 - **QuPath Version**: Must match semver pattern and be available in GitHub releases
 - **Installation Path**: Must be writable directory with sufficient disk space
-- **WSI File Paths**: Files must exist, be readable, and match supported formats (DICOM, SVS, TIFF)
+- **WSI File Paths**: Files must exist, be readable, and match supported formats (DICOM, SVS, TIFF, BIF, NDPI)
 - **Annotation Data**: Must contain valid GeoJSON structure with coordinate data and classification schemas
 
 ### 7.3 Graceful Degradation

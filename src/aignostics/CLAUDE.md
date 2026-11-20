@@ -57,7 +57,7 @@ handling, IDC access, Marimo notebook assets, thumbnailing, TIFF I/O).
 - **Core Features**: Format detection, thumbnail generation, metadata extraction
 - **CLI**: `inspect`; `dicom inspect`, `dicom geojson_import` (see `wsi/_cli.py`)
 - **GUI**: Image viewer and metadata display
-- **Handlers**: OpenSlide (.svs, .tiff), PyDICOM (DICOM files)
+- **Handlers**: OpenSlide (.svs, .tiff, .bif, .ndpi), PyDICOM (DICOM files)
 - **Dependencies**: `utils` (logging)
 
 ### 📦 dataset
