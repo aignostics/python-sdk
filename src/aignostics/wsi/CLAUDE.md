@@ -7,7 +7,7 @@ and `aignostics.utils`. See `../CLAUDE.md` for where this sits in the SDK.
 
 ## Supported formats
 
-`WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}` — defined in
+`WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}` — defined in
 `aignostics/constants.py`, re-exported from `aignostics/__init__.py`. That set
 is the single source of truth; `Service` rejects anything else. Note `.dicom`
 is NOT accepted (only `.dcm`).

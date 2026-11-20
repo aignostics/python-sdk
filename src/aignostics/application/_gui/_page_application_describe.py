@@ -12,7 +12,7 @@ from nicegui import app, binding, ui
 from nicegui import run as nicegui_run
 from nicegui.events import ValueChangeEventArguments
 
-from aignostics.constants import WSI_SUPPORTED_FILE_EXTENSIONS
+from aignostics.constants import HETA_APPLICATION_ID, TEST_APP_APPLICATION_ID, WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.platform import (
     DEFAULT_CPU_PROVISIONING_MODE,
     DEFAULT_FLEX_START_MAX_RUN_DURATION_MINUTES,
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from aignostics.platform import UserInfo
 
 from .._service import Service  # noqa: TID252
-from .._utils import get_mime_type_for_artifact  # noqa: TID252
+from .._utils import get_mime_type_for_artifact, get_supported_extensions_for_application  # noqa: TID252
 from ._frame import _frame
 from ._utils import (
     application_id_to_icon,
@@ -174,6 +174,23 @@ class SubmitForm:
 
 
 submit_form = SubmitForm()
+
+
+def _supported_formats_text(application_id: str | None, application_version: str | None) -> str:
+    """Label text listing the file formats the selected application version accepts.
+
+    Args:
+        application_id: The application ID.
+        application_version: The selected application version.
+
+    Returns:
+        str: The label text.
+    """
+    extensions = WSI_SUPPORTED_FILE_EXTENSIONS
+    if application_version and application_id in {HETA_APPLICATION_ID, TEST_APP_APPLICATION_ID}:
+        extensions = get_supported_extensions_for_application(application_id, application_version)
+    return f"Supported formats: {', '.join(sorted(extensions))}"
+
 
 upload_message_queue = Manager().Queue()
 
@@ -487,7 +504,11 @@ async def _page_application_describe(application_id: str) -> None:  # noqa: C901
             submit_form.wsi_step_label = ui.label(
                 "Select the folder with the whole slide images you want to analyze then click Next."
             )
-            ui.label(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}").classes("text-caption")
+            ui.label().classes("text-caption").bind_text_from(
+                submit_form,
+                "application_version",
+                backward=lambda version: _supported_formats_text(submit_form.application_id, version),
+            )
             with ui.stepper_navigation():
                 if "pytest" in sys.modules:
                     ui.button("Home", on_click=_pytest_home, icon="folder").mark("BUTTON_PYTEST_HOME")

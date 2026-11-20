@@ -364,14 +364,13 @@ class Service(BaseService):
         """
         logger.trace("Generating metadata from source directory: {}", source_directory)
 
-        # TODO(Helmut): Use it
-        _ = Service().application_version(application_id, application_version)
+        resolved_version = Service().application_version(application_id, application_version)
 
         metadata: list[dict[str, Any]] = []
         wsi_service = WSIService()
 
         try:
-            extensions = get_supported_extensions_for_application(application_id)
+            extensions = get_supported_extensions_for_application(application_id, resolved_version.version_number)
             for extension in extensions:
                 files_to_process = wsi_service.get_wsi_files_to_process(source_directory, extension)
 

@@ -2,6 +2,7 @@
 
 from datetime import UTC, datetime, timedelta
 from http import HTTPStatus
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1118,3 +1119,43 @@ def test_application_run_with_share_token_uses_share_token_path(
 
     mock_for_run_id.assert_called_once_with("run-id", share_token="s3cr3t")  # noqa: S106
     mock_get_client.return_value.run.assert_not_called()
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("requested_version", "resolved_version", "expected_suffixes"),
+    [
+        (None, "2.1.1", {".svs"}),
+        ("2.1.1", "2.1.1", {".svs"}),
+        (None, "2.2.0", {".svs", ".bif", ".ndpi"}),
+        ("2.3.0", "2.3.0", {".svs", ".bif", ".ndpi"}),
+    ],
+)
+@patch("aignostics.application._service.WSIService.get_metadata")
+@patch("aignostics.application._service.Service._get_platform_client")
+def test_generate_metadata_offers_bif_and_ndpi_only_from_heta_2_2_0(  # noqa: PLR0913, PLR0917
+    mock_get_client: MagicMock,
+    mock_get_metadata: MagicMock,
+    tmp_path: Path,
+    requested_version: str | None,
+    resolved_version: str,
+    expected_suffixes: set[str],
+) -> None:
+    """Test metadata generation picks the file extensions of the resolved HETA version."""
+    for suffix in (".svs", ".bif", ".ndpi"):
+        (tmp_path / f"slide{suffix}").write_bytes(b"slide")
+    mock_get_client.return_value.application_version.return_value = MagicMock(version_number=resolved_version)
+    mock_get_metadata.return_value = {
+        "dimensions": {"width": 100, "height": 200},
+        "resolution": {"mpp_x": 0.25},
+        "file": {"size_human": "5 B"},
+    }
+
+    metadata = ApplicationService.generate_metadata_from_source_directory(
+        source_directory=tmp_path,
+        application_id="he-tme",
+        application_version=requested_version,
+    )
+
+    mock_get_client.return_value.application_version.assert_called_once_with("he-tme", requested_version)
+    assert {Path(entry["external_id"]).suffix for entry in metadata} == expected_suffixes

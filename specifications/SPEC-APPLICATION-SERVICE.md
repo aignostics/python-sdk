@@ -41,7 +41,7 @@ The Application Module shall:
 ### 1.4 Constraints and Limitations
 
 - Platform API compatibility requirements with auto-generated client integration
-- File format support limited to major medical imaging formats (DICOM, TIFF, SVS)
+- File format support limited to major medical imaging formats (DICOM, TIFF, SVS, BIF, NDPI); HETA accepts BIF and NDPI only from version 2.2.0 on
 - Memory management constraints for large file processing with configurable chunk sizes
 - Optional QuPath integration requiring ijson dependency for full functionality
 
@@ -89,13 +89,13 @@ application/
 
 ### 3.1 Inputs
 
-| Input Type                 | Source        | Data Type/Format | Validation Rules                                       | Business Rules                                  |
-| -------------------------- | ------------- | ---------------- | ------------------------------------------------------ | ----------------------------------------------- |
-| **Supported WSI Files**    | CLI/GUI       | Path object      | Must exist, extension in WSI_SUPPORTED_FILE_EXTENSIONS | File must be readable, format must be supported |
-| **Application Version ID** | API           | String           | Must be valid UUID format                              | Must correspond to existing application version |
-| **Input Items**            | API           | List[InputItem]  | Each item must have valid metadata                     | Items must match application input schema       |
-| **Run ID**                 | API           | String           | Must be valid UUID format                              | Must correspond to existing application run     |
-| **Upload Chunks**          | Configuration | Integer          | Must be positive value                                 | Configurable based on platform limits           |
+| Input Type                 | Source        | Data Type/Format | Validation Rules                                                    | Business Rules                                  |
+| -------------------------- | ------------- | ---------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
+| **Supported WSI Files**    | CLI/GUI       | Path object      | Must exist, extension supported by the resolved application version | File must be readable, format must be supported |
+| **Application Version ID** | API           | String           | Must be valid UUID format                                           | Must correspond to existing application version |
+| **Input Items**            | API           | List[InputItem]  | Each item must have valid metadata                                  | Items must match application input schema       |
+| **Run ID**                 | API           | String           | Must be valid UUID format                                           | Must correspond to existing application run     |
+| **Upload Chunks**          | Configuration | Integer          | Must be positive value                                              | Configurable based on platform limits           |
 
 ### 3.2 Outputs
 

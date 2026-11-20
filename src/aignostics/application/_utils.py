@@ -16,12 +16,15 @@ from pathlib import Path
 from typing import Any, Protocol
 
 import humanize
+import semver
 from loguru import logger
 
 from aignostics.constants import (
     HETA_APPLICATION_ID,
+    HETA_MIN_VERSION_FOR_BIF_AND_NDPI,
     TEST_APP_APPLICATION_ID,
     WSI_SUPPORTED_FILE_EXTENSIONS,
+    WSI_SUPPORTED_FILE_EXTENSIONS_HETA_BEFORE_BIF_AND_NDPI,
     WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP,
 )
 from aignostics.platform import (
@@ -579,20 +582,25 @@ def get_file_extension_for_artifact(artifact: OutputArtifactData) -> str:
     return file_extension
 
 
-def get_supported_extensions_for_application(application_id: str) -> set[str]:
-    """Get the list of supported file extensions for a given application.
+def get_supported_extensions_for_application(application_id: str, application_version: str) -> set[str]:
+    """Get the list of supported file extensions for a given application version.
 
     Args:
         application_id (str): The application ID
+        application_version (str): The resolved semantic version of the application
 
     Returns:
         set[str]: List of supported file extensions
 
     Raises:
         RuntimeError: If the application ID is not supported
+        ValueError: If the application version is not a valid semantic version
     """
     if application_id == HETA_APPLICATION_ID:
-        return WSI_SUPPORTED_FILE_EXTENSIONS
+        # Release candidates of 2.2.0 already read BIF and NDPI.
+        if semver.Version.parse(application_version).finalize_version() >= HETA_MIN_VERSION_FOR_BIF_AND_NDPI:
+            return WSI_SUPPORTED_FILE_EXTENSIONS
+        return WSI_SUPPORTED_FILE_EXTENSIONS_HETA_BEFORE_BIF_AND_NDPI
     if application_id == TEST_APP_APPLICATION_ID:
         return WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
 

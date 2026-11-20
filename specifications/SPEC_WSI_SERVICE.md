@@ -19,7 +19,7 @@ The WSI (Whole Slide Image) Module provides comprehensive support for digital pa
 
 The WSI Module shall:
 
-- **[FR-01]** Support multi-format WSI processing including DICOM (.dcm), TIFF/BigTIFF (.tiff, .tif), and Aperio SVS (.svs) formats
+- **[FR-01]** Support multi-format WSI processing including DICOM (.dcm), TIFF/BigTIFF (.tiff, .tif), Aperio SVS (.svs), Ventana BIF (.bif), and Hamamatsu NDPI (.ndpi) formats
 - **[FR-02]** Generate standardized PNG thumbnails (256x256 pixels) from any supported WSI format
 - **[FR-03]** Extract comprehensive metadata from WSI files including resolution, dimensions, and format-specific properties
 - **[FR-04]** Provide DICOM-specific hierarchical organization by study → container (slide) → series
@@ -38,10 +38,11 @@ The WSI Module shall:
 
 ### 1.4 Constraints and Limitations
 
-- **File Format Support**: Limited to extensions defined in `WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs"}` with format-specific capabilities:
+- **File Format Support**: Limited to extensions defined in `WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}` with format-specific capabilities:
   - DICOM (.dcm): Complete metadata, pyramidal support, annotation support via PydicomHandler
   - TIFF/BigTIFF (.tiff, .tif): Standard metadata, pyramidal support, limited annotations via OpenSlideHandler
   - Aperio SVS (.svs): Vendor-specific metadata, pyramidal support, no annotation support via OpenSlideHandler
+  - Ventana BIF (.bif) and Hamamatsu NDPI (.ndpi): Vendor-specific metadata, pyramidal support, no annotation support via OpenSlideHandler
 - **OpenSlide Dependency**: Non-DICOM formats require OpenSlide library installation for processing
 - **Memory Constraints**: Large WSI files require careful memory management and streaming operations
 - **Platform Dependencies**: Requires platform-specific compilation of OpenSlide and image processing libraries
@@ -60,7 +61,7 @@ wsi/
 ├── _service.py          # Core business logic and WSI processing service
 ├── _cli.py             # Command-line interface for WSI inspection
 ├── _gui.py             # Web-based GUI components and HTTP endpoints
-├── _openslide_handler.py # Handler for TIFF/SVS formats using OpenSlide
+├── _openslide_handler.py # Handler for TIFF/SVS/BIF/NDPI formats using OpenSlide
 ├── _pydicom_handler.py  # Handler for DICOM formats using PyDICOM/HighDICOM
 ├── _utils.py           # Helper functions for output formatting
 ├── __init__.py         # Module exports and public API
@@ -73,7 +74,7 @@ wsi/
 | Component          | Type  | Purpose                               | Public Interface                                             | Dependencies                     |
 | ------------------ | ----- | ------------------------------------- | ------------------------------------------------------------ | -------------------------------- |
 | `Service`          | Class | Core WSI processing service           | Thumbnail generation, metadata extraction, format conversion | OpenSlideHandler, PydicomHandler |
-| `OpenSlideHandler` | Class | Handles TIFF/SVS formats              | Format detection, thumbnail creation, metadata parsing       | OpenSlide, PIL                   |
+| `OpenSlideHandler` | Class | Handles TIFF/SVS/BIF/NDPI formats     | Format detection, thumbnail creation, metadata parsing       | OpenSlide, PIL                   |
 | `PydicomHandler`   | Class | Handles DICOM formats and annotations | DICOM parsing, hierarchy organization, annotation import     | PyDICOM, HighDICOM               |
 | `PageBuilder`      | Class | Web interface registration            | HTTP endpoint registration                                   | NiceGUI (optional)               |
 | `cli`              | Typer | Command-line interface                | WSI inspection, DICOM analysis                               | Typer, Rich                      |
@@ -389,7 +390,7 @@ uvx aignostics wsi [subcommand] [options]
 
 | Dependency         | Min Version | Purpose                                | Optional/Required      | Fallback Behavior                   |
 | ------------------ | ----------- | -------------------------------------- | ---------------------- | ----------------------------------- |
-| `openslide-python` | Latest      | Reading TIFF/SVS formats               | Required for non-DICOM | Clear error with installation guide |
+| `openslide-python` | Latest      | Reading TIFF/SVS/BIF/NDPI formats      | Required for non-DICOM | Clear error with installation guide |
 | `pydicom`          | Latest      | DICOM file parsing                     | Required for DICOM     | Error message for DICOM operations  |
 | `highdicom`        | Latest      | DICOM annotation handling              | Required for DICOM     | Annotation features unavailable     |
 | `Pillow (PIL)`     | Latest      | Image processing and format conversion | Required               | Core functionality fails            |
@@ -413,11 +414,11 @@ _Note: For exact version requirements, refer to `pyproject.toml` and dependency 
 
 ### 6.1 Configuration Parameters
 
-| Parameter                       | Type              | Default                             | Description                     | Required |
-| ------------------------------- | ----------------- | ----------------------------------- | ------------------------------- | -------- |
-| `WSI_SUPPORTED_FILE_EXTENSIONS` | `set[str]`        | `{".dcm", ".tiff", ".tif", ".svs"}` | Supported WSI file extensions   | Yes      |
-| `TIMEOUT`                       | `int`             | `60`                                | HTTP request timeout in seconds | No       |
-| Thumbnail size                  | `tuple[int, int]` | `(256, 256)`                        | Standard thumbnail dimensions   | No       |
+| Parameter                       | Type              | Default                                              | Description                     | Required |
+| ------------------------------- | ----------------- | ---------------------------------------------------- | ------------------------------- | -------- |
+| `WSI_SUPPORTED_FILE_EXTENSIONS` | `set[str]`        | `{".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}` | Supported WSI file extensions   | Yes      |
+| `TIMEOUT`                       | `int`             | `60`                                                 | HTTP request timeout in seconds | No       |
+| Thumbnail size                  | `tuple[int, int]` | `(256, 256)`                                         | Standard thumbnail dimensions   | No       |
 
 ### 6.2 Environment Variables
 
