@@ -44,6 +44,9 @@ from aignostics.platform import (
 
 TEST_MAPPING_TIFF_HE = ".*\\.tiff:staining_method=H&E"
 SUBMITTED_BY = "user@example.com"
+HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI = {".dcm", ".tiff", ".tif", ".svs"}
+HETA_EXTENSIONS_WITH_BIF_AND_NDPI = {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}
+APPLICATION_VERSION = "1.0.0"
 _ISO_8601_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 
@@ -158,22 +161,39 @@ def _make_item_result(  # noqa: PLR0913
 
 
 @pytest.mark.unit
-def test_get_supported_extensions_for_heta_application() -> None:
-    """Test that HETA application returns the correct set of supported extensions."""
-    extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID)
+@pytest.mark.parametrize(
+    ("application_version", "expected"),
+    [
+        ("1.0.0", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
+        ("2.1.1", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
+        ("2.2.0-rc.1", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
+        ("2.2.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
+        ("2.3.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
+        ("3.0.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
+    ],
+)
+def test_get_supported_extensions_for_heta_application(application_version: str, expected: set[str]) -> None:
+    """Test that HETA accepts BIF and NDPI only from version 2.2.0 on."""
+    extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID, application_version)
 
-    assert extensions == WSI_SUPPORTED_FILE_EXTENSIONS
-    assert extensions == {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}
+    assert extensions == expected
 
 
 @pytest.mark.unit
-def test_get_supported_extensions_for_test_app() -> None:
-    """Test that test application returns the correct set of supported extensions."""
-    extensions = get_supported_extensions_for_application(TEST_APP_APPLICATION_ID)
+def test_get_supported_extensions_for_heta_rejects_invalid_version() -> None:
+    """Test that a version that is not semver raises ValueError."""
+    with pytest.raises(ValueError, match="not valid SemVer"):
+        get_supported_extensions_for_application(HETA_APPLICATION_ID, "latest")
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize("application_version", ["0.1.0", "2.1.1", "2.2.0"])
+def test_get_supported_extensions_for_test_app(application_version: str) -> None:
+    """Test that test application returns the same extensions for every version."""
+    extensions = get_supported_extensions_for_application(TEST_APP_APPLICATION_ID, application_version)
 
     assert extensions == WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP
-    assert isinstance(extensions, set)
-    assert len(extensions) > 0
+    assert extensions == {".tiff"}
 
 
 @pytest.mark.unit
@@ -182,7 +202,7 @@ def test_get_supported_extensions_for_unsupported_application() -> None:
     unsupported_app_id = "unsupported-application-id"
 
     with pytest.raises(RuntimeError) as exc_info:
-        get_supported_extensions_for_application(unsupported_app_id)
+        get_supported_extensions_for_application(unsupported_app_id, APPLICATION_VERSION)
 
     assert f"Unsupported application {unsupported_app_id}" in str(exc_info.value)
 
@@ -191,7 +211,7 @@ def test_get_supported_extensions_for_unsupported_application() -> None:
 def test_get_supported_extensions_for_empty_string() -> None:
     """Test that an empty string application ID raises RuntimeError."""
     with pytest.raises(RuntimeError) as exc_info:
-        get_supported_extensions_for_application("")
+        get_supported_extensions_for_application("", APPLICATION_VERSION)
 
     assert "Unsupported application" in str(exc_info.value)
 
@@ -199,8 +219,8 @@ def test_get_supported_extensions_for_empty_string() -> None:
 @pytest.mark.unit
 def test_get_supported_extensions_returns_different_sets() -> None:
     """Test that different applications return different extension sets."""
-    heta_extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID)
-    test_extensions = get_supported_extensions_for_application(TEST_APP_APPLICATION_ID)
+    heta_extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID, "2.2.0")
+    test_extensions = get_supported_extensions_for_application(TEST_APP_APPLICATION_ID, APPLICATION_VERSION)
 
     # Verify they are separate sets (even if they might have the same contents)
     assert heta_extensions is WSI_SUPPORTED_FILE_EXTENSIONS

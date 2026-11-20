@@ -36,6 +36,9 @@ os.environ["NICEGUI_STORAGE_PATH"] = str(Path.home().resolve() / ".aignostics" /
 HETA_APPLICATION_ID = "he-tme"
 TEST_APP_APPLICATION_ID = "test-app"
 WSI_SUPPORTED_FILE_EXTENSIONS = {".dcm", ".tiff", ".tif", ".svs", ".bif", ".ndpi"}
+# HETA versions before this one reject BIF and NDPI while the run is processing.
+HETA_MIN_VERSION_FOR_BIF_AND_NDPI = "2.2.0"
+WSI_SUPPORTED_FILE_EXTENSIONS_HETA_BEFORE_BIF_AND_NDPI = {".dcm", ".tiff", ".tif", ".svs"}
 WSI_SUPPORTED_FILE_EXTENSIONS_TEST_APP = {".tiff"}
 
 WINDOW_TITLE = "Aignostics Launchpad"

@@ -13,13 +13,13 @@ import pytest
 from nicegui.testing import User
 from typer.testing import CliRunner
 
-from aignostics import WSI_SUPPORTED_FILE_EXTENSIONS
 from aignostics.application import Service
 from aignostics.application._gui._page_application_run_describe import (
     RESULTS_PAGE_SIZE,
     _resolve_artifact_url_and_invoke,
     _resolve_artifact_url_or_notify,
 )
+from aignostics.application._utils import get_supported_extensions_for_application
 from aignostics.cli import cli
 from tests.conftest import assert_notified, assert_parquet_geojson_parity, normalize_output, print_directory_structure
 from tests.constants_test import (
@@ -211,7 +211,8 @@ async def test_gui_download_dataset_via_application_to_run_cancel_to_find_back( 
 
             # Check the file picker opens and closes
             await user.should_see("Select the folder with the whole slide images you want to analyze then click Next")
-            await user.should_see(f"Supported formats: {', '.join(sorted(WSI_SUPPORTED_FILE_EXTENSIONS))}")
+            supported_extensions = get_supported_extensions_for_application("he-tme", latest_application_version.number)
+            await user.should_see(f"Supported formats: {', '.join(sorted(supported_extensions))}")
             user.find(marker="BUTTON_WSI_SELECT_DATA").click()
             await user.should_see("Ok")
             await user.should_see("Cancel")

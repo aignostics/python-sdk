@@ -13,6 +13,7 @@ from aignostics.application._gui._page_application_describe import (
     _js_set_membership,
     _metadata_row_is_valid,
     _specimen_metadata_column_defs,
+    _supported_formats_text,
 )
 
 
@@ -122,3 +123,20 @@ def test_metadata_row_is_valid_accepts_supported_combinations(tissue: str, disea
 def test_metadata_row_is_valid_rejects_unsupported_or_missing(row: dict) -> None:
     """Rows with an unsupported or missing tissue/disease fail validation."""
     assert _metadata_row_is_valid(row) is False
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    ("application_id", "application_version", "expected"),
+    [
+        ("he-tme", "2.1.1", "Supported formats: .dcm, .svs, .tif, .tiff"),
+        ("he-tme", "2.2.0", "Supported formats: .bif, .dcm, .ndpi, .svs, .tif, .tiff"),
+        ("test-app", "0.1.0", "Supported formats: .tiff"),
+        ("he-tme", None, "Supported formats: .bif, .dcm, .ndpi, .svs, .tif, .tiff"),
+    ],
+)
+def test_supported_formats_text_follows_selected_version(
+    application_id: str, application_version: str | None, expected: str
+) -> None:
+    """The formats caption lists only the extensions the selected application version accepts."""
+    assert _supported_formats_text(application_id, application_version) == expected
