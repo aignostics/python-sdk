@@ -166,14 +166,16 @@ def _make_item_result(  # noqa: PLR0913
     [
         ("1.0.0", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
         ("2.1.1", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
-        ("2.2.0-rc.1", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
+        ("2.1.1-rc.1", HETA_EXTENSIONS_BEFORE_BIF_AND_NDPI),
+        ("2.2.0-rc.1", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
+        ("2.2.0+build.5", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
         ("2.2.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
         ("2.3.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
         ("3.0.0", HETA_EXTENSIONS_WITH_BIF_AND_NDPI),
     ],
 )
 def test_get_supported_extensions_for_heta_application(application_version: str, expected: set[str]) -> None:
-    """Test that HETA accepts BIF and NDPI only from version 2.2.0 on."""
+    """Test that HETA accepts BIF and NDPI from version 2.2.0 on, its release candidates included."""
     extensions = get_supported_extensions_for_application(HETA_APPLICATION_ID, application_version)
 
     assert extensions == expected

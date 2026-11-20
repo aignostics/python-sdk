@@ -597,7 +597,8 @@ def get_supported_extensions_for_application(application_id: str, application_ve
         ValueError: If the application version is not a valid semantic version
     """
     if application_id == HETA_APPLICATION_ID:
-        if semver.Version.parse(application_version) >= HETA_MIN_VERSION_FOR_BIF_AND_NDPI:
+        # Release candidates of 2.2.0 already read BIF and NDPI.
+        if semver.Version.parse(application_version).finalize_version() >= HETA_MIN_VERSION_FOR_BIF_AND_NDPI:
             return WSI_SUPPORTED_FILE_EXTENSIONS
         return WSI_SUPPORTED_FILE_EXTENSIONS_HETA_BEFORE_BIF_AND_NDPI
     if application_id == TEST_APP_APPLICATION_ID:
